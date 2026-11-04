@@ -10,6 +10,7 @@ import yaml
 
 CASES = Path(__file__).parent / "cases"
 SECTIONS = {
+    "policy_engine": {"isolation", "configuration"},
     "submission_integrity": {"exploits", "adversarial", "refused", "admitted", "unresolved", "unsupported_refused", "unverified_usd", "decided", "itemization_claims"},
     "rules": {"accepted", "refused"},
     "rulesets": {"accepted", "refused"},
@@ -74,6 +75,8 @@ SECTIONS = {
     "hardening": {"directives", "directives_refused", "tampered_refused", "completeness", "ties"},
 }
 INPUTS = {
+    ("policy_engine", "isolation"): {"evaluations"},
+    ("policy_engine", "configuration"): {"path", "value", "receipts"},
     ("submission_integrity", "exploits"): {"receipts", "reason"},
     ("submission_integrity", "refused"): {"receipt"},
     ("submission_integrity", "admitted"): {"receipt"},
@@ -194,7 +197,7 @@ INPUTS = {
     ("hardening", "ties"): {"patches", "extra_rules", "receipts", "complete"},
 }
 # Inputs in these suites can be any YAML value: their runners give them to the code under test.
-FREE_INPUT_SUITES = {"submission_integrity", "agreement", "build_rules", "validate", "semantics", "models", "admission", "facts", "checks", "helpers", "replacements", "approvals", "carveouts", "uncertainty", "report", "evaluation", "hardening", "adversarial", "adversarial_policy", "policy_decisions", "completeness", "inevitable", "offline_eval"}
+FREE_INPUT_SUITES = {"policy_engine", "submission_integrity", "agreement", "build_rules", "validate", "semantics", "models", "admission", "facts", "checks", "helpers", "replacements", "approvals", "carveouts", "uncertainty", "report", "evaluation", "hardening", "adversarial", "adversarial_policy", "policy_decisions", "completeness", "inevitable", "offline_eval"}
 
 
 class CaseLoader(yaml.SafeLoader):

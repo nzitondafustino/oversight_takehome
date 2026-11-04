@@ -14,10 +14,13 @@ under `cases/`. Files are discovered recursively in sorted order. No Python
 changes are needed for new cases in the supported suites.
 
 Every file declares `suite: rules`, `suite: rulesets`, `suite: extraction`, `suite: agreement`, `suite: build_rules`, `suite: validate`, `suite: semantics`, `suite: models`, `suite: admission`, `suite: facts`, `suite: checks`, `suite: helpers`, `suite: replacements`, `suite: approvals`, `suite: carveouts`, `suite: uncertainty`, `suite: report`, `suite: evaluation`, `suite: hardening`, `suite: adversarial`, `suite: adversarial_policy`, `suite: policy_decisions`, `suite: completeness`, `suite: inevitable`, `suite: offline_eval`, or `suite: submission_integrity`.
+The `policy_engine` suite covers reuse and immutable configuration of the class API.
 Optional `templates` can hold YAML anchors; anchors are local to a file.
 
 | Suite | Sections | Input keys | Expected result |
 | --- | --- | --- | --- |
+| policy_engine | isolation | evaluations | Ordered `runs` summaries from repeated evaluations using one engine. |
+| policy_engine | configuration | path, value, receipts | Original receipt outcome after attempted caller-side and engine-side catalog mutations. |
 | submission_integrity | exploits | receipts, reason | `error`: the exact error that refuses it, and it can get no result at all. |
 | submission_integrity | refused | receipt | Error regex: these amounts contradict each other. |
 | submission_integrity | admitted | receipt | Values in its JSON form, as admitted and unchanged. |

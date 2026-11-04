@@ -1,4 +1,4 @@
-"""The public entry point: the only supported way to get an authoritative result for a receipt.
+"""The authoritative evaluation pipeline, also used by PolicyEngine.evaluate.
 
 evaluate_receipts takes receipts and nothing already worked out, so no caller can skip a step:
 

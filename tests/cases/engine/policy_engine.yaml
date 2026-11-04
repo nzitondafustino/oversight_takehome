@@ -1,0 +1,80 @@
+suite: policy_engine
+
+templates:
+  food: &food
+    line_id: L1
+    description_raw: Lunch
+    language: en
+    quantity: 1
+    unit_price: "40.00"
+    amount: "40.00"
+    amount_usd: "40.00"
+    category: food_beverage
+    confidence: "0.95"
+  meal: &meal
+    receipt_id: R1
+    employee_id: E1
+    employee_country: US
+    submitted_expense_type: Meals - Individual
+    merchant_name: Same Restaurant
+    mcc: "5812"
+    transaction_datetime: "2026-04-14T12:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: "40.00"
+    total_amount_usd: "40.00"
+    trip_id: T1
+    trip_nights: 5
+    itemized: true
+    line_items: [*food]
+  second: &second {<<: *meal, receipt_id: R2, transaction_datetime: "2026-04-14T12:01:00"}
+  gear: &gear
+    <<: *meal
+    submitted_expense_type: Computer Equipment
+    merchant_name: Computer Store
+    mcc: "5045"
+    total_amount: "329.00"
+    total_amount_usd: "329.00"
+    line_items: [{<<: *food, description_raw: Monitor, category: computer_accessory, unit_price: "329.00", amount: "329.00", amount_usd: "329.00"}]
+
+isolation:
+  - id: reused engine keeps customers receipts completeness and failed runs apart
+    evaluations:
+      - {customer_id: first, receipts: [*meal, *second], complete: true}
+      - {customer_id: second, receipts: [*meal], complete: true}
+      - {customer_id: first, receipts: [*meal], complete: true}
+      - {customer_id: second, receipts: [*meal], complete: false}
+      - {customer_id: first, receipts: [*meal], complete: true}
+      - {customer_id: third, receipts: [], complete: true}
+      - {customer_id: first, receipts: [*second, *meal], complete: true}
+    expected:
+      runs:
+        - [{receipt_id: R1, disposition: flag, decided: true, exceptions: [TIME-03]}, {receipt_id: R2, disposition: flag, decided: true, exceptions: [TIME-03]}]
+        - [{receipt_id: R1, disposition: pass, decided: true, exceptions: []}]
+        - [{receipt_id: R1, disposition: pass, decided: true, exceptions: []}]
+        - [{receipt_id: R1, disposition: review, decided: false, exceptions: []}]
+        - [{receipt_id: R1, disposition: pass, decided: true, exceptions: []}]
+        - []
+        - [{receipt_id: R1, disposition: flag, decided: true, exceptions: [TIME-03]}, {receipt_id: R2, disposition: flag, decided: true, exceptions: [TIME-03]}]
+
+configuration:
+  - id: category lists are snapshotted and read only
+    path: [item.category, values, 11]
+    value: misspelled_accessory
+    receipts: [*gear]
+    expected: {disposition: flag, exceptions: [TECH-02]}
+  - id: nested country lists are snapshotted and read only
+    path: [receipt.entity, countries, GLOBAL, 0]
+    value: CA
+    receipts: [*gear]
+    expected: {disposition: flag, exceptions: [TECH-02]}
+  - id: nested monetary limits are snapshotted and read only
+    path: [input_contract, usd_tolerance]
+    value: "500"
+    receipts: [*gear]
+    expected: {disposition: flag, exceptions: [TECH-02]}
+  - id: nested currency precision is snapshotted and read only
+    path: [input_contract, minor_units, USD]
+    value: 0
+    receipts: [*gear]
+    expected: {disposition: flag, exceptions: [TECH-02]}

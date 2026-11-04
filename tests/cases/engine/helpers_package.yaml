@@ -1,0 +1,57 @@
+suite: helpers
+
+# How the helpers package is laid out, so that a domain cannot quietly come to depend on another's
+# internals, and an import that callers rely on cannot quietly go away.
+#
+# dispatch: the function behind each helper name in the registry, and the module that owns it.
+# names:    a name importable from expense_validator.engine.helpers, and the module it comes from.
+# modules:  what a module in the package may import. `siblings` are other modules in the package and
+#           `engine` the modules outside it, so nothing here can reach up into checks or evaluation.
+
+dispatch:
+  - {id: meal_cap, helper: meal_cap, expected: {module: meals, function: _meal_cap}}
+  - {id: alcohol_per_attendee, helper: alcohol_per_attendee, expected: {module: meals, function: _alcohol_per_attendee}}
+  - {id: gift_cap, helper: gift_cap, expected: {module: gifts, function: _gift_cap}}
+  - {id: government_official, helper: government_official, expected: {module: gifts, function: _government_official}}
+  - {id: otc_trip_cap, helper: otc_trip_cap, expected: {module: healthcare, function: _otc_trip_cap}}
+  - {id: expense_type_mismatch, helper: expense_type_mismatch, expected: {module: documentation, function: _expense_type_mismatch}}
+  - {id: vat_threshold, helper: vat_threshold, expected: {module: documentation, function: _vat_threshold}}
+  - {id: split_transactions, helper: split_transactions, expected: {module: splits, function: _split_transactions}}
+
+names:
+  - {id: Undetermined, name: Undetermined, expected: {module: common}}
+  - {id: HelperOutcome, name: HelperOutcome, expected: {module: common}}
+  - {id: fields_read_by, name: fields_read_by, expected: {module: common}}
+  - {id: make_finding, name: make_finding, expected: {module: common}}
+  - {id: lowest_total, name: lowest_total, expected: {module: common}}
+  - {id: ReceiptContext, name: ReceiptContext, expected: {module: context}}
+  - {id: build_context, name: build_context, expected: {module: context}}
+  - {id: require_in_context, name: require_in_context, expected: {module: context}}
+  - {id: HelperJob, name: HelperJob, expected: {module: context}}
+  - {id: MEAL_SPEND, name: MEAL_SPEND, expected: {module: meals}}
+  - {id: PRECISION, name: PRECISION, expected: {module: meals}}
+  - {id: MealPolicy, name: MealPolicy, expected: {module: meals}}
+  - {id: GIFT_CATEGORIES, name: GIFT_CATEGORIES, expected: {module: gifts}}
+  - {id: is_client_gift, name: is_client_gift, expected: {module: gifts}}
+  - {id: may_need_recipient, name: may_need_recipient, expected: {module: gifts}}
+  - {id: is_official_line, name: is_official_line, expected: {module: gifts}}
+  - {id: BaggageAllowance, name: BaggageAllowance, expected: {module: travel}}
+  - {id: baggage_allowance, name: baggage_allowance, expected: {module: travel}}
+  - {id: counts_toward_baggage_allowance, name: counts_toward_baggage_allowance, expected: {module: travel}}
+  - {id: TYPE_COVERS, name: TYPE_COVERS, expected: {module: documentation}}
+  - {id: TYPE_IGNORES, name: TYPE_IGNORES, expected: {module: documentation}}
+  - {id: ITEMIZATION_RULE, name: ITEMIZATION_RULE, expected: {module: splits}}
+  - {id: GIFT_RULE, name: GIFT_RULE, expected: {module: splits}}
+  - {id: HELPERS, name: HELPERS, expected: {module: registry}}
+  - {id: run_helper, name: run_helper, expected: {module: registry}}
+
+modules:
+  - {id: common, module: common, expected: {siblings: [], engine: [models]}}
+  - {id: context, module: context, expected: {siblings: [common], engine: [facts, inputs, models]}}
+  - {id: meals, module: meals, expected: {siblings: [common, context], engine: [facts, models]}}
+  - {id: gifts, module: gifts, expected: {siblings: [common, context], engine: [facts, inputs, models]}}
+  - {id: healthcare, module: healthcare, expected: {siblings: [common, context], engine: [models]}}
+  - {id: travel, module: travel, expected: {siblings: [common, context], engine: [inputs, models]}}
+  - {id: documentation, module: documentation, expected: {siblings: [common, context], engine: []}}
+  - {id: splits, module: splits, expected: {siblings: [common, context, gifts, meals], engine: [models]}}
+  - {id: registry, module: registry, expected: {siblings: [common, context, documentation, gifts, healthcare, meals, splits], engine: [facts, models]}}

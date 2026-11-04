@@ -1,0 +1,114 @@
+"""The receipts a helper may read, and HelperJob: one helper rule running on one receipt.
+
+A ReceiptContext is one customer's receipts, and must include the receipt being evaluated.
+Receipts carry no customer of their own, so keeping customers apart rests on building one context
+per customer. complete says whether these are all the receipts that could matter. A partial context
+proves nothing about a cap on a total that spans receipts, either way: a receipt not seen could add to
+the total or hold an adjustment that lowers it. That covers the meal caps per day, TIME-03, HEALTH-01's
+total per trip and the baggage allowance per delay. Such a total stays undetermined, which is not
+compliance. What rests on one receipt or line alone is still confirmed: GIFT-01's occasion is one
+receipt, ALC-02 is per receipt, and categorical rules and HEALTH-01's "no trip record" read no total.
+"""
+
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
+from decimal import Decimal
+
+from expense_validator.engine.facts import item_facts, receipt_facts
+from expense_validator.engine.helpers.common import HelperOutcome, Undetermined, make_finding
+from expense_validator.engine.inputs import admit_receipt, allowed_values
+from expense_validator.engine.models import Finding, LineItem, Receipt, ReplacementTarget
+from expense_validator.policy.schema import CheckRule, RuleSet
+
+
+@dataclass(frozen=True)
+class ReceiptContext:
+    customer_id: str
+    receipts: tuple[Receipt, ...]
+    complete: bool
+
+
+def build_context(
+    customer_id: str, receipts: Iterable[Receipt | Mapping[str, object]], fields: Mapping[str, dict], *, complete: bool
+) -> ReceiptContext:
+    """One customer's receipts, each admitted, in receipt ID order. A repeat of a receipt counts once."""
+    if not customer_id.strip():
+        raise ValueError("a receipt context needs a customer_id")
+    admitted: dict[str, Receipt] = {}
+    for given in receipts:
+        receipt = admit_receipt(given, fields)
+        if admitted.setdefault(receipt.receipt_id, receipt) != receipt:
+            raise ValueError(f"{receipt.receipt_id}: appears twice with different contents")
+    return ReceiptContext(customer_id, tuple(admitted[receipt_id] for receipt_id in sorted(admitted)), complete)
+
+
+def require_in_context(receipt: Receipt, context: ReceiptContext) -> None:
+    if receipt not in context.receipts:
+        raise ValueError(f"{receipt.receipt_id}: is not in the context, or differs from the one there")
+
+
+@dataclass(frozen=True)
+class HelperJob:
+    """One helper rule on one receipt, with what its helper may read. Knows no policy domain."""
+
+    rule: CheckRule
+    receipt: Receipt
+    context: ReceiptContext
+    ruleset: RuleSet
+    fields: Mapping[str, dict]
+
+    def param(self, name: str) -> Decimal:
+        return self.rule.params[name].value
+
+    def known(self, name: str, value: object) -> bool:
+        return value in allowed_values(self.fields, name)
+
+    def category_known(self, line: LineItem) -> bool:
+        return self.known("item.category", line.category)
+
+    def receipt_finding(
+        self, explanation: str, replaces: tuple[ReplacementTarget, ...] = (), **worked_out: object
+    ) -> HelperOutcome:
+        facts = receipt_facts(self.receipt, self.fields)
+        return HelperOutcome((make_finding(self.rule, self.receipt, facts, None, explanation, worked_out, replaces),))
+
+    def line_finding(self, line: LineItem, explanation: str, **worked_out: object) -> Finding:
+        facts = item_facts(self.receipt, line, self.fields)
+        text = f"{self.rule.title}: {line.description_raw}: {explanation}"
+        return make_finding(self.rule, self.receipt, facts, line, text, worked_out)
+
+    def undetermined(self, reason: str, line: LineItem | None = None) -> Undetermined:
+        return Undetermined(self.rule.rule_id, None if line is None else line.line_id, reason)
+
+    def not_known(self, reason: str) -> HelperOutcome:
+        return HelperOutcome((), (self.undetermined(reason),))
+
+    def same_employee(self) -> list[Receipt]:
+        return [other for other in self.context.receipts if other.employee_id == self.receipt.employee_id]
+
+    def same_day(self) -> list[Receipt] | None:
+        """This employee's receipts on this receipt's date. None if a date is missing, as it could be this one."""
+        mine = self.same_employee()
+        if any(other.transaction_datetime is None for other in mine):
+            return None
+        return [other for other in mine if other.transaction_datetime.date() == self.receipt.transaction_datetime.date()]
+
+    def euro_rate(self) -> Decimal | None:
+        """A euro receipt's own rate, or else the one rate on euro receipts that day, if there is one.
+
+        Lives here because euro meal caps and the euro VAT threshold both read it, and neither owns it.
+        """
+        if self.receipt.currency == "EUR" and self.receipt.fx_rate_to_usd is not None:
+            return self.receipt.fx_rate_to_usd
+        if self.receipt.transaction_datetime is None:
+            return None
+        day = self.receipt.transaction_datetime.date()
+        rates = {
+            other.fx_rate_to_usd
+            for other in self.context.receipts
+            if other.currency == "EUR"
+            and other.fx_rate_to_usd is not None
+            and other.transaction_datetime is not None
+            and other.transaction_datetime.date() == day
+        }
+        return rates.pop() if len(rates) == 1 else None

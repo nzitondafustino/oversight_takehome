@@ -20,7 +20,7 @@ PYTHONPATH=src .venv/bin/python -m expense_validator.offline_eval           # re
 |---|---|
 | `src/expense_validator/policy/` | `schema.py` and `vocabulary.py` define rules. `evaluate.py` decides conditions on flat facts. |
 | `src/expense_validator/compiler/` | Offline: turns the policy docs and `rules/rule_logic.yaml` into `rules/ruleset.json`. |
-| `src/expense_validator/engine/` | Runtime: `models.py`, `inputs.py`, `facts.py`, `helpers.py`, `checks.py`, `replacements.py`, `approvals.py`, `carveouts.py`, `money.py`, `uncertainty.py`, `report.py`, `inevitable.py`, `evaluation.py`. |
+| `src/expense_validator/engine/` | Runtime: `models.py`, `inputs.py`, `facts.py`, `helpers/`, `checks.py`, `replacements.py`, `approvals.py`, `carveouts.py`, `money.py`, `uncertainty.py`, `report.py`, `inevitable.py`, `evaluation.py`. |
 | `src/expense_validator/offline_eval/` | Offline: scores classifications through the engine, and changes none of its semantics. Only predictions of kind `actual` are ever classifier performance. |
 | `evaluation/` | Its inputs, and in `output/` its metrics, per-receipt results and report. |
 | `rules/fields.yaml` | The catalog of fields a rule may read, their allowed values, and the country-to-entity mapping. |
@@ -32,7 +32,7 @@ Keep the engine's responsibilities apart:
 - `inputs.py`: admission and vocabulary validation.
 - `money.py`: whether a receipt's amounts agree with each other. Generic: it reads no rule, category or threshold.
 - `facts.py`: deterministic flat facts, with no policy decisions.
-- `helpers.py`: the named helpers, and the `ReceiptContext` for those that read other receipts.
+- `helpers/`: the named helpers, and the `ReceiptContext` for those that read other receipts. Import from the package, not its modules. Inside it, `common.py` is what helpers produce, `context.py` is `ReceiptContext` and `HelperJob`, `registry.py` dispatches by name, and each policy domain has a module: `meals.py`, `gifts.py`, `healthcare.py`, `travel.py`, `documentation.py`. `splits.py` (TIME-03) is the only one that reads other domains, and only their public names. `tests/cases/engine/helpers_package.yaml` holds these boundaries.
 - `checks.py`: candidate findings from all active check rules, plus what it could not decide.
 - `replacements.py`: which candidates another rule replaced, at the level the ruleset declares.
 - `approvals.py`: which active findings an approval reference waives, by EXC-02's mapping.

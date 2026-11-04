@@ -85,6 +85,9 @@ Optional `templates` can hold YAML anchors; anchors are local to a file.
 | helpers | contexts | customer_id, complete, receipts | `receipt_ids` held, in order, and `complete`. |
 | helpers | refused | customer_id, complete, receipts | Error regex: this context cannot be built. |
 | helpers | recipients | line_id | `recipient_name` and `recipient_type` a classifier would read from that real line. Evaluation only. |
+| helpers | dispatch | helper | `module` and `function` behind that name in the registry. |
+| helpers | names | name | `module` the name comes from, importable from `expense_validator.engine.helpers`. |
+| helpers | modules | module | `siblings` and `engine`: the modules it may import, inside the package and outside it. |
 | replacements | real | rule_ids, receipt_id, complete, with_context, receipts | Any of `active`, `unaffected`, `replaced`, `possible`, `undetermined`, `moot`, `pending`, `moot_pending` and `complete`, from those real rules. |
 | replacements | made_up | rules, findings, undetermined, pending | As in real, from resolving the findings given. |
 | replacements | refused | rules, findings, undetermined, pending | Error regex: this resolution cannot go ahead. |

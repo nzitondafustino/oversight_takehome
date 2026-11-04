@@ -42,6 +42,7 @@ Keep the engine's responsibilities apart:
 - `inevitable.py`: the proof that every reading of an unresolved recipient type flags a receipt. Adds no finding.
 - `evaluation.py`: `evaluate_receipts`, the public entry point and the only source of authoritative results. The stage functions are for unit tests.
 - `policy_engine.py`: `PolicyEngine` holds an immutable configuration snapshot and delegates every call to `evaluate_receipts`, with a fresh context and no retained customer state.
+- `config_validation.py`: checks runtime catalog and rule compatibility without policy-source documents or receipt evaluation.
 
 ## Working rules
 

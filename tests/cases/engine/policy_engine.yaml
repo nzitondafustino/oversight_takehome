@@ -85,6 +85,28 @@ catalog_values:
     values: [text, 7, 1.25, true, false, null]
     expected: {values: [text, 7, 1.25, true, false, null]}
 
+missing_references:
+  - id: missing replacement target
+    rule_changes: {REG-01: {replaces: [{rule_id: MISSING-01, level: receipt}]}}
+    expected:
+      validator_error: "REG-01: replacement target MISSING-01 does not exist"
+      engine_error: REG-01 references unknown rule MISSING-01
+  - id: missing replacement beside an existing target
+    rule_changes: {REG-01: {replaces: [{rule_id: ALC-01, level: receipt}, {rule_id: MISSING-01, level: receipt}]}}
+    expected:
+      validator_error: "REG-01: replacement target MISSING-01 does not exist"
+      engine_error: REG-01 references unknown rule MISSING-01
+  - id: missing carveout target
+    rule_changes: {PERS.BAGGAGE: {modifies: [MISSING-01]}}
+    expected:
+      validator_error: "PERS.BAGGAGE: carve-out target MISSING-01 does not exist"
+      engine_error: PERS.BAGGAGE references unknown rule MISSING-01
+  - id: missing carveout target beside an existing target
+    rule_changes: {PERS.BAGGAGE: {modifies: [PERS-01, MISSING-01]}}
+    expected:
+      validator_error: "PERS.BAGGAGE: carve-out target MISSING-01 does not exist"
+      engine_error: PERS.BAGGAGE references unknown rule MISSING-01
+
 configuration_refused:
   - <<: *invalid
     id: missing mandatory category catalog

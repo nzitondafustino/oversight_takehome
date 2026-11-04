@@ -8,14 +8,15 @@ import subprocess
 import sys
 
 import pytest
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 from yaml_cases import exact, load_cases, selected
 
 from expense_validator.compiler.validate import read_fields
 from expense_validator.config import ROOT, load_config
 from expense_validator.engine import evaluation
+from expense_validator.engine.config_validation import validate_rules
 from expense_validator.engine.policy_engine import PolicyEngine
-from expense_validator.policy.schema import RuleSet
+from expense_validator.policy.schema import Rule, RuleSet
 
 PATHS = load_config().paths
 FIELDS = read_fields(PATHS.rule_fields.read_text())
@@ -140,6 +141,22 @@ def test_invalid_configuration_is_rejected_before_evaluation(case, monkeypatch):
     monkeypatch.setattr(evaluation, "evaluate_receipts", must_not_evaluate)
     with pytest.raises(ValueError, match=case["expected"]):
         PolicyEngine(ruleset=ruleset, fields=fields)
+
+
+@pytest.mark.parametrize("case", load_cases("policy_engine", "missing_references"))
+def test_missing_targets_are_value_errors_even_when_ruleset_validation_was_bypassed(case):
+    rule_model = TypeAdapter(Rule)
+    rules = tuple(
+        rule_model.validate_python({**rule.model_dump(), **case["rule_changes"].get(rule.rule_id, {})})
+        for rule in RULESET.rules
+    )
+    # Valid individual rules can still have dangling cross-rule references.
+    unchecked = RuleSet.model_construct(ruleset_version=RULESET.ruleset_version, rules=rules)
+    with pytest.raises(ValueError) as caught:
+        validate_rules(unchecked, FIELDS)
+    assert str(caught.value) == case["expected"]["validator_error"]
+    with pytest.raises(ValueError, match=case["expected"]["engine_error"]):
+        PolicyEngine(ruleset=unchecked, fields=FIELDS)
 
 
 @pytest.mark.parametrize("case", load_cases("policy_engine", "catalog_values"))

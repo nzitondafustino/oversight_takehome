@@ -1,0 +1,200 @@
+suite: hardening
+
+# The public boundary, under attack.
+#
+# directives:         a real run, with EXC-01 changed. directive holds any of: flag and review, the
+#                     severity values; remove, params to take out; as_number, params to make the wrong
+#                     kind; rule_id; status; and duplicate, a second active directive with this rule ID.
+#                     expected.disposition is the result for the first receipt.
+# directives_refused: the same, refused. expected is an error regex.
+# tampered_refused:   check_run on a real run with what `tamper` says changed. tamper holds any of:
+#                     result, fields on the first result; report and group, fields on its report and
+#                     first group; source, fields on that group's first finding; reason, fields on its
+#                     first reason; run, fields on the run; and results, duplicate or drop.
+# completeness:       a real run, on rules changed by `patches`, a mapping of rule ID to fields.
+#                     expected holds any of disposition, decided, reasons, unresolved, open and audit.
+# ties:               a run on rules changed by `patches`, plus `extra_rules`, must give one result
+#                     whatever order the rules come in. expected holds replaced_by and excused_by, by
+#                     rule, and notes, the notes on the group of a rule.
+
+templates:
+  line: &line
+    line_id: L1
+    description_raw: Item
+    language: en
+    quantity: 1
+    unit_price: "40.00"
+    amount: "40.00"
+    amount_usd: "40.00"
+    category: food_beverage
+    confidence: "0.9"
+  meal: &meal
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    submitted_expense_type: Meals - Individual
+    merchant_name: Verona Grill
+    mcc: "5812"
+    transaction_datetime: "2026-04-14T12:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: $lines
+    total_amount_usd: $lines
+    trip_id: T1
+    trip_nights: 5
+    itemized: true
+    line_items: [*line]
+  alcohol: &alcohol
+    <<: *meal
+    line_items: [{<<: *line, category: alcohol}]
+  gear: &gear
+    <<: *meal
+    submitted_expense_type: Computer Equipment
+    mcc: "5045"
+    pre_approval_ref: PA-1
+    line_items: [{<<: *line, category: computer_accessory, unit_price: "329.00", amount: "329.00", amount_usd: "329.00"}]
+  # REG-01 made to read a value that can be missing, so that replacing can depend on it.
+  gate_on_currency: &gate_on_currency {op: eq, field: receipt.currency, value: EUR}
+
+directives:
+  - {id: the rule decides which severities flag, directive: {flag: [low], review: [critical, high, medium]}, receipts: [*alcohol], expected: {disposition: review}}
+  - {id: every severity can flag but one, directive: {flag: [critical, high, low], review: [medium]}, receipts: [*alcohol], expected: {disposition: flag}}
+  - {id: a retired second directive is ignored, directive: {duplicate: EXC-99, duplicate_status: retired}, receipts: [*alcohol], expected: {disposition: flag}}
+
+directives_refused:
+  - {id: a second active directive, directive: {duplicate: EXC-99}, receipts: [*meal], expected: "exactly one active disposition directive, found 2"}
+  - {id: no active directive, directive: {status: retired}, receipts: [*meal], expected: "exactly one active disposition directive, found 0"}
+  - {id: a directive with another rule id, directive: {rule_id: EXC-99}, receipts: [*meal], expected: "EXC-99: the disposition directive must be EXC-01"}
+  - {id: a severity in both sets, directive: {flag: [critical, high, medium, low], review: [low]}, receipts: [*meal], expected: "maps a severity more than once: \\['low'\\]"}
+  - {id: a severity twice in one set, directive: {flag: [critical, high, medium, medium], review: [low]}, receipts: [*meal], expected: "maps a severity more than once: \\['medium'\\]"}
+  - {id: a severity in neither set, directive: {flag: [critical, high], review: [low]}, receipts: [*meal], expected: "does not map every severity: \\['medium'\\]"}
+  - {id: a severity that does not exist, directive: {flag: [critical, high, medium, urgent], review: [low]}, receipts: [*meal], expected: "maps severities that do not exist: \\['urgent'\\]"}
+  - {id: an empty flag set, directive: {flag: [], review: [critical, high, medium, low]}, receipts: [*meal], expected: "flag_severities must be a set of severities"}
+  - {id: an empty review set, directive: {flag: [critical, high, medium, low], review: []}, receipts: [*meal], expected: "review_severities must be a set of severities"}
+  - {id: a missing flag set, directive: {remove: [flag_severities]}, receipts: [*meal], expected: "flag_severities must be a set of severities"}
+  - {id: a missing review set, directive: {remove: [review_severities]}, receipts: [*meal], expected: "review_severities must be a set of severities"}
+  - {id: a flag set of the wrong kind, directive: {as_number: [flag_severities]}, receipts: [*meal], expected: "flag_severities must be a set of severities"}
+  - {id: a flag set holding numbers, directive: {flag: [1, 2], review: [low]}, receipts: [*meal], expected: "flag_severities must be a set of severities"}
+  - {id: a flag set that is text, directive: {flag: critical, review: [high, medium, low]}, receipts: [*meal], expected: "flag_severities must be a set of severities"}
+
+tampered_refused:
+  # Identity
+  - {id: a result with another customer, receipts: [*alcohol], tamper: {result: {customer_id: acme}}, expected: "R1: its customer or ruleset version is not the run's"}
+  - {id: a result with another ruleset version, receipts: [*alcohol], tamper: {result: {ruleset_version: v2}}, expected: "R1: its customer or ruleset version is not the run's"}
+  - {id: a report for another customer, receipts: [*alcohol], tamper: {report: {customer_id: acme}}, expected: "R1: its report is for another customer, receipt or ruleset version"}
+  - {id: a report for another receipt, receipts: [*alcohol], tamper: {report: {receipt_id: R9}}, expected: "R1: its report is for another customer, receipt or ruleset version"}
+  - {id: a report on another ruleset version, receipts: [*alcohol], tamper: {report: {ruleset_version: v2}}, expected: "R1: its report is for another customer, receipt or ruleset version"}
+  - {id: a group for another customer, receipts: [*alcohol], tamper: {group: {customer_id: acme}}, expected: "is for another customer or receipt"}
+  - {id: a group for another receipt, receipts: [*alcohol], tamper: {group: {receipt_id: R9}}, expected: "is for another customer or receipt"}
+  - {id: a finding for another receipt, receipts: [*alcohol], tamper: {source: {receipt_id: R9}}, expected: "holds a finding for another receipt"}
+
+  # One result per receipt
+  - {id: a result missing, receipts: [*alcohol], tamper: {results: drop}, expected: "needs one result per receipt"}
+  - {id: a result repeated, receipts: [*alcohol], tamper: {results: duplicate}, expected: "needs one result per receipt"}
+  - {id: a result for another receipt, receipts: [*alcohol], tamper: {result: {receipt_id: R9}}, expected: "needs one result per receipt"}
+
+  # Decided
+  - {id: decided that disagrees with its report, receipts: [*alcohol], tamper: {result: {decided: false}}, expected: "decided does not agree with its report"}
+  - {id: a pass on an undecided report, receipts: [*meal], tamper: {report: {decided: false}, result: {decided: false}}, expected: "a pass needs a fully decided report"}
+
+  # Outcomes
+  - {id: a pass with an active exception, receipts: [*alcohol], tamper: {result: {disposition: pass}}, expected: "a pass cannot have an active exception"}
+  - {id: a pass with a review signal, receipts: [{<<: *meal, mcc: "5411"}], tamper: {result: {disposition: pass}}, expected: "a pass cannot have an active exception, review signal or uncertainty"}
+  - {id: a pass with uncertainty, receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1}, {<<: *line, line_id: L2, category: gift}]}], tamper: {result: {disposition: pass, decided: true}, report: {decided: true}}, expected: "a pass cannot have an active exception, review signal or uncertainty"}
+  - {id: a flag with nothing to flag, receipts: [*meal], tamper: {result: {disposition: flag}}, expected: "a flag needs an active exception of a flag severity"}
+  - {id: a flag on a low exception, receipts: [{<<: *meal, submitted_expense_type: Software, mcc: "5734", line_items: [{<<: *line, category: software_subscription}]}], tamper: {result: {disposition: flag}}, expected: "a flag needs an active exception of a flag severity"}
+  - {id: a flag on a waived exception, receipts: [*gear], tamper: {result: {disposition: flag}}, expected: "a flag needs an active exception of a flag severity"}
+  - {id: a review with a flag-level exception, receipts: [*alcohol], tamper: {result: {disposition: review}}, expected: "a review cannot have an active exception of a flag severity"}
+
+  # Reasons
+  - {id: no reasons, receipts: [*alcohol], tamper: {result: {reasons: []}}, expected: "needs at least one reason"}
+  - {id: an exception resting on the project decision, receipts: [*alcohol], tamper: {reason: {basis: project_decision}}, expected: "exception_flags cannot rest on project_decision"}
+  - {id: incomplete evidence attributed to EXC-01, receipts: [{<<: *meal, employee_country: FR, currency: USD}], tamper: {reason: {basis: EXC-01}}, expected: "incomplete_evidence cannot rest on EXC-01"}
+  - {id: a reason with no rule behind it, receipts: [*alcohol], tamper: {reason: {rule_ids: [NOPE-99]}}, expected: "names rules not in the ruleset"}
+  - {id: uncertainty with no signal to rest on, receipts: [*alcohol], tamper: {reason: {code: uncertainty, basis: EXC-03}}, expected: "uncertainty cannot rest on EXC-03"}
+
+completeness:
+  # Every independent reason for being undecided can be seen
+  - id: a replacement resting on a missing value names the rule it depends on
+    patches: {REG-01: {applies_when: *gate_on_currency}}
+    complete: true
+    receipts: [{<<: *meal, attendee_count: 1, currency: null, fx_rate_to_usd: null, line_items: [{<<: *line, category: alcohol, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected: {decided: false, unresolved: [ALC-01], open: [MEAL-01, REG-01]}
+  - id: a waived finding possibly replaced names the rule, though nothing else is open
+    patches: {REG-01: {applies_when: *gate_on_currency, replaces: [{rule_id: TECH-04, level: receipt}]}}
+    complete: true
+    receipts: [{<<: *gear, currency: null, fx_rate_to_usd: null, manager_approval_ref: M-1, line_items: [{<<: *line, category: software_subscription}]}]
+    expected:
+      decided: false
+      open: [REG-01]
+      unresolved: []
+      audit: [{rule_id: TECH-04, resolution: waived}]
+      reasons:
+        - {code: exception_flags, basis: EXC-01, rule_ids: [DOC-04]}
+        - {code: incomplete_evidence, basis: project_decision, rule_ids: [REG-01]}
+  - id: the same with a signal beside it keeps both reasons
+    patches: {REG-01: {applies_when: *gate_on_currency, replaces: [{rule_id: TECH-04, level: receipt}]}}
+    complete: true
+    receipts: [{<<: *gear, currency: null, fx_rate_to_usd: null, manager_approval_ref: M-1, line_items: [{<<: *line, line_id: L1, category: software_subscription, unit_price: "329.00", amount: "329.00", amount_usd: "329.00"}, {<<: *line, line_id: L2, category: gift, unit_price: "1.00", amount: "1.00", amount_usd: "1.00"}]}]
+    expected:
+      decided: false
+      open: [GIFT-04, REG-01]
+      reasons:
+        - {code: exception_flags, basis: EXC-01, rule_ids: [DOC-04]}
+        - {code: uncertainty, basis: EXC-03, rule_ids: [EXC-03]}
+        - {code: incomplete_evidence, basis: project_decision, rule_ids: [GIFT-04, REG-01]}
+
+ties:
+  - id: two rules replacing one finding at one level report the same one
+    patches: {ENT-02: {replaces: [{rule_id: ALC-01, level: receipt}]}}
+    extra_rules: []
+    complete: true
+    receipts: [{<<: *meal, employee_country: IN, currency: INR, fx_rate_to_usd: "0.012", line_items: [{<<: *line, category: alcohol, unit_price: "416.67", amount: "416.67", amount_usd: "5.00"}]}]
+    expected: {replaced_by: {ALC-01: ENT-02}}
+  - id: two rules possibly replacing one finding give the same note
+    patches:
+      ENT-02: {applies_when: *gate_on_currency, replaces: [{rule_id: ALC-01, level: receipt}]}
+      REG-01: {applies_when: *gate_on_currency}
+    extra_rules: []
+    complete: true
+    receipts: [{<<: *meal, currency: null, fx_rate_to_usd: null, line_items: [{<<: *line, category: alcohol, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected: {notes: {ALC-01: ["whether ENT-02 applies to this receipt depends on a missing value"]}}
+  - id: two meal rules open for one employee give the split the same target
+    patches:
+      EXC-04: {params: {whole_receipt_rules: {type: set, values: [AA-01, MCC-01, MEAL-01, MEAL-02, DOC-01, DOC-02, DOC-03, DOC-04, REG-02, REG-03, REG-04, TIME-03]}}}
+      TIME-03: {replaces: [{rule_id: AA-01, level: finding}, {rule_id: DOC-01, level: finding}, {rule_id: MEAL-01, level: finding}, {rule_id: REG-02, level: finding}, {rule_id: REG-03, level: finding}, {rule_id: GIFT-01, level: finding}]}
+    extra_rules:
+      - policy_doc: meals-and-entertainment-policy.md
+        title: A second meal cap
+        source_quote: quote
+        rule_id: AA-01
+        kind: check
+        outcome: exception
+        severity: low
+        scope: receipt
+        helper: meal_cap
+        params: {cap_usd: {type: number, value: "10", unit: usd}}
+        provenance: {translator: developer, clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "8.00", amount: "8.00", amount_usd: "8.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "8.00", amount: "8.00", amount_usd: "8.00"}]}
+    expected: {replaced_by: {AA-01: TIME-03}}
+  - id: two carve-outs on one rule report the same one
+    patches: {}
+    extra_rules:
+      - policy_doc: non-reimbursable-items.md
+        title: A second carve-out
+        source_quote: quote
+        rule_id: AA.CARVE
+        kind: carve_out
+        requires_ref: baggage_delay
+        helper: baggage_allowance
+        modifies: [PERS-02]
+        params:
+          allowance_usd: {type: number, value: "500", unit: usd}
+          min_delay_hours: {type: number, value: "1", unit: hour}
+        provenance: {translator: developer, clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+    complete: true
+    receipts: [{<<: *meal, submitted_expense_type: Travel - Other, mcc: "5651", baggage_delay_ref: BAG-1, baggage_delay_hours: "2", line_items: [{<<: *line, category: clothing}]}]
+    expected: {excused_by: {PERS-02: AA.CARVE}}

@@ -1,0 +1,382 @@
+suite: policy_decisions
+
+# Module 10.4: expected outcomes come from these decisions, which are the project's, not policy text.
+#
+#   HEALTH-01  the $25 is per (employee_id, trip_id).
+#   PERS-03    a refund alone is no purchase, a positive purchase stays prohibited, and a refund does
+#              not cancel one. A zero-value line is not stated: it is treated as no purchase, as it
+#              is not a positive one.
+#   GIFT-01    a discount naming nobody is not assigned to anybody.
+#   DOC-02     reads the total as printed. A missing conversion is DOC-04 alone.
+#   Partial    with complete: false, a total that spans receipts is not confirmed either way, as a
+#              receipt not seen could hold a qualifying adjustment. What rests on one receipt stands.
+#
+# expected is as in adversarial_policy.yaml. rules: confirmed is active, undetermined is unresolved or
+# open, and compliant is neither active nor unresolved.
+
+templates:
+  line: &line {language: en, quantity: 1, description_raw: Item, confidence: "0.95"}
+  base: &base
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    merchant_name: Merchant
+    transaction_datetime: "2026-04-14T19:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    trip_id: TRIP-1
+    trip_nights: 5
+    itemized: true
+    total_amount: $lines
+    total_amount_usd: $lines
+  no_rate: &no_rate {currency: EUR, fx_rate_to_usd: null, total_amount_usd: null}
+  no_total: &no_total {total_amount: null, total_amount_usd: null}
+  unknown: &unknown {<<: *line, line_id: L9, description_raw: Adjustment, category: null, unit_price: "-10.00", amount: "-10.00", amount_usd: "-10.00"}
+
+  # 5651 is in no MCC risk tier, and Travel - Other covers OTC, clothing, personal care and transport.
+  travel: &travel {<<: *base, mcc: "5651", submitted_expense_type: Travel - Other}
+  otc_30: &otc_30 {<<: *line, line_id: L1, category: health_otc, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}
+  otc_20: &otc_20 {<<: *otc_30, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}
+  otc_20_b: &otc_20_b {<<: *otc_20, line_id: L2}
+
+  # 5499 is in no risk tier. Travel - Other does not cover tobacco, so a receipt of only tobacco lines
+  # is DOC-03 as well, on its own terms. A taxi on the receipt keeps DOC-03 out of what is being tested.
+  retail: &retail {<<: *base, mcc: "5499", submitted_expense_type: Travel - Other}
+  # Enough to keep the receipt's true total above zero beside a refund, as negative totals are not supported.
+  taxi: &taxi {<<: *line, line_id: L5, category: ground_transport, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}
+  # DOC-03 ignores a service fee, so a receipt of this and a refund has no line its type covers.
+  fee: &fee {<<: *line, line_id: L6, category: service_fee, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}
+  tobacco: &tobacco {<<: *line, line_id: L1, category: tobacco, unit_price: "25.00", amount: "25.00", amount_usd: "25.00"}
+  tobacco_b: &tobacco_b {<<: *tobacco, line_id: L2, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}
+  refund: &refund {<<: *tobacco, line_id: L9, unit_price: "-25.00", amount: "-25.00", amount_usd: "-25.00"}
+  zero: &zero {<<: *tobacco, line_id: L9, unit_price: "0.00", amount: "0.00", amount_usd: "0.00"}
+
+  gifts: &gifts {<<: *base, mcc: "5947", submitted_expense_type: Client Gifts}
+  gift_a: &gift_a {<<: *line, line_id: L1, category: gift, unit_price: "55.00", amount: "55.00", amount_usd: "55.00", recipient_name: Ana, recipient_type: client}
+  gift_b: &gift_b {<<: *gift_a, line_id: L2, recipient_name: Bo}
+  small_a: &small_a {<<: *gift_a, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}
+  small_b: &small_b {<<: *small_a, line_id: L2, recipient_name: Bo}
+  # A known client discount that names nobody. It is below the $10 naming test, which reads each line.
+  unnamed_discount: &unnamed_discount {<<: *unknown, category: gift, recipient_type: client}
+
+  meal: &meal {<<: *base, mcc: "5812", submitted_expense_type: Meals - Individual}
+  food_80: &food_80 {<<: *line, line_id: L1, category: food_beverage, unit_price: "80.00", amount: "80.00", amount_usd: "80.00"}
+  food_40: &food_40 {<<: *food_80, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}
+  entertainment: &entertainment {<<: *base, mcc: "5812", submitted_expense_type: Client Entertainment, attendee_count: 2}
+  alcohol_75: &alcohol_75 {<<: *line, line_id: L1, category: alcohol, unit_price: "75.00", amount: "75.00", amount_usd: "75.00"}
+  delayed: &delayed {<<: *travel, baggage_delay_ref: BAG-1, baggage_delay_hours: "30"}
+  clothing_155: &clothing_155 {<<: *line, line_id: L1, category: clothing, unit_price: "155.00", amount: "155.00", amount_usd: "155.00"}
+  clothing_100: &clothing_100 {<<: *clothing_155, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}
+
+decisions:
+  # 1. HEALTH-01 per employee and trip
+  - id: 1 two employees on one trip ID each have their own 25
+    complete: true
+    receipts:
+      - {<<: *travel, line_items: [*otc_20]}
+      - {<<: *travel, receipt_id: R2, employee_id: E-2, merchant_name: Other Shop, line_items: [*otc_20_b]}
+    expected:
+      R1: {disposition: pass, decided: true, active: [], rules: {HEALTH-01: compliant}}
+      R2: {disposition: pass, decided: true, active: [], rules: {HEALTH-01: compliant}}
+  - id: 2 one employee's two receipts on a trip share the 25
+    complete: true
+    receipts:
+      - {<<: *travel, line_items: [*otc_20]}
+      - {<<: *travel, receipt_id: R2, merchant_name: Other Shop, line_items: [*otc_20_b]}
+    expected:
+      R1: {disposition: review, decided: true, active: [HEALTH-01], severities: {HEALTH-01: low}, cited: {HEALTH-01: [L1]}}
+      R2: {disposition: review, decided: true, active: [HEALTH-01], severities: {HEALTH-01: low}, cited: {HEALTH-01: [L2]}}
+  - id: 3 two employees on one trip ID with one over the cap
+    complete: true
+    receipts:
+      - {<<: *travel, line_items: [*otc_30]}
+      - {<<: *travel, receipt_id: R2, employee_id: E-2, merchant_name: Other Shop, line_items: [*otc_20_b]}
+    expected:
+      R1: {disposition: review, decided: true, active: [HEALTH-01], cited: {HEALTH-01: [L1]}}
+      R2: {disposition: pass, decided: true, active: [], rules: {HEALTH-01: compliant}}
+  - id: 16 one employee on two trips has a 25 on each
+    complete: true
+    receipts:
+      - {<<: *travel, line_items: [*otc_20]}
+      - {<<: *travel, receipt_id: R2, trip_id: TRIP-2, merchant_name: Other Shop, line_items: [*otc_20_b]}
+    expected:
+      R1: {disposition: pass, decided: true, active: []}
+      R2: {disposition: pass, decided: true, active: []}
+  - id: 16 employees and trips crossed, with only the true pair sharing a total
+    complete: true
+    receipts:
+      - {<<: *travel, line_items: [*otc_20]}
+      - {<<: *travel, receipt_id: R2, merchant_name: Shop 2, line_items: [*otc_20_b]}
+      - {<<: *travel, receipt_id: R3, employee_id: E-2, merchant_name: Shop 3, line_items: [{<<: *otc_20, line_id: L3}]}
+      - {<<: *travel, receipt_id: R4, trip_id: TRIP-2, merchant_name: Shop 4, line_items: [{<<: *otc_20, line_id: L4}]}
+    expected:
+      R1: {disposition: review, decided: true, active: [HEALTH-01]}
+      R2: {disposition: review, decided: true, active: [HEALTH-01]}
+      R3: {disposition: pass, decided: true, active: []}
+      R4: {disposition: pass, decided: true, active: []}
+  - id: 16 another employee's uncertain discount on one trip ID leaves this total confirmed
+    complete: true
+    receipts:
+      - {<<: *travel, line_items: [*otc_30]}
+      - {<<: *travel, receipt_id: R2, employee_id: E-2, merchant_name: Other Shop, total_amount: "0.00", total_amount_usd: "0.00", line_items: [*unknown]}
+    expected:
+      R1: {disposition: review, decided: true, active: [HEALTH-01], rules: {HEALTH-01: confirmed}}
+      R2: {disposition: review, decided: false, active: []}
+  - id: an employee's own uncertain discount on another receipt of the trip still counts
+    complete: true
+    receipts:
+      - {<<: *travel, line_items: [*otc_30]}
+      - {<<: *travel, receipt_id: R2, merchant_name: Other Shop, total_amount: "0.00", total_amount_usd: "0.00", line_items: [*unknown]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], rules: {HEALTH-01: undetermined}}
+      R2: {disposition: review, decided: false, active: []}
+
+  # 2. PERS-03
+  - id: 4 a tobacco refund beside something the type covers is no breach
+    complete: true
+    receipts: [{<<: *retail, line_items: [*taxi, *refund]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], rules: {PERS-03: compliant}}}
+  - id: 4 a tobacco refund alone is no PERS-03, and DOC-03 stands on its own terms
+    complete: true
+    receipts: [{<<: *retail, line_items: [*refund, *fee]}]
+    expected: {R1: {disposition: flag, decided: true, active: [DOC-03], rules: {PERS-03: compliant, DOC-03: confirmed}}}
+  - id: 5 a zero-value tobacco line is no breach
+    complete: true
+    receipts: [{<<: *retail, line_items: [*taxi, *zero]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], rules: {PERS-03: compliant}}}
+  - id: a positive tobacco purchase is a breach, whatever else is on the receipt
+    complete: true
+    receipts: [{<<: *retail, line_items: [*taxi, *tobacco]}]
+    expected: {R1: {disposition: flag, decided: true, active: [PERS-03], severities: {PERS-03: high}, cited: {PERS-03: [L1]}}}
+  - id: 6 a refund of the same amount does not cancel a purchase, and is not cited
+    complete: true
+    receipts: [{<<: *retail, line_items: [*taxi, *tobacco, *refund]}]
+    expected: {R1: {disposition: flag, decided: true, active: [PERS-03], severities: {PERS-03: high}, cited: {PERS-03: [L1]}}}
+  - id: 6 a larger refund does not cancel a purchase
+    complete: true
+    receipts: [{<<: *retail, line_items: [*taxi, *tobacco_b, *refund]}]
+    expected: {R1: {disposition: flag, decided: true, active: [PERS-03], cited: {PERS-03: [L2]}}}
+  - id: 6 two purchases and a refund cite both purchases
+    complete: true
+    receipts: [{<<: *retail, line_items: [*taxi, *tobacco, *tobacco_b, *refund]}]
+    expected: {R1: {disposition: flag, decided: true, active: [PERS-03], cited: {PERS-03: [L1, L2]}}}
+  - id: an unconverted purchase is judged by its printed amount
+    complete: true
+    receipts: [{<<: [*no_rate, *retail], line_items: [{<<: *taxi, amount_usd: null}, {<<: *tobacco, amount_usd: null}]}]
+    expected: {R1: {disposition: flag, cited: {PERS-03: [L1]}, rules: {PERS-03: confirmed, DOC-04: confirmed}}}
+  - id: an unconverted refund is judged by its printed amount
+    complete: true
+    receipts: [{<<: [*no_rate, *retail], line_items: [{<<: *taxi, amount_usd: null}, {<<: *refund, amount_usd: null}]}]
+    expected: {R1: {disposition: flag, rules: {PERS-03: compliant, DOC-04: confirmed}}}
+  - id: a low-confidence refund does not disturb a purchase beside it
+    complete: true
+    receipts: [{<<: *retail, line_items: [*taxi, *tobacco, {<<: *refund, confidence: "0.30"}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [PERS-03], cited: {PERS-03: [L1]}}}
+  - id: a low-confidence purchase stays open rather than confirmed or cleared
+    complete: true
+    receipts: [{<<: *retail, line_items: [*taxi, {<<: *tobacco, confidence: "0.30"}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {PERS-03: undetermined}}}
+
+  # 3. GIFT-01
+  - id: 7 a known unnamed discount is not given to the one recipient
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_a, *unnamed_discount]}]
+    expected:
+      R1:
+        disposition: flag
+        decided: true
+        active: [GIFT-01]
+        cited: {GIFT-01: [L1]}
+        evidence: {GIFT-01: {L1: {helper.recipient_total_usd: "55.00"}}}
+  - id: 7 an uncertain unnamed discount is not given to the one recipient, and stays open itself
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_a, *unknown]}]
+    expected:
+      R1:
+        disposition: flag
+        decided: false
+        active: [GIFT-01]
+        cited: {GIFT-01: [L1]}
+        evidence: {GIFT-01: {L1: {helper.recipient_total_usd: "55.00"}}}
+  - id: 8 a known unnamed discount is given to neither of two recipients
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_a, *gift_b, *unnamed_discount]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-01], cited: {GIFT-01: [L1, L2]}}}
+  - id: 8 an uncertain unnamed discount is given to neither of two recipients
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_a, *gift_b, *unknown]}]
+    expected: {R1: {disposition: flag, decided: false, active: [GIFT-01], cited: {GIFT-01: [L1, L2]}}}
+  - id: 8 two recipients within the cap stay separate and an unnamed discount changes nothing
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*small_a, *small_b, *unnamed_discount]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], rules: {GIFT-01: compliant}}}
+  - id: 9 a known discount for one recipient does not lower another
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_b, {<<: *unnamed_discount, recipient_name: Ana}]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-01], cited: {GIFT-01: [L2]}}}
+  - id: 9 an uncertain discount for one recipient does not lower another
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_b, {<<: *unknown, recipient_name: Ana, recipient_type: client}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [GIFT-01], cited: {GIFT-01: [L2]}}}
+  - id: a known unnamed charge is tested alone, not added to the one recipient
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*small_a, {<<: *unnamed_discount, unit_price: "25.00", amount: "25.00", amount_usd: "25.00"}]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-01], cited: {GIFT-01: [L9]}}}
+  # A gift line with no recipient type could be for an official: EXC-03's secondary-field signal.
+  - id: an unnamed discount with no recipient type is not attributed, and its own uncertainty stays
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*small_a, {<<: *unknown, category: gift}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], uncertainty: [{line_id: L9, field: recipient_type, state: missing}]}}
+  - id: an uncertain unnamed charge leaves the naming test open rather than inventing a recipient
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*small_a, {<<: *unknown, unit_price: "25.00", amount: "25.00", amount_usd: "25.00"}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {GIFT-01: undetermined}}}
+
+  # 4. DOC-02 and DOC-04
+  - id: 10 a euro receipt showing its total with no conversion is DOC-04 alone
+    complete: true
+    receipts: [{<<: [*no_rate, *travel], total_amount: "20.00", line_items: [{<<: *otc_20, amount_usd: null}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [DOC-04], rules: {DOC-02: compliant, DOC-04: confirmed}}}
+  - id: 11 no total in dollars is DOC-02 alone
+    complete: true
+    receipts: [{<<: [*no_total, *travel], line_items: [*otc_20]}]
+    expected: {R1: {disposition: flag, active: [DOC-02], rules: {DOC-02: confirmed, DOC-04: compliant}}}
+  - id: 11 no total on a euro receipt with its rate is DOC-02 alone
+    complete: true
+    receipts: [{<<: [*no_total, *travel], currency: EUR, fx_rate_to_usd: "1.10", line_items: [{<<: *otc_20, unit_price: "18.18", amount: "18.18"}]}]
+    expected: {R1: {disposition: flag, active: [DOC-02], rules: {DOC-02: confirmed, DOC-04: compliant}}}
+  - id: 11 no total and no rate are each their own exception
+    complete: true
+    receipts: [{<<: [*no_rate, *no_total, *travel], line_items: [{<<: *otc_20, amount_usd: null}]}]
+    expected: {R1: {disposition: flag, active: [DOC-02, DOC-04], rules: {DOC-02: confirmed, DOC-04: confirmed}}}
+  - id: 11 a conversion does not stand in for the total the receipt should show
+    complete: true
+    receipts: [{<<: *travel, total_amount: null, total_amount_usd: "20.00", line_items: [*otc_20]}]
+    expected: {R1: {disposition: flag, active: [DOC-02], rules: {DOC-02: confirmed}}}
+  - id: 11 no merchant is DOC-02 whatever the conversion
+    complete: true
+    receipts: [{<<: [*no_rate, *travel], merchant_name: null, line_items: [{<<: *otc_20, amount_usd: null}]}]
+    expected: {R1: {disposition: flag, active: [DOC-02, DOC-04], rules: {DOC-02: confirmed, DOC-04: confirmed}}}
+
+partial:
+  # Cross-receipt totals are not confirmed
+  - id: 12 an incomplete trip with known 30 of OTC is open
+    complete: false
+    receipts: [{<<: *travel, line_items: [*otc_30]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {HEALTH-01: undetermined}}}
+  - id: 13 a complete trip with known 30 of OTC and no relevant discount is a breach
+    complete: true
+    receipts: [{<<: *travel, line_items: [*otc_30]}]
+    expected: {R1: {disposition: review, decided: true, active: [HEALTH-01], severities: {HEALTH-01: low}, cited: {HEALTH-01: [L1]}, rules: {HEALTH-01: confirmed}}}
+  - id: an incomplete trip over the cap across two receipts is open on both
+    complete: false
+    receipts:
+      - {<<: *travel, line_items: [*otc_20]}
+      - {<<: *travel, receipt_id: R2, merchant_name: Other Shop, line_items: [*otc_20_b]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], rules: {HEALTH-01: undetermined}}
+      R2: {disposition: review, decided: false, active: [], rules: {HEALTH-01: undetermined}}
+  - id: an incomplete day over the meal cap is open
+    complete: false
+    receipts: [{<<: *meal, line_items: [*food_80]}]
+    expected: {R1: {disposition: review, decided: false, active: [], unresolved: [], rules: {MEAL-01: undetermined}}}
+  - id: a complete day over the meal cap is a breach
+    complete: true
+    receipts: [{<<: *meal, line_items: [*food_80]}]
+    expected: {R1: {disposition: flag, decided: true, active: [MEAL-01], rules: {MEAL-01: confirmed}}}
+  - id: an incomplete day over the APAC cap is open
+    complete: false
+    receipts: [{<<: *meal, employee_country: IN, line_items: [*food_80]}]
+    expected: {R1: {disposition: review, decided: false, active: [], unresolved: [], rules: {REG-02: undetermined}}}
+  - id: a complete day over the APAC cap is a breach
+    complete: true
+    receipts: [{<<: *meal, employee_country: IN, line_items: [*food_80]}]
+    expected: {R1: {disposition: flag, active: [REG-02], rules: {REG-02: confirmed}}}
+  # REG-04 stands on the receipt's own total, beside a cap that is open.
+  - id: an incomplete day over the EMEA cap is open, while the receipt's own VAT rule stands
+    complete: false
+    receipts: [{<<: *meal, employee_country: DE, currency: EUR, fx_rate_to_usd: "1.10", total_amount: "100.00", total_amount_usd: "110.00", line_items: [{<<: *food_80, unit_price: "100.00", amount: "100.00", amount_usd: "110.00"}]}]
+    expected: {R1: {decided: false, unresolved: [], rules: {REG-03: undetermined, REG-04: confirmed}}}
+  - id: a complete day over the EMEA cap is a breach
+    complete: true
+    receipts: [{<<: *meal, employee_country: DE, currency: EUR, fx_rate_to_usd: "1.10", total_amount: "100.00", total_amount_usd: "110.00", line_items: [{<<: *food_80, unit_price: "100.00", amount: "100.00", amount_usd: "110.00"}]}]
+    expected: {R1: {disposition: flag, decided: true, rules: {REG-03: confirmed, REG-04: confirmed}}}
+  - id: what looks like a split in an incomplete context is open, with neither rule confirmed
+    complete: false
+    receipts:
+      - {<<: *meal, line_items: [*food_40]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *food_40, line_id: L2}]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], rules: {MEAL-01: undetermined, TIME-03: undetermined}}
+      R2: {disposition: review, decided: false, active: [], rules: {MEAL-01: undetermined, TIME-03: undetermined}}
+  - id: the same split in a complete context is confirmed
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [*food_40]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *food_40, line_id: L2}]}
+    expected:
+      R1: {disposition: flag, decided: true, active: [TIME-03], audit: [{rule_id: MEAL-01, resolution: replaced}]}
+      R2: {disposition: flag, decided: true, active: [TIME-03], audit: [{rule_id: MEAL-01, resolution: replaced}]}
+  # With every receipt seen, the day's breach is proved, and only what replaces it is open.
+  - id: a complete day that could still be a split leaves the breach unresolved
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [*food_40]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *food_40, line_id: L2}, {<<: *unknown, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], unresolved: [MEAL-01], rules: {TIME-03: undetermined}}
+      R2: {disposition: review, decided: false, active: [], unresolved: [MEAL-01], rules: {TIME-03: undetermined}}
+  - id: an incomplete delay over the allowance with its reference is open
+    complete: false
+    receipts: [{<<: *delayed, line_items: [*clothing_155]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {PERS-02: undetermined}}}
+  - id: an incomplete delay within the allowance so far is open too, not excused
+    complete: false
+    receipts: [{<<: *delayed, line_items: [*clothing_100]}]
+    expected: {R1: {disposition: review, decided: false, active: [], audit: [], rules: {PERS-02: undetermined}}}
+  - id: a complete delay over the allowance with its reference is a breach
+    complete: true
+    receipts: [{<<: *delayed, line_items: [*clothing_155]}]
+    expected: {R1: {disposition: flag, decided: true, active: [PERS-02], rules: {PERS-02: confirmed}}}
+
+  # What rests on one receipt or line stands
+  - id: clothing with no delay reference stands in an incomplete context
+    complete: false
+    receipts: [{<<: *travel, line_items: [*clothing_155]}]
+    expected: {R1: {disposition: flag, decided: false, active: [PERS-02], rules: {PERS-02: confirmed}}}
+  - id: a delay of exactly 24 hours fails whatever the total, in an incomplete context
+    complete: false
+    receipts: [{<<: *delayed, baggage_delay_hours: "24", line_items: [*clothing_100]}]
+    expected: {R1: {disposition: flag, decided: false, active: [PERS-02], rules: {PERS-02: confirmed}}}
+  - id: tobacco stands in an incomplete context
+    complete: false
+    receipts: [{<<: *retail, line_items: [*taxi, *tobacco]}]
+    expected: {R1: {disposition: flag, decided: false, active: [PERS-03], rules: {PERS-03: confirmed}}}
+  - id: prescription medication stands in an incomplete context
+    complete: false
+    receipts: [{<<: *travel, line_items: [{<<: *otc_30, item_kind: prescription_medication}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [HEALTH-01], severities: {HEALTH-01: medium}, rules: {HEALTH-01: confirmed}}}
+  - id: OTC with no trip record stands in an incomplete context
+    complete: false
+    receipts: [{<<: *travel, trip_id: null, trip_nights: null, line_items: [*otc_30]}]
+    expected: {R1: {disposition: review, decided: false, active: [HEALTH-01], rules: {HEALTH-01: confirmed}}}
+  - id: a gift over the cap stands in an incomplete context, as its occasion is one receipt
+    complete: false
+    receipts: [{<<: *gifts, line_items: [*gift_a]}]
+    expected: {R1: {disposition: flag, decided: false, active: [GIFT-01], rules: {GIFT-01: confirmed}}}
+  - id: alcohol over the cap stands in an incomplete context, as its total is one receipt
+    complete: false
+    receipts: [{<<: *entertainment, line_items: [*alcohol_75]}]
+    expected: {R1: {disposition: flag, decided: false, active: [ALC-02], rules: {ALC-02: confirmed}}}
+  - id: a large non-itemized receipt stands in an incomplete context, as it cannot be part of a split
+    complete: false
+    receipts: [{<<: *travel, itemized: false, total_amount: "100.00", total_amount_usd: "100.00", line_items: [{<<: *line, line_id: L1, category: other, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [DOC-01], rules: {DOC-01: confirmed}}}
+
+refused:
+  - id: a dollar total with no USD value, as nothing would report it and USD thresholds would stay quiet
+    receipts: [{<<: *travel, total_amount: "20.00", total_amount_usd: null, line_items: [*otc_20]}]
+    expected: R1. no total_amount_usd, though it can be converted
+  - id: a euro total with a rate and no USD value
+    receipts: [{<<: *travel, currency: EUR, fx_rate_to_usd: "1.10", total_amount: "20.00", total_amount_usd: null, line_items: [*otc_20]}]
+    expected: R1. no total_amount_usd, though it can be converted

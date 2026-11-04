@@ -1,0 +1,134 @@
+suite: rulesets
+
+# Whole rulesets: the checks that need every rule at once, and the published JSON.
+#
+# accepted: `ruleset` must validate and survive a JSON round trip unchanged.
+#           expected.rule_ids is the published order. expected.params holds the
+#           published params of each rule listed.
+# refused:  `ruleset` must fail, with an error matching the pattern in `expected`.
+
+templates:
+  provenance: &provenance {translator: template, clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+
+  tech_02: &tech_02
+    kind: check
+    rule_id: TECH-02
+    policy_doc: technology-and-equipment-policy.md
+    title: Peripherals under $200
+    source_quote: "reimbursable up to **$200 per item**"
+    provenance: *provenance
+    applies_to: {classes: [computer_accessory]}
+    outcome: exception
+    scope: item
+    severity: medium
+    params:
+      cap_usd: {type: number, value: "200", unit: usd}
+    select: {op: gt, field: item.unit_price_usd, value: {param: cap_usd}}
+
+  alc_01: &alc_01
+    kind: check
+    rule_id: ALC-01
+    policy_doc: meals-and-entertainment-policy.md
+    title: Alcohol requires a documented entertainment context
+    source_quote: "Alcohol is reimbursable"
+    provenance: *provenance
+    applies_to: {classes: [alcohol]}
+    outcome: exception
+    scope: item
+    severity: high
+    select: {op: eq, field: item.category, value: alcohol}
+
+  reg_01: &reg_01
+    kind: check
+    rule_id: REG-01
+    policy_doc: regional-addendum.md
+    title: Alcohol
+    source_quote: "Alcohol is **never** reimbursable for APAC-entity employees"
+    provenance: *provenance
+    applies_to: {classes: [alcohol]}
+    outcome: exception
+    scope: item
+    severity: high
+    applies_when: {op: eq, field: receipt.entity, value: APAC}
+    select: {op: eq, field: item.category, value: alcohol}
+    replaces:
+      - {rule_id: ALC-01, level: receipt}
+
+  baggage: &baggage
+    kind: carve_out
+    rule_id: PERS.BAGGAGE
+    policy_doc: non-reimbursable-items.md
+    title: Baggage-delay exception
+    source_quote: "essential toiletries are reimbursable up to **$150**"
+    provenance: *provenance
+    applies_to: {classes: [personal_care, clothing]}
+    modifies: [PERS-01, PERS-02]
+    requires_ref: baggage_delay
+    helper: baggage_allowance
+    params:
+      allowance_usd: {type: number, value: "150", unit: usd}
+      delay_hours: {type: number, value: "24", unit: hour}
+
+  exc_01: &exc_01
+    kind: process
+    rule_id: EXC-01
+    policy_doc: approval-and-exception-handling.md
+    title: Receipt disposition
+    source_quote: "Disposition is computed, not judged."
+    provenance: *provenance
+    applies_to: {classes: all}
+    directive: disposition
+    params:
+      flag_severities: {type: set, values: [critical, high, medium]}
+      review_severities: {type: set, values: [low]}
+
+accepted:
+  - id: published sorted with exact decimals
+    ruleset:
+      ruleset_version: v1
+      rules: [*tech_02, *alc_01, *reg_01, *exc_01]
+    expected:
+      rule_ids: [ALC-01, EXC-01, REG-01, TECH-02]
+      params:
+        TECH-02:
+          cap_usd: {type: number, value: "200", unit: usd, source: policy}
+
+refused:
+  - id: duplicate rule ids
+    ruleset:
+      ruleset_version: v1
+      rules: [*tech_02, *tech_02]
+    expected: duplicate rule ids
+
+  - id: check replaces an unknown rule
+    ruleset:
+      ruleset_version: v1
+      rules: [*reg_01]
+    expected: REG-01 references unknown rule ALC-01
+
+  - id: carve-out modifies an unknown rule
+    ruleset:
+      ruleset_version: v1
+      rules: [*baggage]
+    expected: PERS.BAGGAGE references unknown rule PERS-0
+
+  - id: active rule points at a retired rule
+    ruleset:
+      ruleset_version: v1
+      rules:
+        - {<<: *alc_01, status: retired}
+        - *reg_01
+    expected: references retired rule ALC-01
+
+  - id: replacement cycle
+    ruleset:
+      ruleset_version: v1
+      rules:
+        - <<: *reg_01
+          replaces:
+            - {rule_id: GIFT-04, level: receipt}
+        - <<: *reg_01
+          rule_id: GIFT-04
+          replaces:
+            - {rule_id: REG-01, level: receipt}
+    expected: replacement cycle

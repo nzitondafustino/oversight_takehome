@@ -1,0 +1,64 @@
+suite: build_rules
+
+# Building rules from `logic` and the clauses in `text`.
+#
+# accepted: the built rule AA-01 must have the fields in `expected`.
+# refused:  the build must fail, with an error matching the pattern in `expected`.
+
+templates:
+  text: &text "## Limits\n\n**AA-01 — One.** Never allowed, so **high** it is.\n"
+
+  rule: &rule
+    rule_id: AA-01
+    kind: check
+    outcome: exception
+    scope: item
+    severity: high
+    source_quote: "Never allowed"
+    select: {op: eq, field: item.category, value: alcohol}
+
+accepted:
+  - id: the title and document come from the clause
+    text: *text
+    logic: {ruleset_version: v1, rules: [*rule]}
+    expected:
+      rule_id: AA-01
+      title: One
+      policy_doc: doc.md
+
+  - id: a quote may wrap and still match
+    text: "**AA-01 — One.** Never\nallowed.\n"
+    logic: {ruleset_version: v1, rules: [*rule]}
+    expected:
+      source_quote: "Never allowed"
+
+refused:
+  - id: a clause with no rule
+    text: *text
+    logic: {ruleset_version: v1, rules: []}
+    expected: "no rule for: \\['AA-01'\\]"
+
+  - id: a rule with no clause
+    text: *text
+    logic:
+      ruleset_version: v1
+      rules:
+        - *rule
+        - {<<: *rule, rule_id: BB-02}
+    expected: "BB-02: no clause with the ID BB-02"
+
+  - id: a quote that is not in the clause
+    text: *text
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, source_quote: "Always allowed"}
+    expected: "AA-01: quote is not in the clause"
+
+  - id: a rule that breaks the schema
+    text: *text
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, severity: null}
+    expected: "needs a severity"

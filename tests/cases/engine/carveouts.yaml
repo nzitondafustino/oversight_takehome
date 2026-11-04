@@ -1,0 +1,519 @@
+suite: carveouts
+
+# resolve_carveouts, after run_checks, resolve_replacements and resolve_approvals.
+#
+# real:     the real ruleset on `receipt_id`, in a context of `receipts` that is `complete`.
+# made_up:  the same with only the rules in `rules`.
+# refused:  resolve cannot go ahead. expected is an error regex.
+#
+# expected holds any of: active, unaffected and replaced, by rule_id and line_ids; waived, by rule_id
+# and line_ids; excused and rejected and undetermined_carveouts, by rule_id, line_ids, by and
+# reference; undetermined, by rule_id and line_id; and complete.
+
+templates:
+  line: &line
+    line_id: L1
+    description_raw: Toothpaste
+    language: en
+    quantity: 1
+    unit_price: "100.00"
+    amount: "100.00"
+    amount_usd: "100.00"
+    category: personal_care
+    essential_toiletry: true
+    confidence: "0.9"
+  shirt: &shirt
+    <<: *line
+    description_raw: Shirt
+    category: clothing
+    essential_toiletry: null
+  # Catches only PERS-01 on its line. No rule that takes a reference fires, nor a merchant rule.
+  base: &base
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    submitted_expense_type: Travel - Other
+    merchant_name: Airport Shop
+    mcc: "5651"
+    transaction_datetime: "2026-04-14T12:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: "100.00"
+    total_amount_usd: "100.00"
+    trip_id: T1
+    trip_nights: 5
+    itemized: true
+    line_items: [*line]
+  delayed: &delayed
+    <<: *base
+    baggage_delay_ref: BAG-1
+    baggage_delay_hours: "30"
+  rule: &rule
+    policy_doc: doc.md
+    title: A rule
+    source_quote: quote
+    provenance: &provenance
+      translator: developer
+      clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  check: &check
+    <<: *rule
+    kind: check
+    outcome: exception
+    severity: low
+    scope: item
+    select: {op: eq, field: item.category, value: clothing}
+  carve: &carve
+    <<: *rule
+    rule_id: AA.CARVE
+    kind: carve_out
+    requires_ref: baggage_delay
+    helper: baggage_allowance
+    params:
+      allowance_usd: {type: number, value: "50", unit: usd}
+      min_delay_hours: {type: number, value: "48", unit: hour}
+
+real:
+  # The delay against the real threshold: the policy says "more than 24 hours"
+  - &not_more_than
+    id: a delay of exactly 24 hours is not more than 24
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "24"}]
+    expected:
+      active: [{rule_id: PERS-01, line_ids: [L1]}]
+      unaffected: []
+      excused: []
+      rejected: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]
+      undetermined_carveouts: []
+      complete: true
+  - {<<: *not_more_than, id: 24.00 hours is the same as 24, receipts: [{<<: *delayed, baggage_delay_hours: "24.00"}]}
+  - {<<: *not_more_than, id: a delay just below the threshold, receipts: [{<<: *delayed, baggage_delay_hours: "23.99"}]}
+  - {<<: *not_more_than, id: a delay of zero is a value and does not qualify, receipts: [{<<: *delayed, baggage_delay_hours: "0"}]}
+  - &more_than
+    id: a delay just above the threshold
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "24.01"}]
+    expected:
+      active: []
+      excused: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]
+      rejected: []
+      undetermined_carveouts: []
+      complete: true
+  - {<<: *more_than, id: a delay the smallest step above the threshold, receipts: [{<<: *delayed, baggage_delay_hours: "24.0000000001"}]}
+  - {<<: *more_than, id: a delay well above the threshold, receipts: [*delayed]}
+
+  # The reference and the duration
+  - id: a reference with no duration is undetermined
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *base, baggage_delay_ref: BAG-1}]
+    expected:
+      active: [{rule_id: PERS-01, line_ids: [L1]}]
+      unaffected: []
+      excused: []
+      rejected: []
+      undetermined_carveouts: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]
+      complete: false
+  - id: a duration with no reference is rejected
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *base, baggage_delay_hours: "30"}]
+    expected: {active: [{rule_id: PERS-01, line_ids: [L1]}], excused: [], rejected: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: null}], undetermined_carveouts: [], complete: true}
+  - id: neither a reference nor a duration is rejected
+    receipt_id: R1
+    complete: true
+    receipts: [*base]
+    expected: {active: [{rule_id: PERS-01, line_ids: [L1]}], excused: [], rejected: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: null}], complete: true}
+  - id: another kind of reference is not a delay reference
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *base, pre_approval_ref: BAG-1, vp_approval_ref: BAG-1, manager_approval_ref: BAG-1, baggage_delay_hours: "30"}]
+    expected: {excused: [], rejected: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: null}]}
+  - id: the format of a reference means nothing
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_ref: PA-2026-0412}]
+    expected: {excused: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: PA-2026-0412}]}
+  - id: a delay is not read from a reference or a description
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *base, baggage_delay_ref: DELAYED-48-HOURS, line_items: [{<<: *line, description_raw: Toothpaste - bags delayed 48 hours}]}]
+    expected: {excused: [], undetermined_carveouts: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: DELAYED-48-HOURS}], complete: false}
+
+  # What the allowance covers
+  - id: clothing is eligible
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [*shirt]}]
+    expected: {active: [], excused: [{rule_id: PERS-02, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], complete: true}
+  - id: an essential toiletry and clothing share the allowance
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *line, line_id: L1, unit_price: "75.00", amount: "75.00", amount_usd: "75.00"}, {<<: *shirt, line_id: L2, unit_price: "75.00", amount: "75.00", amount_usd: "75.00"}]}]
+    expected:
+      active: []
+      excused:
+        - {rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}
+        - {rule_id: PERS-02, line_ids: [L2], by: PERS.BAGGAGE, reference: BAG-1}
+  - id: a massage is personal care, but not an essential toiletry
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *line, description_raw: Massage, essential_toiletry: false}]}]
+    expected: {active: [{rule_id: PERS-01, line_ids: [L1]}], excused: [], rejected: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], complete: true}
+  - id: personal care not known to be essential is undetermined
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *line, essential_toiletry: null}]}]
+    expected: {active: [{rule_id: PERS-01, line_ids: [L1]}], excused: [], rejected: [], undetermined_carveouts: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], complete: false}
+  - id: an eligible and an ineligible line are decided apart
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *line, line_id: L1}, {<<: *line, line_id: L2, description_raw: Massage, essential_toiletry: false}]}]
+    expected:
+      active: [{rule_id: PERS-01, line_ids: [L2]}]
+      excused: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]
+      rejected: [{rule_id: PERS-01, line_ids: [L2], by: PERS.BAGGAGE, reference: BAG-1}]
+  - id: a rule it does not modify is left as it is
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, submitted_expense_type: Travel - Other, line_items: [{<<: *line, line_id: L1}, {<<: *line, line_id: L2, category: tobacco, essential_toiletry: null}, {<<: *line, line_id: L3, category: household_goods, essential_toiletry: null}]}]
+    expected:
+      active: [{rule_id: HOUSE-01, line_ids: [L3]}, {rule_id: PERS-03, line_ids: [L2]}]
+      unaffected: [{rule_id: HOUSE-01, line_ids: [L3]}, {rule_id: PERS-03, line_ids: [L2]}]
+      excused: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]
+      rejected: []
+      undetermined_carveouts: []
+      complete: true
+
+  # The allowance of $150, and no partial reimbursement
+  - id: exactly at the allowance
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *line, unit_price: "150.00", amount: "150.00", amount_usd: "150.00"}]}]
+    expected: {active: [], excused: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], complete: true}
+  - id: just above the allowance
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *line, unit_price: "150.01", amount: "150.01", amount_usd: "150.01"}]}]
+    expected: {active: [{rule_id: PERS-01, line_ids: [L1]}], excused: [], rejected: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], complete: true}
+  - id: over the allowance, no line is excused, not even one that fits alone
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *line, line_id: L1, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}, {<<: *shirt, line_id: L2, unit_price: "50.01", amount: "50.01", amount_usd: "50.01"}]}]
+    expected:
+      active: [{rule_id: PERS-01, line_ids: [L1]}, {rule_id: PERS-02, line_ids: [L2]}]
+      excused: []
+      rejected:
+        - {rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}
+        - {rule_id: PERS-02, line_ids: [L2], by: PERS.BAGGAGE, reference: BAG-1}
+  - id: an unknown toiletry on the delay stops another line being confirmed
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *shirt, line_id: L1, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}, {<<: *line, line_id: L2, essential_toiletry: null, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}]
+    expected:
+      excused: []
+      rejected: []
+      undetermined_carveouts:
+        - {rule_id: PERS-01, line_ids: [L2], by: PERS.BAGGAGE, reference: BAG-1}
+        - {rule_id: PERS-02, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}
+      complete: false
+  - id: an unknown toiletry elsewhere on the delay stops this receipt being confirmed
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *delayed, line_items: [{<<: *shirt, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}
+      - {<<: *delayed, receipt_id: R2, line_items: [{<<: *line, essential_toiletry: null, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}
+    expected: {excused: [], undetermined_carveouts: [{rule_id: PERS-02, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], complete: false}
+  - id: known amounts over the allowance reject, though another line is unknown
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *shirt, line_id: L1, unit_price: "150.01", amount: "150.01", amount_usd: "150.01"}, {<<: *line, line_id: L2, essential_toiletry: null, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}]
+    expected: {excused: [], undetermined_carveouts: [], rejected: [{rule_id: PERS-01, line_ids: [L2], by: PERS.BAGGAGE, reference: BAG-1}, {rule_id: PERS-02, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]}
+  - id: a massage does not use up the allowance across receipts
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *delayed, line_items: [{<<: *line, unit_price: "150.00", amount: "150.00", amount_usd: "150.00"}]}
+      - {<<: *delayed, receipt_id: R2, line_items: [{<<: *line, essential_toiletry: false, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}
+    expected: {excused: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], rejected: [], complete: true}
+  - id: a repeated receipt is not counted twice toward the allowance
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}, {<<: *delayed, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}]
+    expected: {excused: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], rejected: [], complete: true}
+  - id: a partial context above the allowance across receipts proves nothing, as a receipt not seen could lower it
+    receipt_id: R1
+    complete: false
+    receipts:
+      - {<<: *delayed, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+      - {<<: *delayed, receipt_id: R2, line_items: [{<<: *shirt, unit_price: "50.01", amount: "50.01", amount_usd: "50.01"}]}
+    expected: {excused: [], rejected: [], undetermined_carveouts: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]}
+  - id: a partial context exactly at the allowance proves nothing
+    receipt_id: R1
+    complete: false
+    receipts: [{<<: *delayed, line_items: [{<<: *line, unit_price: "150.00", amount: "150.00", amount_usd: "150.00"}]}]
+    expected: {excused: [], rejected: [], undetermined_carveouts: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], complete: false}
+  - id: an unconverted line elsewhere on the delay leaves it undetermined
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *delayed, line_items: [{<<: *line, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}
+      - {<<: *delayed, receipt_id: R2, currency: EUR, fx_rate_to_usd: null, line_items: [{<<: *shirt, amount_usd: null}]}
+    expected: {excused: [], undetermined_carveouts: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], complete: false}
+  - id: a massage does not use up the allowance
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *line, line_id: L1, unit_price: "150.00", amount: "150.00", amount_usd: "150.00"}, {<<: *line, line_id: L2, essential_toiletry: false, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}]
+    expected:
+      excused: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]
+      rejected: [{rule_id: PERS-01, line_ids: [L2], by: PERS.BAGGAGE, reference: BAG-1}]
+
+  # Several receipts
+  - id: two receipts sharing a delay share one allowance, within it
+    receipt_id: R2
+    complete: true
+    receipts:
+      - {<<: *delayed, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+      - {<<: *delayed, receipt_id: R2, line_items: [{<<: *shirt, unit_price: "50.00", amount: "50.00", amount_usd: "50.00"}]}
+    expected: {active: [], excused: [{rule_id: PERS-02, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], complete: true}
+  - id: two receipts sharing a delay share one allowance, over it, for this receipt
+    receipt_id: R2
+    complete: true
+    receipts: &over_together
+      - {<<: *delayed, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+      - {<<: *delayed, receipt_id: R2, line_items: [{<<: *shirt, unit_price: "50.01", amount: "50.01", amount_usd: "50.01"}]}
+    expected: {excused: [], rejected: [{rule_id: PERS-02, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]}
+  - id: two receipts sharing a delay share one allowance, over it, for the other
+    receipt_id: R1
+    complete: true
+    receipts: *over_together
+    expected: {excused: [], rejected: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]}
+  - id: another delay has its own allowance
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *delayed, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+      - {<<: *delayed, receipt_id: R2, baggage_delay_ref: BAG-2, line_items: [{<<: *shirt, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+    expected: {excused: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], rejected: []}
+  - id: another delay by this employee can state another duration
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *delayed, baggage_delay_hours: "30", line_items: [{<<: *line, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}
+      - {<<: *delayed, receipt_id: R2, baggage_delay_ref: BAG-2, baggage_delay_hours: "5", line_items: [{<<: *line, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}
+    expected: {excused: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], rejected: [], undetermined_carveouts: []}
+  - id: another employee has their own allowance and delay
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *delayed, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+      - {<<: *delayed, receipt_id: R2, employee_id: E-2, baggage_delay_hours: "1", line_items: [{<<: *shirt, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+    expected: {excused: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], rejected: [], undetermined_carveouts: []}
+  - id: receipts sharing a reference that state different delays are undetermined
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *delayed, baggage_delay_hours: "30", line_items: [{<<: *line, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}
+      - {<<: *delayed, receipt_id: R2, baggage_delay_hours: "20", line_items: [{<<: *line, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}
+    expected: {excused: [], rejected: [], undetermined_carveouts: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], complete: false}
+  - id: a delay stated on another receipt is not assumed for this one
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *base, baggage_delay_ref: BAG-1, line_items: [{<<: *line, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}
+      - {<<: *delayed, receipt_id: R2, line_items: [{<<: *line, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}
+    expected: {excused: [], undetermined_carveouts: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]}
+  - id: a partial context cannot show the shared total is within the allowance
+    receipt_id: R1
+    complete: false
+    receipts: [*delayed]
+    expected: {excused: [], rejected: [], undetermined_carveouts: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], complete: false}
+  - id: a partial context above the allowance proves nothing, as a receipt not seen could lower it
+    receipt_id: R1
+    complete: false
+    receipts: [{<<: *delayed, line_items: [{<<: *line, unit_price: "150.01", amount: "150.01", amount_usd: "150.01"}]}]
+    expected: {excused: [], rejected: [], undetermined_carveouts: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]}
+
+  # A known failure outranks what is not known
+  - id: a short delay rejects, even with the allowance not yet shown
+    receipt_id: R1
+    complete: false
+    receipts: [{<<: *delayed, baggage_delay_hours: "1"}]
+    expected: {rejected: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], undetermined_carveouts: []}
+  - id: a line known not to count rejects, even with no duration
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *base, baggage_delay_ref: BAG-1, line_items: [{<<: *line, essential_toiletry: false}]}]
+    expected: {rejected: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], undetermined_carveouts: []}
+
+  # States from earlier steps stay
+  - id: a line with no category stays open upstream, and nothing is excused for it
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *line, category: null, essential_toiletry: null}]}]
+    expected: {active: [], excused: [], rejected: [], undetermined_carveouts: [], complete: false}
+  - id: a line with no category on the same delay leaves another line undetermined
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *line, line_id: L1, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}, {<<: *line, line_id: L2, category: null, essential_toiletry: null, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}]
+    expected: {excused: [], undetermined_carveouts: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}], complete: false}
+
+  # On a line with no USD amount, the total cannot be shown
+  - id: an unconverted line on the delay is undetermined
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, currency: EUR, fx_rate_to_usd: null, line_items: [{<<: *line, amount_usd: null}]}]
+    expected: {excused: [], undetermined_carveouts: [{rule_id: PERS-01, line_ids: [L1], by: PERS.BAGGAGE, reference: BAG-1}]}
+
+made_up:
+  - id: its own threshold is strict, and exactly at it does not qualify
+    rules:
+      - {<<: *check, rule_id: AA-01}
+      - {<<: *carve, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "48", line_items: [{<<: *shirt, unit_price: "50.00", amount: "50.00", amount_usd: "50.00"}]}]
+    expected: {active: [{rule_id: AA-01, line_ids: [L1]}], excused: [], rejected: [{rule_id: AA-01, line_ids: [L1], by: AA.CARVE, reference: BAG-1}]}
+  - id: its own threshold, and not the real one, decides a delay of 30
+    rules:
+      - {<<: *check, rule_id: AA-01}
+      - {<<: *carve, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "30", line_items: [{<<: *shirt, unit_price: "50.00", amount: "50.00", amount_usd: "50.00"}]}]
+    expected: {excused: [], rejected: [{rule_id: AA-01, line_ids: [L1], by: AA.CARVE, reference: BAG-1}]}
+  - id: its own threshold and allowance are used, just past one and at the other
+    rules:
+      - {<<: *check, rule_id: AA-01}
+      - {<<: *carve, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "48.01", line_items: [{<<: *shirt, unit_price: "50.00", amount: "50.00", amount_usd: "50.00"}]}]
+    expected: {active: [], excused: [{rule_id: AA-01, line_ids: [L1], by: AA.CARVE, reference: BAG-1}], complete: true}
+  - id: its own threshold is used, under it
+    rules:
+      - {<<: *check, rule_id: AA-01}
+      - {<<: *carve, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "47.99", line_items: [{<<: *shirt, unit_price: "50.00", amount: "50.00", amount_usd: "50.00"}]}]
+    expected: {excused: [], rejected: [{rule_id: AA-01, line_ids: [L1], by: AA.CARVE, reference: BAG-1}]}
+  - id: its own allowance is used, over it
+    rules:
+      - {<<: *check, rule_id: AA-01}
+      - {<<: *carve, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "48.01", line_items: [{<<: *shirt, unit_price: "50.01", amount: "50.01", amount_usd: "50.01"}]}]
+    expected: {excused: [], rejected: [{rule_id: AA-01, line_ids: [L1], by: AA.CARVE, reference: BAG-1}]}
+  - id: only the rules it modifies are decided
+    rules:
+      - {<<: *check, rule_id: AA-01}
+      - {<<: *check, rule_id: BB-01}
+      - {<<: *carve, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "48.01", line_items: [{<<: *shirt, unit_price: "50.00", amount: "50.00", amount_usd: "50.00"}]}]
+    expected:
+      active: [{rule_id: BB-01, line_ids: [L1]}]
+      unaffected: [{rule_id: BB-01, line_ids: [L1]}]
+      excused: [{rule_id: AA-01, line_ids: [L1], by: AA.CARVE, reference: BAG-1}]
+  - id: a rule it modifies that catches an item outside the allowance is rejected
+    rules:
+      - {<<: *check, rule_id: AA-01, select: {op: eq, field: item.category, value: gift}}
+      - {<<: *carve, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "48.01", line_items: [{<<: *line, category: gift, essential_toiletry: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected: {excused: [], rejected: [{rule_id: AA-01, line_ids: [L1], by: AA.CARVE, reference: BAG-1}]}
+  - id: a rule it modifies that catches a line with no category is undetermined
+    rules:
+      - {<<: *check, rule_id: AA-01, select: {op: eq, field: item.venue_type, value: golf}}
+      - {<<: *carve, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "48.01", line_items: [{<<: *line, category: null, essential_toiletry: null, venue_type: golf, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected: {excused: [], rejected: [], undetermined_carveouts: [{rule_id: AA-01, line_ids: [L1], by: AA.CARVE, reference: BAG-1}], complete: false}
+  - id: a receipt rule it modifies cites no line, so it is rejected
+    rules:
+      - {<<: *check, rule_id: AA-01, scope: receipt, select: null, applies_when: {op: eq, field: receipt.mcc, value: "5651"}}
+      - {<<: *carve, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "48.01", line_items: [{<<: *shirt, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected: {excused: [], rejected: [{rule_id: AA-01, line_ids: [], by: AA.CARVE, reference: BAG-1}]}
+  - id: a replaced finding stays replaced, with no decision
+    rules:
+      - {<<: *check, rule_id: AA-01}
+      - {<<: *check, rule_id: BB-01, scope: receipt, select: null, applies_when: {op: eq, field: receipt.mcc, value: "5651"}, replaces: [{rule_id: AA-01, level: receipt}]}
+      - {<<: *carve, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "48.01", line_items: [{<<: *shirt, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected:
+      active: [{rule_id: BB-01, line_ids: []}]
+      replaced: [{rule_id: AA-01, line_ids: [L1]}]
+      excused: []
+      rejected: []
+      undetermined_carveouts: []
+  - id: a waived finding stays waived, with no decision
+    rules:
+      - {<<: *check, rule_id: AA-01, waived_by_ref: pre_approval}
+      - {<<: *check, rule_id: VV-01, waived_by_ref: vp_approval, select: {op: eq, field: item.category, value: gift}}
+      - {<<: *check, rule_id: VV-02, waived_by_ref: manager_approval, select: {op: eq, field: item.category, value: gift}}
+      - {<<: *carve, modifies: [AA-01]}
+      - <<: *rule
+        rule_id: EXC-02
+        kind: process
+        directive: reference_kinds
+        params:
+          pre_approval_rules: {type: set, values: [AA-01]}
+          vp_approval_rules: {type: set, values: [VV-01]}
+          manager_approval_rules: {type: set, values: [VV-02]}
+          baggage_delay_rules: {type: set, values: [AA.CARVE]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, pre_approval_ref: PA-1, baggage_delay_hours: "48.01", line_items: [{<<: *shirt, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected:
+      active: []
+      waived: [{rule_id: AA-01, line_ids: [L1]}]
+      excused: []
+      rejected: []
+      undetermined_carveouts: []
+      complete: true
+  - id: a carve-out that is not active decides nothing
+    rules:
+      - {<<: *check, rule_id: AA-01}
+      - {<<: *carve, status: retired, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "48.01", line_items: [{<<: *shirt, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected: {active: [{rule_id: AA-01, line_ids: [L1]}], unaffected: [{rule_id: AA-01, line_ids: [L1]}], excused: [], rejected: []}
+
+refused:
+  - id: a carve-out decided by conditions has nothing here to decide it
+    rules:
+      - {<<: *check, rule_id: AA-01}
+      - {<<: *rule, rule_id: AA.CARVE, kind: carve_out, requires_ref: baggage_delay, modifies: [AA-01], select: {op: eq, field: item.category, value: clothing}}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [*shirt]}]
+    expected: "AA.CARVE: only the baggage_allowance helper can decide a carve-out"
+  - id: a carve-out needing another kind of reference cannot use the baggage allowance
+    rules:
+      - {<<: *check, rule_id: AA-01}
+      - {<<: *carve, requires_ref: vp_approval, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *base, vp_approval_ref: VP-1, baggage_delay_hours: "60", line_items: [*shirt]}]
+    expected: "AA.CARVE: baggage_allowance reads a baggage_delay reference, not vp_approval"
+  - id: a carve-out with another helper has nothing here to decide it
+    rules:
+      - {<<: *check, rule_id: AA-01}
+      - {<<: *carve, helper: gift_cap, modifies: [AA-01]}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *delayed, line_items: [*shirt]}]
+    expected: "AA.CARVE: only the baggage_allowance helper can decide a carve-out"

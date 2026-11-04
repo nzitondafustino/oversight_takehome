@@ -1,0 +1,524 @@
+# The logic of each policy rule, written by hand from its clause.
+# build_rules adds the title, document and hashes from extraction, and writes rules/ruleset.json.
+#
+# source_quote must appear in the rule's clause. Numbers go in params, so each has one home.
+# Fields such as item.category are stored as written: the schema does not check them.
+# applies_to is left out on purpose: the LLM will decide which classes a rule covers.
+
+ruleset_version: v1
+
+rules:
+  # --- Approval and exception handling ---
+  - rule_id: EXC-01
+    kind: process
+    directive: disposition
+    source_quote: "Disposition is computed, not judged."
+    params:
+      flag_severities: {type: set, values: [critical, high, medium]}
+      review_severities: {type: set, values: [low]}
+
+  - rule_id: EXC-02
+    kind: process
+    directive: reference_kinds
+    source_quote: "A reference does not waive any other rule."
+    params:
+      pre_approval_rules: {type: set, values: [TECH-02]}
+      vp_approval_rules: {type: set, values: [ENT-01]}
+      manager_approval_rules: {type: set, values: [TECH-04]}
+      baggage_delay_rules: {type: set, values: [PERS.BAGGAGE]}
+
+  - rule_id: EXC-03
+    kind: process
+    directive: uncertainty
+    source_quote: "raise a **review signal** with rule ID `EXC-03`"
+    params:
+      min_confidence: {type: number, value: "0.5", unit: ratio, source: project_decision}
+
+  - rule_id: EXC-04
+    kind: process
+    directive: evidence
+    source_quote: "cite no line items"
+    params:
+      whole_receipt_rules:
+        type: set
+        values: [MCC-01, MEAL-01, MEAL-02, DOC-01, DOC-02, DOC-03, DOC-04, REG-02, REG-03, REG-04, TIME-03]
+
+  # --- Merchant category risk ---
+  - rule_id: MCC-01
+    kind: check
+    outcome: exception
+    scope: receipt
+    severity: high
+    source_quote: "raises a **high** exception on its own"
+    params:
+      high_risk: {type: set, values: ["5921", "5993", "7995", "7297", "5944"]}
+    applies_when: {op: in, field: receipt.mcc, values: {param: high_risk}}
+
+  - rule_id: MCC-02
+    kind: check
+    outcome: review_signal
+    scope: receipt
+    source_quote: "A medium-risk MCC raises a **review signal** only."
+    params:
+      medium_risk: {type: set, values: ["5813", "5912", "5311", "5411", "5732"]}
+    applies_when: {op: in, field: receipt.mcc, values: {param: medium_risk}}
+
+  - rule_id: MCC-03
+    kind: process
+    directive: guidance
+    source_quote: "it is never treated as retail under ALC-03"
+
+  # --- Gifts and awards ---
+  - rule_id: GIFT-01
+    kind: check
+    outcome: exception
+    scope: item
+    severity: medium
+    helper: gift_cap
+    source_quote: "capped at **$50 per recipient per occasion**"
+    params:
+      cap_usd: {type: number, value: "50", unit: usd}
+      named_recipient_from_usd: {type: number, value: "10", unit: usd}
+
+  - rule_id: GIFT-02
+    kind: check
+    outcome: exception
+    scope: item
+    severity: high
+    source_quote: "other cash equivalent are **never** reimbursable"
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.category, value: gift_card}
+        - {op: eq, field: item.is_purchase, value: true}
+  - rule_id: GIFT-03
+    kind: check
+    outcome: exception
+    scope: item
+    severity: medium
+    source_quote: "must be processed through HR"
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.is_purchase, value: true}
+        - {op: eq, field: item.recipient_type, value: employee}
+        # Not a gift: food, drink and gratuities at a meal. Gift cards fall under GIFT-02.
+        - op: not
+          condition: {op: in, field: item.category, values: [food_beverage, alcohol, service_fee, gift_card]}
+
+  - rule_id: GIFT-04
+    kind: check
+    outcome: exception
+    scope: item
+    severity: critical
+    helper: government_official
+    source_quote: "replaces GIFT-01 for those lines"
+    replaces:
+      - {rule_id: GIFT-01, level: line}
+
+  # --- Meals and entertainment ---
+  - rule_id: MEAL-01
+    kind: check
+    outcome: exception
+    scope: receipt
+    severity: medium
+    helper: meal_cap
+    source_quote: "Spend above the cap is a **medium** exception"
+    params:
+      domestic_usd: {type: number, value: "75", unit: usd}
+      international_usd: {type: number, value: "100", unit: usd}
+
+  - rule_id: MEAL-02
+    kind: check
+    outcome: exception
+    scope: receipt
+    severity: low
+    source_quote: "A missing attendee count is a **low** exception."
+    params:
+      total_usd: {type: number, value: "150", unit: usd}
+    applies_when:
+      op: all
+      conditions:
+        - {op: eq, field: receipt.is_meal_receipt, value: true}
+        - {op: gt, field: receipt.total_amount_usd, value: {param: total_usd}}
+        - {op: missing, field: receipt.attendee_count}
+
+  - rule_id: ALC-01
+    kind: check
+    outcome: exception
+    scope: item
+    severity: high
+    source_quote: "records an attendee count of two or more"
+    params:
+      on_premises: {type: set, values: ["5812", "5813", "7011"]}
+      min_attendees: {type: number, value: "2", unit: count}
+    applies_when:
+      op: all
+      conditions:
+        - {op: in, field: receipt.mcc, values: {param: on_premises}}
+        - op: not
+          condition:
+            op: all
+            conditions:
+              - {op: eq, field: receipt.submitted_expense_type, value: Client Entertainment}
+              - {op: gte, field: receipt.attendee_count, value: {param: min_attendees}}
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.category, value: alcohol}
+        - {op: eq, field: item.is_purchase, value: true}
+  - rule_id: ALC-02
+    kind: check
+    outcome: exception
+    scope: item
+    severity: medium
+    helper: alcohol_per_attendee
+    source_quote: "**$30 per attendee**"
+    params:
+      cap_usd: {type: number, value: "30", unit: usd}
+
+  - rule_id: ALC-03
+    kind: check
+    outcome: exception
+    scope: item
+    severity: high
+    source_quote: "is **never** reimbursable, regardless of business context"
+    params:
+      on_premises: {type: set, values: ["5812", "5813", "7011"]}
+    applies_when:
+      op: all
+      conditions:
+        # A missing merchant code says nothing about where it was bought, so it is not retail.
+        - op: not
+          condition: {op: missing, field: receipt.mcc}
+        - op: not
+          condition: {op: in, field: receipt.mcc, values: {param: on_premises}}
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.category, value: alcohol}
+        - {op: eq, field: item.is_purchase, value: true}
+  - rule_id: ENT-01
+    kind: check
+    outcome: exception
+    scope: item
+    severity: medium
+    waived_by_ref: vp_approval
+    source_quote: "requires prior VP approval"
+    select:
+      op: all
+      conditions:
+        - {op: in, field: item.venue_type, values: [golf, sporting_event, theatre, concert, other_venue]}
+        - {op: eq, field: item.is_purchase, value: true}
+  - rule_id: ENT-02
+    kind: check
+    outcome: exception
+    scope: item
+    severity: high
+    source_quote: "is prohibited and is a **high** exception"
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.category, value: gambling}
+        - {op: eq, field: item.is_purchase, value: true}
+  # --- Non-reimbursable items ---
+  - rule_id: PERS-01
+    kind: check
+    outcome: exception
+    scope: item
+    severity: medium
+    source_quote: "massage are not reimbursable"
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.category, value: personal_care}
+        - {op: eq, field: item.is_purchase, value: true}
+  - rule_id: PERS.BAGGAGE
+    kind: carve_out
+    title: Baggage-delay exception
+    modifies: [PERS-01, PERS-02]
+    requires_ref: baggage_delay
+    helper: baggage_allowance
+    source_quote: "essential toiletries are reimbursable up to **$150**"
+    params:
+      allowance_usd: {type: number, value: "150", unit: usd}
+      min_delay_hours: {type: number, value: "24", unit: hour}
+
+  - rule_id: PERS-02
+    kind: check
+    outcome: exception
+    scope: item
+    severity: medium
+    source_quote: "ties and bags are not reimbursable"
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.category, value: clothing}
+        - {op: eq, field: item.is_purchase, value: true}
+  - rule_id: PERS-03
+    kind: check
+    outcome: exception
+    scope: item
+    severity: high
+    source_quote: "e-liquids are not reimbursable"
+    # A project decision, on this and every rule worded as a purchase, spend or reimbursement: a refund
+    # or a zero-value line is not one, and a line is judged alone, so a refund cannot cancel a purchase
+    # beside it. The sign is the printed amount's, so a line with no conversion is still judged.
+    # TECH-04 reads "any ... on an expense report", and MCC-01 "whatever the line items say", so neither
+    # is gated. GIFT-04 is a helper: "anything of value provided" keeps a zero-priced gift in.
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.category, value: tobacco}
+        - {op: eq, field: item.is_purchase, value: true}
+
+  - rule_id: HOUSE-01
+    kind: check
+    outcome: exception
+    scope: item
+    severity: medium
+    source_quote: "office stock of this kind is bought centrally"
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.category, value: household_goods}
+        - {op: eq, field: item.is_purchase, value: true}
+  - rule_id: HEALTH-01
+    kind: check
+    outcome: exception
+    scope: item
+    severity: low
+    severity_cases:
+      - when: {op: eq, field: item.item_kind, value: prescription_medication}
+        severity: medium
+    helper: otc_trip_cap
+    source_quote: "up to **$25** in total"
+    params:
+      trip_cap_usd: {type: number, value: "25", unit: usd}
+
+  - rule_id: LAUNDRY-01
+    kind: check
+    outcome: exception
+    scope: item
+    severity: low
+    source_quote: "Reimbursable only on trips of **four or more nights**"
+    params:
+      min_nights: {type: number, value: "4", unit: nights}
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.is_purchase, value: true}
+        - {op: eq, field: item.category, value: laundry_service}
+        - op: not
+          condition: {op: gte, field: receipt.trip_nights, value: {param: min_nights}}
+
+  # --- Technology and equipment ---
+  - rule_id: TECH-01
+    kind: check
+    outcome: exception
+    scope: item
+    severity: high
+    source_quote: "is a **high** exception, regardless of stated business purpose"
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.category, value: personal_electronics}
+        - {op: eq, field: item.is_purchase, value: true}
+  - rule_id: TECH-02
+    kind: check
+    outcome: exception
+    scope: item
+    severity: medium
+    waived_by_ref: pre_approval
+    source_quote: "reimbursable up to **$200 per item**"
+    params:
+      cap_usd: {type: number, value: "200", unit: usd}
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.is_purchase, value: true}
+        - {op: eq, field: item.category, value: computer_accessory}
+        - {op: gt, field: item.unit_price_usd, value: {param: cap_usd}}
+
+  - rule_id: TECH-03
+    kind: check
+    outcome: exception
+    scope: item
+    severity: high
+    source_quote: "never reimbursable on an expense report"
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.item_kind, value: mobile_phone}
+        - {op: eq, field: item.is_purchase, value: true}
+  - rule_id: TECH-04
+    kind: check
+    outcome: exception
+    scope: item
+    severity: low
+    waived_by_ref: manager_approval
+    source_quote: "requires a manager approval reference"
+    select: {op: eq, field: item.category, value: software_subscription}
+
+  # --- Receipt documentation ---
+  - rule_id: DOC-01
+    kind: check
+    outcome: exception
+    scope: receipt
+    severity: medium
+    source_quote: "must be itemized"
+    params:
+      total_usd: {type: number, value: "75", unit: usd}
+    applies_when:
+      op: all
+      conditions:
+        - {op: gt, field: receipt.total_amount_usd, value: {param: total_usd}}
+        - {op: eq, field: receipt.itemized, value: false}
+
+  - rule_id: DOC-02
+    kind: check
+    outcome: exception
+    scope: receipt
+    severity: medium
+    source_quote: "A receipt missing any of these is a **medium** exception."
+    applies_when:
+      op: any
+      conditions:
+        - {op: missing, field: receipt.merchant_name}
+        - {op: missing, field: receipt.transaction_date}
+        # The total the receipt shows, in its own currency. A missing conversion is DOC-04.
+        - {op: missing, field: receipt.total_amount}
+
+  - rule_id: DOC-03
+    kind: check
+    outcome: exception
+    scope: receipt
+    severity: medium
+    helper: expense_type_mismatch
+    source_quote: "A misclassification is a **medium** exception"
+
+  - rule_id: DOC-04
+    kind: check
+    outcome: exception
+    scope: receipt
+    severity: medium
+    source_quote: "a receipt missing either is a **medium** exception"
+    applies_when:
+      op: any
+      conditions:
+        - {op: missing, field: receipt.currency}
+        - op: all
+          conditions:
+            - {op: ne, field: receipt.currency, value: USD}
+            - {op: missing, field: receipt.fx_rate_to_usd}
+
+  # --- Transaction patterns ---
+  - rule_id: TIME-01
+    kind: check
+    outcome: review_signal
+    scope: receipt
+    source_quote: "raises a **review signal**"
+    params:
+      from_hour: {type: number, value: "0", unit: hour}
+      before_hour: {type: number, value: "5", unit: hour}
+    applies_when:
+      op: all
+      conditions:
+        - {op: gte, field: receipt.local_hour, value: {param: from_hour}}
+        - {op: lt, field: receipt.local_hour, value: {param: before_hour}}
+
+  - rule_id: TIME-02
+    kind: check
+    outcome: review_signal
+    scope: receipt
+    source_quote: "with no associated trip record raises a **review signal**"
+    applies_when:
+      op: all
+      conditions:
+        - {op: in, field: receipt.submitted_expense_type, values: [Meals - Individual, Lodging, Travel - Other]}
+        - {op: missing, field: receipt.trip_id}
+
+  - rule_id: TIME-03
+    kind: check
+    outcome: exception
+    scope: receipt
+    severity: high
+    helper: split_transactions
+    source_quote: "report the split, not a separate breach of that threshold"
+    params:
+      min_receipts: {type: number, value: "2", unit: count}
+      itemization_usd: {type: number, value: "75", unit: usd}
+      gift_cap_usd: {type: number, value: "50", unit: usd}
+    replaces:
+      - {rule_id: DOC-01, level: finding}
+      - {rule_id: MEAL-01, level: finding}
+      - {rule_id: REG-02, level: finding}
+      - {rule_id: REG-03, level: finding}
+      - {rule_id: GIFT-01, level: finding}
+
+  - rule_id: TIME-04  # data/README.md: trip records hold no start or end dates
+    kind: check
+    status: not_evaluable
+    outcome: review_signal
+    scope: receipt
+    source_quote: "It applies only when the trip record includes those dates"
+
+  # --- Regional addendum ---
+  - rule_id: REG-01
+    kind: check
+    outcome: exception
+    scope: item
+    severity: high
+    source_quote: "report REG-01 instead of those three"
+    applies_when: {op: eq, field: receipt.entity, value: APAC}
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.category, value: alcohol}
+        - {op: eq, field: item.is_purchase, value: true}
+    replaces:
+      - {rule_id: ALC-01, level: receipt}
+      - {rule_id: ALC-02, level: receipt}
+      - {rule_id: ALC-03, level: receipt}
+
+  - rule_id: REG-02
+    kind: check
+    outcome: exception
+    scope: receipt
+    severity: medium
+    helper: meal_cap
+    source_quote: "The APAC daily meal cap is **$60 per person**"
+    params:
+      cap_usd: {type: number, value: "60", unit: usd}
+    applies_when: {op: eq, field: receipt.entity, value: APAC}
+    replaces:
+      - {rule_id: MEAL-01, level: receipt}
+
+  - rule_id: REG-03
+    kind: check
+    outcome: exception
+    scope: receipt
+    severity: medium
+    helper: meal_cap
+    source_quote: "The EMEA daily meal cap is **EUR 70 per person**"
+    params:
+      cap_eur: {type: number, value: "70", unit: eur}
+    applies_when: {op: eq, field: receipt.entity, value: EMEA}
+    replaces:
+      - {rule_id: MEAL-01, level: receipt}
+
+  - rule_id: REG-04
+    kind: check
+    outcome: exception
+    scope: receipt
+    severity: low
+    helper: vat_threshold
+    source_quote: "A missing VAT number is a **low** exception."
+    params:
+      above_eur: {type: number, value: "50", unit: eur}
+    applies_when: {op: eq, field: receipt.entity, value: EMEA}
+
+  - rule_id: REG-05
+    kind: process
+    directive: fx_rate
+    source_quote: "raises nothing on its own"

@@ -1,0 +1,360 @@
+suite: uncertainty
+
+# EXC-03, on the real ruleset, whose threshold is 0.5, unless a case says otherwise.
+#
+# assessed:  assess_context over `receipts`, then the assessment of `receipt_id`. expected holds any
+#            of: category, by line_id, state and confidence; secondary, by line_id, field and state;
+#            eligible and exempt, as line IDs.
+# evaluated: the same, then checks, replacements, approvals and carve-outs on the views. expected
+#            holds any of: active and candidates, by rule_id and line_ids; open, the rule IDs left
+#            undetermined at any level; open_lines, those with their line_id; carve_open, by rule_id
+#            and line_ids; signals, how many; complete, from the later steps; and decided, with signals.
+# refused:   assess cannot go ahead with `rules`. expected is an error regex.
+
+templates:
+  line: &line
+    line_id: L1
+    description_raw: Grilled salmon
+    language: en
+    quantity: 1
+    unit_price: "40.00"
+    amount: "40.00"
+    amount_usd: "40.00"
+    category: food_beverage
+    confidence: "0.9"
+  meal: &meal
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    submitted_expense_type: Meals - Individual
+    merchant_name: Verona Grill
+    mcc: "5812"
+    transaction_datetime: "2026-04-14T12:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: "40.00"
+    total_amount_usd: "40.00"
+    trip_id: T1
+    trip_nights: 5
+    itemized: true
+    line_items: [*line]
+  gifts: &gifts
+    <<: *meal
+    submitted_expense_type: Client Gifts
+    mcc: "5947"
+  travel: &travel
+    <<: *meal
+    submitted_expense_type: Travel - Other
+    mcc: "5651"
+  provenance: &provenance
+    translator: developer
+    clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  # Every real category-reading item rule open on an unusable line of an ordinary US meal.
+  every_rule_open: &every_rule_open [ALC-01, DOC-03, ENT-02, GIFT-02, GIFT-03, HEALTH-01, HOUSE-01, LAUNDRY-01, MEAL-01, MEAL-02, PERS-01, PERS-02, PERS-03, TECH-01, TECH-02, TECH-04]
+
+assessed:
+  # Category
+  - {id: a usable category, receipt_id: R1, complete: true, receipts: [*meal], expected: {category: [], secondary: [], eligible: [L1], exempt: []}}
+  - {id: a missing category, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: null}]}], expected: {category: [{line_id: L1, state: missing, confidence: "0.9"}], eligible: []}}
+  - {id: a missing category with no confidence either, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: null, confidence: null}]}], expected: {category: [{line_id: L1, state: missing, confidence: null}], eligible: []}}
+  - {id: a category outside the catalog, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: foood}]}], expected: {category: [{line_id: L1, state: unknown, confidence: "0.9"}], eligible: []}}
+  - {id: a category just below the threshold, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, confidence: "0.49"}]}], expected: {category: [{line_id: L1, state: low_confidence, confidence: "0.49"}], eligible: []}}
+  - {id: a confidence of zero is a value, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, confidence: "0"}]}], expected: {category: [{line_id: L1, state: low_confidence, confidence: "0"}]}}
+  - {id: a category exactly at the threshold, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, confidence: "0.5"}]}], expected: {category: [], eligible: [L1]}}
+  - {id: a category with no confidence, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, confidence: null}]}], expected: {category: [{line_id: L1, state: no_confidence, confidence: null}], eligible: []}}
+  - id: only the uncertain line is left out
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1}, {<<: *line, line_id: L2, confidence: "0.1"}, {<<: *line, line_id: L3, category: service_fee}]}]
+    expected: {category: [{line_id: L2, state: low_confidence, confidence: "0.1"}], eligible: [L1, L3]}
+
+  # The exemption
+  - {id: a non-itemized other line is exempt with no confidence, receipt_id: R1, complete: true, receipts: [{<<: *meal, itemized: false, line_items: [{<<: *line, category: other, confidence: null}]}], expected: {category: [], secondary: [], eligible: [L1], exempt: [L1]}}
+  - {id: a non-itemized other line is exempt at low confidence, receipt_id: R1, complete: true, receipts: [{<<: *meal, itemized: false, line_items: [{<<: *line, category: other, confidence: "0.1"}]}], expected: {category: [], exempt: [L1]}}
+  - {id: a non-itemized other line needs no venue, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, itemized: false, line_items: [{<<: *line, category: other}]}], expected: {secondary: [], exempt: [L1]}}
+  - {id: an itemized other line is not exempt, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: other, confidence: null}]}], expected: {category: [{line_id: L1, state: no_confidence, confidence: null}], exempt: []}}
+  - {id: a non-itemized line of another category is not exempt, receipt_id: R1, complete: true, receipts: [{<<: *meal, itemized: false, line_items: [{<<: *line, confidence: null}]}], expected: {category: [{line_id: L1, state: no_confidence, confidence: null}], exempt: []}}
+
+  # Recipient type
+  - {id: a gift with no recipient type, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: gift}]}], expected: {secondary: [{line_id: L1, field: recipient_type, state: missing}]}}
+  - {id: a gift card with no recipient type, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: gift_card}]}], expected: {secondary: [{line_id: L1, field: recipient_type, state: missing}]}}
+  - {id: jewelry with no recipient type, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: jewelry}]}], expected: {secondary: [{line_id: L1, field: recipient_type, state: missing}]}}
+  - {id: a gift with a recipient type, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, recipient_type: client}]}], expected: {secondary: []}}
+  - {id: a line on Client Gifts with no recipient type, receipt_id: R1, complete: true, receipts: [{<<: *gifts, line_items: [{<<: *line, category: office_supplies}]}], expected: {secondary: [{line_id: L1, field: recipient_type, state: missing}]}}
+  - {id: a gratuity on Client Gifts needs none, receipt_id: R1, complete: true, receipts: [{<<: *gifts, line_items: [{<<: *line, category: service_fee}]}], expected: {secondary: []}}
+  - {id: an uncertain line on Client Gifts is still a recipient question, receipt_id: R1, complete: true, receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift, confidence: "0.1"}]}], expected: {category: [{line_id: L1, state: low_confidence, confidence: "0.1"}], secondary: [{line_id: L1, field: recipient_type, state: missing}]}}
+  - {id: a low confidence gift elsewhere is not read as a gift, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, confidence: "0.1"}]}], expected: {category: [{line_id: L1, state: low_confidence, confidence: "0.1"}], secondary: []}}
+  - {id: a named line GIFT-01 cannot place, receipt_id: R1, complete: true, receipts: [{<<: *travel, line_items: [{<<: *line, category: office_supplies, recipient_name: A. Moreau}]}], expected: {secondary: [{line_id: L1, field: recipient_type, state: missing}]}}
+  - {id: a named meal guest is no recipient question, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, recipient_name: A. Moreau}]}], expected: {secondary: []}}
+  - {id: a recipient type outside the catalog on any line, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, recipient_type: vip}]}], expected: {secondary: [{line_id: L1, field: recipient_type, state: unknown}]}}
+
+  # Venue type
+  - {id: other on Client Entertainment with no venue, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, line_items: [{<<: *line, category: other}]}], expected: {secondary: [{line_id: L1, field: venue_type, state: missing}]}}
+  - {id: other on Client Entertainment with a venue, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, line_items: [{<<: *line, category: other, venue_type: golf}]}], expected: {secondary: []}}
+  - {id: food on Client Entertainment needs no venue, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Client Entertainment}], expected: {secondary: []}}
+  - {id: other on an individual meal needs no venue or kind, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: other}]}], expected: {secondary: []}}
+  - {id: a venue outside the catalog on any line, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, venue_type: opera}]}], expected: {secondary: [{line_id: L1, field: venue_type, state: unknown}]}}
+
+  # Item kind
+  - {id: other on Computer Equipment with no kind, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Computer Equipment, line_items: [{<<: *line, category: other}]}], expected: {secondary: [{line_id: L1, field: item_kind, state: missing}]}}
+  - {id: other on Travel - Other with no kind, receipt_id: R1, complete: true, receipts: [{<<: *travel, line_items: [{<<: *line, category: other}]}], expected: {secondary: [{line_id: L1, field: item_kind, state: missing}]}}
+  - {id: other on Computer Equipment with a kind, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Computer Equipment, line_items: [{<<: *line, category: other, item_kind: mobile_phone}]}], expected: {secondary: []}}
+  - {id: other on Lodging needs no kind, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Lodging, line_items: [{<<: *line, category: other}]}], expected: {secondary: []}}
+  - {id: an accessory on Computer Equipment needs no kind, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Computer Equipment, line_items: [{<<: *line, category: computer_accessory}]}], expected: {secondary: []}}
+  - {id: OTC medication on Travel - Other needs no kind, receipt_id: R1, complete: true, receipts: [{<<: *travel, line_items: [{<<: *line, category: health_otc}]}], expected: {secondary: []}}
+  - {id: a kind outside the catalog on any line, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, item_kind: tablet}]}], expected: {secondary: [{line_id: L1, field: item_kind, state: unknown}]}}
+
+  # Essential toiletry
+  - {id: personal care with a delay claim and no answer, receipt_id: R1, complete: true, receipts: [{<<: *travel, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: personal_care}]}], expected: {secondary: [{line_id: L1, field: essential_toiletry, state: missing}]}}
+  - {id: personal care with a delay claim and an answer, receipt_id: R1, complete: true, receipts: [{<<: *travel, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: personal_care, essential_toiletry: false}]}], expected: {secondary: []}}
+  - {id: personal care with no delay claim needs no answer, receipt_id: R1, complete: true, receipts: [{<<: *travel, line_items: [{<<: *line, category: personal_care}]}], expected: {secondary: []}}
+  - {id: clothing with a delay claim needs no answer, receipt_id: R1, complete: true, receipts: [{<<: *travel, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: clothing}]}], expected: {secondary: []}}
+  - {id: a duration alone is no claim, receipt_id: R1, complete: true, receipts: [{<<: *travel, baggage_delay_hours: "30", line_items: [{<<: *line, category: personal_care}]}], expected: {secondary: []}}
+
+  # Nothing speculative
+  - {id: an ordinary meal, receipt_id: R1, complete: true, receipts: [*meal], expected: {category: [], secondary: []}}
+  - {id: an ordinary gratuity, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: service_fee}]}], expected: {category: [], secondary: []}}
+  - {id: an ordinary taxi, receipt_id: R1, complete: true, receipts: [{<<: *travel, line_items: [{<<: *line, category: ground_transport}]}], expected: {category: [], secondary: []}}
+  - {id: an ordinary hotel, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Lodging, mcc: "7011", line_items: [{<<: *line, category: lodging}]}], expected: {category: [], secondary: []}}
+  - {id: ordinary office supplies, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Office Supplies, line_items: [{<<: *line, category: office_supplies}]}], expected: {category: [], secondary: []}}
+  - {id: a description is not read for a gift, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, description_raw: Gift basket for R. Delgado}]}], expected: {category: [], secondary: []}}
+  - {id: a description is not read for a venue, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, description_raw: Golf green fees}]}], expected: {category: [], secondary: []}}
+  - {id: a merchant code is not read for a venue, receipt_id: R1, complete: true, receipts: [{<<: *meal, mcc: "7992", line_items: [{<<: *line, category: other}]}], expected: {secondary: []}}
+  - {id: a reference is not read for a delay, receipt_id: R1, complete: true, receipts: [{<<: *travel, pre_approval_ref: BAG-1, line_items: [{<<: *line, category: personal_care}]}], expected: {secondary: []}}
+
+  # One signal per line, field and reason
+  - id: a line can have one signal per field, and no more
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gifts, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: personal_care, venue_type: opera, item_kind: tablet}]}]
+    expected:
+      secondary:
+        - {line_id: L1, field: recipient_type, state: missing}
+        - {line_id: L1, field: venue_type, state: unknown}
+        - {line_id: L1, field: item_kind, state: unknown}
+        - {line_id: L1, field: essential_toiletry, state: missing}
+
+evaluated:
+  # Left out of category rules
+  - id: an uncertain alcohol line gives no ALC-01, and is not called clean
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: alcohol, confidence: "0.1"}]}]
+    expected: {candidates: [], open: *every_rule_open, signals: 1, complete: false, decided: false}
+  - id: a line exactly at the threshold is read, and ALC-01 fires
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: alcohol, confidence: "0.5"}]}]
+    expected: {active: [{rule_id: ALC-01, line_ids: [L1]}], open: [], signals: 0, complete: true, decided: true}
+  - id: a line just below the threshold is not, though at high confidence it would fire
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: tobacco, confidence: "0.49"}]}]
+    expected: {candidates: [], signals: 1, decided: false}
+  - id: a low confidence not gives no false GIFT-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: office_supplies, recipient_type: employee, confidence: "0.1"}]}]
+    expected: {candidates: [], signals: 1, decided: false}
+  - id: an uncertain line is open for its own rules, while a usable line is caught
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, category: tobacco}, {<<: *line, line_id: L2, category: alcohol, confidence: "0.1"}]}]
+    expected:
+      candidates: [{rule_id: PERS-03, line_ids: [L1]}]
+      active: [{rule_id: PERS-03, line_ids: [L1]}]
+      signals: 1
+      decided: false
+
+  # Rules that do not read the category still run
+  - id: an uncertain category does not stop a rule that reads the venue
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: other, confidence: "0.1", venue_type: golf}]}]
+    expected: {active: [{rule_id: ENT-01, line_ids: [L1]}], signals: 1, decided: false}
+  - id: an uncertain category does not stop a rule that reads the item kind
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: other, confidence: "0.1", item_kind: mobile_phone}]}]
+    expected: {active: [{rule_id: TECH-03, line_ids: [L1]}], signals: 1}
+
+  - id: an uncertain category does not stop prescription medication, read from the item kind
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: other, confidence: "0.1", item_kind: prescription_medication}]}]
+    expected: {active: [{rule_id: HEALTH-01, line_ids: [L1]}], signals: 1}
+  - id: an official on an uncertain line stays open, as it could be a gratuity
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, confidence: "0.1", recipient_type: government_official}]}]
+    expected: {candidates: [], open_lines_include: [{rule_id: GIFT-04, line_id: L1}], signals: 1, decided: false}
+  - id: a named client on an uncertain line stays open for the gift cap
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, confidence: "0.1", recipient_name: A. Moreau, recipient_type: client, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}]
+    expected: {candidates: [], open_lines_include: [{rule_id: GIFT-01, line_id: L1}], signals: 1, decided: false}
+
+  # A known limitation, documented on purpose: nothing is inferred to close it
+  - id: an official on a meal line with no recipient type gives no GIFT-04 and no signal
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, description_raw: "Lunch - guest R. Delgado, City Procurement Office"}]}]
+    expected: {active: [], candidates: [], signals: 0, complete: true, decided: true}
+
+  # Aggregations
+  - id: an uncertain line does not count toward the meal cap, which stays open under it
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *line, line_id: L2, confidence: "0.1", unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}]
+    expected: {candidates: [], open_lines_include: [{rule_id: MEAL-01, line_id: null}], signals: 1, complete: false}
+  - id: usable lines alone over the cap are a breach, and an uncertain line takes none of it
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "75.01", amount: "75.01", amount_usd: "75.01"}, {<<: *line, line_id: L2, confidence: "0.1", unit_price: "1.00", amount: "1.00", amount_usd: "1.00"}]}]
+    expected: {active: [{rule_id: MEAL-01, line_ids: []}], signals: 1, complete: false}
+  - id: an uncertain line on another receipt is left out of this one's day total too
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, merchant_name: Morning, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, merchant_name: Evening, line_items: [{<<: *line, confidence: "0.1", unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}
+    expected: {candidates: [], open_lines: [{rule_id: MEAL-01, line_id: null}], signals: 0, complete: false}
+  - id: the receipt with the uncertain line agrees about the same day
+    receipt_id: R2
+    complete: true
+    receipts:
+      - {<<: *meal, merchant_name: Morning, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, merchant_name: Evening, line_items: [{<<: *line, confidence: "0.1", unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}
+    expected: {candidates: [], signals: 1, complete: false}
+  - id: an uncertain alcohol line does not count toward the attendee cap
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, attendee_count: 2, line_items: [{<<: *line, category: alcohol, confidence: "0.1", unit_price: "60.01", amount: "60.01", amount_usd: "60.01"}]}]
+    expected: {candidates: [], signals: 1, complete: false}
+  - id: an uncertain medication line does not count toward the trip cap
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *travel, line_items: [{<<: *line, category: health_otc, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}]}
+      - {<<: *travel, receipt_id: R2, line_items: [{<<: *line, category: health_otc, confidence: "0.1", unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}]}
+    expected: {candidates: [], open_lines: [{rule_id: HEALTH-01, line_id: L1}], signals: 0, complete: false}
+
+  # Every line uncertain, and whether it is a meal
+  - id: every line uncertain leaves the meal open, and not a confirmed non-meal
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, line_id: L1, confidence: null}, {<<: *line, line_id: L2, category: foood}]}]
+    expected: {candidates: [], meal: null, open_lines_include: [{rule_id: MEAL-02, line_id: null}, {rule_id: MEAL-01, line_id: null}], signals: 2, complete: false}
+  - id: a usable food line settles that it is a meal, with another uncertain
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, line_id: L1}, {<<: *line, line_id: L2, confidence: null}]}]
+    expected: {active: [{rule_id: MEAL-02, line_ids: []}], meal: true, signals: 1}
+  - id: a low confidence food line does not settle that it is a meal
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, confidence: "0.1"}]}]
+    expected: {meal: null}
+  - id: a declared type that is no meal is settled whatever the lines
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, submitted_expense_type: Lodging, line_items: [{<<: *line, category: lodging, confidence: "0.1"}]}]
+    expected: {meal: false}
+
+  # Receipt rules that do not depend on a line
+  - id: a merchant, a time and a trip are not affected
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, mcc: "5921", transaction_datetime: "2026-04-14T01:00:00", trip_id: null, trip_nights: null, line_items: [{<<: *line, category: foood}]}]
+    expected: {active: [{rule_id: MCC-01, line_ids: []}, {rule_id: TIME-01, line_ids: []}, {rule_id: TIME-02, line_ids: []}]}
+  - id: no merchant name and no rate are not affected
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, merchant_name: null, currency: EUR, fx_rate_to_usd: null, line_items: [{<<: *line, category: foood, amount_usd: null}]}]
+    expected: {active: [{rule_id: DOC-02, line_ids: []}, {rule_id: DOC-04, line_ids: []}]}
+  - id: a non-itemized total is not affected by an exempt line
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, itemized: false, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, category: other, confidence: null, unit_price: "186.00", amount: "186.00", amount_usd: "186.00"}]}]
+    expected: {active: [{rule_id: DOC-01, line_ids: []}, {rule_id: MEAL-01, line_ids: []}, {rule_id: MEAL-02, line_ids: []}], signals: 0, complete: true, decided: true}
+
+  # Secondary uncertainty does not suppress anything
+  - id: a gift with no recipient type stays in ordinary rules
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift_card}]}]
+    expected: {active: [{rule_id: GIFT-02, line_ids: [L1]}], signals: 1, complete: false, decided: false}
+  - id: an employee gift is caught by GIFT-03 with no signal
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, line_items: [{<<: *line, category: gift, recipient_type: employee, recipient_name: A. Moreau}]}]
+    expected: {active: [{rule_id: DOC-03, line_ids: []}, {rule_id: GIFT-03, line_ids: [L1]}], signals: 0, complete: true, decided: true}
+  - id: a gift that could be an employee's is not called clean by a quiet GIFT-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift, recipient_name: A. Moreau, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected: {active: [], signals: 1, complete: false, decided: false}
+  - id: a line on an ordinary meal with no recipient type is called clean
+    receipt_id: R1
+    complete: true
+    receipts: [*meal]
+    expected: {active: [], signals: 0, complete: true, decided: true}
+  - id: a venue question leaves other rules on the line running
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, line_items: [{<<: *line, category: other, item_kind: mobile_phone}]}]
+    expected: {active: [{rule_id: TECH-03, line_ids: [L1]}], signals: 1, complete: true, decided: false}
+
+  # Carve-outs
+  - id: an uncertain line cannot be excused, whatever is claimed
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *line, category: clothing, confidence: "0.1"}]}]
+    expected: {candidates: [], excused: [], signals: 1, complete: false, decided: false}
+  - id: an uncertain line on the delay stops a usable one being confirmed
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *line, line_id: L1, category: clothing}, {<<: *line, line_id: L2, category: clothing, confidence: "0.1"}]}]
+    expected: {excused: [], carve_open: [{rule_id: PERS-02, line_ids: [L1]}], signals: 1, decided: false}
+  - id: an uncertain line elsewhere on the delay stops this one too
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *travel, baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *line, category: clothing}]}
+      - {<<: *travel, receipt_id: R2, baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *line, category: clothing, confidence: "0.1"}]}
+    expected: {excused: [], carve_open: [{rule_id: PERS-02, line_ids: [L1]}], signals: 0, complete: false}
+  - id: a usable claim is confirmed
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *line, category: clothing}]}]
+    expected: {excused: [{rule_id: PERS-02, line_ids: [L1]}], signals: 0, complete: true, decided: true}
+  - id: a toiletry with no answer gets one signal and an open carve-out
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *line, category: personal_care}]}]
+    expected: {excused: [], carve_open: [{rule_id: PERS-01, line_ids: [L1]}], signals: 1, complete: false, decided: false}
+
+  # A partial context
+  - id: a partial context stays open with no signal to explain it
+    receipt_id: R1
+    complete: false
+    receipts: [*meal]
+    expected: {active: [], signals: 0, complete: false, decided: false}
+
+refused:
+  - id: no uncertainty directive
+    rules: []
+    expected: no active uncertainty directive
+  - id: an uncertainty directive that is not active
+    rules:
+      - policy_doc: doc.md
+        title: Uncertainty
+        source_quote: quote
+        rule_id: EXC-03
+        kind: process
+        directive: uncertainty
+        status: retired
+        provenance: *provenance
+        params: {min_confidence: {type: number, value: "0.5", unit: ratio, source: project_decision}}
+    expected: no active uncertainty directive

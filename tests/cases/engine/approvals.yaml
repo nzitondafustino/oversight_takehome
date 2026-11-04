@@ -1,0 +1,405 @@
+suite: approvals
+
+# resolve_approvals, after run_checks and resolve_replacements.
+#
+# real:     the real ruleset on an admitted `receipt`, in a complete context of that one receipt.
+# made_up:  resolve the `findings` given from rules `rules` on a receipt with `references`, after
+#           replacements, with the `undetermined` and `pending` given.
+# refused:  resolve cannot go ahead, as in made_up. expected is an error regex.
+#
+# expected holds any of: active and replaced, by rule_id and line_ids; waived, by rule_id, line_ids,
+# kind, field and reference; gaps, by rule_id, line_ids, required, state and others; undetermined,
+# by rule_id and line_id; possible, by rule_id, line_ids and by; and complete.
+
+templates:
+  line: &line
+    line_id: L1
+    description_raw: Monitor
+    language: en
+    quantity: 1
+    unit_price: "329.00"
+    amount: "329.00"
+    amount_usd: "329.00"
+    category: computer_accessory
+    confidence: "0.9"
+  base: &base
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    merchant_name: Best Buy
+    mcc: "5732"
+    transaction_datetime: "2026-04-14T12:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: "329.00"
+    total_amount_usd: "329.00"
+    trip_id: T1
+    trip_nights: 5
+    itemized: true
+  # Each of these catches its one rule, and a medium-risk merchant adds only a signal, MCC-02.
+  tech_02: &tech_02
+    <<: *base
+    mcc: "5045"
+    submitted_expense_type: Computer Equipment
+    line_items: [*line]
+  ent_01: &ent_01
+    <<: *base
+    mcc: "7941"
+    submitted_expense_type: Client Entertainment
+    line_items: [{<<: *line, description_raw: Golf, category: other, venue_type: golf}]
+  tech_04: &tech_04
+    <<: *base
+    mcc: "5734"
+    submitted_expense_type: Software
+    line_items: [{<<: *line, description_raw: Seats, category: software_subscription}]
+  rule: &rule
+    policy_doc: doc.md
+    title: A rule
+    source_quote: quote
+    kind: check
+    outcome: exception
+    severity: low
+    scope: receipt
+    applies_when: {op: eq, field: receipt.mcc, value: "5812"}
+    provenance: &provenance
+      translator: developer
+      clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  # What the directive needs on hand: each kind it lists must name a rule that exists.
+  aa_02: &aa_02 {<<: *rule, rule_id: AA-02, waived_by_ref: pre_approval}
+  vp_rule: &vp_rule {<<: *rule, rule_id: VV-01, waived_by_ref: vp_approval}
+  manager_rule: &manager_rule {<<: *rule, rule_id: VV-02, waived_by_ref: manager_approval}
+  delay_rule: &delay_rule
+    policy_doc: doc.md
+    title: A carve-out
+    source_quote: quote
+    kind: carve_out
+    rule_id: CO-01
+    modifies: [AA-02]
+    requires_ref: baggage_delay
+    select: {op: eq, field: item.category, value: gift}
+    provenance: *provenance
+  kinds: &kinds
+    policy_doc: doc.md
+    title: Approval references
+    source_quote: quote
+    rule_id: EXC-02
+    kind: process
+    directive: reference_kinds
+    provenance: *provenance
+    params: &listing
+      pre_approval_rules: {type: set, values: [AA-01, AA-02]}
+      vp_approval_rules: {type: set, values: [VV-01]}
+      manager_approval_rules: {type: set, values: [VV-02]}
+      baggage_delay_rules: {type: set, values: [CO-01]}
+
+real:
+  # TECH-02 takes a pre-approval
+  - id: TECH-02 with no reference
+    receipt: *tech_02
+    expected:
+      active: [{rule_id: TECH-02, line_ids: [L1]}]
+      waived: []
+      gaps: [{rule_id: TECH-02, line_ids: [L1], required: pre_approval_ref, state: no_reference, others: []}]
+      complete: true
+  - id: TECH-02 with a pre-approval
+    receipt: {<<: *tech_02, pre_approval_ref: PA-2026-0001}
+    expected:
+      active: []
+      waived: [{rule_id: TECH-02, line_ids: [L1], kind: pre_approval, field: pre_approval_ref, reference: PA-2026-0001}]
+      gaps: []
+      complete: true
+  - id: TECH-02 with a VP approval is the wrong kind
+    receipt: {<<: *tech_02, vp_approval_ref: VP-1}
+    expected:
+      active: [{rule_id: TECH-02, line_ids: [L1]}]
+      waived: []
+      gaps: [{rule_id: TECH-02, line_ids: [L1], required: pre_approval_ref, state: wrong_kind, others: [vp_approval_ref]}]
+  - id: TECH-02 with a manager approval is the wrong kind
+    receipt: {<<: *tech_02, manager_approval_ref: MG-1}
+    expected:
+      waived: []
+      gaps: [{rule_id: TECH-02, line_ids: [L1], required: pre_approval_ref, state: wrong_kind, others: [manager_approval_ref]}]
+  - id: TECH-02 with a baggage-delay reference is the wrong kind
+    receipt: {<<: *tech_02, baggage_delay_ref: BAG-1}
+    expected:
+      waived: []
+      gaps: [{rule_id: TECH-02, line_ids: [L1], required: pre_approval_ref, state: wrong_kind, others: [baggage_delay_ref]}]
+  - id: the right kind waives, whatever else is on file
+    receipt: {<<: *tech_02, pre_approval_ref: PA-1, vp_approval_ref: VP-1, manager_approval_ref: MG-1, baggage_delay_ref: BAG-1}
+    expected:
+      waived: [{rule_id: TECH-02, line_ids: [L1], kind: pre_approval, field: pre_approval_ref, reference: PA-1}]
+      gaps: []
+
+  # ENT-01 takes a VP approval
+  - id: ENT-01 with no reference
+    receipt: *ent_01
+    expected:
+      active: [{rule_id: ENT-01, line_ids: [L1]}]
+      gaps: [{rule_id: ENT-01, line_ids: [L1], required: vp_approval_ref, state: no_reference, others: []}]
+  - id: ENT-01 with a VP approval
+    receipt: {<<: *ent_01, vp_approval_ref: VP-1}
+    expected:
+      active: []
+      waived: [{rule_id: ENT-01, line_ids: [L1], kind: vp_approval, field: vp_approval_ref, reference: VP-1}]
+      gaps: []
+  - id: ENT-01 with a pre-approval is the wrong kind
+    receipt: {<<: *ent_01, pre_approval_ref: PA-1}
+    expected:
+      active: [{rule_id: ENT-01, line_ids: [L1]}]
+      gaps: [{rule_id: ENT-01, line_ids: [L1], required: vp_approval_ref, state: wrong_kind, others: [pre_approval_ref]}]
+  - id: ENT-01 with a manager approval is the wrong kind
+    receipt: {<<: *ent_01, manager_approval_ref: MG-1}
+    expected: {waived: [], gaps: [{rule_id: ENT-01, line_ids: [L1], required: vp_approval_ref, state: wrong_kind, others: [manager_approval_ref]}]}
+
+  # TECH-04 takes a manager approval
+  - id: TECH-04 with no reference
+    receipt: *tech_04
+    expected:
+      active: [{rule_id: TECH-04, line_ids: [L1]}]
+      gaps: [{rule_id: TECH-04, line_ids: [L1], required: manager_approval_ref, state: no_reference, others: []}]
+  - id: TECH-04 with a manager approval
+    receipt: {<<: *tech_04, manager_approval_ref: MG-1}
+    expected:
+      active: []
+      waived: [{rule_id: TECH-04, line_ids: [L1], kind: manager_approval, field: manager_approval_ref, reference: MG-1}]
+  - id: TECH-04 with a pre-approval is the wrong kind
+    receipt: {<<: *tech_04, pre_approval_ref: PA-1}
+    expected: {waived: [], gaps: [{rule_id: TECH-04, line_ids: [L1], required: manager_approval_ref, state: wrong_kind, others: [pre_approval_ref]}]}
+  - id: TECH-04 with a VP approval is the wrong kind
+    receipt: {<<: *tech_04, vp_approval_ref: VP-1}
+    expected: {waived: [], gaps: [{rule_id: TECH-04, line_ids: [L1], required: manager_approval_ref, state: wrong_kind, others: [vp_approval_ref]}]}
+
+  # The kind is the field, never the format
+  - {id: a value that looks like another kind counts by its field, receipt: {<<: *tech_02, vp_approval_ref: PA-2026-0001}, expected: {waived: [], gaps: [{rule_id: TECH-02, line_ids: [L1], required: pre_approval_ref, state: wrong_kind, others: [vp_approval_ref]}]}}
+  - id: any text in the right field is a claim, as no format is defined
+    receipt: {<<: *tech_02, pre_approval_ref: see my email}
+    expected: {waived: [{rule_id: TECH-02, line_ids: [L1], kind: pre_approval, field: pre_approval_ref, reference: see my email}]}
+
+  # Several findings
+  - id: every line caught is waived by one reference
+    receipt: {<<: *tech_02, pre_approval_ref: PA-1, line_items: [{<<: *line, line_id: L1}, {<<: *line, line_id: L2}]}
+    expected:
+      active: []
+      waived:
+        - {rule_id: TECH-02, line_ids: [L1], kind: pre_approval, field: pre_approval_ref, reference: PA-1}
+        - {rule_id: TECH-02, line_ids: [L2], kind: pre_approval, field: pre_approval_ref, reference: PA-1}
+  - id: only the line caught is waived, and a line under the cap gives no finding
+    receipt: {<<: *tech_02, pre_approval_ref: PA-1, line_items: [{<<: *line, line_id: L1}, {<<: *line, line_id: L2, unit_price: "14.99", amount: "14.99", amount_usd: "14.99"}]}
+    expected: {waived: [{rule_id: TECH-02, line_ids: [L1], kind: pre_approval, field: pre_approval_ref, reference: PA-1}], active: []}
+  - id: one reference waives its rule, and leaves the others with gaps
+    receipt:
+      <<: *base
+      mcc: "5045"
+      submitted_expense_type: Computer Equipment
+      pre_approval_ref: PA-1
+      line_items:
+        - {<<: *line, line_id: L1}
+        - {<<: *line, line_id: L2, category: other, venue_type: golf}
+        - {<<: *line, line_id: L3, category: software_subscription}
+    expected:
+      active: [{rule_id: ENT-01, line_ids: [L2]}, {rule_id: TECH-04, line_ids: [L3]}]
+      waived: [{rule_id: TECH-02, line_ids: [L1], kind: pre_approval, field: pre_approval_ref, reference: PA-1}]
+      gaps:
+        - {rule_id: ENT-01, line_ids: [L2], required: vp_approval_ref, state: wrong_kind, others: [pre_approval_ref]}
+        - {rule_id: TECH-04, line_ids: [L3], required: manager_approval_ref, state: wrong_kind, others: [pre_approval_ref]}
+  - id: three references each waive their own
+    receipt:
+      <<: *base
+      mcc: "5045"
+      submitted_expense_type: Computer Equipment
+      pre_approval_ref: PA-1
+      vp_approval_ref: VP-1
+      manager_approval_ref: MG-1
+      line_items:
+        - {<<: *line, line_id: L1}
+        - {<<: *line, line_id: L2, category: other, venue_type: golf}
+        - {<<: *line, line_id: L3, category: software_subscription}
+    expected:
+      active: []
+      gaps: []
+      waived:
+        - {rule_id: ENT-01, line_ids: [L2], kind: vp_approval, field: vp_approval_ref, reference: VP-1}
+        - {rule_id: TECH-02, line_ids: [L1], kind: pre_approval, field: pre_approval_ref, reference: PA-1}
+        - {rule_id: TECH-04, line_ids: [L3], kind: manager_approval, field: manager_approval_ref, reference: MG-1}
+
+  # A reference waives nothing else
+  - id: every reference on file leaves a rule that takes none, with no gap
+    receipt: {<<: *tech_02, mcc: "5921", submitted_expense_type: Computer Equipment, pre_approval_ref: PA-1, vp_approval_ref: VP-1, manager_approval_ref: MG-1, line_items: [{<<: *line, category: tobacco}]}
+    expected:
+      active: [{rule_id: DOC-03, line_ids: []}, {rule_id: MCC-01, line_ids: []}, {rule_id: PERS-03, line_ids: [L1]}]
+      waived: []
+      gaps: []
+  - id: a reference does not waive an alcohol rule beside the one it waives
+    receipt: {<<: *tech_02, mcc: "5812", submitted_expense_type: Computer Equipment, pre_approval_ref: PA-1, line_items: [{<<: *line, line_id: L1}, {<<: *line, line_id: L2, category: alcohol, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected:
+      active: [{rule_id: ALC-01, line_ids: [L2]}]
+      waived: [{rule_id: TECH-02, line_ids: [L1], kind: pre_approval, field: pre_approval_ref, reference: PA-1}]
+      gaps: []
+  - id: with no reference, only a rule that takes one has a gap
+    receipt: {<<: *tech_02, mcc: "5812", line_items: [{<<: *line, line_id: L1}, {<<: *line, line_id: L2, category: alcohol, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected:
+      active: [{rule_id: ALC-01, line_ids: [L2]}, {rule_id: TECH-02, line_ids: [L1]}]
+      gaps: [{rule_id: TECH-02, line_ids: [L1], required: pre_approval_ref, state: no_reference, others: []}]
+
+  # Replacements come first
+  - id: a replaced finding stays replaced, whatever is on file
+    receipt: {<<: *tech_02, submitted_expense_type: Meals - Individual, total_amount: "416.67", total_amount_usd: "5.00", mcc: "5812", employee_country: IN, currency: INR, fx_rate_to_usd: "0.012", pre_approval_ref: PA-1, vp_approval_ref: VP-1, manager_approval_ref: MG-1, line_items: [{<<: *line, category: alcohol, unit_price: "416.67", amount: "416.67", amount_usd: "5.00"}]}
+    expected:
+      active: [{rule_id: REG-01, line_ids: [L1]}]
+      replaced: [{rule_id: ALC-01, line_ids: [L1]}]
+      waived: []
+      gaps: []
+
+  # An unclassified line stays open whatever is on file
+  - id: a reference settles nothing about a line with no category
+    receipt: {<<: *tech_02, pre_approval_ref: PA-1, line_items: [{<<: *line, category: null, confidence: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {active: [], waived: [], gaps: [], complete: false}
+
+made_up:
+  - id: a finding replaced is not waived, and one not replaced is
+    rules:
+      - {<<: *rule, rule_id: AA-01, waived_by_ref: pre_approval}
+      - *aa_02
+      - {<<: *rule, rule_id: BB-01, replaces: [{rule_id: AA-01, level: receipt}]}
+      - *vp_rule
+      - *manager_rule
+      - *delay_rule
+      - *kinds
+    references: {pre_approval_ref: PA-1}
+    findings: [{rule_id: AA-01}, {rule_id: AA-02}]
+    undetermined: []
+    pending: []
+    expected:
+      active: []
+      replaced: [{rule_id: AA-01, line_ids: []}]
+      waived: [{rule_id: AA-02, line_ids: [], kind: pre_approval, field: pre_approval_ref, reference: PA-1}]
+      complete: true
+  - id: a finding possibly replaced can still be waived, and stays open
+    rules: &possibly
+      - {<<: *rule, rule_id: AA-01, waived_by_ref: pre_approval}
+      - *aa_02
+      - {<<: *rule, rule_id: BB-01, replaces: [{rule_id: AA-01, level: finding}]}
+      - *vp_rule
+      - *manager_rule
+      - *delay_rule
+      - *kinds
+    references: {pre_approval_ref: PA-1}
+    findings: [{rule_id: AA-01}]
+    undetermined: [{rule_id: BB-01, line_id: null}]
+    pending: []
+    expected:
+      active: []
+      waived: [{rule_id: AA-01, line_ids: [], kind: pre_approval, field: pre_approval_ref, reference: PA-1}]
+      possible: [{rule_id: AA-01, line_ids: [], by: BB-01}]
+      undetermined: [{rule_id: BB-01, line_id: null}]
+      complete: false
+  - id: a finding possibly replaced with no reference stays active, with its gap
+    rules: *possibly
+    references: {}
+    findings: [{rule_id: AA-01}]
+    undetermined: []
+    pending: [BB-01]
+    expected:
+      active: [{rule_id: AA-01, line_ids: []}]
+      waived: []
+      gaps: [{rule_id: AA-01, line_ids: [], required: pre_approval_ref, state: no_reference, others: []}]
+      possible: [{rule_id: AA-01, line_ids: [], by: BB-01}]
+      complete: false
+  - id: a rule that takes no reference needs no directive
+    rules: [{<<: *rule, rule_id: AA-01}]
+    references: {pre_approval_ref: PA-1, vp_approval_ref: VP-1}
+    findings: [{rule_id: AA-01}]
+    undetermined: []
+    pending: []
+    expected: {active: [{rule_id: AA-01, line_ids: []}], waived: [], gaps: [], complete: true}
+  - id: a directive that is not active waives nothing
+    rules:
+      - {<<: *rule, rule_id: AA-01}
+      - {<<: *kinds, status: retired}
+    references: {pre_approval_ref: PA-1}
+    findings: [{rule_id: AA-01}]
+    undetermined: []
+    pending: []
+    expected: {active: [{rule_id: AA-01, line_ids: []}], waived: [], gaps: []}
+  - id: no findings at all
+    rules: *possibly
+    references: {pre_approval_ref: PA-1}
+    findings: []
+    undetermined: []
+    pending: []
+    expected: {active: [], waived: [], gaps: [], complete: true}
+
+refused:
+  - id: a rule accepts a reference, but the directive does not list it
+    rules:
+      - {<<: *rule, rule_id: AA-01, waived_by_ref: pre_approval}
+      - *aa_02
+      - {<<: *rule, rule_id: BB-01, waived_by_ref: pre_approval}
+      - *vp_rule
+      - *manager_rule
+      - *delay_rule
+      - *kinds
+    references: {pre_approval_ref: PA-1}
+    findings: [{rule_id: BB-01}]
+    undetermined: []
+    pending: []
+    expected: "BB-01: accepts pre_approval, but EXC-02 says None"
+  - id: the directive lists a rule that accepts none
+    rules:
+      - {<<: *rule, rule_id: AA-01}
+      - *aa_02
+      - *vp_rule
+      - *manager_rule
+      - *delay_rule
+      - *kinds
+    references: {pre_approval_ref: PA-1}
+    findings: [{rule_id: AA-01}]
+    undetermined: []
+    pending: []
+    expected: "AA-01: accepts None, but EXC-02 says pre_approval"
+  - id: a rule and the directive disagree on the kind
+    rules:
+      - {<<: *rule, rule_id: AA-01, waived_by_ref: vp_approval}
+      - *aa_02
+      - *vp_rule
+      - *manager_rule
+      - *delay_rule
+      - *kinds
+    references: {vp_approval_ref: VP-1}
+    findings: [{rule_id: AA-01}]
+    undetermined: []
+    pending: []
+    expected: "AA-01: accepts vp_approval, but EXC-02 says pre_approval"
+  - id: a rule accepts a reference, with no directive at all
+    rules: [{<<: *rule, rule_id: AA-01, waived_by_ref: pre_approval}]
+    references: {pre_approval_ref: PA-1}
+    findings: [{rule_id: AA-01}]
+    undetermined: []
+    pending: []
+    expected: "AA-01: accepts a reference, but no directive says which kind"
+  - id: a baggage-delay reference cannot waive a check
+    rules:
+      - {<<: *rule, rule_id: AA-01, waived_by_ref: pre_approval}
+      - *aa_02
+      - *vp_rule
+      - *manager_rule
+      - {<<: *rule, rule_id: VV-03, waived_by_ref: baggage_delay}
+      - {<<: *kinds, params: {<<: *listing, baggage_delay_rules: {type: set, values: [VV-03]}}}
+    references: {baggage_delay_ref: BAG-1}
+    findings: [{rule_id: VV-03}]
+    undetermined: []
+    pending: []
+    expected: "VV-03: a baggage_delay reference belongs to a carve-out"
+  - id: the directive lists one rule under two kinds
+    rules:
+      - {<<: *rule, rule_id: AA-01, waived_by_ref: pre_approval}
+      - *aa_02
+      - *manager_rule
+      - *delay_rule
+      - {<<: *kinds, params: {<<: *listing, vp_approval_rules: {type: set, values: [AA-01]}}}
+    references: {pre_approval_ref: PA-1}
+    findings: [{rule_id: AA-01}]
+    undetermined: []
+    pending: []
+    expected: "EXC-02: lists AA-01 under two kinds of reference"

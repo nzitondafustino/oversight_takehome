@@ -1,0 +1,655 @@
+suite: adversarial_policy
+
+# Expected outcomes are worked out from the policy documents and rule params, never from a run.
+#
+# The method for an uncertain amount is the project's, not the policy's. No policy document mentions a
+# discount, and the data has no negative line. Read alone, EXC-03 says to "leave that item out of every
+# other rule's calculation", which would count none of these discounts and confirm the breach. These
+# cases instead apply the bounds method already adopted for MEAL-01: a line of unknown category may or
+# may not count, so a breach is confirmed only if it survives at the lowest total the line allows. The
+# support for that is EXC-03's own weighing: "a missed review costs far less than a false accusation".
+#
+# bound holds the arithmetic and is checked on its own, whatever the engine does:
+#   status is confirmed if lowest > threshold, compliant if highest <= threshold, else undetermined.
+#   Compared per `per`. uncertain is an amount, or "no_usd_negative" / "no_usd_positive" where only the
+#   sign is known, or null. A baggage "confirmed" means over the allowance.
+#
+# In expected, rules gives a rule's status from the result: confirmed is an active exception, and
+# undetermined is unresolved or open. compliant means neither active nor unresolved. It allows an open
+# question, as the engine keeps item rules open on an uncertain line even where bounds settle them.
+
+templates:
+  line: &line {language: en, quantity: 1, description_raw: Item, confidence: "0.95"}
+  # A line of unknown category that could be a discount on anything.
+  unknown: &unknown {<<: *line, line_id: L9, description_raw: Adjustment, category: null, unit_price: "-10.00", amount: "-10.00", amount_usd: "-10.00"}
+  unknown_no_usd: &unknown_no_usd {<<: *unknown, amount_usd: null}
+  known_only: &base
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    merchant_name: Merchant
+    transaction_datetime: "2026-04-14T19:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    trip_id: TRIP-1
+    trip_nights: 5
+    itemized: true
+    total_amount: $lines
+    total_amount_usd: $lines
+  no_rate: &no_rate {currency: EUR, fx_rate_to_usd: null, total_amount_usd: null}
+
+  # ALC-02 applies where ALC-01 permits: Client Entertainment, on premises, two or more attendees.
+  entertainment: &entertainment {<<: *base, mcc: "5812", submitted_expense_type: Client Entertainment, attendee_count: 2}
+  alcohol_65: &alcohol_65 {<<: *line, line_id: L1, category: alcohol, unit_price: "65.00", amount: "65.00", amount_usd: "65.00"}
+  alcohol_75: &alcohol_75 {<<: *alcohol_65, unit_price: "75.00", amount: "75.00", amount_usd: "75.00"}
+  alcohol_40: &alcohol_40 {<<: *alcohol_65, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}
+
+  gifts: &gifts {<<: *base, mcc: "5947", submitted_expense_type: Client Gifts}
+  gift_55_a: &gift_55_a {<<: *line, line_id: L1, category: gift, unit_price: "55.00", amount: "55.00", amount_usd: "55.00", recipient_name: Ana, recipient_type: client}
+  unknown_for_a: &unknown_for_a {<<: *unknown, recipient_name: Ana, recipient_type: client}
+  official_40: &official_40 {<<: *line, line_id: L1, category: gift, unit_price: "40.00", amount: "40.00", amount_usd: "40.00", recipient_name: Xu, recipient_type: government_official}
+  official_60: &official_60 {<<: *official_40, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}
+  official_10: &official_10 {<<: *official_40, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}
+  client_30: &client_30 {<<: *line, line_id: L2, category: gift, unit_price: "30.00", amount: "30.00", amount_usd: "30.00", recipient_name: Xu, recipient_type: client}
+  client_55: &client_55 {<<: *client_30, unit_price: "55.00", amount: "55.00", amount_usd: "55.00"}
+
+  # 5651 is in no MCC risk tier, and Travel - Other covers OTC, clothing and personal care in DOC-03.
+  travel: &travel {<<: *base, mcc: "5651", submitted_expense_type: Travel - Other}
+  otc_30: &otc_30 {<<: *line, line_id: L1, category: health_otc, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}
+  otc_20: &otc_20 {<<: *otc_30, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}
+
+  delayed: &delayed {<<: *travel, baggage_delay_ref: BAG-1, baggage_delay_hours: "30"}
+  # Clothing and essential toiletries share one allowance.
+  clothing_100: &clothing_100 {<<: *line, line_id: L1, category: clothing, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}
+  toiletries_55: &toiletries_55 {<<: *line, line_id: L2, category: personal_care, essential_toiletry: true, unit_price: "55.00", amount: "55.00", amount_usd: "55.00"}
+  toiletries_75: &toiletries_75 {<<: *toiletries_55, unit_price: "75.00", amount: "75.00", amount_usd: "75.00"}
+  clothing_155: &clothing_155 {<<: *clothing_100, unit_price: "155.00", amount: "155.00", amount_usd: "155.00"}
+  clothing_discount: &clothing_discount {<<: *line, line_id: L9, category: clothing, unit_price: "-10.00", amount: "-10.00", amount_usd: "-10.00"}
+
+  # A $80 meal is over MEAL-01's domestic $75.
+  meal: &meal {<<: *base, mcc: "5812", submitted_expense_type: Meals - Individual}
+  food_80: &food_80 {<<: *line, line_id: L1, category: food_beverage, unit_price: "80.00", amount: "80.00", amount_usd: "80.00"}
+  food_70: &food_70 {<<: *food_80, unit_price: "70.00", amount: "70.00", amount_usd: "70.00"}
+  food_40: &food_40 {<<: *food_80, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}
+
+  monitor: &monitor {<<: *line, line_id: L1, category: computer_accessory, unit_price: "329.00", amount: "329.00", amount_usd: "329.00"}
+  computer: &computer {<<: *base, mcc: "5045", submitted_expense_type: Computer Equipment}
+  retail: &retail {<<: *base, mcc: "5499", submitted_expense_type: Travel - Other}
+  tobacco: &tobacco {<<: *line, line_id: L1, category: tobacco, unit_price: "25.00", amount: "25.00", amount_usd: "25.00"}
+  snack: &snack {<<: *line, line_id: L2, category: food_beverage, unit_price: "9.00", amount: "9.00", amount_usd: "9.00"}
+
+# Part 1: aggregate bounds, in the order of the brief
+bounds:
+  - id: 1 alcohol 65 for 2 with an uncertain discount could be within the cap
+    bound: {rule: ALC-02, param: cap_usd, threshold: "30", per: 2, known: "65.00", uncertain: "-10.00", status: undetermined, scope: the alcohol lines of this receipt}
+    complete: true
+    receipts: [{<<: *entertainment, line_items: [*alcohol_65, *unknown]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {ALC-02: undetermined}}}
+  - id: 1 the same with a discount that is low confidence rather than missing
+    bound: {rule: ALC-02, param: cap_usd, threshold: "30", per: 2, known: "65.00", uncertain: "-10.00", status: undetermined, scope: the alcohol lines of this receipt}
+    complete: true
+    receipts: [{<<: *entertainment, line_items: [*alcohol_65, {<<: *unknown, category: alcohol, confidence: "0.30"}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {ALC-02: undetermined}}}
+  - id: 2 alcohol 75 for 2 is over the cap even with the discount
+    bound: {rule: ALC-02, param: cap_usd, threshold: "30", per: 2, known: "75.00", uncertain: "-10.00", status: confirmed, scope: the alcohol lines of this receipt}
+    complete: true
+    receipts: [{<<: *entertainment, line_items: [*alcohol_75, *unknown]}]
+    expected: {R1: {disposition: flag, decided: false, active: [ALC-02], severities: {ALC-02: medium}, cited: {ALC-02: [L1]}, rules: {ALC-02: confirmed}}}
+  - id: a known alcohol discount counts, as the rule totals the alcohol lines
+    bound: {rule: ALC-02, param: cap_usd, threshold: "30", per: 2, known: "55.00", uncertain: null, status: compliant, scope: the alcohol lines of this receipt}
+    complete: true
+    receipts: [{<<: *entertainment, line_items: [*alcohol_65, {<<: *unknown, category: alcohol}]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], rules: {ALC-02: compliant}}}
+  - id: an uncertain charge cannot break a cap the upper bound stays within
+    bound: {rule: ALC-02, param: cap_usd, threshold: "30", per: 2, known: "40.00", uncertain: "10.00", status: compliant, scope: the alcohol lines of this receipt}
+    complete: true
+    receipts: [{<<: *entertainment, line_items: [*alcohol_40, {<<: *unknown, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {ALC-02: compliant}}}
+
+  - id: 3 gift 55 to one recipient with an uncertain discount naming them could be within the cap
+    bound: {rule: GIFT-01, param: cap_usd, threshold: "50", per: 1, known: "55.00", uncertain: "-10.00", status: undetermined, scope: lines on this receipt naming this recipient}
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_55_a, *unknown_for_a]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {GIFT-01: undetermined}}}
+  - id: an uncertain discount naming another recipient cannot lower this one
+    bound: {rule: GIFT-01, param: cap_usd, threshold: "50", per: 1, known: "55.00", uncertain: null, status: confirmed, scope: lines on this receipt naming this recipient}
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_55_a, {<<: *unknown, recipient_name: Bo, recipient_type: client}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [GIFT-01], cited: {GIFT-01: [L1]}, rules: {GIFT-01: confirmed}}}
+  - id: 4 a known discount belonging to another recipient cannot lower this one
+    bound: {rule: GIFT-01, param: cap_usd, threshold: "50", per: 1, known: "55.00", uncertain: null, status: confirmed, scope: lines on this receipt naming this recipient}
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_55_a, {<<: *unknown, category: gift, recipient_name: Bo, recipient_type: client}]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-01], severities: {GIFT-01: medium}, cited: {GIFT-01: [L1]}, rules: {GIFT-01: confirmed}}}
+  - id: a known discount naming this recipient is added to their lines
+    bound: {rule: GIFT-01, param: cap_usd, threshold: "50", per: 1, known: "45.00", uncertain: null, status: compliant, scope: lines on this receipt naming this recipient}
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_55_a, {<<: *unknown, category: gift, recipient_name: Ana, recipient_type: client}]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], rules: {GIFT-01: compliant}}}
+
+  - id: 5 OTC 30 with an uncertain discount on the same receipt could be within the trip cap
+    bound: {rule: HEALTH-01, param: trip_cap_usd, threshold: "25", per: 1, known: "30.00", uncertain: "-10.00", status: undetermined, scope: medication on all of this trip's receipts}
+    complete: true
+    receipts: [{<<: *travel, line_items: [*otc_30, *unknown]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {HEALTH-01: undetermined}}}
+  - id: 5 OTC 30 with an uncertain discount on another receipt of the trip
+    bound: {rule: HEALTH-01, param: trip_cap_usd, threshold: "25", per: 1, known: "30.00", uncertain: "-10.00", status: undetermined, scope: medication on all of this trip's receipts}
+    complete: true
+    receipts:
+      - {<<: *travel, line_items: [*otc_30]}
+      - {<<: *travel, receipt_id: R2, merchant_name: Other Shop, total_amount: "0.00", total_amount_usd: "0.00", line_items: [*unknown]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], rules: {HEALTH-01: undetermined}}
+      R2: {disposition: review, decided: false, active: []}
+  - id: an uncertain discount on another trip cannot lower this trip
+    bound: {rule: HEALTH-01, param: trip_cap_usd, threshold: "25", per: 1, known: "30.00", uncertain: null, status: confirmed, scope: medication on all of this trip's receipts}
+    complete: true
+    receipts:
+      - {<<: *travel, line_items: [*otc_30]}
+      - {<<: *travel, receipt_id: R2, trip_id: TRIP-2, merchant_name: Other Shop, total_amount: "0.00", total_amount_usd: "0.00", line_items: [*unknown]}
+    expected:
+      # HEALTH-01 is low, so a confirmed breach is a review under EXC-01.
+      R1: {disposition: review, decided: true, active: [HEALTH-01], severities: {HEALTH-01: low}, rules: {HEALTH-01: confirmed}}
+      R2: {disposition: review, decided: false, active: []}
+
+  - id: 6 baggage essentials 155 with an uncertain discount could be within the allowance
+    bound: {rule: PERS.BAGGAGE, param: allowance_usd, threshold: "150", per: 1, known: "155.00", uncertain: "-10.00", status: undetermined, scope: clothing and essential toiletries sharing this employee's delay reference}
+    complete: true
+    receipts: [{<<: *delayed, line_items: [*clothing_100, *toiletries_55, *unknown]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {PERS-01: undetermined, PERS-02: undetermined}}}
+  - id: a known personal care discount not known to be a toiletry could be within the allowance
+    bound: {rule: PERS.BAGGAGE, param: allowance_usd, threshold: "150", per: 1, known: "155.00", uncertain: "-10.00", status: undetermined, scope: clothing and essential toiletries sharing this employee's delay reference}
+    complete: true
+    receipts: [{<<: *delayed, line_items: [*clothing_155, {<<: *clothing_discount, category: personal_care}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {PERS-02: undetermined}}}
+  - id: baggage essentials well over the allowance stay over with the discount
+    bound: {rule: PERS.BAGGAGE, param: allowance_usd, threshold: "150", per: 1, known: "175.00", uncertain: "-10.00", status: confirmed, scope: clothing and essential toiletries sharing this employee's delay reference}
+    complete: true
+    receipts: [{<<: *delayed, line_items: [*clothing_100, *toiletries_75, *unknown]}]
+    expected: {R1: {disposition: flag, decided: false, active: [PERS-01, PERS-02], cited: {PERS-01: [L2], PERS-02: [L1]}, rules: {PERS-01: confirmed, PERS-02: confirmed}}}
+  # An assumption: the policy says "up to $150" and does not say net or gross. Net is what was paid.
+  - id: 7 a known eligible discount brings baggage essentials within the allowance
+    bound: {rule: PERS.BAGGAGE, param: allowance_usd, threshold: "150", per: 1, known: "145.00", uncertain: null, status: compliant, scope: clothing and essential toiletries sharing this employee's delay reference}
+    complete: true
+    receipts: [{<<: *delayed, line_items: [*clothing_100, *toiletries_55, *clothing_discount]}]
+    expected:
+      R1:
+        disposition: pass
+        decided: true
+        active: []
+        rules: {PERS-01: compliant, PERS-02: compliant}
+        audit: [{rule_id: PERS-01, resolution: excused}, {rule_id: PERS-02, resolution: excused}]
+
+  # The rate is missing, so DOC-04 stands on its own. Admission allows a line with no USD amount only
+  # on a receipt with no rate. Only the sign of the discount is known, so the total has no lower bound.
+  - id: 8 alcohol with a negative line of unknown category and no conversion
+    bound: {rule: ALC-02, param: cap_usd, threshold: "30", per: 2, known: "65.00", uncertain: no_usd_negative, status: undetermined, scope: the alcohol lines of this receipt}
+    complete: true
+    receipts: [{<<: [*no_rate, *entertainment], line_items: [*alcohol_65, *unknown_no_usd]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {ALC-02: undetermined, DOC-04: confirmed}}}
+  - id: 8 gift with a negative line of unknown category and no conversion
+    bound: {rule: GIFT-01, param: cap_usd, threshold: "50", per: 1, known: "55.00", uncertain: no_usd_negative, status: undetermined, scope: lines on this receipt naming this recipient}
+    complete: true
+    receipts: [{<<: [*no_rate, *gifts], line_items: [*gift_55_a, {<<: *unknown_for_a, amount_usd: null}]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {GIFT-01: undetermined, DOC-04: confirmed}}}
+  - id: 8 OTC with a negative line of unknown category and no conversion
+    bound: {rule: HEALTH-01, param: trip_cap_usd, threshold: "25", per: 1, known: "30.00", uncertain: no_usd_negative, status: undetermined, scope: medication on all of this trip's receipts}
+    complete: true
+    receipts: [{<<: [*no_rate, *travel], line_items: [*otc_30, *unknown_no_usd]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {HEALTH-01: undetermined, DOC-04: confirmed}}}
+  - id: 8 baggage with a negative line of unknown category and no conversion
+    bound: {rule: PERS.BAGGAGE, param: allowance_usd, threshold: "150", per: 1, known: "155.00", uncertain: no_usd_negative, status: undetermined, scope: clothing and essential toiletries sharing this employee's delay reference}
+    complete: true
+    receipts: [{<<: [*no_rate, *delayed], line_items: [*clothing_155, *unknown_no_usd]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {PERS-02: undetermined, DOC-04: confirmed}}}
+  # Module 11C.1 changed this from ALC-02 confirmed: with no rate, the $65 is not a known amount either.
+  - id: a USD amount supplied with no rate is not a known breach
+    bound: {rule: ALC-02, param: cap_usd, threshold: "30", per: 2, known: "65.00", uncertain: no_usd_at_all, status: undetermined, scope: the alcohol lines of this receipt}
+    complete: true
+    receipts: [{<<: [*no_rate, *entertainment], line_items: [*alcohol_65, {<<: *unknown_no_usd, unit_price: "10.00", amount: "10.00"}]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {ALC-02: undetermined, DOC-04: confirmed}}}
+
+  # Exactly at a threshold, with nothing uncertain. "Above" and "up to" both leave it within.
+  - id: alcohol exactly at the cap
+    bound: {rule: ALC-02, param: cap_usd, threshold: "30", per: 2, known: "60.00", uncertain: null, status: compliant, scope: the alcohol lines of this receipt}
+    complete: true
+    receipts: [{<<: *entertainment, line_items: [{<<: *alcohol_65, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], rules: {ALC-02: compliant}}}
+  - id: a gift exactly at the cap
+    bound: {rule: GIFT-01, param: cap_usd, threshold: "50", per: 1, known: "50.00", uncertain: null, status: compliant, scope: lines on this receipt naming this recipient}
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_55_a, unit_price: "50.00", amount: "50.00", amount_usd: "50.00"}]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], rules: {GIFT-01: compliant}}}
+  - id: medication exactly at the trip cap
+    bound: {rule: HEALTH-01, param: trip_cap_usd, threshold: "25", per: 1, known: "25.00", uncertain: null, status: compliant, scope: medication on all of this trip's receipts}
+    complete: true
+    receipts: [{<<: *travel, line_items: [{<<: *otc_20, unit_price: "25.00", amount: "25.00", amount_usd: "25.00"}]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], rules: {HEALTH-01: compliant}}}
+  - id: baggage essentials exactly at the allowance
+    bound: {rule: PERS.BAGGAGE, param: allowance_usd, threshold: "150", per: 1, known: "150.00", uncertain: null, status: compliant, scope: clothing and essential toiletries sharing this employee's delay reference}
+    complete: true
+    receipts: [{<<: *delayed, line_items: [{<<: *clothing_100, unit_price: "150.00", amount: "150.00", amount_usd: "150.00"}]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], audit: [{rule_id: PERS-02, resolution: excused}], rules: {PERS-02: compliant}}}
+
+  # What each cap's total can lean on, beyond a line of unknown category
+  - id: a known gift discount with no conversion leaves the recipient with no lower bound
+    bound: {rule: GIFT-01, param: cap_usd, threshold: "50", per: 1, known: "55.00", uncertain: no_usd_negative, status: undetermined, scope: lines on this receipt naming this recipient}
+    complete: true
+    receipts: [{<<: [*no_rate, *gifts], line_items: [*gift_55_a, {<<: *unknown_for_a, category: gift, amount_usd: null}]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {GIFT-01: undetermined, DOC-04: confirmed}}}
+  - id: a known alcohol discount with no conversion leaves the total with no lower bound
+    bound: {rule: ALC-02, param: cap_usd, threshold: "30", per: 2, known: "65.00", uncertain: no_usd_negative, status: undetermined, scope: the alcohol lines of this receipt}
+    complete: true
+    receipts: [{<<: [*no_rate, *entertainment], line_items: [*alcohol_65, {<<: *unknown_no_usd, category: alcohol}]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {ALC-02: undetermined, DOC-04: confirmed}}}
+  - id: a known medication discount with no conversion leaves the trip with no lower bound
+    bound: {rule: HEALTH-01, param: trip_cap_usd, threshold: "25", per: 1, known: "30.00", uncertain: no_usd_negative, status: undetermined, scope: medication on all of this trip's receipts}
+    complete: true
+    receipts: [{<<: [*no_rate, *travel], line_items: [*otc_30, {<<: *unknown_no_usd, category: health_otc}]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {HEALTH-01: undetermined, DOC-04: confirmed}}}
+  - id: a known clothing discount with no conversion leaves the allowance with no lower bound
+    bound: {rule: PERS.BAGGAGE, param: allowance_usd, threshold: "150", per: 1, known: "155.00", uncertain: no_usd_negative, status: undetermined, scope: clothing and essential toiletries sharing this employee's delay reference}
+    complete: true
+    receipts: [{<<: [*no_rate, *delayed], line_items: [*clothing_155, {<<: *unknown_no_usd, category: clothing}]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {PERS-02: undetermined, DOC-04: confirmed}}}
+  - id: a discount of an unknown item kind could be medication
+    bound: {rule: HEALTH-01, param: trip_cap_usd, threshold: "25", per: 1, known: "30.00", uncertain: "-10.00", status: undetermined, scope: medication on all of this trip's receipts}
+    complete: true
+    receipts: [{<<: *travel, line_items: [*otc_30, {<<: *unknown, category: other, item_kind: made_up}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {HEALTH-01: undetermined}}}
+  - id: a charge of an unknown item kind on another receipt could take the trip over
+    bound: {rule: HEALTH-01, param: trip_cap_usd, threshold: "25", per: 1, known: "20.00", uncertain: "10.00", status: undetermined, scope: medication on all of this trip's receipts}
+    complete: true
+    receipts:
+      - {<<: *travel, line_items: [*otc_20]}
+      - {<<: *travel, receipt_id: R2, merchant_name: Other Shop, line_items: [{<<: *unknown, category: other, item_kind: made_up, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], rules: {HEALTH-01: undetermined}}
+      R2: {decided: false}
+  # Prescription medication is outside the OTC total whatever its category, so it lowers nothing. Only
+  # L1 is asserted: whether a negative prescription line is itself a breach is the refund question.
+  - id: a prescription discount does not lower OTC spend
+    bound: {rule: HEALTH-01, param: trip_cap_usd, threshold: "25", per: 1, known: "30.00", uncertain: null, status: confirmed, scope: medication on all of this trip's receipts}
+    complete: true
+    receipts: [{<<: *travel, line_items: [*otc_30, {<<: *unknown, item_kind: prescription_medication}]}]
+    expected: {R1: {cites_include: {HEALTH-01: [L1]}, rules: {HEALTH-01: confirmed}}}
+  # A confirmed breach reports what it can prove: the lowest total, said to be one.
+  - id: a gift breach beside an uncertain discount reports the lowest total
+    bound: {rule: GIFT-01, param: cap_usd, threshold: "50", per: 1, known: "75.00", uncertain: "-10.00", status: confirmed, scope: lines on this receipt naming this recipient}
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_55_a, unit_price: "75.00", amount: "75.00", amount_usd: "75.00"}, *unknown_for_a]}]
+    expected:
+      R1:
+        disposition: flag
+        decided: false
+        active: [GIFT-01]
+        evidence: {GIFT-01: {L1: {helper.recipient_total_usd: "65.00"}}}
+        explains: {GIFT-01: at least 65 for Ana}
+  - id: an alcohol breach beside an uncertain discount reports the lowest total
+    bound: {rule: ALC-02, param: cap_usd, threshold: "30", per: 2, known: "75.00", uncertain: "-10.00", status: confirmed, scope: the alcohol lines of this receipt}
+    complete: true
+    receipts: [{<<: *entertainment, line_items: [*alcohol_75, *unknown]}]
+    expected:
+      R1:
+        disposition: flag
+        decided: false
+        active: [ALC-02]
+        evidence: {ALC-02: {L1: {helper.alcohol_usd: "65.00"}}}
+        explains: {ALC-02: at least 32.5 per attendee}
+
+# Part 2: "replaces GIFT-01 for those lines", so what remains for GIFT-01 is the ordinary lines
+replacement:
+  - id: the official gift is cited alone and its breach is not doubled
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*official_40, *client_30]}]
+    expected:
+      R1:
+        disposition: flag
+        decided: true
+        severities: {GIFT-04: critical}
+        cited: {GIFT-04: [L1]}
+        rules: {GIFT-04: confirmed}
+  - id: the ordinary gift below the cap has no GIFT-01 once the official line is taken out
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*official_40, *client_30]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-04], cited: {GIFT-04: [L1]}, rules: {GIFT-01: compliant, GIFT-04: confirmed}}}
+  - id: the same with an official gift that is over the cap by itself
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*official_60, *client_30]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-04], rules: {GIFT-04: confirmed}}}
+  - id: the official line's own GIFT-01 is replaced by GIFT-04 and kept in the audit history
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*official_60, *client_30]}]
+    expected:
+      R1:
+        disposition: flag
+        decided: true
+        replaced: [{rule_id: GIFT-01, line_ids: [L1], resolved_by: GIFT-04}]
+  - id: ordinary gifts over the cap by themselves still breach it, on their own line
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*official_10, *client_55]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-01, GIFT-04], cited: {GIFT-01: [L2], GIFT-04: [L1]}}}
+  - id: the ordinary breach is evidenced by the ordinary total alone
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*official_10, *client_55]}]
+    expected: {R1: {evidence: {GIFT-01: {L2: {helper.recipient_total_usd: "55.00"}}}}}
+  - id: different recipients are not added together
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*official_40, {<<: *client_30, recipient_name: Bo}]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-04], cited: {GIFT-04: [L1]}, audit: []}}
+  - id: a recipient type outside the catalog leaves both rules open and no breach confirmed
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *official_40, recipient_type: martian}, *client_30]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], rules: {GIFT-01: undetermined, GIFT-04: undetermined}}}
+  # This one is an inference: TIME-03 names "the $50 gift cap for one recipient (GIFT-01)", and the
+  # official line has left GIFT-01, so only $30 is left to be split around the cap.
+  - id: an official gift cannot make an ordinary gift at the same merchant a split
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *official_40, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [*client_30]}
+    expected:
+      R1: {disposition: flag, decided: true, active: [GIFT-04]}
+      R2: {disposition: pass, decided: true, active: []}
+  - id: two ordinary gifts really are a split around the gift cap
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *client_30, line_id: L1}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [*client_30]}
+    expected:
+      R1: {disposition: flag, decided: true, active: [TIME-03], severities: {TIME-03: high}}
+      R2: {disposition: flag, decided: true, active: [TIME-03], severities: {TIME-03: high}}
+
+  - id: gifts to two recipients at one merchant are no split around the cap for either
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *client_30, line_id: L1}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [{<<: *client_30, recipient_name: Bo}]}
+    expected:
+      R1: {disposition: pass, decided: true, active: []}
+      R2: {disposition: pass, decided: true, active: []}
+
+# Part 3
+isolation:
+  # ALC-03 would apply at 5499, but EXC-03 leaves the alcohol out. It stays open, and tobacco stands.
+  - id: an uncertain alcohol line beside definite tobacco
+    complete: true
+    receipts: [{<<: *retail, line_items: [*tobacco, {<<: *snack, category: alcohol, confidence: "0.30"}]}]
+    expected:
+      R1:
+        disposition: flag
+        decided: false
+        active: [PERS-03]
+        severities: {PERS-03: high}
+        cited: {PERS-03: [L1]}
+        uncertainty: [{line_id: L2, field: category, state: low_confidence}]
+        rules: {ALC-03: undetermined, PERS-03: confirmed}
+  - id: a receipt repeated with the same contents counts once
+    complete: true
+    receipts: [{<<: *computer, line_items: [*monitor]}, {<<: *computer, line_items: [*monitor]}]
+    expected: {R1: {disposition: flag, decided: true, active: [TECH-02]}}
+  - id: a pre-approval on one receipt does not reach the same employee's other receipt
+    complete: true
+    receipts:
+      - {<<: *computer, line_items: [*monitor]}
+      - {<<: *computer, receipt_id: R2, merchant_name: Other Shop, pre_approval_ref: PA-1, line_items: [*monitor]}
+    expected:
+      R1: {disposition: flag, decided: true, active: [TECH-02], audit: []}
+      R2: {disposition: pass, decided: true, active: [], audit: [{rule_id: TECH-02, resolution: waived}]}
+  - id: a pre-approval on one employee's receipt does not reach another employee's
+    complete: true
+    receipts:
+      - {<<: *computer, line_items: [*monitor]}
+      - {<<: *computer, receipt_id: R2, employee_id: E-2, pre_approval_ref: PA-1, line_items: [*monitor]}
+    expected:
+      R1: {disposition: flag, decided: true, active: [TECH-02], audit: []}
+      R2: {disposition: pass, decided: true, active: [], audit: [{rule_id: TECH-02, resolution: waived}]}
+  - id: a VP approval does not satisfy a rule asking for a pre-approval
+    complete: true
+    receipts: [{<<: *computer, vp_approval_ref: VP-1, line_items: [*monitor]}]
+    expected: {R1: {disposition: flag, decided: true, active: [TECH-02], audit: []}}
+  - id: a waived finding is kept in the audit history with what waived it
+    complete: true
+    receipts: [{<<: *computer, pre_approval_ref: PA-1, line_items: [*monitor]}]
+    expected:
+      R1:
+        disposition: pass
+        decided: true
+        active: []
+        audit: [{rule_id: TECH-02, resolution: waived}]
+        waived: [{rule_id: TECH-02, line_ids: [L1], resolved_by: EXC-02}]
+  - id: a delay of exactly 24 hours is not more than 24
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "24", line_items: [*clothing_100]}]
+    expected: {R1: {disposition: flag, decided: true, active: [PERS-02], audit: []}}
+  - id: a delay just above 24 hours qualifies
+    complete: true
+    receipts: [{<<: *delayed, baggage_delay_hours: "24.01", line_items: [*clothing_100]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], audit: [{rule_id: PERS-02, resolution: excused}]}}
+  - id: two employees with the same reference each have their own allowance
+    complete: true
+    receipts:
+      - {<<: *delayed, line_items: [*clothing_100]}
+      - {<<: *delayed, receipt_id: R2, employee_id: E-2, merchant_name: Other Shop, line_items: [*clothing_100]}
+    expected:
+      R1: {disposition: pass, decided: true, active: [], audit: [{rule_id: PERS-02, resolution: excused}]}
+      R2: {disposition: pass, decided: true, active: [], audit: [{rule_id: PERS-02, resolution: excused}]}
+  - id: one employee's two receipts on one reference share one allowance
+    complete: true
+    receipts:
+      - {<<: *delayed, line_items: [*clothing_100]}
+      - {<<: *delayed, receipt_id: R2, merchant_name: Other Shop, line_items: [*clothing_100]}
+    expected:
+      R1: {disposition: flag, decided: true, active: [PERS-02]}
+      R2: {disposition: flag, decided: true, active: [PERS-02]}
+  - id: one employee's two delays each have their own allowance
+    complete: true
+    receipts:
+      - {<<: *delayed, line_items: [*clothing_100]}
+      - {<<: *delayed, receipt_id: R2, baggage_delay_ref: BAG-2, merchant_name: Other Shop, line_items: [*clothing_100]}
+    expected:
+      R1: {disposition: pass, decided: true, active: []}
+      R2: {disposition: pass, decided: true, active: []}
+
+conflicts_refused:
+  - id: one receipt ID with different amounts
+    receipts:
+      - {<<: *computer, line_items: [*monitor]}
+      - {<<: *computer, line_items: [{<<: *monitor, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+    expected: R1. appears twice with different contents
+  - id: one receipt ID with different employees
+    receipts:
+      - {<<: *computer, line_items: [*monitor]}
+      - {<<: *computer, employee_id: E-2, line_items: [*monitor]}
+    expected: R1. appears twice with different contents
+
+# Each run stands alone: run in either order, and neither sees the other's receipts.
+separate_runs:
+  - id: one receipt ID with different contents for two customers
+    runs:
+      northwind: [{<<: *retail, line_items: [*tobacco]}]
+      southwind: [{<<: *computer, pre_approval_ref: PA-1, line_items: [*monitor]}]
+    expected:
+      northwind: {R1: {disposition: flag, active: [DOC-03, PERS-03]}}
+      southwind: {R1: {disposition: pass, active: [], audit: [{rule_id: TECH-02, resolution: waived}]}}
+  - id: an allowance is not shared across customers with the same employee and reference
+    runs:
+      northwind: [{<<: *delayed, line_items: [*clothing_100]}]
+      southwind: [{<<: *delayed, line_items: [*clothing_100]}]
+    expected:
+      northwind: {R1: {disposition: pass, active: []}}
+      southwind: {R1: {disposition: pass, active: []}}
+  - id: a trip total is not shared across customers
+    runs:
+      northwind: [{<<: *travel, line_items: [*otc_20]}]
+      southwind: [{<<: *travel, line_items: [*otc_20]}]
+    expected:
+      northwind: {R1: {disposition: pass, active: []}}
+      southwind: {R1: {disposition: pass, active: []}}
+
+# Part 4. Each ladder changes one amount. statuses is the rule's status at each step, from the bound.
+ladders:
+  - id: a higher uncertain charge on a meal under the cap never confirms a breach
+    rule: MEAL-01
+    vary: {receipt_id: R1, line_id: L9}
+    amounts: ["0.01", "4.99", "5.00", "5.01", "50.00"]
+    complete: true
+    receipts: [{<<: *meal, line_items: [*food_70, *unknown]}]
+    expected: {statuses: [undetermined, undetermined, undetermined, undetermined, undetermined]}
+  - id: a higher uncertain charge beside alcohol under the cap never confirms a breach
+    rule: ALC-02
+    vary: {receipt_id: R1, line_id: L9}
+    amounts: ["1.00", "20.00", "20.01", "50.00"]
+    complete: true
+    receipts: [{<<: *entertainment, line_items: [*alcohol_40, *unknown]}]
+    expected: {statuses: [compliant, compliant, undetermined, undetermined]}
+  - id: a higher uncertain charge beside medication under the cap never confirms a breach
+    rule: HEALTH-01
+    vary: {receipt_id: R1, line_id: L9}
+    amounts: ["1.00", "5.00", "5.01", "50.00"]
+    complete: true
+    receipts: [{<<: *travel, line_items: [*otc_20, *unknown]}]
+    expected: {statuses: [compliant, compliant, undetermined, undetermined]}
+  - id: a deeper uncertain discount on a meal over the cap
+    rule: MEAL-01
+    vary: {receipt_id: R1, line_id: L9}
+    amounts: ["-1.00", "-4.99", "-5.00", "-10.00", "-50.00"]
+    complete: true
+    receipts: [{<<: *meal, line_items: [*food_80, *unknown]}]
+    expected: {statuses: [confirmed, confirmed, undetermined, undetermined, undetermined]}
+  - id: a deeper uncertain discount on alcohol over the cap
+    rule: ALC-02
+    vary: {receipt_id: R1, line_id: L9}
+    amounts: ["-1.00", "-4.99", "-5.00", "-10.00", "-50.00"]
+    complete: true
+    receipts: [{<<: *entertainment, line_items: [*alcohol_65, *unknown]}]
+    expected: {statuses: [confirmed, confirmed, undetermined, undetermined, undetermined]}
+  - id: a deeper uncertain discount on a gift over the cap
+    rule: GIFT-01
+    vary: {receipt_id: R1, line_id: L9}
+    amounts: ["-1.00", "-4.99", "-5.00", "-10.00", "-50.00"]
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_55_a, *unknown_for_a]}]
+    expected: {statuses: [confirmed, confirmed, undetermined, undetermined, undetermined]}
+  - id: a deeper uncertain discount on medication over the cap
+    rule: HEALTH-01
+    vary: {receipt_id: R1, line_id: L9}
+    amounts: ["-1.00", "-4.99", "-5.00", "-10.00", "-50.00"]
+    complete: true
+    receipts: [{<<: *travel, line_items: [*otc_30, *unknown]}]
+    expected: {statuses: [confirmed, confirmed, undetermined, undetermined, undetermined]}
+  - id: a deeper uncertain discount on baggage essentials over the allowance
+    rule: PERS-02
+    vary: {receipt_id: R1, line_id: L9}
+    amounts: ["-1.00", "-4.99", "-5.00", "-10.00", "-50.00"]
+    complete: true
+    receipts: [{<<: *delayed, line_items: [*clothing_155, *unknown]}]
+    expected: {statuses: [confirmed, confirmed, undetermined, undetermined, undetermined]}
+
+# The one bound the engine works out as a number today. least and most are per person, at each step.
+spend_bounds:
+  - id: a higher uncertain charge raises the most and leaves the least
+    vary: {receipt_id: R1, line_id: L9}
+    amounts: ["0.01", "5.00", "50.00"]
+    receipts: [{<<: *meal, line_items: [*food_70, *unknown]}]
+    expected: {least: ["70", "70", "70"], most: ["70.01", "75", "120"]}
+  - id: a deeper uncertain discount lowers the least and leaves the most
+    vary: {receipt_id: R1, line_id: L9}
+    amounts: ["-0.01", "-5.00", "-50.00"]
+    receipts: [{<<: *meal, line_items: [*food_80, *unknown]}]
+    expected: {least: ["79.99", "75", "30"], most: ["80", "80", "80"]}
+  - id: per person, with attendees
+    vary: {receipt_id: R1, line_id: L9}
+    amounts: ["-10.00", "10.00"]
+    receipts: [{<<: *meal, attendee_count: 2, line_items: [*food_80, *unknown]}]
+    expected: {least: ["35", "40"], most: ["40", "45"]}
+  - id: a known discount outside meal spend moves neither bound, whatever its size
+    vary: {receipt_id: R1, line_id: L9}
+    amounts: ["-1.00", "-50.00"]
+    receipts: [{<<: *meal, line_items: [*food_80, {<<: *unknown, category: gift}]}]
+    expected: {least: ["80", "80"], most: ["80", "80"]}
+
+unrelated:
+  - id: another employee's meal at one merchant and date
+    receipts: [{<<: *meal, line_items: [*food_40]}]
+    other: [{<<: *meal, receipt_id: R2, employee_id: E-2, line_items: [{<<: *food_40, line_id: L2}]}]
+    expected: {rules: {MEAL-01: compliant, TIME-03: compliant}}
+  - id: another employee's uncertain discount does not lower this employee's alcohol
+    receipts: [{<<: *entertainment, line_items: [*alcohol_65]}]
+    other: [{<<: *entertainment, receipt_id: R2, employee_id: E-2, total_amount: "0.00", total_amount_usd: "0.00", line_items: [*unknown]}]
+    expected: {rules: {ALC-02: confirmed}}
+  - id: another employee's gift to the same recipient at one merchant and date
+    receipts: [{<<: *gifts, line_items: [*client_30]}]
+    other: [{<<: *gifts, receipt_id: R2, employee_id: E-2, line_items: [{<<: *client_30, line_id: L3}]}]
+    expected: {rules: {GIFT-01: compliant, TIME-03: compliant}}
+  - id: another employee's clothing on the same delay reference
+    receipts: [{<<: *delayed, line_items: [*clothing_100]}]
+    other: [{<<: *delayed, receipt_id: R2, employee_id: E-2, line_items: [{<<: *clothing_100, line_id: L2}]}]
+    expected: {rules: {PERS-02: compliant}}
+  - id: another employee's medication on the same trip ID
+    receipts: [{<<: *travel, line_items: [*otc_20]}]
+    other: [{<<: *travel, receipt_id: R2, employee_id: E-2, line_items: [{<<: *otc_20, line_id: L2}]}]
+    expected: {rules: {HEALTH-01: compliant}}
+  - id: another employee's uncertain discount on the same trip ID does not lower this employee's total
+    receipts: [{<<: *travel, line_items: [*otc_30]}]
+    other: [{<<: *travel, receipt_id: R2, employee_id: E-2, merchant_name: Other Shop, total_amount: "0.00", total_amount_usd: "0.00", line_items: [*unknown]}]
+    expected: {rules: {HEALTH-01: confirmed}}
+  - id: another employee's medication on another trip
+    receipts: [{<<: *travel, line_items: [*otc_20]}]
+    other: [{<<: *travel, receipt_id: R2, employee_id: E-2, trip_id: TRIP-2, line_items: [{<<: *otc_20, line_id: L2}]}]
+    expected: {rules: {HEALTH-01: compliant}}
+
+ineligible:
+  - id: a gift discount does not lower meal spend
+    rule: MEAL-01
+    receipts: [{<<: *meal, line_items: [*food_80]}]
+    discount: {<<: *unknown, category: gift}
+    expected: {status: confirmed}
+  - id: a food discount does not lower alcohol
+    rule: ALC-02
+    receipts: [{<<: *entertainment, line_items: [*alcohol_65]}]
+    discount: {<<: *unknown, category: food_beverage}
+    expected: {status: confirmed}
+  - id: a discount to another recipient does not lower this one
+    rule: GIFT-01
+    receipts: [{<<: *gifts, line_items: [*gift_55_a]}]
+    discount: {<<: *unknown, category: gift, recipient_name: Bo, recipient_type: client}
+    expected: {status: confirmed}
+  - id: a food discount does not lower medication
+    rule: HEALTH-01
+    receipts: [{<<: *travel, line_items: [*otc_30]}]
+    discount: {<<: *unknown, category: food_beverage}
+    expected: {status: confirmed}
+  - id: an office supplies discount does not lower the baggage total
+    rule: PERS-02
+    receipts: [{<<: *delayed, line_items: [*clothing_155]}]
+    discount: {<<: *unknown, category: office_supplies}
+    expected: {status: confirmed}
+  - id: a discount on personal care that is not an essential toiletry does not lower the baggage total
+    rule: PERS-02
+    receipts: [{<<: *delayed, line_items: [*clothing_155]}]
+    discount: {<<: *unknown, category: personal_care, essential_toiletry: false}
+    expected: {status: confirmed}
+
+# `line_id` is an unrelated line, made uncertain in each way EXC-03 knows. The rule must stand unchanged.
+categorical:
+  - id: tobacco
+    line_id: L2
+    receipts: [{<<: *retail, line_items: [*tobacco, *snack]}]
+    expected: {rule: PERS-03, severity: high, lines: [L1]}
+  - id: retail alcohol
+    line_id: L2
+    receipts: [{<<: *retail, line_items: [{<<: *tobacco, category: alcohol}, *snack]}]
+    expected: {rule: ALC-03, severity: high, lines: [L1]}
+  - id: a gift card
+    line_id: L2
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_55_a, category: gift_card}, *snack]}]
+    expected: {rule: GIFT-02, severity: high, lines: [L1]}
+  - id: personal care with no baggage delay
+    line_id: L2
+    receipts: [{<<: *travel, line_items: [{<<: *tobacco, category: personal_care}, *snack]}]
+    expected: {rule: PERS-01, severity: medium, lines: [L1]}
+  - id: a gift to a government official
+    line_id: L2
+    receipts: [{<<: *gifts, line_items: [*official_40, *snack]}]
+    expected: {rule: GIFT-04, severity: critical, lines: [L1]}

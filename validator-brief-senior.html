@@ -1,0 +1,213 @@
+<title>Expense Validator Senior Brief</title>
+<style>
+  :root {
+    --paper: #f6f7f9; --card: #ffffff; --ink: #22303c; --ink-soft: #55636f;
+    --line: #d9dee4; --accent: #0e7c6b; --accent-ink: #0a5c50;
+    --good: #17803d; --warn: #a06008; --bad: #b32e2e;
+    --chip-good-bg: #e2f2e7; --chip-warn-bg: #f8ecd8; --chip-bad-bg: #f9e3e3; --tint: #eef4f2;
+    --code-bg: #eef1f4;
+  }
+  body { background: var(--paper); color: var(--ink);
+    font-family: "Charter","Iowan Old Style",Georgia,"Times New Roman",serif;
+    font-size: 17px; line-height: 1.6; margin: 0; padding: 3rem 1.25rem 5rem; }
+  .wrap { max-width: 46rem; margin: 0 auto; }
+  h1,h2,h3,.eyebrow,.chip,th,.meta,.pillrow,.flow { font-family: "Avenir Next","Segoe UI","Helvetica Neue",system-ui,sans-serif; }
+  h1 { font-size: 2rem; line-height: 1.15; margin: .35rem 0 .5rem; text-wrap: balance; font-weight: 700; letter-spacing: -0.015em; }
+  h2 { font-size: 1.3rem; margin: 2.4rem 0 .7rem; letter-spacing: -0.01em; text-wrap: balance; }
+  h3 { font-size: 1rem; margin: 1.3rem 0 .35rem; }
+  p { margin: .55rem 0; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: .72rem; font-weight: 600; color: var(--accent-ink); }
+  .meta { color: var(--ink-soft); font-size: .85rem; }
+  .lede { font-size: 1.06rem; color: var(--ink-soft); max-width: 62ch; }
+  .pillrow { display: flex; gap: .6rem; flex-wrap: wrap; margin: 1rem 0 0; font-size: .8rem; }
+  .pill { border: 1px solid var(--line); background: var(--card); border-radius: 99px; padding: .25rem .8rem; color: var(--ink-soft); }
+  .pill b { color: var(--ink); font-weight: 600; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 1.2rem 1.4rem; margin: 1rem 0; }
+  .callout { border-left: 4px solid var(--accent); }
+  ul,ol { padding-left: 1.25rem; margin: .5rem 0; }
+  li { margin: .32rem 0; }
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th,td { text-align: left; padding: .45rem .65rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-soft); font-weight: 600; }
+  code { font-family: ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size: .85em; background: var(--code-bg); padding: .08em .35em; border-radius: 4px; }
+  pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: .9rem 1rem; overflow-x: auto; }
+  pre code { background: none; padding: 0; font-size: .79rem; line-height: 1.5; }
+  .chip { display: inline-block; font-size: .72rem; font-weight: 600; letter-spacing: .04em; padding: .12rem .55rem; border-radius: 99px; white-space: nowrap; vertical-align: middle; margin-left: .4rem; }
+  .chip.must { background: var(--chip-good-bg); color: var(--good); }
+  .chip.opt { background: var(--chip-warn-bg); color: var(--warn); }
+  .checklist li { list-style: none; position: relative; padding-left: .3rem; }
+  .checklist { padding-left: 1.6rem; }
+  .checklist li::before { content: "☐"; position: absolute; left: -1.3rem; color: var(--accent-ink); }
+  .note { font-size: .9rem; color: var(--ink-soft); }
+  .flow { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; font-size: .82rem; margin: .8rem 0; }
+  .flow span { border: 1px solid var(--line); background: var(--card); border-radius: 7px; padding: .35rem .7rem; }
+  .flow i { color: var(--accent-ink); font-style: normal; font-weight: 700; }
+  hr { border: none; border-top: 1px solid var(--line); margin: 2.2rem 0; }
+  .track{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-family:"Avenir Next","Segoe UI","Helvetica Neue",system-ui,sans-serif;
+    color:#6b3f8f;background:#f1e9f7;border:1px solid #d8c3e8;border-radius:5px;padding:.2rem .6rem;margin-bottom:.6rem}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="track">Senior track</div>
+    <div class="eyebrow">Candidate project brief</div>
+    <h1>Expense Policy Validator — Item Classification &amp; Rule Engine</h1>
+    <p class="lede">Build a system that reads itemized expense receipts, classifies every line item into a spend category, checks the receipt against a set of written expense policies, and raises evidence-grounded exceptions when a purchase is out of policy.</p>
+    <div class="pillrow">
+      <span class="pill"><b>Time</b> ≈ 8–9 hours</span>
+      <span class="pill"><b>AI assistants</b> expected</span>
+      <span class="pill"><b>UI</b> simple local viewer</span>
+      <span class="pill"><b>Deployment</b> none required</span>
+      <span class="pill"><b>Model access</b> provided (OpenRouter)</span>
+      <span class="pill"><b>Budget</b> under $5 total</span>
+    </div>
+  </header>
+
+  <h2>1 · Project goal</h2>
+  <p>An audit team at Northwind Global receives thousands of itemized expense receipts. Most are routine. A small number contain purchases that breach company policy — alcohol on a solo meal, personal electronics booked as office supplies, a gift card, a spa charge claimed as lodging. Finding these by hand does not scale, and the keyword rules that came before caught the obvious cases while drowning reviewers in false positives.</p>
+  <div class="flow">
+    <span>Receipt</span><i>→</i><span>Normalise &amp; translate items</span><i>→</i><span>Classify into categories</span><i>→</i><span>Retrieve applicable policy</span><i>→</i><span>Apply rules</span><i>→</i><span>Exceptions with evidence</span>
+  </div>
+  <p>For each receipt your system should produce: a <b>category per line item</b>, a set of <b>exceptions</b> each citing the rule it breaks and the line items it concerns, any <b>review signals</b>, and a final <b>disposition</b> of <code>flag</code>, <code>review</code>, or <code>pass</code>.</p>
+  <div class="card callout">
+    <p style="margin:0 0 .5rem"><b>How we work — and how we'll evaluate you.</b> Our team uses AI coding assistants (Claude Code, Cursor, Copilot, and similar) every day as normal engineering practice, and we expect you to build this project the same way. Writing the code is not the test. What we evaluate is how well you <b>direct</b> the tools: the classification and rule-design decisions you make, how you verify what the assistant produces, where you overrule it, and how honestly you report both.</p>
+    <p style="margin:0"><b>Scope honestly.</b> Aim for 8–9 hours; this is the largest exercise we run. If you fall behind, cut UI polish first and the evaluation last. A small, well-measured system beats a large unfinished one.</p>
+  </div>
+
+  <h2>2 · What we provide</h2>
+  <h3>Policy corpus — <code>policy-docs/</code></h3>
+  <p><b>9 Markdown policy documents</b> covering meals and entertainment, technology and equipment, gifts and awards, non-reimbursable items, merchant category risk, receipt documentation, transaction patterns, regional addenda, and approval and exception handling. Each rule carries an identifier such as <code>ALC-01</code> or <code>TECH-02</code>; <b>41 rules</b> are defined in total. The documents cross-reference each other, and the regional addendum deliberately <b>overrides</b> some global rules.</p>
+  <h3>Receipts — <code>receipts.jsonl</code></h3>
+  <p><b>32 receipts, 79 line items</b>, with merchant, MCC, timestamp, currency and conversion rate, submitted expense type, attendee count, trip record, and pre-approval reference. Line-item descriptions appear in English, Spanish, French, German, Portuguese and Japanese. Ground truth is attached at two levels:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Field</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>line_items[].labels.category</code></td><td>Gold spend category for each item, plus a <code>restricted</code> boolean</td></tr>
+      <tr><td><code>labels.expected_exceptions</code></td><td>Each with <code>rule_id</code>, <code>policy_doc</code>, <code>severity</code>, the <code>line_ids</code> concerned, and the reason</td></tr>
+      <tr><td><code>labels.review_signals</code></td><td>Softer signals that are <em>not</em> exceptions — reporting one as a violation is a false positive</td></tr>
+      <tr><td><code>labels.disposition</code></td><td><code>flag</code> (18) · <code>review</code> (5) · <code>pass</code> (9)</td></tr>
+      <tr><td><code>notes</code></td><td>Scoring guidance and the trap each receipt plants</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Use the labels — including the <code>notes</code> field — only to evaluate your system, never as input to it or in a prompt.</b></p>
+  <h3>Taxonomy — <code>category-taxonomy.md</code></h3>
+  <p>A 21-category starting taxonomy with a restricted flag on each. It is <b>deliberately open-ended</b>: invent a category if it describes an item better, provide a mapping back to ours so the evaluation can be scored, and say in your README why it earned its place.</p>
+  <h3>Data dictionary — <code>README.md</code></h3>
+  <p>Defines every field in the data, the conventions the correct answers follow, and how to compare your output with them. <b>Read it before you start</b> — it settles questions such as who an attendee count includes, and which field holds an approval reference.</p>
+  <h3>Model access</h3>
+  <p>An <b>OpenRouter API key</b> (OpenAI-compatible, base URL <code>https://openrouter.ai/api/v1</code>) for generation and, if you wish, embeddings. Local embedding models are equally welcome. <b>Do not commit the key.</b></p>
+  <p><b>Hard budget: under $5 of total model spend</b> — the key is capped there, and staying within it is part of the exercise. An efficient (Haiku-class) model over 9 short documents and 79 line items costs well under $1 per full run. Cache aggressively; classify items once and reuse.</p>
+
+  <h2>3 · Part 1 — Classification and policy retrieval <span class="chip must">Core · ~3.5 h</span></h2>
+  <p>Build <b>at least four clearly separated components</b>. A sensible decomposition:</p>
+  <ul>
+    <li><b>Normaliser</b> — cleans and, where needed, translates line-item text. Multilingual items must be handled; how is your call.</li>
+    <li><b>Item classifier</b> — assigns a category and a restricted flag to each line item, with a confidence.</li>
+    <li><b>Policy retriever</b> — finds the rules that could apply to this receipt, given its items, merchant category, and metadata.</li>
+    <li><b>Exception reporter</b> — turns engine output into reviewer-facing findings, each citing its rule and evidence.</li>
+  </ul>
+  <div class="card">
+    <p style="margin:0 0 .4rem"><b>Two things the classifier must get right, which keyword matching cannot.</b></p>
+    <p style="margin:0 0 .4rem"><b>Names lie.</b> "Beer-battered cod" is food. An "Arnold Palmer" is iced tea and lemonade. "Rum cake" is dessert. "Cooking wine" from a supermarket is still alcohol. Several receipts exist only to catch systems that match on words.</p>
+    <p style="margin:0"><b>Context decides.</b> The same bottle of wine is compliant at a documented client dinner, a high exception on a solo meal, and never reimbursable from a liquor store. Classification alone cannot tell you which; the rules and the receipt metadata do.</p>
+  </div>
+
+  <h2>4 · Part 2 — Policy engine <span class="chip must">Core · ~1.5 h</span></h2>
+  <p><b>The policy engine must be deterministic code, not an LLM call.</b> It takes the classified items plus receipt metadata and the retrieved rules, and it decides. Cover it with <b>5–8 unit tests</b>. This is the component you fully own and will defend in the interview.</p>
+  <p>It must implement at least:</p>
+  <ul>
+    <li><b>Thresholds and caps</b> evaluated on USD converted amounts (per-person meal caps, per-attendee alcohol caps, per-item equipment ceilings, gift caps).</li>
+    <li><b>Conditional carve-outs</b> — a rule that permits something only when something is recorded — a pre-approval, a baggage-delay reference, an attendee count. Absence of evidence does not satisfy a carve-out.</li>
+    <li><b>Rule precedence</b> — regional rules override the global rule they conflict with.</li>
+    <li><b>The severity ladder and disposition</b> — <code>EXC-01</code> defines exactly how exceptions map to <code>flag</code> / <code>review</code> / <code>pass</code>. This must be computed, never judged.</li>
+    <li><b>An uncertainty path</b> — <code>EXC-03</code> requires a review signal rather than an exception when item classification confidence is too low. Choose and justify that threshold. No correct answer uses <code>EXC-03</code> — the answers assume every category is known — so each <code>EXC-03</code> signal you raise counts as unmatched, as does any change it makes to a disposition. The data dictionary explains this.</li>
+  </ul>
+  <p>Some rules look <b>across receipts</b>: TIME-03 (split transactions) groups receipts by employee, merchant and date; MEAL-01 adds up one employee's meals per day; HEALTH-01 adds up a trip's medication. TIME-03 is the one that fires in this data only when receipts are grouped. Handling it is expected; if you run out of time, say so explicitly rather than quietly skipping it.</p>
+  <p><b>Commit your raw per-receipt outputs</b> (JSONL, all 32) so reviewers can re-run your evaluation without re-running the model.</p>
+
+  <h3>Expected output shape (extend if useful, document if you do)</h3>
+  <p class="note">Abridged: this shows the shape, not the complete answer for RCP-014 — some items and exceptions are left out.</p>
+  <pre><code>{
+  "receipt_id": "RCP-014",
+  "disposition": "flag",
+  "line_items": [
+    { "line_id": "RCP-014-L1", "description_raw": "Tide Pods laundry detergent 42ct",
+      "category": "household_goods", "restricted": true, "confidence": 0.95 },
+    { "line_id": "RCP-014-L4", "description_raw": "Cooking wine - Marsala 375ml",
+      "category": "alcohol", "restricted": true, "confidence": 0.82,
+      "reasoning": "Fortified wine sold at retail; culinary use does not change the product." }
+  ],
+  "exceptions": [
+    { "rule_id": "ALC-03", "policy_doc": "meals-and-entertainment-policy.md",
+      "severity": "high", "line_ids": ["RCP-014-L4"],
+      "evidence": "Alcohol purchased from a package store, liquor store, or any other merchant that is not a restaurant, bar or hotel is never reimbursable",
+      "explanation": "Marsala cooking wine bought at a supermarket is retail alcohol." },
+    { "rule_id": "HOUSE-01", "policy_doc": "non-reimbursable-items.md",
+      "severity": "medium", "line_ids": ["RCP-014-L1","RCP-014-L2","RCP-014-L3"],
+      "evidence": "Cleaning supplies, laundry products, household paper goods (paper towels, toilet paper, tissues), kitchenware and drinkware...",
+      "explanation": "Detergent, paper towels and dish soap are household goods." }
+  ],
+  "review_signals": [
+    { "rule_id": "MCC-02", "reason": "MCC 5411 is medium risk; context only, not an exception." }
+  ],
+  "metadata": { "model": "...", "retriever": "embeddings", "latency_ms": 2400 }
+}</code></pre>
+
+  <h2>5 · Part 3 — Evaluation <span class="chip must">Core · ~2 h</span></h2>
+  <ol>
+    <li><b>Classification quality:</b> macro precision, recall and F1 across categories, plus F1 on the <b>restricted</b> decision with restricted = true as the positive class. Score both per line item over all 79 items; a macro score is the mean of the per-category scores, taken over the categories that appear in the correct answers, mapping any categories you added back to the taxonomy first, and count a category you never predict as zero precision. The two scores can diverge, and the engine needs both.</li>
+    <li><b>Exception detection:</b> precision and recall <em>per rule</em>, and a 3×3 confusion matrix for disposition.</li>
+    <li><b>Keyword baseline:</b> implement a keyword or regex matcher over restricted terms — the system this is meant to replace — and quantify what your approach adds. Show where the baseline wins, if it does.</li>
+    <li><b>Evidence correctness:</b> a raised exception is only useful if it cites the right rule. For the exceptions that match an answer, report how often they cite exactly the right line items — separately from disposition accuracy.</li>
+    <li><b>Error analysis:</b> 3 diagnosed failures, each attributed to a stage — translation, classification, retrieval, or rule logic.</li>
+    <li><b>Reflection:</b> a short "what I'd improve next with more time".</li>
+  </ol>
+  <p><span class="chip opt">Optional stretch</span> Cost-weighted scoring (a missed violation versus a reviewer-hour wasted); confidence calibration on the classifier; an ablation showing which signal — items, MCC, metadata — carries the detection.</p>
+
+  <h2>6 · Part 4 — Review UI <span class="chip must">Core · ~1 h</span></h2>
+  <p>Build a <b>simple local UI</b> (Streamlit, Gradio, or similar) that you will drive your presentation through. A reviewer should be able to see the receipt queue with dispositions, open one receipt to see every line item with its category and confidence alongside the exceptions raised and the policy text each cites, compare against the gold labels, and view the metrics in one place.</p>
+  <p class="note">Clarity is graded; visual polish is not. Serving cached results is fine.</p>
+
+  <h2>7 · Part 5 — AWS deployment design, on paper <span class="chip must">Core · ~1 h</span></h2>
+  <p>Write <b>one page</b> (diagram welcome) on how you would ship this as a batch or API service on AWS. No code, no deployment. Cover the architecture and where the policy index lives; how a <b>policy document change</b> propagates and what happens to receipts already processed under the old version; authentication and secrets; cost at ~50,000 receipts per day; and the production gaps — monitoring, the reviewer feedback loop, how you would measure false positives with no gold labels, and handling of personal data on receipts.</p>
+
+  <h2>8 · Deliverables</h2>
+  <ul class="checklist">
+    <li><b>Working solution</b> — runs end-to-end over all 32 receipts, with the unit-tested policy engine.</li>
+    <li><b>Committed raw outputs</b> — per-receipt results as JSONL.</li>
+    <li><b>Evaluation report</b> — classification metrics, per-rule precision and recall, disposition confusion matrix, keyword baseline comparison, evidence correctness, error analysis.</li>
+    <li><b>Review UI</b> — with a one-line command to launch it.</li>
+    <li><b>AWS design page.</b></li>
+    <li><b>Git history</b> — meaningful commits, not a single final dump.</li>
+    <li><b>README (≤2 pages)</b> — architecture and why you decomposed it that way; core prompts; how the policy engine encodes rules and where its thresholds came from; your uncertainty threshold; any categories you added; assumptions; whether receipt or policy data leaves your machine; and one worked example end to end.</li>
+    <li><b>AI collaboration notes</b> — which assistants you used, at least one concrete thing one got wrong and how you caught it, and what you verified by hand. "It made no mistakes" is not a credible answer.</li>
+    <li><b>Spend note</b> — approximate total model spend and how you stayed under $5.</li>
+  </ul>
+
+  <h2>9 · What we evaluate</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>We care about</th><th>We are not evaluating</th></tr></thead>
+    <tbody><tr>
+      <td><ul style="margin:0">
+        <li><b>Classification judgment</b> — open-ended categories, multilingual items, names that lie</li>
+        <li><b>Rule engineering</b> — thresholds, carve-outs, precedence, severity, all deterministic</li>
+        <li><b>Evidence grounding</b> — every exception cites the rule and lines it rests on</li>
+        <li><b>Evaluation rigor</b> — choosing the right metrics, a real keyword baseline, and honesty about what the numbers can and cannot show</li>
+        <li><b>Decision quality</b> — exceptions you could defend to an auditor and to the employee who was flagged</li>
+        <li><b>AI-assisted development</b> — how well you directed and verified the tools</li>
+      </ul></td>
+      <td><ul style="margin:0">
+        <li>Whether you used AI tools (we assume you did)</li>
+        <li>UI visual polish</li>
+        <li>Framework familiarity</li>
+        <li>Actual cloud deployment</li>
+        <li>Implementing all 41 rules — cover what the data exercises</li>
+        <li>Perfect accuracy; honest measurement beats a high score</li>
+      </ul></td>
+    </tr></tbody>
+  </table></div>
+
+  <hr>
+  <p class="note"><b>The review session (90 minutes)</b> has four parts. <b>Your walkthrough, 25–30 minutes:</b> you present the problem, your approach, a demo through your UI (including receipts we pick on the spot), your evaluation results and your AWS design. Plan to fit it into that window — the panel will hold to the time. <b>A technical deep dive, 30–35 minutes:</b> the panel leads, asking about your design decisions and your code — especially the policy engine and how your classifier handles ambiguous items — along with related ML and data-science concepts, debugging scenarios, and alternatives you considered. <b>Collaboration and role scenarios, 15–20 minutes.</b> <b>Your questions, 10 minutes.</b> Please submit everything at least 24 hours before the session so the panel can review it in advance. There is no live coding and no surprise data; everything is based on what you submitted. Questions before you start are welcome; good scoping questions count in your favor.</p>
+</div>

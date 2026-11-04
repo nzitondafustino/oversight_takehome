@@ -1,0 +1,90 @@
+# The receipt and item fields a rule may read, for the Validate step. The schema stays
+# unaware of them on purpose. Most come from data/README.md. Those marked "derived" are
+# worked out from the receipt, and those marked "classified" come from reading the line text.
+#
+# type:   text, number or bool. Only number fields can be ordered, and always against a param.
+# unit:   the unit a param compared with this field must have.
+# values: the only values the field can be compared with.
+# countries: the only home in the code for which employee_country gives which entity.
+#   APAC and EMEA are from the regional addendum. No document lists GLOBAL: US is the only
+#   country the data has for it, so this is a project decision to widen as countries are confirmed.
+
+# The monetary input contract: see engine/money.py and design/monetary_contract.md. Change the version
+# with any change here. The currencies are those of data/README.md and home_currency below, from ISO 4217.
+input_contract:
+  version: 1
+  minor_units: {USD: 2, EUR: 2, INR: 2, JPY: 0, SGD: 2, GBP: 2}
+  missing_currency_minor_units: 0
+  usd_tolerance: "0.005"
+  max_abs_amount: "1000000000000000"
+  max_decimal_places: 10
+
+receipt.entity:
+  type: text
+  values: [GLOBAL, APAC, EMEA]
+  countries:
+    GLOBAL: [US]
+    APAC: [IN, JP, SG]
+    EMEA: [GB, DE, FR, NL, IE, PT, ES]
+# home_currency: decides domestic or international travel under MEAL-01. Not a policy decision.
+receipt.employee_country:
+  type: text
+  home_currency: {US: USD, IN: INR, JP: JPY, SG: SGD, GB: GBP, DE: EUR, FR: EUR, NL: EUR, IE: EUR, PT: EUR, ES: EUR}
+receipt.submitted_expense_type:
+  type: text
+  values:
+    - Meals - Individual
+    - Meals - Team
+    - Client Entertainment
+    - Client Gifts
+    - Lodging
+    - Travel - Other
+    - Office Supplies
+    - Computer Equipment
+    - Software
+receipt.merchant_name: {type: text}
+receipt.mcc: {type: text}
+receipt.currency: {type: text}
+receipt.fx_rate_to_usd: {type: number}
+receipt.total_amount: {type: number}  # in the receipt's own currency
+receipt.total_amount_usd: {type: number, unit: usd}
+receipt.attendee_count: {type: number, unit: count}
+receipt.trip_id: {type: text}
+receipt.trip_nights: {type: number, unit: nights}
+receipt.itemized: {type: bool}
+receipt.is_meal_receipt: {type: bool}  # derived: the definition in MEAL-01
+receipt.transaction_date: {type: text}  # derived: from transaction_datetime
+receipt.local_hour: {type: number, unit: hour}  # derived: from transaction_datetime
+
+item.category:
+  type: text
+  values:
+    - alcohol
+    - tobacco
+    - personal_electronics
+    - gift
+    - gift_card
+    - household_goods
+    - personal_care
+    - clothing
+    - gambling
+    - jewelry
+    - food_beverage
+    - computer_accessory
+    - office_supplies
+    - lodging
+    - ground_transport
+    - airfare
+    - laundry_service
+    - health_otc
+    - software_subscription
+    - service_fee
+    - other
+item.restricted: {type: bool}
+item.amount_usd: {type: number, unit: usd}
+item.is_purchase: {type: bool}  # derived: the amount as printed is above zero
+item.unit_price_usd: {type: number, unit: usd}
+item.recipient_name: {type: text}  # classified
+item.recipient_type: {type: text, values: [client, employee, government_official]}  # classified
+item.venue_type: {type: text, values: [golf, sporting_event, theatre, concert, other_venue]}  # classified
+item.item_kind: {type: text, values: [mobile_phone, prescription_medication, otc_medication]}  # classified

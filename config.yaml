@@ -1,0 +1,14 @@
+# Settings that are safe to commit. Secrets go in .env.
+
+llm:
+  model: null  # the OpenRouter model ID to use
+  url: https://openrouter.ai/api/v1/chat/completions
+  temperature: 0
+  timeout_seconds: 180
+
+paths:  # relative to the project root
+  policy_docs: data/policy-docs
+  llm_cache: .cache/llm
+  rule_logic: rules/rule_logic.yaml
+  ruleset: rules/ruleset.json
+  rule_fields: rules/fields.yaml

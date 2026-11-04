@@ -1,0 +1,449 @@
+suite: submission_integrity
+
+# Amounts that contradict each other, and those that do not, by data/README.md: amount is quantity x
+# unit_price, and a USD value is its printed amount x fx_rate_to_usd. Refusal invents no violation.
+# Tolerances are in engine/money.py: half a unit plus half per unit priced, and half a cent in USD.
+#
+# exploits:     the four that once reached a clean pass.
+# unverified_usd: receipts whose USD values nothing supports, which must change no result whatever they say.
+# decided:      monetary uncertainty stays visible beside a confirmed flag.
+# adversarial:  each of Module 11C.1's cases, marked accepted and reconciled, accepted but unresolved, or
+#               explicitly rejected. Neither may get a clean pass from a value it could not verify.
+# refused, admitted, unresolved: the boundaries around them.
+#
+# No case here uses $lines: every amount is stated, as the amounts are what is being tested.
+
+templates:
+  line: &line
+    line_id: L1
+    description_raw: Monitor
+    language: en
+    quantity: 1
+    unit_price: "329.00"
+    amount: "329.00"
+    amount_usd: "329.00"
+    category: computer_accessory
+    confidence: "0.99"
+  gear: &gear
+    receipt_id: R1
+    employee_id: E-ATTACK
+    employee_country: US
+    submitted_expense_type: Computer Equipment
+    merchant_name: Electronics Store
+    mcc: "5045"
+    transaction_datetime: "2026-04-14T12:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: "329.00"
+    total_amount_usd: "329.00"
+    trip_id: T1
+    trip_nights: 5
+    itemized: true
+    line_items: [*line]
+  # At a rate, with nothing else on it to refuse
+  euro: &euro {<<: *gear, currency: EUR, fx_rate_to_usd: "1.08", total_amount: "100.00", total_amount_usd: "108.00"}
+  euro_line: &euro_line {<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "108.00"}
+  yen: &yen {<<: *gear, currency: JPY, fx_rate_to_usd: "0.0067", total_amount: "1000", total_amount_usd: "6.70"}
+  yen_line: &yen_line {<<: *line, unit_price: "1000", amount: "1000", amount_usd: "6.70"}
+  rupee: &rupee {<<: *gear, currency: INR, fx_rate_to_usd: "0.012", total_amount: "8333.33", total_amount_usd: "100.00"}
+  rupee_line: &rupee_line {<<: *line, unit_price: "8333.33", amount: "8333.33", amount_usd: "100.00"}
+  no_rate: &no_rate {<<: *gear, currency: EUR, fx_rate_to_usd: null, total_amount: "100.00", total_amount_usd: null}
+  no_rate_line: &no_rate_line {<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: null}
+  # A tip and a discount, each a line, adding up to a total of 70.00, within the meal cap.
+  food: &food {<<: *line, description_raw: Dinner, category: food_beverage, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}
+  tip: &tip {<<: *line, line_id: L2, description_raw: Gratuity, category: service_fee, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}
+  coupon: &coupon {<<: *line, line_id: L3, description_raw: Coupon, category: food_beverage, unit_price: "-10.00", amount: "-10.00", amount_usd: "-10.00"}
+  dinner: &dinner {<<: *gear, submitted_expense_type: Meals - Team, mcc: "5812", total_amount: "70.00", total_amount_usd: "70.00", line_items: [*food, *tip, *coupon]}
+
+exploits:
+  - id: inflate quantity while preserving the printed unit price and line amount
+    reason: Quantity times printed unit price was not reconciled with the line amount
+    receipts: [{<<: *gear, line_items: [{<<: *line, quantity: 100}]}]
+    expected: {error: "R1: contradictory amounts: L1 amount 329.00 contradicts quantity 100 x unit_price 329.00 = 32900.00"}
+  - id: understate USD line amount despite USD currency and a rate of one
+    reason: USD line amounts were trusted even when they contradicted the printed amounts
+    receipts: [{<<: *gear, line_items: [{<<: *line, amount_usd: "1.00"}]}]
+    expected: {error: "R1: contradictory amounts: L1 USD value 1.00 contradicts 329.00 x rate 1 = 329.00"}
+  - id: supply a conversion that contradicts the recorded FX rate
+    reason: Converted amounts were not reconciled with the supplied FX rate
+    receipts: [{<<: *gear, currency: EUR, fx_rate_to_usd: "2", total_amount_usd: "100.00", line_items: [{<<: *line, amount_usd: "100.00"}]}]
+    expected: {error: "R1: contradictory amounts: L1 USD value 100.00 contradicts 329.00 x rate 2 = 658.00; receipt total USD value 100.00 contradicts 329.00 x rate 2 = 658.00"}
+  - id: hide a non-itemized hundred-dollar stay behind a one-dollar USD total
+    reason: USD receipt totals were trusted even when they contradicted the printed total
+    receipts:
+      - <<: *gear
+        submitted_expense_type: Lodging
+        mcc: "7011"
+        total_amount: "100.00"
+        total_amount_usd: "1.00"
+        itemized: false
+        line_items: [{<<: *line, description_raw: Hotel stay, category: other, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]
+    expected: {error: "R1: contradictory amounts: receipt total USD value 1.00 contradicts 100.00 x rate 1 = 100.00"}
+
+refused:
+  # Quantity x unit price
+  - {id: unit price that does not make the amount, receipt: {<<: *gear, line_items: [{<<: *line, unit_price: "100.00"}]}, expected: "L1 amount 329.00 contradicts quantity 1 x unit_price 100.00 = 100.00"}
+  - {id: an amount understated beside a right unit price, receipt: {<<: *gear, line_items: [{<<: *line, amount: "1.00", amount_usd: "1.00"}]}, expected: "L1 amount 1.00 contradicts quantity 1 x unit_price 329.00"}
+  - {id: 3 at 3.33 just past what rounding explains, receipt: {<<: *gear, total_amount: "10.03", total_amount_usd: "10.03", line_items: [{<<: *line, quantity: 3, unit_price: "3.33", amount: "10.03", amount_usd: "10.03"}]}, expected: "L1 amount 10.03 contradicts quantity 3"}
+  - {id: 3 at 3.33 half a cent past the edge, receipt: {<<: *gear, total_amount: "10.015", total_amount_usd: "10.015", line_items: [{<<: *line, quantity: 3, unit_price: "3.33", amount: "10.015", amount_usd: "10.015"}]}, expected: "L1 amount 10.015 contradicts quantity 3"}
+  - {id: 1000 at 1.00 just past the edge, receipt: {<<: *gear, total_amount: "1005.006", total_amount_usd: "1005.006", line_items: [{<<: *line, quantity: 1000, unit_price: "1.00", amount: "1005.006", amount_usd: "1005.006"}]}, expected: "L1 amount 1005.006 contradicts quantity 1000"}
+  - {id: a unit price printed finer than a cent just past its edge, receipt: {<<: *gear, total_amount: "1000.056", total_amount_usd: "1000.056", line_items: [{<<: *line, quantity: 1000, unit_price: "1.0000", amount: "1000.056", amount_usd: "1000.056"}]}, expected: "L1 amount 1000.056 contradicts quantity 1000 x unit_price 1.0000"}
+  - {id: USD differing beyond default precision, receipt: {<<: *gear, total_amount: "999999999999999.99", total_amount_usd: "999999999999999.97", line_items: [{<<: *line, unit_price: "999999999999999.99", amount: "999999999999999.99", amount_usd: "999999999999999.99"}]}, expected: "receipt total USD value 999999999999999.97 contradicts"}
+  - {id: a negative discount with a positive unit price, receipt: {<<: *gear, line_items: [*line, {<<: *coupon, unit_price: "10.00"}]}, expected: "L3 amount -10.00 contradicts quantity 1 x unit_price 10.00"}
+  - {id: a zero amount with a price, receipt: {<<: *gear, line_items: [{<<: *line, amount: "0.00", amount_usd: "0.00"}]}, expected: "L1 amount 0.00 contradicts quantity 1 x unit_price 329.00"}
+  - {id: JPY one yen past the edge at quantity one, receipt: {<<: *yen, total_amount: "1001", total_amount_usd: "6.71", line_items: [{<<: *yen_line, amount: "1001.01", amount_usd: "6.71"}]}, expected: "L1 amount 1001.01 contradicts quantity 1 x unit_price 1000"}
+  - {id: complete itemization claimed on a receipt with no items to complete, receipt: {<<: *gear, itemized: false, itemization_complete: true}, expected: "not itemized cannot have complete itemization"}
+  - {id: a quantity of zero, receipt: {<<: *gear, line_items: [{<<: *line, quantity: 0}]}, expected: "quantity"}
+  - {id: a negative quantity, receipt: {<<: *gear, line_items: [{<<: *line, quantity: -1}]}, expected: "quantity"}
+  - {id: a fractional quantity, receipt: {<<: *gear, line_items: [{<<: *line, quantity: 1.5}]}, expected: "quantity"}
+  - {id: a unit price printed coarser than a cent has no more room than a cent, receipt: {<<: *gear, total_amount: "28.02", total_amount_usd: "28.02", line_items: [{<<: *line, unit_price: 28.0, amount: "28.02", amount_usd: "28.02"}]}, expected: "L1 amount 28.02 contradicts quantity 1 x unit_price 28.0"}
+  - {id: rupees past what paise explain, receipt: {<<: *rupee, total_amount: "1000.03", total_amount_usd: "12.00", line_items: [{<<: *rupee_line, quantity: 3, unit_price: "333.33", amount: "1000.03", amount_usd: "12.00"}]}, expected: "L1 amount 1000.03 contradicts quantity 3 x unit_price 333.33"}
+  - {id: a positive amount for a negative unit price, receipt: {<<: *gear, line_items: [{<<: *line, unit_price: "-329.00"}]}, expected: "contradicts quantity 1 x unit_price -329.00"}
+  - {id: a yen amount past what yen rounding explains, receipt: {<<: *yen, line_items: [{<<: *yen_line, quantity: 3, unit_price: "333", amount: "1003", amount_usd: "6.72"}], total_amount: "1003", total_amount_usd: "6.72"}, expected: "L1 amount 1003 contradicts quantity 3 x unit_price 333"}
+
+  # A line in USD
+  - {id: USD overstated too, receipt: {<<: *gear, line_items: [{<<: *line, amount_usd: "3290.00"}]}, expected: "L1 USD value 3290.00 contradicts 329.00 x rate 1"}
+  - {id: one tenth of a cent past half a cent, receipt: {<<: *gear, line_items: [{<<: *line, amount_usd: "329.006"}]}, expected: "L1 USD value 329.006 contradicts"}
+  - {id: USD tampered with no rate on record and as USD needs none, receipt: {<<: *gear, fx_rate_to_usd: null, line_items: [{<<: *line, amount_usd: "1.00"}]}, expected: "L1 USD value 1.00 contradicts 329.00 x rate 1"}
+  - {id: a USD receipt with a rate other than one, receipt: {<<: *gear, fx_rate_to_usd: "2"}, expected: "a USD receipt cannot have rate 2"}
+
+  # A line at a rate
+  - {id: a euro line in USD at no rate at all, receipt: {<<: *euro, line_items: [{<<: *euro_line, amount_usd: "100.00"}]}, expected: "L1 USD value 100.00 contradicts 100.00 x rate 1.08"}
+  - {id: a yen line a cent out, receipt: {<<: *yen, line_items: [{<<: *yen_line, amount_usd: "6.71"}]}, expected: "L1 USD value 6.71 contradicts 1000 x rate 0.0067"}
+  - {id: a rupee line off by the rate, receipt: {<<: *rupee, line_items: [{<<: *rupee_line, amount_usd: "8333.33"}]}, expected: "L1 USD value 8333.33 contradicts 8333.33 x rate 0.012"}
+  - {id: a discount understated in USD, receipt: {<<: *euro, line_items: [*euro_line, {<<: *coupon, amount_usd: "-5.00"}]}, expected: "L3 USD value -5.00 contradicts -10.00 x rate 1.08"}
+
+  # A total
+  - {id: an itemized USD total tampered with, receipt: {<<: *gear, total_amount_usd: "1.00"}, expected: "receipt total USD value 1.00 contradicts 329.00 x rate 1"}
+  - {id: a non-itemized euro total, receipt: {<<: *euro, itemized: false, total_amount_usd: "50.00", line_items: [{<<: *euro_line, category: other}]}, expected: "receipt total USD value 50.00 contradicts 100.00 x rate 1.08"}
+  - {id: a zero total with a USD value, receipt: {<<: *gear, total_amount: "0.00", total_amount_usd: "5.00"}, expected: "receipt total USD value 5.00 contradicts 0.00 x rate 1"}
+  - {id: a total with a zero USD value, receipt: {<<: *gear, total_amount_usd: "0.00"}, expected: "receipt total USD value 0.00 contradicts 329.00 x rate 1"}
+
+  # Every problem at once, so nothing has to be found one refusal at a time
+  - {id: each contradiction is named, receipt: {<<: *gear, total_amount_usd: "1.00", line_items: [{<<: *line, quantity: 2, amount_usd: "2.00"}]}, expected: "L1 amount 329.00 contradicts .*; L1 USD value 2.00 contradicts .*; receipt total USD value 1.00 contradicts"}
+
+  # The existing contract stands
+  - {id: a negative total, receipt: {<<: *gear, total_amount: "-5.00", total_amount_usd: "-5.00"}, expected: "total_amount -5.00 is below zero"}
+  - {id: a total with no USD value though it can be converted, receipt: {<<: *gear, total_amount_usd: null}, expected: "no total_amount_usd, though it can be converted"}
+  - {id: a line with no USD value though it can be converted, receipt: {<<: *gear, line_items: [{<<: *line, amount_usd: null}]}, expected: "no amount_usd on .*L1.*, though it can be converted"}
+
+admitted:
+  # Rounding that the tolerance is there for
+  - {id: 3 at 3.33 printed as 10.00, receipt: {<<: *gear, total_amount: "10.00", total_amount_usd: "10.00", line_items: [{<<: *line, quantity: 3, unit_price: "3.33", amount: "10.00", amount_usd: "10.00"}]}, expected: {line_items.0.amount: "10.00"}}
+  - {id: 3 at 3.33 at the very edge of rounding, receipt: {<<: *gear, total_amount: "10.01", total_amount_usd: "10.01", line_items: [{<<: *line, quantity: 3, unit_price: "3.33", amount: "10.01", amount_usd: "10.01"}]}, expected: {line_items.0.amount: "10.01"}}
+  - {id: exactly half a cent in USD, receipt: {<<: *gear, line_items: [{<<: *line, amount_usd: "329.005"}]}, expected: {line_items.0.amount_usd: "329.005"}}
+  - {id: a euro amount rounded in USD, receipt: {<<: *euro, total_amount: "70.01", total_amount_usd: "75.61", line_items: [{<<: *euro_line, unit_price: "70.01", amount: "70.01", amount_usd: "75.61"}]}, expected: {line_items.0.amount_usd: "75.61"}}
+  - {id: rupees to the nearest cent, receipt: {<<: *rupee, line_items: [*rupee_line]}, expected: {total_amount_usd: "100.00", line_items.0.amount: "8333.33"}}
+  - {id: whole yen, receipt: {<<: *yen, line_items: [*yen_line]}, expected: {total_amount: "1000", line_items.0.amount_usd: "6.70"}}
+  - {id: 3 at 333 yen printed as 1000 and as a yen is the smallest unit, receipt: {<<: *yen, line_items: [{<<: *yen_line, quantity: 3, unit_price: "333"}]}, expected: {line_items.0.amount: "1000"}}
+  - {id: an unlisted currency is treated as two decimal places, receipt: {<<: *gear, currency: GBP, fx_rate_to_usd: "1.25", total_amount: "80.00", total_amount_usd: "100.00", line_items: [{<<: *line, unit_price: "80.00", amount: "80.00", amount_usd: "100.00"}]}, expected: {currency: GBP}}
+
+  # Negative and zero lines, and totals
+  - {id: a discount line, receipt: *dinner, expected: {line_items.2.amount: "-10.00", line_items.2.amount_usd: "-10.00"}}
+  - {id: a discount at a rate, receipt: {<<: *euro, line_items: [*euro_line, {<<: *coupon, amount_usd: "-10.80"}]}, expected: {line_items.1.amount_usd: "-10.80"}}
+  - {id: a refund alone beside a zero total, receipt: {<<: *gear, total_amount: "0.00", total_amount_usd: "0.00", line_items: [*coupon]}, expected: {total_amount: "0.00", line_items.0.amount: "-10.00"}}
+  - {id: with no currency nothing short of a whole unit can be shown to be wrong, receipt: {<<: *gear, currency: null, fx_rate_to_usd: "1", total_amount: "1000", total_amount_usd: "1000", line_items: [{<<: *line, quantity: 3, unit_price: "333", amount: "1000", amount_usd: "1000"}]}, expected: {currency: null, line_items.0.amount: "1000"}}
+  - {id: a zero line, receipt: {<<: *gear, line_items: [*line, {<<: *line, line_id: L2, unit_price: "0.00", amount: "0.00", amount_usd: "0.00"}]}, expected: {line_items.1.amount: "0.00"}}
+  - {id: a zero total, receipt: {<<: *gear, total_amount: "0", total_amount_usd: "0", line_items: [{<<: *line, unit_price: "0", amount: "0", amount_usd: "0"}]}, expected: {total_amount: "0", total_amount_usd: "0"}}
+  - {id: numbers as floats, receipt: {<<: *gear, total_amount: 0.3, total_amount_usd: 0.3, line_items: [{<<: *line, quantity: 3, unit_price: 0.1, amount: 0.3, amount_usd: 0.3}]}, expected: {total_amount: "0.3", line_items.0.unit_price: "0.1"}}
+
+  # What cannot be compared is left as it is
+  - {id: USD with no rate on record, receipt: {<<: *gear, fx_rate_to_usd: null}, expected: {fx_rate_to_usd: null, total_amount_usd: "329.00"}}
+  - {id: no rate leaves USD values unset, receipt: {<<: *no_rate, line_items: [*no_rate_line]}, expected: {fx_rate_to_usd: null, total_amount_usd: null, line_items.0.amount_usd: null}}
+  - {id: no total at all, receipt: {<<: *gear, total_amount: null, total_amount_usd: null}, expected: {total_amount: null, total_amount_usd: null}}
+  - {id: a USD total with no printed one has nothing to contradict it, receipt: {<<: *gear, total_amount: null}, expected: {total_amount: null, total_amount_usd: "329.00"}}
+  - {id: a USD value beside a missing rate cannot be checked, receipt: {<<: *no_rate, total_amount_usd: "1.00", line_items: [{<<: *no_rate_line, amount_usd: "1.00"}]}, expected: {total_amount_usd: "1.00"}}
+  - {id: no currency and no rate, receipt: {<<: *gear, currency: null, fx_rate_to_usd: null, total_amount_usd: "1.00", line_items: [{<<: *line, amount_usd: "1.00"}]}, expected: {currency: null}}
+  - {id: lines that do not add up are admitted when none says they should, receipt: {<<: *gear, total_amount: "500.00", total_amount_usd: "500.00"}, expected: {total_amount: "500.00"}}
+
+  # Tolerance, mathematically: h + quantity x min(h, half the unit price's last digit)
+  - {id: 1000 at 1.00 at the edge, receipt: {<<: *gear, total_amount: "1005.005", total_amount_usd: "1005.005", line_items: [{<<: *line, quantity: 1000, unit_price: "1.00", amount: "1005.005", amount_usd: "1005.005"}]}, expected: {line_items.0.amount: "1005.005"}}
+  - {id: a unit price printed finer than a cent is held to it, receipt: {<<: *gear, total_amount: "1000.055", total_amount_usd: "1000.055", line_items: [{<<: *line, quantity: 1000, unit_price: "1.0000", amount: "1000.055", amount_usd: "1000.055"}]}, expected: {line_items.0.amount: "1000.055"}}
+  - {id: a unit price printed coarser than a cent is not given more room, receipt: {<<: *gear, total_amount: "28.005", total_amount_usd: "28.005", line_items: [{<<: *line, unit_price: 28.0, amount: "28.01", amount_usd: "28.01"}]}, expected: {total_amount_usd: "28.005"}}
+  - {id: very small amounts, receipt: {<<: *gear, total_amount: "0.0000000001", total_amount_usd: "0.0000000001", line_items: [{<<: *line, unit_price: "0.0000000001", amount: "0.0000000001", amount_usd: "0.0000000001"}]}, expected: {total_amount: "1E-10"}}
+  - {id: amounts near the limit stay exact, receipt: {<<: *gear, total_amount: "999999999999999.99", total_amount_usd: "999999999999999.99", line_items: [{<<: *line, unit_price: "999999999999999.99", amount: "999999999999999.99", amount_usd: "999999999999999.99"}]}, expected: {total_amount: "999999999999999.99"}}
+  - {id: a large line in euros at the rate, receipt: {<<: *euro, total_amount: "100000000000.00", total_amount_usd: "108000000000.00", line_items: [{<<: *euro_line, unit_price: "100000000000.00", amount: "100000000000.00", amount_usd: "108000000000.00"}]}, expected: {total_amount_usd: "108000000000.00"}}
+
+unresolved:
+  - id: a missing rate is DOC-04, and the USD threshold stays open with no conversion invented
+    receipt: {<<: *no_rate, line_items: [*no_rate_line]}
+    expected: {disposition: flag, decided: false, active: [DOC-04], open_includes: [TECH-02]}
+  - id: a non-itemized receipt with a missing rate leaves DOC-01 open
+    receipt: {<<: *no_rate, submitted_expense_type: Lodging, mcc: "7011", itemized: false, line_items: [{<<: *no_rate_line, category: other}]}
+    expected: {disposition: flag, decided: false, active: [DOC-04], open_includes: [DOC-01]}
+  - id: no currency and no rate is DOC-04 too
+    receipt: {<<: *no_rate, currency: null, line_items: [*no_rate_line]}
+    expected: {disposition: flag, decided: false, active: [DOC-04]}
+  - id: a USD value beside a missing rate cannot reach a clean pass
+    receipt: {<<: *no_rate, total_amount_usd: "1.00", line_items: [{<<: *no_rate_line, amount_usd: "1.00"}]}
+    expected: {disposition: flag, active: [DOC-04]}
+  - id: no printed total is DOC-02, not a contradiction
+    receipt: {<<: *gear, total_amount: null, total_amount_usd: null, pre_approval_ref: PA-1}
+    expected: {disposition: flag, decided: true, active: [DOC-02]}
+  - id: no rate leaves USD-dependent rules open, whatever USD value was supplied
+    receipt: {<<: *no_rate, total_amount_usd: "1.00", line_items: [{<<: *no_rate_line, amount_usd: "1.00"}]}
+    expected: {disposition: flag, decided: false, active: [DOC-04], open_includes: [TECH-02]}
+  - id: a valid discount at a rate reaches the rules as it was
+    receipt: {<<: *euro, pre_approval_ref: PA-1, total_amount: "90.00", total_amount_usd: "97.20", line_items: [*euro_line, {<<: *coupon, category: computer_accessory, amount_usd: "-10.80"}]}
+    expected: {disposition: pass, decided: true, active: []}
+
+unsupported_refused:
+  - {id: a currency the contract has no precision for, receipt: {<<: *gear, currency: CHF, fx_rate_to_usd: "1.1", total_amount: "10.00", total_amount_usd: "11.00", line_items: [{<<: *line, unit_price: "10.00", amount: "10.00", amount_usd: "11.00"}]}, expected: "R1: unsupported amounts: currency CHF has no precision in input contract 1"}
+  - {id: an amount past the limit, receipt: {<<: *gear, total_amount: "1000000000000000", total_amount_usd: "1000000000000000", line_items: [{<<: *line, unit_price: "1000000000000000", amount: "1000000000000000", amount_usd: "1000000000000000"}]}, expected: "total_amount 1000000000000000 is beyond the contract's limits"}
+  - {id: an exponent past the limit, receipt: {<<: *gear, total_amount: "1E+999999", total_amount_usd: "1E+999999", line_items: [*line]}, expected: "total_amount 1E\\+999999 is beyond"}
+  - {id: more decimal places than the limit, receipt: {<<: *gear, line_items: [{<<: *line, unit_price: "0.00000000001", amount: "0.00", amount_usd: "0.00"}]}, expected: "L1 unit_price 1E-11 is beyond"}
+  - {id: a rate with more decimal places than the limit, receipt: {<<: *euro, fx_rate_to_usd: "1.08000000000", line_items: [*euro_line]}, expected: "fx_rate_to_usd 1.08000000000 is beyond"}
+
+# The fifteen of Module 11C.1
+adversarial:
+  # 1 to 4: conversion evidence
+  - id: 1 a non-USD receipt with no rate and USD values supplied
+    result: unresolved
+    receipt: {<<: *no_rate, total_amount_usd: "1.00", line_items: [{<<: *no_rate_line, amount_usd: "1.00"}]}
+    expected: {monetary: {fx_rate: unverified, line_conversion: unverified, total_conversion: unverified}, disposition: flag, decided: false, active: [DOC-04], open_includes: [TECH-02]}
+  - id: 2 a non-USD receipt with no rate and no USD values
+    result: unresolved
+    receipt: {<<: *no_rate, line_items: [*no_rate_line]}
+    expected: {monetary: {fx_rate: unverified, line_conversion: unverified, total_conversion: unverified}, disposition: flag, decided: false, active: [DOC-04], open_includes: [TECH-02]}
+  - id: 3 a USD receipt with no rate on record
+    result: reconciled
+    receipt: {<<: *gear, fx_rate_to_usd: null, pre_approval_ref: PA-1}
+    expected: {monetary: {fx_rate: reconciled, line_conversion: reconciled, total_conversion: reconciled, line_sum: reconciled}, disposition: pass, decided: true, active: []}
+  - id: 4 a USD receipt with a rate other than one
+    result: rejected
+    receipt: {<<: *gear, fx_rate_to_usd: "1.08", total_amount_usd: "355.32", line_items: [{<<: *line, amount_usd: "355.32"}]}
+    expected: {error: "R1: contradictory amounts: a USD receipt cannot have rate 1.08"}
+
+  # 5 to 7: conversions
+  - id: 5 a valid non-USD conversion
+    result: reconciled
+    receipt: {<<: *euro, pre_approval_ref: PA-1, line_items: [*euro_line]}
+    expected: {monetary: {fx_rate: reconciled, line_arithmetic: reconciled, line_conversion: reconciled, total_conversion: reconciled, line_sum: reconciled}, disposition: pass, decided: true, active: []}
+  - id: 6 a wrong non-USD line conversion
+    result: rejected
+    receipt: {<<: *euro, line_items: [{<<: *euro_line, amount_usd: "100.00"}]}
+    expected: {error: "R1: contradictory amounts: L1 USD value 100.00 contradicts 100.00 x rate 1.08 = 108.00"}
+  - id: 7 a wrong non-USD receipt conversion
+    result: rejected
+    receipt: {<<: *euro, total_amount_usd: "1.00", line_items: [*euro_line]}
+    expected: {error: "R1: contradictory amounts: receipt total USD value 1.00 contradicts 100.00 x rate 1.08 = 108.00"}
+
+  # 8 to 10: itemization
+  - id: 8 complete itemization with a line sum that does not reach the total
+    result: rejected
+    receipt: {<<: *dinner, itemization_complete: true, total_amount: "500.00", total_amount_usd: "500.00"}
+    expected: {error: "R1: contradictory amounts: receipt total 500.00 contradicts its complete itemization, whose lines add up to 70.00: a discrepancy of 430.00"}
+  - id: 8 complete itemization with lines above the total
+    result: rejected
+    receipt: {<<: *dinner, itemization_complete: true, total_amount: "50.00", total_amount_usd: "50.00"}
+    expected: {error: "receipt total 50.00 contradicts its complete itemization, whose lines add up to 70.00: a discrepancy of -20.00"}
+  - id: 8 complete itemization just past rounding across three lines
+    result: rejected
+    receipt: {<<: *dinner, itemization_complete: true, total_amount: "70.03", total_amount_usd: "70.03"}
+    expected: {error: "whose lines add up to 70.00: a discrepancy of 0.03"}
+  - id: 8 complete itemization in yen just past a whole yen
+    result: rejected
+    receipt: {<<: *yen, itemization_complete: true, total_amount: "1002", total_amount_usd: "6.71", line_items: [{<<: *yen_line, amount_usd: "6.70"}]}
+    expected: {error: "whose lines add up to 1000: a discrepancy of 2"}
+  - id: 9 complete itemization with a tip, a fee and a discount adds each once
+    result: reconciled
+    receipt: {<<: *dinner, itemization_complete: true}
+    expected: {monetary: {line_sum: reconciled, line_arithmetic: reconciled}, decided: true, disposition: pass, active: []}
+  - id: 9 complete itemization at the edge of rounding
+    result: reconciled
+    receipt: {<<: *dinner, itemization_complete: true, total_amount: "70.02", total_amount_usd: "70.02"}
+    expected: {monetary: {line_sum: reconciled}, decided: true, disposition: pass}
+  - id: 10 itemization declared incomplete is never called reconciled, even when it adds up
+    result: unresolved
+    receipt: {<<: *dinner, itemization_complete: false}
+    expected: {monetary: {line_sum: unverified}, disposition: review, decided: false, active: []}
+  - id: 10 itemization not declared with spend no line shows gets no clean pass
+    result: unresolved
+    receipt: {<<: *dinner, total_amount: "500.00", total_amount_usd: "500.00"}
+    expected: {monetary: {line_sum: unverified, line_sum_discrepancy: "430.00"}, disposition: review, decided: false, active: [MEAL-02]}
+  - id: 10 itemization not declared with lines above the total gets no clean pass
+    result: unresolved
+    receipt: {<<: *dinner, total_amount: "5.00", total_amount_usd: "5.00"}
+    expected: {monetary: {line_sum: unverified, line_sum_discrepancy: "-65.00"}, disposition: review, decided: false, active: []}
+  - id: 10 itemization not declared that adds up is reconciled
+    result: reconciled
+    receipt: *dinner
+    expected: {monetary: {line_sum: reconciled, line_sum_discrepancy: null}, disposition: pass, decided: true}
+  - id: 10 a confirmed exception still flags beside lines that do not account for the total
+    result: unresolved
+    receipt: {<<: *gear, total_amount: "500.00", total_amount_usd: "500.00"}
+    expected: {monetary: {line_sum: unverified}, disposition: flag, decided: false, active: [TECH-02]}
+
+  # 11 and 12
+  - id: 11 a non-itemized receipt with a valid total and conversion
+    result: reconciled
+    receipt: {<<: *euro, submitted_expense_type: Lodging, mcc: "7011", itemized: false, total_amount: "50.00", total_amount_usd: "54.00", line_items: [{<<: *euro_line, category: other, unit_price: "50.00", amount: "50.00", amount_usd: "54.00"}]}
+    expected: {monetary: {line_sum: not_applicable, total_conversion: reconciled, line_conversion: reconciled}, disposition: pass, decided: true, active: []}
+  - id: 12 high quantity at the edge of rounding
+    result: reconciled
+    receipt: {<<: *gear, pre_approval_ref: PA-1, total_amount: "1005.005", total_amount_usd: "1005.005", line_items: [{<<: *line, quantity: 1000, unit_price: "1.00", amount: "1005.005", amount_usd: "1005.005"}]}
+    expected: {monetary: {line_arithmetic: reconciled}, decided: true}
+  - id: 12 high quantity just past it
+    result: rejected
+    receipt: {<<: *gear, total_amount: "1005.006", total_amount_usd: "1005.006", line_items: [{<<: *line, quantity: 1000, unit_price: "1.00", amount: "1005.006", amount_usd: "1005.006"}]}
+    expected: {error: "R1: contradictory amounts: L1 amount 1005.006 contradicts quantity 1000 x unit_price 1.00 = 1000.00"}
+
+  # 13 and 14
+  - id: 13 a negative adjustment reconciles, in the sum and at a rate
+    result: reconciled
+    receipt: {<<: *euro, pre_approval_ref: PA-1, total_amount: "90.00", total_amount_usd: "97.20", line_items: [*euro_line, {<<: *coupon, category: computer_accessory, amount_usd: "-10.80"}]}
+    expected: {monetary: {line_sum: reconciled, line_conversion: reconciled, total_conversion: reconciled}, disposition: pass, decided: true}
+  # A rate with no currency verifies nothing, however well the USD values agree with it.
+  - id: 1 a rate and USD values that agree, with no currency
+    result: unresolved
+    receipt: {<<: *gear, currency: null, fx_rate_to_usd: "1"}
+    expected: {monetary: {fx_rate: unverified, line_conversion: unverified, total_conversion: unverified}, disposition: flag, decided: false, active: [DOC-04], open_includes: [TECH-02]}
+  - id: 1 a rate and USD values that disagree, with no currency, is no contradiction either
+    result: unresolved
+    receipt: {<<: *gear, currency: null, fx_rate_to_usd: "2"}
+    expected: {monetary: {fx_rate: unverified, line_conversion: unverified, total_conversion: unverified}, disposition: flag, decided: false, active: [DOC-04], open_includes: [TECH-02]}
+  - id: 1 a rate with no currency and no USD values is admitted, as nothing can be converted
+    result: unresolved
+    receipt: {<<: *gear, currency: null, fx_rate_to_usd: "1", total_amount_usd: null, line_items: [{<<: *line, amount_usd: null}]}
+    expected: {monetary: {fx_rate: unverified, line_conversion: unverified, total_conversion: unverified}, disposition: flag, decided: false, active: [DOC-04], open_includes: [TECH-02]}
+
+  - id: 14 no totals at all
+    result: unresolved
+    receipt: {<<: *gear, total_amount: null, total_amount_usd: null}
+    expected: {monetary: {total_conversion: not_applicable, line_sum: not_applicable}, disposition: flag, active: [DOC-02, TECH-02]}
+  - id: 14 a USD total with no printed total is not read, so DOC-01 stays open beside DOC-02
+    result: unresolved
+    receipt: {<<: *gear, submitted_expense_type: Lodging, mcc: "7011", itemized: false, total_amount: null, total_amount_usd: "1.00", line_items: [{<<: *line, category: other, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}
+    expected: {monetary: {total_conversion: unverified}, disposition: flag, decided: false, active: [DOC-02], open_includes: [DOC-01]}
+
+# Every path a USD value can take. The runner gives each receipt with no verifiable conversion its USD values
+# as null, as "1.00", and as a huge sentinel, and all three must give one result, holding no trace of them.
+unverified_usd:
+  - id: a policy check on an item, TECH-02
+    complete: true
+    receipts: [{<<: *no_rate, line_items: [*no_rate_line]}]
+    expected: {R1: {rules: {TECH-02: undetermined}}}
+  - id: a policy check on a receipt total, DOC-01
+    complete: true
+    receipts: [{<<: *no_rate, submitted_expense_type: Lodging, mcc: "7011", itemized: false, line_items: [{<<: *no_rate_line, category: other}]}]
+    expected: {R1: {rules: {DOC-01: undetermined}}}
+  - id: a policy check on a meal total, MEAL-02
+    complete: true
+    receipts: [{<<: *no_rate, submitted_expense_type: Meals - Team, mcc: "5812", line_items: [{<<: *no_rate_line, category: food_beverage}]}]
+    expected: {R1: {rules: {MEAL-01: undetermined, MEAL-02: undetermined}}}
+  - id: an aggregate on one receipt, ALC-02
+    complete: true
+    receipts: [{<<: *no_rate, submitted_expense_type: Client Entertainment, mcc: "5812", attendee_count: 2, line_items: [{<<: *no_rate_line, category: alcohol}]}]
+    expected: {R1: {rules: {ALC-02: undetermined}}}
+  - id: an aggregate per recipient, GIFT-01
+    complete: true
+    receipts: [{<<: *no_rate, submitted_expense_type: Client Gifts, mcc: "5947", line_items: [{<<: *no_rate_line, category: gift, recipient_name: Ana, recipient_type: client}]}]
+    expected: {R1: {rules: {GIFT-01: undetermined}}}
+  - id: an aggregate across a day, with a verified receipt beside it
+    complete: true
+    receipts:
+      - {<<: *no_rate, submitted_expense_type: Meals - Team, mcc: "5812", line_items: [{<<: *no_rate_line, category: food_beverage}]}
+      - {<<: *gear, receipt_id: R2, merchant_name: Other Place, submitted_expense_type: Meals - Team, mcc: "5812", total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *line, line_id: L2, category: food_beverage, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+    expected: {R1: {rules: {MEAL-01: undetermined}}, R2: {rules: {MEAL-01: undetermined}}}
+  - id: an aggregate across a trip, with a verified receipt beside it
+    complete: true
+    receipts:
+      - {<<: *no_rate, submitted_expense_type: Travel - Other, mcc: "5651", line_items: [{<<: *no_rate_line, category: health_otc}]}
+      - {<<: *gear, receipt_id: R2, merchant_name: Other Place, submitted_expense_type: Travel - Other, mcc: "5651", total_amount: "20.00", total_amount_usd: "20.00", line_items: [{<<: *line, line_id: L2, category: health_otc, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}]}
+    expected: {R1: {rules: {HEALTH-01: undetermined}}, R2: {rules: {HEALTH-01: undetermined}}}
+  - id: a split across receipts, TIME-03
+    complete: true
+    receipts:
+      - {<<: *no_rate, submitted_expense_type: Lodging, mcc: "7011", itemized: false, line_items: [{<<: *no_rate_line, category: other}]}
+      - {<<: *gear, receipt_id: R2, submitted_expense_type: Lodging, mcc: "7011", itemized: false, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *line, line_id: L2, category: other, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+    expected: {R1: {rules: {TIME-03: undetermined}}, R2: {rules: {TIME-03: undetermined}}}
+  - id: a replacement, GIFT-04 over GIFT-01 on an official's line
+    complete: true
+    receipts: [{<<: *no_rate, submitted_expense_type: Client Gifts, mcc: "5947", line_items: [{<<: *no_rate_line, category: gift, recipient_name: Xu, recipient_type: government_official}]}]
+    expected: {R1: {rules: {GIFT-04: confirmed}}}
+  - id: a regional replacement, REG-01 over the alcohol rules
+    complete: true
+    receipts: [{<<: *no_rate, employee_country: IN, submitted_expense_type: Client Entertainment, mcc: "5812", attendee_count: 2, line_items: [{<<: *no_rate_line, category: alcohol}]}]
+    expected: {R1: {rules: {REG-01: confirmed}}}
+  - id: a carve-out, the baggage allowance across receipts
+    complete: true
+    receipts:
+      - {<<: *no_rate, submitted_expense_type: Travel - Other, mcc: "5651", baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *no_rate_line, category: clothing}]}
+      - {<<: *gear, receipt_id: R2, merchant_name: Other Place, submitted_expense_type: Travel - Other, mcc: "5651", baggage_delay_ref: BAG-1, baggage_delay_hours: "30", total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *line, line_id: L2, category: clothing, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+    expected: {R1: {rules: {PERS-02: undetermined}}, R2: {rules: {PERS-02: undetermined}}}
+  - id: an inevitable-violation proof, which cannot rest on a USD value
+    complete: true
+    receipts: [{<<: *no_rate, submitted_expense_type: Client Gifts, mcc: "5947", line_items: [{<<: *no_rate_line, category: gift, recipient_name: Xu}]}]
+    expected: {R1: {rules: {GIFT-01: undetermined, GIFT-04: undetermined}}}
+  - id: a proof beside a verified receipt, with the unverified one in the same split
+    complete: true
+    receipts:
+      - {<<: *no_rate, submitted_expense_type: Client Gifts, mcc: "5947", line_items: [{<<: *no_rate_line, category: gift, recipient_name: Xu}]}
+      - {<<: *gear, receipt_id: R2, submitted_expense_type: Client Gifts, mcc: "5947", total_amount: "30.00", total_amount_usd: "30.00", line_items: [{<<: *line, line_id: L2, category: gift, recipient_name: Xu, recipient_type: client, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+    expected: {R1: {rules: {TIME-03: undetermined}}, R2: {rules: {TIME-03: undetermined}}}
+  - id: with no currency, though a rate is given
+    complete: true
+    receipts: [{<<: *no_rate, currency: null, fx_rate_to_usd: "1", line_items: [*no_rate_line]}]
+    expected: {R1: {rules: {TECH-02: undetermined}}}
+  - id: with no printed total, the USD total alone is unverified
+    complete: true
+    receipts: [{<<: *gear, submitted_expense_type: Lodging, mcc: "7011", itemized: false, total_amount: null, line_items: [{<<: *line, category: other}]}]
+    expected: {R1: {rules: {DOC-01: undetermined}}}
+
+decided:
+  - id: lines that do not account for the total stay visible beside a confirmed flag
+    receipt: {<<: *gear, total_amount: "500.00", total_amount_usd: "500.00"}
+    expected:
+      disposition: flag
+      decided: false
+      active: [TECH-02]
+      monetary: {line_sum: unverified, line_sum_discrepancy: "171.00"}
+      reasons: [exception_flags, lines_do_not_account_for_total]
+  - id: declared incomplete itemization stays visible beside a confirmed flag
+    receipt: {<<: *gear, itemization_complete: false}
+    expected:
+      disposition: flag
+      decided: false
+      active: [TECH-02]
+      monetary: {line_sum: unverified}
+      reasons: [exception_flags, lines_do_not_account_for_total]
+  - id: an unverified USD value a rule needs leaves it undecided beside a confirmed flag
+    receipt: {<<: *no_rate, line_items: [*no_rate_line]}
+    expected:
+      disposition: flag
+      decided: false
+      active: [DOC-04]
+      monetary: {fx_rate: unverified, line_conversion: unverified, total_conversion: unverified}
+      reasons: [exception_flags, incomplete_evidence]
+  # Decided says every rule was evaluated. No rule here reads USD, so all were, and the states still show it.
+  - id: an unverified USD value no rule needs is decided, and the state still shows it
+    receipt: {<<: *no_rate, submitted_expense_type: Office Supplies, mcc: "5943", line_items: [{<<: *no_rate_line, category: office_supplies}]}
+    expected:
+      disposition: flag
+      decided: true
+      active: [DOC-04]
+      monetary: {fx_rate: unverified, line_conversion: unverified, total_conversion: unverified, line_sum: reconciled}
+      reasons: [exception_flags]
+  - id: a confirmed exception does not hide what a low exception leaves unverified
+    receipt: {<<: *no_rate, submitted_expense_type: Travel - Other, mcc: "5499", line_items: [{<<: *no_rate_line, category: tobacco}, {<<: *no_rate_line, line_id: L2, category: health_otc, unit_price: "0.00", amount: "0.00"}]}
+    expected:
+      disposition: flag
+      decided: false
+      active: [DOC-04, PERS-03]
+      monetary: {line_conversion: unverified}
+      reasons: [exception_flags, incomplete_evidence]
+
+# itemization_complete is a claim. The runner checks it can only add scrutiny, by giving each receipt each value.
+itemization_claims:
+  - id: lines that add up
+    receipt: *dinner
+    expected: {absent: pass, "true": pass, "false": review}
+  - id: lines below the total
+    receipt: {<<: *dinner, total_amount: "500.00", total_amount_usd: "500.00"}
+    expected: {absent: review, "true": refused, "false": review}
+  - id: lines above the total
+    receipt: {<<: *dinner, total_amount: "5.00", total_amount_usd: "5.00"}
+    expected: {absent: review, "true": refused, "false": review}
+  - id: a confirmed exception beside lines below the total
+    receipt: {<<: *gear, total_amount: "500.00", total_amount_usd: "500.00"}
+    expected: {absent: flag, "true": refused, "false": flag}

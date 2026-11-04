@@ -1,0 +1,324 @@
+suite: adversarial
+
+# Three receipts by one employee on one day, through evaluate_receipts only. Every expectation comes
+# from the policy text and the rules, not from what the engine happened to do.
+#
+# scenarios:     `receipts` with `complete`. expected maps each receipt ID to any of: disposition;
+#                decided; active and unresolved, as rule IDs; severities, by rule; uncertainty, by
+#                line_id, field and state; audit, by rule_id and resolution; open_includes and
+#                open_excludes, rule IDs that must and must not be open.
+#
+# R1 at 0.30: the wine is left out under EXC-03. The ribeye and gratuity are $100 known, over the $75
+# domestic cap, so MEAL-01 stands. TIME-03 needs two receipts at one merchant on one date.
+# R2: a $329 accessory, over TECH-02's $200, with no pre-approval. The type covers accessories.
+# R3: tobacco is PERS-03. Travel - Other does not cover tobacco in DOC-03's table, so DOC-03 fires too.
+
+templates:
+  line: &line
+    language: en
+    quantity: 1
+  ribeye: &ribeye {<<: *line, line_id: R1-L1, description_raw: Ribeye, category: food_beverage, unit_price: "90.00", amount: "90.00", amount_usd: "90.00", confidence: "0.95"}
+  wine: &wine {<<: *line, line_id: R1-L2, description_raw: Glass of wine, category: alcohol, unit_price: "20.00", amount: "20.00", amount_usd: "20.00", confidence: "0.30"}
+  # The taxonomy puts a gratuity in service_fee. There is no gratuity category.
+  gratuity: &gratuity {<<: *line, line_id: R1-L3, description_raw: Gratuity, category: service_fee, unit_price: "10.00", amount: "10.00", amount_usd: "10.00", confidence: "0.95"}
+  monitor: &monitor {<<: *line, line_id: R2-L1, description_raw: Monitor, category: computer_accessory, unit_price: "329.00", amount: "329.00", amount_usd: "329.00", confidence: "0.99"}
+  cigarettes: &cigarettes {<<: *line, line_id: R3-L1, description_raw: Cigarettes, category: tobacco, unit_price: "25.00", amount: "25.00", amount_usd: "25.00", confidence: "0.95"}
+  coffee: &coffee {<<: *line, line_id: R4-L1, description_raw: Coffee, category: food_beverage, unit_price: "5.00", amount: "5.00", amount_usd: "5.00", confidence: "0.95"}
+  eighty: &eighty {<<: *ribeye, unit_price: "80.00", amount: "80.00", amount_usd: "80.00"}
+  coupon: &coupon {<<: *line, line_id: R1-L2, description_raw: Coupon, category: null, unit_price: "-10.00", amount: "-10.00", amount_usd: "-10.00", confidence: "0.95"}
+  shared: &shared
+    employee_id: E-1042
+    employee_country: US
+    transaction_datetime: "2026-04-14T19:30:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    trip_id: TRIP-0091
+    trip_nights: 3
+    itemized: true
+  r1: &r1 {<<: *shared, receipt_id: R1, merchant_name: Verona Grill, mcc: "5812", submitted_expense_type: Meals - Individual, total_amount: "120.00", total_amount_usd: "120.00", line_items: [*ribeye, *wine, *gratuity]}
+  r2: &r2 {<<: *shared, receipt_id: R2, merchant_name: Compu World, mcc: "5045", submitted_expense_type: Computer Equipment, total_amount: "329.00", total_amount_usd: "329.00", line_items: [*monitor]}
+  # 5499 is in no risk tier. A cigar store's 5993 would add MCC-01, which is not what this tests.
+  r3: &r3 {<<: *shared, receipt_id: R3, merchant_name: Corner Store, mcc: "5499", submitted_expense_type: Travel - Other, total_amount: "25.00", total_amount_usd: "25.00", line_items: [*cigarettes]}
+  r4: &r4 {<<: *shared, receipt_id: R4, merchant_name: Verona Grill, mcc: "5812", submitted_expense_type: Meals - Individual, transaction_datetime: "2026-04-14T21:00:00", total_amount: "5.00", total_amount_usd: "5.00", line_items: [*coffee]}
+  # The two that the wine does not touch.
+  r2_stands: &r2_stands {disposition: flag, decided: true, active: [TECH-02], unresolved: [], uncertainty: [], audit: [], open_excludes: [TIME-03]}
+  r3_stands: &r3_stands {disposition: flag, decided: true, active: [DOC-03, PERS-03], unresolved: [], uncertainty: [], audit: [], open_excludes: [TIME-03]}
+
+scenarios:
+  - id: the three receipts
+    complete: true
+    receipts: [*r1, *r2, *r3]
+    expected:
+      R1:
+        disposition: flag
+        decided: false
+        active: [MEAL-01]
+        severities: {MEAL-01: medium}
+        unresolved: []
+        uncertainty: [{line_id: R1-L2, field: category, state: low_confidence}]
+        open_includes: [ALC-01]
+        open_excludes: [TIME-03]
+      R2: {<<: *r2_stands, severities: {TECH-02: medium}}
+      R3: {<<: *r3_stands, severities: {DOC-03: medium, PERS-03: high}}
+
+  # 1. A missing category is uncertain as low confidence is, and the known lines still breach
+  - id: the wine with no category
+    complete: true
+    receipts: [{<<: *r1, line_items: [*ribeye, {<<: *wine, category: null}, *gratuity]}, *r2, *r3]
+    expected:
+      R1:
+        disposition: flag
+        decided: false
+        active: [MEAL-01]
+        uncertainty: [{line_id: R1-L2, field: category, state: missing}]
+        open_includes: [ALC-01]
+        open_excludes: [TIME-03]
+      R2: *r2_stands
+      R3: *r3_stands
+
+  # 2. The threshold is inclusive, so the wine is read: ALC-01 on a solo meal, with the cap on all $120
+  - id: the wine exactly at the threshold
+    complete: true
+    receipts: [{<<: *r1, line_items: [*ribeye, {<<: *wine, confidence: "0.50"}, *gratuity]}, *r2, *r3]
+    expected:
+      R1:
+        disposition: flag
+        decided: true
+        active: [ALC-01, MEAL-01]
+        severities: {ALC-01: high, MEAL-01: medium}
+        uncertainty: []
+        open_excludes: [ALC-01, TIME-03]
+      R2: *r2_stands
+      R3: *r3_stands
+  - id: the wine just below the threshold
+    complete: true
+    receipts: [{<<: *r1, line_items: [*ribeye, {<<: *wine, confidence: "0.49"}, *gratuity]}, *r2, *r3]
+    expected:
+      R1: {disposition: flag, decided: false, active: [MEAL-01], uncertainty: [{line_id: R1-L2, field: category, state: low_confidence}]}
+      R2: *r2_stands
+      R3: *r3_stands
+
+  # 3. A partial context. Unseen receipts could raise R1's cap to $100, the international one, and
+  # its known $100 does not exceed that, so nothing is proved. R2 and R3 stand on their own lines,
+  # with TIME-03 open on all three. Neither of theirs is a rule TIME-03 can replace.
+  - id: a partial context
+    complete: false
+    receipts: [*r1, *r2, *r3]
+    expected:
+      R1:
+        disposition: review
+        decided: false
+        active: []
+        unresolved: []
+        uncertainty: [{line_id: R1-L2, field: category, state: low_confidence}]
+        open_includes: [ALC-01, MEAL-01, TIME-03]
+      R2: {disposition: flag, decided: false, active: [TECH-02], unresolved: [], open_includes: [TIME-03]}
+      R3: {disposition: flag, decided: false, active: [DOC-03, PERS-03], unresolved: [], open_includes: [TIME-03]}
+
+  # 4. A second receipt at one merchant is not a split: each must be at or below the cap
+  - id: a second receipt at the merchant with every line known is no split
+    complete: true
+    receipts: [{<<: *r1, line_items: [*ribeye, {<<: *wine, confidence: "0.95"}, *gratuity]}, *r2, *r3, *r4]
+    expected:
+      R1: {disposition: flag, decided: true, active: [ALC-01, MEAL-01], open_excludes: [TIME-03]}
+      R2: *r2_stands
+      R3: *r3_stands
+      # It adds to the same day's meals, and MEAL-01 is raised on every receipt contributing.
+      R4: {disposition: flag, decided: true, active: [MEAL-01], open_excludes: [TIME-03]}
+  - id: a second receipt that makes a real split raises TIME-03 and replaces the cap
+    complete: true
+    receipts:
+      - {<<: *r1, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *ribeye, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - *r2
+      - *r3
+      - {<<: *r4, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *coffee, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+    expected:
+      R1: {disposition: flag, decided: true, active: [TIME-03], audit: [{rule_id: MEAL-01, resolution: replaced}]}
+      R2: *r2_stands
+      R3: *r3_stands
+      R4: {disposition: flag, decided: true, active: [TIME-03], audit: [{rule_id: MEAL-01, resolution: replaced}]}
+  - id: two uncertain receipts that could be a split stay open
+    complete: true
+    receipts:
+      - {<<: *r1, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *ribeye, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *wine, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+      - *r2
+      - *r3
+      - {<<: *r4, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *coffee, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], open_includes: [TIME-03]}
+      R2: *r2_stands
+      R3: *r3_stands
+      R4: {disposition: review, decided: false, active: [], open_includes: [TIME-03]}
+
+  # 5. An approval reaches only the rule that accepts its kind, on its own receipt
+  - id: a pre-approval on R2
+    complete: true
+    receipts: [*r1, {<<: *r2, pre_approval_ref: PA-2026-0001}, *r3]
+    expected:
+      R1: {disposition: flag, decided: false, active: [MEAL-01], audit: []}
+      R2: {disposition: pass, decided: true, active: [], audit: [{rule_id: TECH-02, resolution: waived}]}
+      R3: *r3_stands
+  - id: an approval of the wrong kind on R2 waives nothing
+    complete: true
+    receipts: [*r1, {<<: *r2, vp_approval_ref: VP-1}, *r3]
+    expected:
+      R1: {disposition: flag, decided: false, active: [MEAL-01]}
+      R2: *r2_stands
+      R3: *r3_stands
+  - id: a pre-approval on R3 waives neither of its findings
+    complete: true
+    receipts: [*r1, *r2, {<<: *r3, pre_approval_ref: PA-2026-0001}]
+    expected:
+      R1: {disposition: flag, decided: false, active: [MEAL-01]}
+      R2: *r2_stands
+      R3: *r3_stands
+
+  # 6. Reversed order is tested on every scenario by the runner, and this states it outright
+  - id: the three receipts in reverse
+    complete: true
+    receipts: [*r3, *r2, *r1]
+    expected:
+      R1: {disposition: flag, decided: false, active: [MEAL-01], open_excludes: [TIME-03]}
+      R2: *r2_stands
+      R3: *r3_stands
+
+  # The gratuity as first described: `gratuity` is not in the catalog, so the line is uncertain too.
+  # The ribeye alone is $90, still over $75, so MEAL-01 stands either way.
+  - id: a gratuity with a category outside the catalog
+    complete: true
+    receipts: [{<<: *r1, line_items: [*ribeye, *wine, {<<: *gratuity, category: gratuity}]}, *r2, *r3]
+    expected:
+      R1:
+        disposition: flag
+        decided: false
+        active: [MEAL-01]
+        uncertainty:
+          - {line_id: R1-L2, field: category, state: low_confidence}
+          - {line_id: R1-L3, field: category, state: unknown}
+      R2: *r2_stands
+      R3: *r3_stands
+
+  # TIME-03 needs each receipt at or below the threshold. R1's $100 is already over $75 at its least,
+  # so no meal split is possible however the wine resolves, and MEAL-01 stands on both.
+  - id: a known breach on one receipt rules out a split, with a second receipt present
+    complete: true
+    receipts: [*r1, *r2, *r3, *r4]
+    expected:
+      R1:
+        disposition: flag
+        decided: false
+        active: [MEAL-01]
+        unresolved: []
+        uncertainty: [{line_id: R1-L2, field: category, state: low_confidence}]
+        open_excludes: [TIME-03]
+      R2: *r2_stands
+      R3: *r3_stands
+      R4: {disposition: flag, decided: true, active: [MEAL-01], unresolved: [], open_excludes: [TIME-03]}
+
+  # Spend at its least, with an uncertain line that may or may not be meal spend
+  - id: an uncertain discount could bring the spend under the cap, so nothing is proved
+    complete: true
+    receipts: [{<<: *r1, total_amount: "70.00", total_amount_usd: "70.00", line_items: [{<<: *eighty, line_id: R1-L1}, *coupon]}]
+    expected: {R1: {disposition: review, decided: false, active: [], open_includes: [MEAL-01], open_excludes: [TIME-03], uncertainty: [{line_id: R1-L2, field: category, state: missing}]}}
+  - id: an uncertain discount that still leaves the spend over the cap proves a breach
+    complete: true
+    receipts: [{<<: *r1, total_amount: "86.00", total_amount_usd: "86.00", line_items: [{<<: *ribeye, unit_price: "86.00", amount: "86.00", amount_usd: "86.00"}, *coupon]}]
+    expected: {R1: {disposition: flag, decided: false, active: [MEAL-01]}}
+  - id: a discount exactly reaching the cap proves nothing
+    complete: true
+    receipts: [{<<: *r1, total_amount: "75.00", total_amount_usd: "75.00", line_items: [{<<: *ribeye, unit_price: "85.00", amount: "85.00", amount_usd: "85.00"}, *coupon]}]
+    expected: {R1: {disposition: review, decided: false, active: [], open_includes: [MEAL-01]}}
+  - id: an uncertain line of zero changes nothing
+    complete: true
+    receipts: [{<<: *r1, total_amount: "80.00", total_amount_usd: "80.00", line_items: [{<<: *eighty, line_id: R1-L1}, {<<: *coupon, unit_price: "0.00", amount: "0.00", amount_usd: "0.00"}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [MEAL-01]}}
+  - id: an uncertain charge on a known $100 meal proves a breach
+    complete: true
+    receipts: [{<<: *r1, line_items: [{<<: *ribeye, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}, *wine]}]
+    expected: {R1: {disposition: flag, decided: false, active: [MEAL-01], open_excludes: [TIME-03]}}
+  - id: an uncertain charge cannot bring spend under the cap up to a breach
+    complete: true
+    receipts: [{<<: *r1, total_amount: "90.00", total_amount_usd: "90.00", line_items: [{<<: *ribeye, unit_price: "70.00", amount: "70.00", amount_usd: "70.00"}, *wine]}]
+    expected: {R1: {disposition: review, decided: false, active: [], open_includes: [MEAL-01]}}
+
+  # A negative amount of a known category outside meal spend offsets nothing
+  - id: a known negative line outside meal spend does not lower the meal
+    complete: true
+    receipts: [{<<: *r1, total_amount: "70.00", total_amount_usd: "70.00", line_items: [{<<: *eighty, line_id: R1-L1}, {<<: *coupon, category: office_supplies, confidence: "0.95"}]}]
+    expected: {R1: {disposition: flag, decided: true, active: [MEAL-01], uncertainty: []}}
+  - id: a known negative meal line does lower the meal
+    complete: true
+    receipts: [{<<: *r1, total_amount: "70.00", total_amount_usd: "70.00", line_items: [{<<: *eighty, line_id: R1-L1}, {<<: *coupon, category: food_beverage, confidence: "0.95"}]}]
+    expected: {R1: {disposition: pass, decided: true, active: []}}
+
+  # The discount around the confidence threshold
+  - id: a discount just below the threshold is left out, and nothing is proved
+    complete: true
+    receipts: [{<<: *r1, total_amount: "70.00", total_amount_usd: "70.00", line_items: [{<<: *eighty, line_id: R1-L1}, {<<: *coupon, category: food_beverage, confidence: "0.49"}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], open_includes: [MEAL-01]}}
+  - id: a discount exactly at the threshold is read, and spend is under the cap
+    complete: true
+    receipts: [{<<: *r1, total_amount: "70.00", total_amount_usd: "70.00", line_items: [{<<: *eighty, line_id: R1-L1}, {<<: *coupon, category: food_beverage, confidence: "0.50"}]}]
+    expected: {R1: {disposition: pass, decided: true, active: []}}
+  - id: a discount just above the threshold is read too
+    complete: true
+    receipts: [{<<: *r1, total_amount: "70.00", total_amount_usd: "70.00", line_items: [{<<: *eighty, line_id: R1-L1}, {<<: *coupon, category: food_beverage, confidence: "0.51"}]}]
+    expected: {R1: {disposition: pass, decided: true, active: []}}
+
+  # Whose receipts count
+  - id: another employee's discount does not lower this meal
+    complete: true
+    receipts:
+      - {<<: *r1, total_amount: "80.00", total_amount_usd: "80.00", line_items: [{<<: *eighty, line_id: R1-L1}]}
+      - {<<: *r4, employee_id: E-2, total_amount: "-0.00", total_amount_usd: "0.00", line_items: [{<<: *coupon, line_id: R4-L1}]}
+    expected: {R1: {disposition: flag, decided: true, active: [MEAL-01]}, R4: {disposition: review, decided: false, active: []}}
+  - id: a discount on another date does not lower this meal
+    complete: true
+    receipts:
+      - {<<: *r1, total_amount: "80.00", total_amount_usd: "80.00", line_items: [{<<: *eighty, line_id: R1-L1}]}
+      - {<<: *r4, transaction_datetime: "2026-04-15T12:00:00", total_amount: "0.00", total_amount_usd: "0.00", line_items: [{<<: *coupon, line_id: R4-L1}]}
+    expected: {R1: {disposition: flag, decided: true, active: [MEAL-01]}, R4: {disposition: review, decided: false, active: []}}
+  - id: a possible discount the same day at another merchant could lower the day, so nothing is proved
+    complete: true
+    receipts:
+      - {<<: *r1, total_amount: "80.00", total_amount_usd: "80.00", line_items: [{<<: *eighty, line_id: R1-L1}]}
+      - {<<: *r4, merchant_name: Other, total_amount: "0.00", total_amount_usd: "0.00", line_items: [{<<: *coupon, line_id: R4-L1}]}
+    expected: {R1: {disposition: review, decided: false, active: [], open_includes: [MEAL-01]}, R4: {disposition: review, decided: false, active: []}}
+
+  # A receipt only possibly a meal may count for nothing
+  - id: a gratuity on a receipt only possibly a meal does not prove a breach on another
+    complete: true
+    receipts:
+      - {<<: *r1, merchant_name: Morning, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *ribeye, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *r4, merchant_name: Evening, total_amount: "45.00", total_amount_usd: "45.00", line_items: [{<<: *gratuity, line_id: R4-L1, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *wine, line_id: R4-L2, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {R1: {disposition: review, decided: false, active: [], open_includes: [MEAL-01]}, R4: {disposition: review, decided: false, active: []}}
+
+  # Two receipts at one merchant
+  - id: two receipts that could still be a split stay open, with the day breach unresolved
+    complete: true
+    receipts:
+      - {<<: *r1, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *ribeye, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *r4, total_amount: "45.00", total_amount_usd: "45.00", line_items: [{<<: *coffee, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *wine, line_id: R4-L2, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], unresolved: [MEAL-01], open_includes: [TIME-03]}
+      R4: {disposition: review, decided: false, active: [], unresolved: [MEAL-01], open_includes: [TIME-03]}
+  - id: two small receipts that cannot reach the cap together are no split
+    complete: true
+    receipts:
+      - {<<: *r1, total_amount: "5.00", total_amount_usd: "5.00", line_items: [{<<: *ribeye, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+      - {<<: *r4, total_amount: "8.00", total_amount_usd: "8.00", line_items: [{<<: *coffee}, {<<: *wine, line_id: R4-L2, unit_price: "3.00", amount: "3.00", amount_usd: "3.00"}]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], unresolved: [], open_excludes: [TIME-03], open_includes: [MEAL-01]}
+      R4: {disposition: review, decided: false, active: [], unresolved: [], open_excludes: [TIME-03]}
+  - id: a partial context stays open even with a receipt over the cap
+    complete: false
+    receipts: [*r1, *r4]
+    expected:
+      R1: {disposition: review, decided: false, active: [], open_includes: [TIME-03]}
+      R4: {disposition: review, decided: false, active: [], open_includes: [TIME-03]}
+  - id: above every possible cap in a partial context is still open, as a receipt not seen could lower the day
+    complete: false
+    receipts: [{<<: *r1, total_amount: "120.00", total_amount_usd: "120.00", line_items: [{<<: *ribeye, unit_price: "110.00", amount: "110.00", amount_usd: "110.00"}, *wine]}, *r4]
+    expected:
+      R1: {disposition: review, decided: false, active: [], unresolved: [], open_includes: [MEAL-01, TIME-03]}
+      R4: {disposition: review, decided: false, active: [], unresolved: [], open_includes: [MEAL-01, TIME-03]}

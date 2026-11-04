@@ -1,0 +1,270 @@
+suite: offline_eval
+
+# Hand-worked scores. An outcome names only what differs from a plain passing receipt, and expected names
+# only the values compared. Rates give numerator and denominator, as well as value where it matters.
+
+rates:
+  - {id: zero denominator has no value and is not zero, numerator: 0, denominator: 0, expected: {numerator: 0, denominator: 0, value: null, wilson_95: null}}
+  - {id: a half, numerator: 1, denominator: 2, expected: {numerator: 1, denominator: 2, value: 0.5}}
+  - {id: all right on 32 still has an interval below 1, numerator: 32, denominator: 32, expected: {value: 1.0, wilson_95: [0.892821, 1.0]}}
+  - {id: none right on 32 has an interval above 0, numerator: 0, denominator: 32, expected: {value: 0.0, wilson_95: [0.0, 0.107179]}}
+
+prf:
+  - {id: nothing at all is undefined throughout, tp: 0, fp: 0, fn: 0, expected: {precision: null, recall: null, f1: null}}
+  - {id: a rule never raised has recall 0 and precision n/a, tp: 0, fp: 0, fn: 3, expected: {precision: null, recall: 0.0, f1: 0.0}}
+  - {id: a rule in no answer has precision 0 and recall n/a, tp: 0, fp: 2, fn: 0, expected: {precision: 0.0, recall: null, f1: 0.0}}
+  - {id: worked by hand, tp: 2, fp: 1, fn: 1, expected: {precision: 0.666667, recall: 0.666667, f1: 0.666667}}
+  - {id: perfect, tp: 4, fp: 0, fn: 0, expected: {precision: 1.0, recall: 1.0, f1: 1.0}}
+  - {id: F1 weighs misses and extras alike, tp: 1, fp: 3, fn: 0, expected: {precision: 0.25, recall: 1.0, f1: 0.4}}
+
+rule_scores:
+  - id: a match with the right lines and severity
+    outcomes:
+      - exceptions: {ALC-01: {line_ids: [L1], severity: high}}
+        gold_exceptions: {ALC-01: {line_ids: [L1], severity: high}}
+    expected:
+      rules: {ALC-01: {tp: 1, fp: 0, fn: 0, evidence_exact: {numerator: 1, denominator: 1}, severity_exact: {numerator: 1, denominator: 1}}}
+      strict: {tp: 1, fp: 0, fn: 0}
+  - id: a match on the rule with the wrong lines is still a match, and not exact
+    outcomes:
+      - exceptions: {ALC-01: {line_ids: [L1], severity: high}}
+        gold_exceptions: {ALC-01: {line_ids: [L1, L2], severity: high}}
+    expected:
+      rules: {ALC-01: {tp: 1, evidence_exact: {numerator: 0, denominator: 1}}}
+      evidence_exact: {numerator: 0, denominator: 1}
+  - id: a wrong severity is counted apart
+    outcomes:
+      - exceptions: {HEALTH-01: {line_ids: [L1], severity: low}}
+        gold_exceptions: {HEALTH-01: {line_ids: [L1], severity: medium}}
+    expected: {rules: {HEALTH-01: {tp: 1, severity_exact: {numerator: 0, denominator: 1}, evidence_exact: {numerator: 1, denominator: 1}}}}
+  - id: several findings on one receipt are each their own count
+    outcomes:
+      - exceptions: {ALC-01: {line_ids: [L1], severity: high}, TECH-01: {line_ids: [L2], severity: high}}
+        gold_exceptions: {ALC-01: {line_ids: [L1], severity: high}, MEAL-01: {line_ids: [], severity: medium}}
+    expected:
+      rules: {ALC-01: {tp: 1, fp: 0, fn: 0}, TECH-01: {tp: 0, fp: 1, fn: 0}, MEAL-01: {tp: 0, fp: 0, fn: 1}}
+      strict: {tp: 1, fp: 1, fn: 1}
+  - id: one rule across receipts adds up
+    outcomes:
+      - {exceptions: {ALC-01: {line_ids: [L1], severity: high}}, gold_exceptions: {ALC-01: {line_ids: [L1], severity: high}}}
+      - {receipt_id: R2, gold_exceptions: {ALC-01: {line_ids: [L9], severity: high}}}
+      - {receipt_id: R3, exceptions: {ALC-01: {line_ids: [L7], severity: high}}}
+    expected: {rules: {ALC-01: {tp: 1, fp: 1, fn: 1, precision: 0.5, recall: 0.5, f1: 0.5}}}
+  - id: signals match on the rule alone and have no evidence to score
+    outcomes:
+      - {signals: [MCC-02], gold_signals: [MCC-02]}
+    expected:
+      rules: {MCC-02: {tp: 1, evidence_exact: {numerator: 0, denominator: 0, value: null}}}
+      evidence_exact: {numerator: 0, denominator: 0, value: null}
+  - id: a rule only unresolved is a miss with a warning, and no true positive
+    outcomes:
+      - {gold_exceptions: {MEAL-01: {line_ids: [], severity: medium}}, unresolved: [MEAL-01]}
+    expected:
+      rules: {MEAL-01: {tp: 0, fn: 1, fn_by_kind: {unresolved: 1, open: 0, in_proof: 0, silent: 0}}}
+      fn_by_kind: {unresolved: 1, open: 0, in_proof: 0, silent: 0}
+  - id: a rule only open is a miss with a warning
+    outcomes:
+      - {gold_exceptions: {ALC-01: {line_ids: [L1], severity: high}}, open: [ALC-01]}
+    expected: {fn_by_kind: {unresolved: 0, open: 1, in_proof: 0, silent: 0}}
+  - id: a rule only in a proof is a miss with a warning
+    outcomes:
+      - {gold_exceptions: {GIFT-03: {line_ids: [L1], severity: medium}}, proof: {rule_ids: [GIFT-03], readings: 3}}
+    expected: {fn_by_kind: {unresolved: 0, open: 0, in_proof: 1, silent: 0}}
+  - id: a rule nothing mentions is a silent miss
+    outcomes:
+      - {gold_exceptions: {ALC-01: {line_ids: [L1], severity: high}}}
+    expected: {fn_by_kind: {unresolved: 0, open: 0, in_proof: 0, silent: 1}}
+  - id: an unresolved rule that is not in the answers is no false positive
+    outcomes:
+      - {unresolved: [GIFT-01], open: [GIFT-04]}
+    expected: {strict: {tp: 0, fp: 0, fn: 0, precision: null, recall: null, f1: null}}
+  - id: EXC-03 is one false positive per receipt in strict alone
+    outcomes:
+      - {uncertain: true}
+      - {receipt_id: R2, uncertain: true}
+      - {receipt_id: R3}
+    expected:
+      rules: {EXC-03: {tp: 0, fp: 2, fn: 0}}
+      strict: {fp: 2}
+      diagnostic: {fp: 0, precision: null}
+  - id: no outcomes at all
+    outcomes: []
+    expected: {strict: {tp: 0, fp: 0, fn: 0, f1: null}, evidence_exact: {denominator: 0, value: null}}
+
+dispositions:
+  - id: the matrix and each denominator
+    outcomes:
+      - {disposition: flag, gold_disposition: flag, decided: true}
+      - {disposition: review, gold_disposition: flag, decided: false, reason_codes: [uncertainty]}
+      - {disposition: pass, gold_disposition: flag, decided: true}
+      - {disposition: flag, gold_disposition: review, decided: true}
+      - {disposition: pass, gold_disposition: review, decided: true}
+      - {disposition: flag, gold_disposition: pass, decided: false}
+      - {disposition: pass, gold_disposition: pass, decided: true}
+    expected:
+      matrix_gold_by_predicted:
+        flag: {flag: 1, review: 1, pass: 1}
+        review: {flag: 1, review: 0, pass: 1}
+        pass: {flag: 1, review: 0, pass: 1}
+      accuracy: {numerator: 2, denominator: 7}
+      false_pass: {numerator: 2, denominator: 5}
+      missed_flag_passed: {numerator: 1, denominator: 3}
+      missed_flag_any: {numerator: 2, denominator: 3}
+      false_flag: {numerator: 2, denominator: 4}
+      review: {numerator: 1, denominator: 7}
+      abstention: {numerator: 1, denominator: 7}
+      decided: {numerator: 5, denominator: 7}
+      flagged_undecided: {numerator: 1, denominator: 3}
+  - id: a review for a low exception is not abstaining
+    outcomes:
+      - {disposition: review, gold_disposition: review, reason_codes: [exception_reviews]}
+      - {disposition: review, gold_disposition: review, reason_codes: [review_signal, uncertainty]}
+      - {disposition: review, gold_disposition: flag, reason_codes: [incomplete_evidence]}
+      - {disposition: review, gold_disposition: flag, reason_codes: [uncertainty, incomplete_evidence]}
+    expected: {abstention: {numerator: 2, denominator: 4}, review: {numerator: 4, denominator: 4}}
+  - id: nothing should pass here, so false flag has no denominator
+    outcomes:
+      - {disposition: flag, gold_disposition: flag}
+    expected:
+      false_flag: {numerator: 0, denominator: 0, value: null}
+      false_pass: {numerator: 0, denominator: 1, value: 0.0}
+  - id: everything should pass, so false pass has no denominator
+    outcomes:
+      - {disposition: pass, gold_disposition: pass}
+    expected:
+      false_pass: {numerator: 0, denominator: 0, value: null}
+      missed_flag_any: {numerator: 0, denominator: 0, value: null}
+      flagged_undecided: {numerator: 0, denominator: 0, value: null}
+  - id: a proof flag with no active exception counts as a flag
+    outcomes:
+      - {disposition: flag, gold_disposition: flag, decided: false, reason_codes: [inevitable_violation, uncertainty], proof: {rule_ids: [GIFT-01], readings: 3}}
+    expected:
+      accuracy: {numerator: 1, denominator: 1}
+      decided: {numerator: 0, denominator: 1}
+      flagged_undecided: {numerator: 1, denominator: 1}
+      abstention: {numerator: 0, denominator: 1}
+
+exact:
+  - id: rules and lines, and rules alone
+    outcomes:
+      - {exceptions: {A-1: {line_ids: [L1]}}, gold_exceptions: {A-1: {line_ids: [L1]}}}
+      - {receipt_id: R2, exceptions: {A-1: {line_ids: [L1]}}, gold_exceptions: {A-1: {line_ids: [L2]}}}
+      - {receipt_id: R3, exceptions: {B-1: {line_ids: []}}, gold_exceptions: {A-1: {line_ids: []}}}
+    expected:
+      rules: {numerator: 2, denominator: 3}
+      rules_and_lines: {numerator: 1, denominator: 3}
+  - id: an EXC-03 signal means the receipt is not exactly right
+    outcomes:
+      - {uncertain: true}
+      - {receipt_id: R2, signals: [MCC-02]}
+      - {receipt_id: R3, signals: [MCC-02], gold_signals: [MCC-02]}
+    expected: {rules: {numerator: 1, denominator: 3}}
+  - id: an unresolved rule cannot make a receipt exactly right
+    outcomes:
+      - {gold_exceptions: {A-1: {line_ids: []}}, unresolved: [A-1]}
+    expected: {rules_and_lines: {numerator: 0, denominator: 1}}
+
+proofs:
+  - id: no proofs
+    outcomes:
+      - {}
+    expected: {receipts: {numerator: 0, denominator: 1}, correct_flag: {numerator: 0, denominator: 0, value: null}, flag_without_active_exception: 0, readings_total: 0, possible_critical_receipts: []}
+  - id: a right one, a wrong one, and a truly critical one
+    outcomes:
+      - {receipt_id: R1, disposition: flag, gold_disposition: flag, gold_exceptions: {GIFT-04: {line_ids: [L1]}}, proof: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 3}}
+      - {receipt_id: R2, disposition: flag, gold_disposition: flag, gold_exceptions: {MCC-01: {line_ids: []}}, proof: {rule_ids: [GIFT-01, GIFT-03], readings: 3}}
+      - {receipt_id: R3, disposition: flag, gold_disposition: review, proof: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 9}}
+      - {receipt_id: R4, disposition: flag, gold_disposition: pass, proof: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 3}}
+      - {receipt_id: R5}
+    expected:
+      receipts: {numerator: 4, denominator: 5}
+      readings_total: 18
+      flag_without_active_exception: 4
+      correct_flag: {numerator: 2, denominator: 4}
+      false_flag: {numerator: 2, denominator: 4}
+      gold_rule_in_proof: {numerator: 1, denominator: 4}
+      # Two right that would have been reviews, and one a review that was right before.
+      disposition_accuracy_gain: 1
+      possible_critical: {numerator: 3, denominator: 4}
+      possible_critical_receipts: [R1, R3, R4]
+      actually_critical: 1
+      receipt_ids: [R1, R2, R3, R4]
+  - id: a proof beside an active low exception is not a flag with no active exception
+    outcomes:
+      - {disposition: flag, gold_disposition: flag, exceptions: {HEALTH-01: {line_ids: [L1], severity: low}}, proof: {rule_ids: [GIFT-01], readings: 3}}
+    expected: {flag_without_active_exception: 0}
+
+classification:
+  - id: worked by hand over three categories, one never predicted
+    lines:
+      - {gold_category: alcohol, category: alcohol, gold_restricted: true, restricted: true, confidence: "0.9"}
+      - {gold_category: alcohol, category: food_beverage, gold_restricted: true, restricted: false, confidence: "0.6"}
+      - {gold_category: food_beverage, category: food_beverage, gold_restricted: false, restricted: false, confidence: "0.8"}
+      - {gold_category: tobacco, category: gift, gold_restricted: true, restricted: true, confidence: "0.8"}
+    expected:
+      lines: 4
+      accuracy: {numerator: 2, denominator: 4}
+      per_category:
+        alcohol: {tp: 1, fp: 0, fn: 1, precision: 1.0, recall: 0.5, f1: 0.666667}
+        food_beverage: {tp: 1, fp: 1, fn: 0, precision: 0.5, recall: 1.0, f1: 0.666667}
+        # Never predicted: the brief counts that as zero precision.
+        tobacco: {tp: 0, fp: 0, fn: 1, precision: 0.0, recall: 0.0, f1: 0.0}
+      macro: {precision: 0.5, recall: 0.5, f1: 0.444444}
+      restricted: {tp: 2, fp: 0, fn: 1}
+  - id: a line with no prediction is a miss and counted as missing
+    lines:
+      - {gold_category: alcohol, gold_restricted: true}
+      - {gold_category: alcohol, category: alcohol, gold_restricted: true, restricted: true, confidence: "0.9"}
+    expected:
+      missing_category: {numerator: 1, denominator: 2}
+      missing_confidence: {numerator: 1, denominator: 2}
+      missing_restricted: {numerator: 1, denominator: 2}
+      per_category: {alcohol: {tp: 1, fp: 0, fn: 1, recall: 0.5}}
+      restricted: {tp: 1, fp: 0, fn: 1}
+  - id: a predicted category not in the answers is not in the macro average
+    lines:
+      - {gold_category: alcohol, category: made_up, gold_restricted: true}
+    expected: {macro: {precision: 0.0, recall: 0.0, f1: 0.0}}
+  - id: no lines at all
+    lines: []
+    expected: {lines: 0, accuracy: {denominator: 0, value: null}, macro: {precision: null, recall: null, f1: null}}
+
+buckets:
+  - {id: none, confidence: null, expected: {bucket: missing}}
+  - {id: below the threshold, confidence: "0.49", expected: {bucket: below_0.5}}
+  - {id: at the threshold, confidence: "0.5", expected: {bucket: 0.5_to_0.7}}
+  - {id: at 0.7, confidence: "0.7", expected: {bucket: 0.7_to_0.9}}
+  - {id: at 0.9, confidence: "0.9", expected: {bucket: 0.9_to_1}}
+  - {id: at 1, confidence: "1", expected: {bucket: 0.9_to_1}}
+
+calibration:
+  - {id: no points, points: [], bins: 10, expected: {points: 0, ece: null, brier: null}}
+  - id: perfectly calibrated at the extremes
+    points: [["1", true], ["0", false]]
+    bins: 10
+    expected: {points: 2, ece: 0.0, brier: 0.0}
+  - id: overconfident
+    points: [["0.9", true], ["0.9", false]]
+    bins: 10
+    expected: {points: 2, ece: 0.4, brier: 0.41}
+  # Bin one: 3 points, mean 0.25, right 1/3, so 3/4 of 1/12. Bin two: 1 point, 0.75, right, so 1/4 of 1/4.
+  # Brier: (0.5625 + 0.0625 + 0.0625 + 0.0625) / 4.
+  - id: two bins weighted by their size
+    points: [["0.25", true], ["0.25", false], ["0.25", false], ["0.75", true]]
+    bins: 2
+    expected: {points: 4, ece: 0.125, brier: 0.1875}
+
+families:
+  - {id: a dashed rule, rule_id: ALC-01, expected: {family: ALC}}
+  - {id: a dotted rule, rule_id: PERS.BAGGAGE, expected: {family: PERS}}
+  - {id: EXC-03, rule_id: EXC-03, expected: {family: EXC}}
+
+sources_refused:
+  - {id: actual with no model, prediction_set: {customer_id: c, source: {kind: actual, name: n, description: d}}, expected: must name the model}
+  - {id: synthetic claiming a model, prediction_set: {customer_id: c, source: {kind: synthetic, name: n, description: d, model: m}}, expected: have no model}
+  - {id: oracle claiming a model, prediction_set: {customer_id: c, source: {kind: oracle, name: n, description: d, model: m}}, expected: have no model}
+  - {id: an unknown kind, prediction_set: {customer_id: c, source: {kind: measured, name: n, description: d}}, expected: kind}
+  - {id: two predictions for one line, prediction_set: {customer_id: c, source: {kind: none, name: n, description: d}, predictions: [{line_id: L1}, {line_id: L1}]}, expected: more than one prediction}
+  - {id: confidence above 1, prediction_set: {customer_id: c, source: {kind: none, name: n, description: d}, predictions: [{line_id: L1, confidence: "1.5"}]}, expected: confidence}
+  - {id: a field no classifier output has, prediction_set: {customer_id: c, source: {kind: none, name: n, description: d}, predictions: [{line_id: L1, severity: high}]}, expected: severity}
+  - {id: gold labels in a prediction, prediction_set: {customer_id: c, source: {kind: none, name: n, description: d}, predictions: [{line_id: L1, labels: {category: x}}]}, expected: labels}

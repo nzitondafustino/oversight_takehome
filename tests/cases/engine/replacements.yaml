@@ -1,0 +1,612 @@
+suite: replacements
+
+# resolve_replacements, on real rules and on small rules made up to reach what the real ones do not.
+#
+# real:     run_checks then resolve, with only the real rules in `rule_ids`, on `receipt_id`, in a
+#           context of `receipts` that is `complete`, or with no context if `with_context` is false.
+# made_up:  resolve the `findings` given, from rules `rules`, with the `undetermined` and `pending`
+#           given. A finding is by rule_id, with line_ids and replaces if it has them.
+# refused:  resolve cannot go ahead, as in made_up. expected is an error regex.
+#
+# expected holds any of: active and unaffected, by rule_id and line_ids; replaced, by rule_id,
+# line_ids, by and level; possible, by rule_id, line_ids, by and level; undetermined and moot, by
+# rule_id and line_id; pending and moot_pending, as rule IDs; and complete.
+
+templates:
+  line: &line
+    line_id: L1
+    description_raw: Grilled salmon
+    language: en
+    quantity: 1
+    unit_price: "40.00"
+    amount: "40.00"
+    amount_usd: "40.00"
+    category: food_beverage
+    confidence: "0.9"
+  meal: &meal
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    submitted_expense_type: Meals - Individual
+    merchant_name: Verona Grill
+    mcc: "5812"
+    transaction_datetime: "2026-04-14T12:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: "40.00"
+    total_amount_usd: "40.00"
+    trip_id: T1
+    trip_nights: 5
+    itemized: true
+    line_items: [*line]
+  gifts: &gifts
+    <<: *meal
+    submitted_expense_type: Client Gifts
+    mcc: "5944"
+  rule: &rule
+    policy_doc: doc.md
+    title: A rule
+    source_quote: quote
+    kind: check
+    outcome: exception
+    severity: low
+    provenance:
+      translator: developer
+      clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  # An item rule, which any line can be said to have caught here.
+  item: &item
+    <<: *rule
+    scope: item
+    select: {op: eq, field: item.category, value: gift}
+  # A receipt rule whose gate is open on the receipt below.
+  whole: &whole
+    <<: *rule
+    scope: receipt
+    applies_when: {op: eq, field: receipt.mcc, value: "5812"}
+  shut: &shut
+    <<: *rule
+    scope: receipt
+    applies_when: {op: eq, field: receipt.mcc, value: "9999"}
+
+real:
+  # Receipt level: regional overrides
+  - id: REG-01 replaces ALC-01 for an APAC employee, on any line
+    rule_ids: [ALC-01, REG-01]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *meal, employee_country: IN, line_items: [{<<: *line, line_id: L1, category: alcohol}, {<<: *line, line_id: L2, category: alcohol}]}]
+    expected:
+      active: [{rule_id: REG-01, line_ids: [L1]}, {rule_id: REG-01, line_ids: [L2]}]
+      unaffected: [{rule_id: REG-01, line_ids: [L1]}, {rule_id: REG-01, line_ids: [L2]}]
+      replaced:
+        - {rule_id: ALC-01, line_ids: [L1], by: REG-01, level: receipt}
+        - {rule_id: ALC-01, line_ids: [L2], by: REG-01, level: receipt}
+      possible: []
+      complete: true
+  - id: ALC-01 stands for a US employee
+    rule_ids: [ALC-01, REG-01]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: alcohol}]}]
+    expected: {active: [{rule_id: ALC-01, line_ids: [L1]}], replaced: [], possible: [], complete: true}
+  - id: REG-01 replaces ALC-02 and ALC-03 too
+    rule_ids: [ALC-01, ALC-02, ALC-03, REG-01]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *meal, employee_country: IN, submitted_expense_type: Client Entertainment, attendee_count: 2, line_items: [{<<: *line, category: alcohol, unit_price: "60.01", amount: "60.01", amount_usd: "60.01"}]}]
+    expected:
+      active: [{rule_id: REG-01, line_ids: [L1]}]
+      replaced: [{rule_id: ALC-02, line_ids: [L1], by: REG-01, level: receipt}]
+  - id: REG-01 replaces only its own targets on the receipt
+    rule_ids: [ALC-01, PERS-03, REG-01]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *meal, employee_country: IN, line_items: [{<<: *line, line_id: L1, category: alcohol}, {<<: *line, line_id: L2, category: tobacco}]}]
+    expected:
+      active: [{rule_id: PERS-03, line_ids: [L2]}, {rule_id: REG-01, line_ids: [L1]}]
+      replaced: [{rule_id: ALC-01, line_ids: [L1], by: REG-01, level: receipt}]
+  - id: REG-02 replaces MEAL-01 for an APAC employee, both over
+    rule_ids: [MEAL-01, REG-02]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *meal, employee_country: IN, currency: INR, fx_rate_to_usd: "0.012", total_amount: "3333.33", line_items: [{<<: *line, unit_price: "6666.67", amount: "6666.67", amount_usd: "80.00"}]}]
+    expected:
+      active: [{rule_id: REG-02, line_ids: []}]
+      replaced: [{rule_id: MEAL-01, line_ids: [], by: REG-02, level: receipt}]
+      complete: true
+  - id: REG-03 replaces MEAL-01 for an EMEA employee, both over
+    rule_ids: [MEAL-01, REG-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *meal, employee_country: FR, currency: EUR, fx_rate_to_usd: "1.08", total_amount: "37.04", line_items: [{<<: *line, unit_price: "74.07", amount: "74.07", amount_usd: "80.00"}]}]
+    expected:
+      active: [{rule_id: REG-03, line_ids: []}]
+      replaced: [{rule_id: MEAL-01, line_ids: [], by: REG-03, level: receipt}]
+      complete: true
+  - id: a receipt-level replacement needs no finding from the replacing rule
+    rule_ids: [MEAL-01, REG-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *meal, employee_country: FR, currency: USD, fx_rate_to_usd: "1", line_items: [{<<: *line, unit_price: "150.00", amount: "150.00", amount_usd: "150.00"}]}]
+    expected:
+      replaced: [{rule_id: MEAL-01, line_ids: [], by: REG-03, level: receipt}]
+      undetermined: [{rule_id: REG-03, line_id: null}]
+      complete: false
+  - id: MEAL-01 stands for a US employee, with REG-02 shut
+    rule_ids: [MEAL-01, REG-02, REG-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "80.00", amount: "80.00", amount_usd: "80.00"}]}]
+    expected: {active: [{rule_id: MEAL-01, line_ids: []}], replaced: [], complete: true}
+  - id: only this receipt is resolved, though another breaks the rule too
+    rule_ids: [MEAL-01, REG-02]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts:
+      - {<<: *meal, employee_country: IN, currency: INR, fx_rate_to_usd: "0.012", total_amount: "3333.33", line_items: [{<<: *line, unit_price: "6666.67", amount: "6666.67", amount_usd: "80.00"}]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-2, line_items: [{<<: *line, unit_price: "80.00", amount: "80.00", amount_usd: "80.00"}]}
+    expected: {active: [{rule_id: REG-02, line_ids: []}], replaced: [{rule_id: MEAL-01, line_ids: [], by: REG-02, level: receipt}]}
+  - id: the other receipt keeps what the first one lost
+    rule_ids: [MEAL-01, REG-02]
+    receipt_id: R2
+    complete: true
+    with_context: true
+    receipts:
+      - {<<: *meal, employee_country: IN, currency: INR, fx_rate_to_usd: "0.012", total_amount: "3333.33", line_items: [{<<: *line, unit_price: "6666.67", amount: "6666.67", amount_usd: "80.00"}]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-2, line_items: [{<<: *line, unit_price: "80.00", amount: "80.00", amount_usd: "80.00"}]}
+    expected: {active: [{rule_id: MEAL-01, line_ids: []}], replaced: []}
+
+  # Line level: government officials
+  - id: GIFT-04 replaces GIFT-01 on the official's line, and only there
+    rule_ids: [GIFT-01, GIFT-04]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts:
+      - <<: *gifts
+        line_items:
+          - {<<: *line, line_id: L1, category: gift, recipient_name: R. Delgado, recipient_type: government_official, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}
+          - {<<: *line, line_id: L2, category: gift, recipient_name: A. Moreau, recipient_type: client, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}
+    expected:
+      active: [{rule_id: GIFT-01, line_ids: [L2]}, {rule_id: GIFT-04, line_ids: [L1]}]
+      replaced: [{rule_id: GIFT-01, line_ids: [L1], by: GIFT-04, level: line}]
+      possible: []
+      complete: true
+  - id: GIFT-01 stands on a receipt with no official
+    rule_ids: [GIFT-01, GIFT-04]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift, recipient_name: A. Moreau, recipient_type: client, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}]}]
+    expected: {active: [{rule_id: GIFT-01, line_ids: [L1]}], replaced: [], complete: true}
+  - id: an official's line with no category leaves both rules open, and the other line stands
+    rule_ids: [GIFT-01, GIFT-04]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts:
+      - <<: *gifts
+        line_items:
+          - {<<: *line, line_id: L1, category: null, recipient_type: government_official, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}
+          - {<<: *line, line_id: L2, category: gift, recipient_name: A. Moreau, recipient_type: client, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}
+    expected:
+      active: [{rule_id: GIFT-01, line_ids: [L2]}]
+      replaced: []
+      possible: []
+      undetermined: [{rule_id: GIFT-01, line_id: L1}, {rule_id: GIFT-04, line_id: L1}]
+      complete: false
+
+  # Finding level: TIME-03
+  - id: TIME-03 replaces the one threshold split around
+    rule_ids: [ALC-01, DOC-01, MEAL-01, TIME-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "35.01", amount: "35.01", amount_usd: "35.01"}]}
+    expected:
+      active: [{rule_id: TIME-03, line_ids: []}]
+      replaced: [{rule_id: MEAL-01, line_ids: [], by: TIME-03, level: finding}]
+      complete: true
+  - id: an unrelated finding on the split receipt stays
+    rule_ids: [ALC-01, MEAL-01, TIME-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, category: alcohol, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "35.01", amount: "35.01", amount_usd: "35.01"}]}
+    expected:
+      active: [{rule_id: ALC-01, line_ids: [L1]}, {rule_id: TIME-03, line_ids: []}]
+      replaced: [{rule_id: MEAL-01, line_ids: [], by: TIME-03, level: finding}]
+  - id: a receipt outside the split keeps its meal cap breach
+    rule_ids: [MEAL-01, TIME-03]
+    receipt_id: R3
+    complete: true
+    with_context: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "35.01", amount: "35.01", amount_usd: "35.01"}]}
+      - {<<: *meal, receipt_id: R3, merchant_name: Other, line_items: [{<<: *line, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {active: [{rule_id: MEAL-01, line_ids: []}], replaced: []}
+  - id: an APAC split replaces REG-02, and MEAL-01 goes at receipt level
+    rule_ids: [MEAL-01, REG-02, TIME-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts:
+      - {<<: *meal, employee_country: IN, line_items: [{<<: *line, unit_price: "31.00", amount: "31.00", amount_usd: "31.00"}]}
+      - {<<: *meal, receipt_id: R2, employee_country: IN, line_items: [{<<: *line, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+    expected:
+      active: [{rule_id: TIME-03, line_ids: []}]
+      replaced: [{rule_id: REG-02, line_ids: [], by: TIME-03, level: finding}]
+      complete: true
+  - id: an APAC split at the cap of MEAL-01 still replaces both
+    rule_ids: [MEAL-01, REG-02, TIME-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts:
+      - {<<: *meal, employee_country: IN, currency: INR, fx_rate_to_usd: "0.012", total_amount: "3333.33", line_items: [{<<: *line, unit_price: "4166.67", amount: "4166.67", amount_usd: "50.00"}]}
+      - {<<: *meal, receipt_id: R2, employee_country: IN, currency: INR, fx_rate_to_usd: "0.012", total_amount: "3333.33", line_items: [{<<: *line, unit_price: "2500.00", amount: "2500.00", amount_usd: "30.00"}]}
+    expected:
+      active: [{rule_id: TIME-03, line_ids: []}]
+      replaced:
+        - {rule_id: MEAL-01, line_ids: [], by: REG-02, level: receipt}
+        - {rule_id: REG-02, line_ids: [], by: TIME-03, level: finding}
+  - id: a split around a gift cap replaces no unrelated gift finding
+    rule_ids: [GIFT-01, TIME-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts:
+      - <<: *gifts
+        line_items:
+          - {<<: *line, line_id: L1, category: gift, recipient_name: A. Moreau, recipient_type: client, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}
+          - {<<: *line, line_id: L2, category: gift, recipient_type: client, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}
+      - {<<: *gifts, receipt_id: R2, line_items: [{<<: *line, category: gift, recipient_name: A. Moreau, recipient_type: client, unit_price: "20.01", amount: "20.01", amount_usd: "20.01"}]}
+    expected:
+      active: [{rule_id: GIFT-01, line_ids: [L2]}, {rule_id: TIME-03, line_ids: []}]
+      replaced: []
+      complete: true
+  - id: no split means no replacement
+    rule_ids: [MEAL-01, TIME-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "80.00", amount: "80.00", amount_usd: "80.00"}]}]
+    expected: {active: [{rule_id: MEAL-01, line_ids: []}], replaced: [], possible: [], complete: true}
+
+  # Incomplete evaluations
+  - id: an undetermined TIME-03 cannot replace a finding that one receipt above the threshold proves
+    rule_ids: [DOC-01, MEAL-01, TIME-03]
+    receipt_id: R1
+    complete: false
+    with_context: true
+    receipts: [{<<: *meal, itemized: false, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, category: other}]}]
+    expected:
+      active: [{rule_id: DOC-01, line_ids: []}]
+      unaffected: [{rule_id: DOC-01, line_ids: []}]
+      replaced: []
+      possible: []
+      undetermined: [{rule_id: MEAL-01, line_id: null}, {rule_id: TIME-03, line_id: null}]
+      complete: false
+  - id: an undetermined TIME-03 possibly replaces a day's breach, and removes nothing
+    rule_ids: [MEAL-01, TIME-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *line, line_id: L2, category: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected:
+      active: [{rule_id: MEAL-01, line_ids: []}]
+      unaffected: []
+      replaced: []
+      possible: [{rule_id: MEAL-01, line_ids: [], by: TIME-03, level: finding}]
+      undetermined: [{rule_id: TIME-03, line_id: null}]
+      complete: false
+  - id: a pending TIME-03 possibly replaces, and removes nothing
+    rule_ids: [DOC-01, TIME-03]
+    receipt_id: R1
+    complete: true
+    with_context: false
+    receipts: [{<<: *meal, itemized: false, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, category: other}]}]
+    expected:
+      active: [{rule_id: DOC-01, line_ids: []}]
+      possible: [{rule_id: DOC-01, line_ids: [], by: TIME-03, level: finding}]
+      pending: [TIME-03]
+      complete: false
+  - id: a rule confirmed replaced no longer needs deciding
+    rule_ids: [MEAL-01, REG-02]
+    receipt_id: R1
+    complete: true
+    with_context: false
+    receipts: [{<<: *meal, employee_country: IN}]
+    expected: {pending: [REG-02], moot_pending: [MEAL-01], complete: false}
+  - id: an undetermined rule confirmed replaced no longer needs deciding
+    rule_ids: [ALC-01, REG-01]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *meal, employee_country: IN, line_items: [{<<: *line, category: foood}]}]
+    expected:
+      undetermined: [{rule_id: REG-01, line_id: L1}]
+      moot: [{rule_id: ALC-01, line_id: L1}]
+      complete: false
+  - id: an established split with another threshold open replaces what it established
+    rule_ids: [DOC-01, MEAL-01, TIME-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts:
+      - {<<: *meal, submitted_expense_type: Client Gifts, itemized: false, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *line, category: null}]}
+      - {<<: *meal, submitted_expense_type: Client Gifts, receipt_id: R2, itemized: false, total_amount: "35.01", total_amount_usd: "35.01", line_items: [{<<: *line, category: null}]}
+    expected:
+      active: [{rule_id: TIME-03, line_ids: []}]
+      replaced: []
+      undetermined: [{rule_id: TIME-03, line_id: null}]
+      complete: false
+
+made_up:
+  # Receipt level
+  - id: an open gate replaces at receipt level, whichever lines are caught
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *whole, rule_id: BB-01, replaces: [{rule_id: AA-01, level: receipt}]}
+    findings: [{rule_id: AA-01, line_ids: [L1]}, {rule_id: AA-01, line_ids: [L2]}]
+    undetermined: []
+    pending: []
+    expected:
+      active: []
+      replaced:
+        - {rule_id: AA-01, line_ids: [L1], by: BB-01, level: receipt}
+        - {rule_id: AA-01, line_ids: [L2], by: BB-01, level: receipt}
+      complete: true
+  - id: a shut gate does not
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *shut, rule_id: BB-01, replaces: [{rule_id: AA-01, level: receipt}]}
+    findings: [{rule_id: AA-01, line_ids: [L1]}]
+    undetermined: []
+    pending: []
+    expected: {active: [{rule_id: AA-01, line_ids: [L1]}], replaced: [], possible: [], complete: true}
+  - id: a gate reading a missing value is a possible replacement
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *rule, scope: receipt, rule_id: BB-01, applies_when: {op: eq, field: receipt.currency, value: EUR}, replaces: [{rule_id: AA-01, level: receipt}]}
+    findings: [{rule_id: AA-01, line_ids: [L1]}]
+    undetermined: []
+    pending: []
+    expected:
+      active: [{rule_id: AA-01, line_ids: [L1]}]
+      unaffected: []
+      replaced: []
+      possible: [{rule_id: AA-01, line_ids: [L1], by: BB-01, level: receipt}]
+      complete: false
+  - id: a retired rule replaces nothing
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *whole, rule_id: BB-01, status: not_evaluable, replaces: [{rule_id: AA-01, level: receipt}]}
+    findings: [{rule_id: AA-01, line_ids: [L1]}]
+    undetermined: []
+    pending: []
+    expected: {active: [{rule_id: AA-01, line_ids: [L1]}], replaced: [], possible: []}
+
+  # Line level
+  - id: a line caught replaces on that line
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *item, rule_id: BB-01, replaces: [{rule_id: AA-01, level: line}]}
+    findings: [{rule_id: AA-01, line_ids: [L1]}, {rule_id: AA-01, line_ids: [L2]}, {rule_id: BB-01, line_ids: [L1]}]
+    undetermined: []
+    pending: []
+    expected:
+      active: [{rule_id: AA-01, line_ids: [L2]}, {rule_id: BB-01, line_ids: [L1]}]
+      replaced: [{rule_id: AA-01, line_ids: [L1], by: BB-01, level: line}]
+      complete: true
+  - id: no line caught, no line replaced
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *item, rule_id: BB-01, replaces: [{rule_id: AA-01, level: line}]}
+    findings: [{rule_id: AA-01, line_ids: [L1]}]
+    undetermined: []
+    pending: []
+    expected: {active: [{rule_id: AA-01, line_ids: [L1]}], replaced: [], possible: [], complete: true}
+  - id: an open question on one line possibly replaces there only
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *item, rule_id: BB-01, replaces: [{rule_id: AA-01, level: line}]}
+    findings: [{rule_id: AA-01, line_ids: [L1]}, {rule_id: AA-01, line_ids: [L2]}]
+    undetermined: [{rule_id: BB-01, line_id: L1}]
+    pending: []
+    expected:
+      active: [{rule_id: AA-01, line_ids: [L1]}, {rule_id: AA-01, line_ids: [L2]}]
+      unaffected: [{rule_id: AA-01, line_ids: [L2]}]
+      possible: [{rule_id: AA-01, line_ids: [L1], by: BB-01, level: line}]
+      undetermined: [{rule_id: BB-01, line_id: L1}]
+  - id: an open question on the whole receipt possibly replaces on every line
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *item, rule_id: BB-01, replaces: [{rule_id: AA-01, level: line}]}
+    findings: [{rule_id: AA-01, line_ids: [L1]}, {rule_id: AA-01, line_ids: [L2]}]
+    undetermined: [{rule_id: BB-01, line_id: L1}, {rule_id: BB-01, line_id: null}, {rule_id: BB-01, line_id: L2}]
+    pending: []
+    expected:
+      unaffected: []
+      possible:
+        - {rule_id: AA-01, line_ids: [L1], by: BB-01, level: line}
+        - {rule_id: AA-01, line_ids: [L2], by: BB-01, level: line}
+  - id: a pending line rule possibly replaces on every line
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *item, rule_id: BB-01, replaces: [{rule_id: AA-01, level: line}]}
+    findings: [{rule_id: AA-01, line_ids: [L1]}]
+    undetermined: []
+    pending: [BB-01]
+    expected: {active: [{rule_id: AA-01, line_ids: [L1]}], possible: [{rule_id: AA-01, line_ids: [L1], by: BB-01, level: line}], pending: [BB-01], complete: false}
+  - id: an open line whose rule's gate is shut possibly replaces nothing
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *item, rule_id: BB-01, applies_when: {op: eq, field: receipt.mcc, value: "9999"}, replaces: [{rule_id: AA-01, level: line}]}
+    findings: [{rule_id: AA-01, line_ids: [L1]}]
+    undetermined: [{rule_id: BB-01, line_id: L1}]
+    pending: []
+    expected: {active: [{rule_id: AA-01, line_ids: [L1]}], unaffected: [{rule_id: AA-01, line_ids: [L1]}], possible: []}
+  - id: an undetermined target on a replaced line is moot, and on another line stays
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *item, rule_id: BB-01, replaces: [{rule_id: AA-01, level: line}]}
+    findings: [{rule_id: BB-01, line_ids: [L1]}]
+    undetermined: [{rule_id: AA-01, line_id: L1}, {rule_id: AA-01, line_id: L2}]
+    pending: []
+    expected: {undetermined: [{rule_id: AA-01, line_id: L2}], moot: [{rule_id: AA-01, line_id: L1}], complete: false}
+
+  # Finding level
+  - id: a declared target is only eligible until a finding establishes it
+    rules:
+      - {<<: *whole, rule_id: AA-01}
+      - {<<: *whole, rule_id: AA-02}
+      - {<<: *whole, rule_id: BB-01, replaces: [{rule_id: AA-01, level: finding}, {rule_id: AA-02, level: finding}]}
+    findings: [{rule_id: AA-01}, {rule_id: AA-02}, {rule_id: BB-01, replaces: [{rule_id: AA-02}]}]
+    undetermined: []
+    pending: []
+    expected:
+      active: [{rule_id: AA-01, line_ids: []}, {rule_id: BB-01, line_ids: []}]
+      replaced: [{rule_id: AA-02, line_ids: [], by: BB-01, level: finding}]
+      complete: true
+  - id: several established targets each replace
+    rules:
+      - {<<: *whole, rule_id: AA-01}
+      - {<<: *whole, rule_id: AA-02}
+      - {<<: *whole, rule_id: AA-03}
+      - {<<: *whole, rule_id: BB-01, replaces: [{rule_id: AA-01, level: finding}, {rule_id: AA-02, level: finding}, {rule_id: AA-03, level: finding}]}
+    findings: [{rule_id: AA-01}, {rule_id: AA-02}, {rule_id: AA-03}, {rule_id: BB-01, replaces: [{rule_id: AA-01}, {rule_id: AA-03}]}]
+    undetermined: []
+    pending: []
+    expected:
+      active: [{rule_id: AA-02, line_ids: []}, {rule_id: BB-01, line_ids: []}]
+      replaced:
+        - {rule_id: AA-01, line_ids: [], by: BB-01, level: finding}
+        - {rule_id: AA-03, line_ids: [], by: BB-01, level: finding}
+  - id: no target established means nothing is replaced
+    rules:
+      - {<<: *whole, rule_id: AA-01}
+      - {<<: *whole, rule_id: BB-01, replaces: [{rule_id: AA-01, level: finding}]}
+    findings: [{rule_id: AA-01}, {rule_id: BB-01}]
+    undetermined: []
+    pending: []
+    expected: {active: [{rule_id: AA-01, line_ids: []}, {rule_id: BB-01, line_ids: []}], replaced: [], possible: [], complete: true}
+  - id: a target with lines replaces on those lines only
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *whole, rule_id: BB-01, replaces: [{rule_id: AA-01, level: finding}]}
+    findings: [{rule_id: AA-01, line_ids: [L1]}, {rule_id: AA-01, line_ids: [L2]}, {rule_id: BB-01, replaces: [{rule_id: AA-01, line_ids: [L2]}]}]
+    undetermined: []
+    pending: []
+    expected:
+      active: [{rule_id: AA-01, line_ids: [L1]}, {rule_id: BB-01, line_ids: []}]
+      replaced: [{rule_id: AA-01, line_ids: [L2], by: BB-01, level: finding}]
+  - id: an open question with a target established keeps the rest possible
+    rules:
+      - {<<: *whole, rule_id: AA-01}
+      - {<<: *whole, rule_id: AA-02}
+      - {<<: *whole, rule_id: BB-01, replaces: [{rule_id: AA-01, level: finding}, {rule_id: AA-02, level: finding}]}
+    findings: [{rule_id: AA-01}, {rule_id: AA-02}, {rule_id: BB-01, replaces: [{rule_id: AA-01}]}]
+    undetermined: [{rule_id: BB-01, line_id: null}]
+    pending: []
+    expected:
+      active: [{rule_id: AA-02, line_ids: []}, {rule_id: BB-01, line_ids: []}]
+      replaced: [{rule_id: AA-01, line_ids: [], by: BB-01, level: finding}]
+      possible: [{rule_id: AA-02, line_ids: [], by: BB-01, level: finding}]
+      unaffected: [{rule_id: BB-01, line_ids: []}]
+      complete: false
+
+  # Several rules at once
+  - id: a chain replaces one step at a time, and a replaced finding can still replace
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *item, rule_id: BB-01, replaces: [{rule_id: AA-01, level: line}]}
+      - {<<: *item, rule_id: CC-01, replaces: [{rule_id: BB-01, level: line}]}
+    findings: [{rule_id: AA-01, line_ids: [L1]}, {rule_id: BB-01, line_ids: [L1]}, {rule_id: CC-01, line_ids: [L1]}]
+    undetermined: []
+    pending: []
+    expected:
+      active: [{rule_id: CC-01, line_ids: [L1]}]
+      replaced:
+        - {rule_id: AA-01, line_ids: [L1], by: BB-01, level: line}
+        - {rule_id: BB-01, line_ids: [L1], by: CC-01, level: line}
+  - id: when two rules replace one finding, the broader level is reported
+    rules:
+      - {<<: *whole, rule_id: AA-01}
+      - {<<: *whole, rule_id: BB-01, replaces: [{rule_id: AA-01, level: finding}]}
+      - {<<: *whole, rule_id: CC-01, replaces: [{rule_id: AA-01, level: receipt}]}
+    findings: [{rule_id: AA-01}, {rule_id: BB-01, replaces: [{rule_id: AA-01}]}]
+    undetermined: []
+    pending: []
+    expected:
+      active: [{rule_id: BB-01, line_ids: []}]
+      replaced: [{rule_id: AA-01, line_ids: [], by: CC-01, level: receipt}]
+  - id: a line replacement is reported before a finding one, whichever finding came first
+    rules:
+      - {<<: *item, rule_id: AA-01}
+      - {<<: *item, rule_id: BB-01, replaces: [{rule_id: AA-01, level: line}]}
+      - {<<: *whole, rule_id: CC-01, replaces: [{rule_id: AA-01, level: finding}]}
+    findings: [{rule_id: CC-01, replaces: [{rule_id: AA-01, line_ids: [L1]}]}, {rule_id: AA-01, line_ids: [L1]}, {rule_id: BB-01, line_ids: [L1]}]
+    undetermined: []
+    pending: []
+    expected:
+      replaced: [{rule_id: AA-01, line_ids: [L1], by: BB-01, level: line}]
+  - id: a finding replaced for certain is not also possibly replaced
+    rules:
+      - {<<: *whole, rule_id: AA-01}
+      - {<<: *whole, rule_id: BB-01, replaces: [{rule_id: AA-01, level: finding}]}
+      - {<<: *whole, rule_id: CC-01, replaces: [{rule_id: AA-01, level: receipt}]}
+    findings: [{rule_id: AA-01}]
+    undetermined: [{rule_id: BB-01, line_id: null}]
+    pending: []
+    expected:
+      replaced: [{rule_id: AA-01, line_ids: [], by: CC-01, level: receipt}]
+      possible: []
+      undetermined: [{rule_id: BB-01, line_id: null}]
+  - id: no findings at all
+    rules: [{<<: *whole, rule_id: AA-01}]
+    findings: []
+    undetermined: []
+    pending: []
+    expected: {active: [], unaffected: [], replaced: [], possible: [], complete: true}
+
+refused:
+  - id: a finding names a target its rule does not declare
+    rules:
+      - {<<: *whole, rule_id: AA-01}
+      - {<<: *whole, rule_id: BB-01}
+    findings: [{rule_id: BB-01, replaces: [{rule_id: AA-01}]}]
+    undetermined: []
+    pending: []
+    expected: "BB-01: does not declare AA-01 as a target at finding level"
+  - id: a target declared at another level does not count
+    rules:
+      - {<<: *whole, rule_id: AA-01}
+      - {<<: *whole, rule_id: BB-01, replaces: [{rule_id: AA-01, level: receipt}]}
+    findings: [{rule_id: BB-01, replaces: [{rule_id: AA-01}]}]
+    undetermined: []
+    pending: []
+    expected: "BB-01: does not declare AA-01 as a target at finding level"
+  - id: a finding for another receipt
+    rules: [{<<: *whole, rule_id: AA-01}]
+    findings: [{rule_id: AA-01, receipt_id: R2}]
+    undetermined: []
+    pending: []
+    expected: "R1: has findings for another receipt"

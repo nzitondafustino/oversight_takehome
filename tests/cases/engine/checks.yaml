@@ -1,0 +1,512 @@
+suite: checks
+
+# What run_checks reports. Findings are candidates, all raised: replacements, references,
+# carve-outs and uncertainty come later, so some of these cases show catches that a later
+# module takes out of play.
+#
+# findings: the real ruleset on an admitted `receipt`. expected holds any of: findings, listed in
+#           order by rule_id, severity, scope and line_ids; pending_helpers, by rule_id and helper;
+#           undetermined, by rule_id and line_id; and complete.
+# details:  the first finding for `rule_id`. expected names values in its JSON form.
+# rules:    its own `rules` on an admitted `receipt`, expected as in findings.
+# refused:  its own `rules` cannot be run on `receipt`. expected is an error regex.
+
+templates:
+  line: &line
+    line_id: L1
+    description_raw: Grilled salmon
+    language: en
+    quantity: 1
+    unit_price: "28.00"
+    amount: "28.00"
+    amount_usd: "28.00"
+    category: food_beverage
+    confidence: "0.9"
+  # Clean under every rule that conditions can decide.
+  receipt: &receipt
+    receipt_id: RCP-001
+    employee_id: E-1042
+    employee_country: US
+    submitted_expense_type: Meals - Individual
+    merchant_name: Verona Grill
+    mcc: "5812"
+    transaction_datetime: "2026-04-14T19:22:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: "28.00"
+    total_amount_usd: "28.00"
+    trip_id: TRIP-0091
+    trip_nights: 5
+    itemized: true
+    line_items: [*line]
+  rule: &rule
+    policy_doc: doc.md
+    title: A rule
+    source_quote: quote
+    provenance:
+      translator: developer
+      clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  check: &check
+    <<: *rule
+    kind: check
+    outcome: exception
+    scope: item
+    severity: low
+  # Every real rule that reads a category and applies to a US receipt from a restaurant, on one line.
+  uncertain: &uncertain
+    - {rule_id: ALC-01, line_id: L1}
+    - {rule_id: ENT-02, line_id: L1}
+    - {rule_id: GIFT-02, line_id: L1}
+    - {rule_id: GIFT-03, line_id: L1}
+    - {rule_id: HOUSE-01, line_id: L1}
+    - {rule_id: LAUNDRY-01, line_id: L1}
+    - {rule_id: MEAL-02, line_id: null}
+    - {rule_id: PERS-01, line_id: L1}
+    - {rule_id: PERS-02, line_id: L1}
+    - {rule_id: PERS-03, line_id: L1}
+    - {rule_id: TECH-01, line_id: L1}
+    - {rule_id: TECH-02, line_id: L1}
+    - {rule_id: TECH-04, line_id: L1}
+
+findings:
+  # Nothing to report, yet the evaluation is not complete without the helper rules
+  - id: a clean receipt
+    receipt: *receipt
+    expected:
+      findings: []
+      undetermined: []
+      complete: false
+      pending_helpers:
+        - {rule_id: ALC-02, helper: alcohol_per_attendee}
+        - {rule_id: DOC-03, helper: expense_type_mismatch}
+        - {rule_id: GIFT-01, helper: gift_cap}
+        - {rule_id: GIFT-04, helper: government_official}
+        - {rule_id: HEALTH-01, helper: otc_trip_cap}
+        - {rule_id: MEAL-01, helper: meal_cap}
+        - {rule_id: REG-02, helper: meal_cap}
+        - {rule_id: REG-03, helper: meal_cap}
+        - {rule_id: REG-04, helper: vat_threshold}
+        - {rule_id: TIME-03, helper: split_transactions}
+  - id: alcohol at a documented client dinner is allowed
+    receipt: {<<: *receipt, submitted_expense_type: Client Entertainment, attendee_count: 4, line_items: [{<<: *line, category: alcohol}]}
+    expected: {findings: []}
+
+  # Item rules: one finding per line caught, and only the lines caught
+  - id: alcohol on a solo meal
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohol}]}
+    expected: {findings: [{rule_id: ALC-01, severity: high, scope: item, line_ids: [L1]}]}
+  - id: two lines caught give two findings
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1, category: alcohol}, {<<: *line, line_id: L2, category: alcohol}]}
+    expected:
+      findings:
+        - {rule_id: ALC-01, severity: high, scope: item, line_ids: [L1]}
+        - {rule_id: ALC-01, severity: high, scope: item, line_ids: [L2]}
+  - id: a gratuity beside alcohol is not caught
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1, category: alcohol}, {<<: *line, line_id: L2, category: service_fee}]}
+    expected: {findings: [{rule_id: ALC-01, severity: high, scope: item, line_ids: [L1]}]}
+  - id: several rules on one receipt come in ruleset order
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1, category: tobacco}, {<<: *line, line_id: L2, category: clothing}, {<<: *line, line_id: L3, category: gift_card}]}
+    expected:
+      findings:
+        - {rule_id: GIFT-02, severity: high, scope: item, line_ids: [L3]}
+        - {rule_id: PERS-02, severity: medium, scope: item, line_ids: [L2]}
+        - {rule_id: PERS-03, severity: high, scope: item, line_ids: [L1]}
+  - id: laundry on a short trip
+    receipt: {<<: *receipt, trip_nights: 3, line_items: [{<<: *line, category: laundry_service}]}
+    expected: {findings: [{rule_id: LAUNDRY-01, severity: low, scope: item, line_ids: [L1]}]}
+  - id: an accessory above the cap
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: computer_accessory, unit_price: "329.00", amount: "329.00", amount_usd: "329.00"}]}
+    expected: {findings: [{rule_id: TECH-02, severity: medium, scope: item, line_ids: [L1]}]}
+  - id: a venue from the classifier
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: other, venue_type: golf}]}
+    expected: {findings: [{rule_id: ENT-01, severity: medium, scope: item, line_ids: [L1]}]}
+  - id: an item kind from the classifier
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: other, item_kind: mobile_phone}]}
+    expected: {findings: [{rule_id: TECH-03, severity: high, scope: item, line_ids: [L1]}]}
+
+  # Receipt rules: one finding for the receipt, citing no lines
+  - id: a high-risk merchant
+    receipt: {<<: *receipt, mcc: "5921"}
+    expected: {findings: [{rule_id: MCC-01, severity: high, scope: receipt, line_ids: []}]}
+  - id: no merchant name
+    receipt: {<<: *receipt, merchant_name: null}
+    expected: {findings: [{rule_id: DOC-02, severity: medium, scope: receipt, line_ids: []}]}
+  - id: foreign currency with no rate
+    receipt: {<<: *receipt, currency: EUR, fx_rate_to_usd: null, line_items: [{<<: *line, amount_usd: null}]}
+    expected: {findings: [{rule_id: DOC-04, severity: medium, scope: receipt, line_ids: []}]}
+  - id: a large meal that is not itemized
+    receipt: {<<: *receipt, itemized: false, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, category: other, unit_price: "186.00", amount: "186.00", amount_usd: "186.00"}]}
+    expected:
+      findings:
+        - {rule_id: DOC-01, severity: medium, scope: receipt, line_ids: []}
+        - {rule_id: MEAL-02, severity: low, scope: receipt, line_ids: []}
+
+  # Review signals carry no severity
+  - id: a medium-risk merchant
+    receipt: {<<: *receipt, mcc: "5411"}
+    expected: {findings: [{rule_id: MCC-02, severity: null, scope: receipt, line_ids: []}]}
+  - id: overnight
+    receipt: {<<: *receipt, transaction_datetime: "2026-04-14T00:00:00"}
+    expected: {findings: [{rule_id: TIME-01, severity: null, scope: receipt, line_ids: []}]}
+  - id: no trip
+    receipt: {<<: *receipt, trip_id: null, trip_nights: null}
+    expected: {findings: [{rule_id: TIME-02, severity: null, scope: receipt, line_ids: []}]}
+  - id: an exception and a signal together
+    receipt: {<<: *receipt, mcc: "5411", line_items: [{<<: *line, category: alcohol}]}
+    expected:
+      findings:
+        - {rule_id: ALC-03, severity: high, scope: item, line_ids: [L1]}
+        - {rule_id: MCC-02, severity: null, scope: receipt, line_ids: []}
+
+  # Raw catches that a later module decides on
+  - id: an APAC receipt gets the global rule until replacements apply
+    receipt: {<<: *receipt, employee_country: IN, line_items: [{<<: *line, category: alcohol}]}
+    expected:
+      findings:
+        - {rule_id: ALC-01, severity: high, scope: item, line_ids: [L1]}
+        - {rule_id: REG-01, severity: high, scope: item, line_ids: [L1]}
+  - id: a reference on file does not waive here
+    receipt: {<<: *receipt, pre_approval_ref: PA-2026-0412, line_items: [{<<: *line, category: computer_accessory, unit_price: "329.00", amount: "329.00", amount_usd: "329.00"}]}
+    expected: {findings: [{rule_id: TECH-02, severity: medium, scope: item, line_ids: [L1]}]}
+
+  # A missing or unknown category: no finding that could be false, and not reported as passed
+  - id: a line with no category leaves its rules undetermined
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: null, confidence: null}]}
+    expected: {findings: [], undetermined: *uncertain, complete: false}
+  - id: a line with an unknown category leaves its rules undetermined
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohool}]}
+    expected: {findings: [], undetermined: *uncertain, complete: false}
+  - id: an unknown category does not make a large meal a confirmed non-meal
+    receipt: {<<: *receipt, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, category: foood, unit_price: "186.00", amount: "186.00", amount_usd: "186.00"}]}
+    expected: {findings: [], undetermined: *uncertain}
+  - id: a not on no category gives no false GIFT-03
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: null, recipient_type: employee}]}
+    expected: {findings: [], undetermined: *uncertain}
+  - id: a rule that does not read the category still runs on a line with none
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: null, venue_type: golf}]}
+    expected: {findings: [{rule_id: ENT-01, severity: medium, scope: item, line_ids: [L1]}], undetermined: *uncertain}
+  - id: a rule that does not apply to the receipt is not undetermined
+    receipt: {<<: *receipt, mcc: "5411", line_items: [{<<: *line, category: null}]}
+    expected:
+      findings: [{rule_id: MCC-02, severity: null, scope: receipt, line_ids: []}]
+      undetermined:
+        - {rule_id: ALC-03, line_id: L1}
+        - {rule_id: ENT-02, line_id: L1}
+        - {rule_id: GIFT-02, line_id: L1}
+        - {rule_id: GIFT-03, line_id: L1}
+        - {rule_id: HOUSE-01, line_id: L1}
+        - {rule_id: LAUNDRY-01, line_id: L1}
+        - {rule_id: MEAL-02, line_id: null}
+        - {rule_id: PERS-01, line_id: L1}
+        - {rule_id: PERS-02, line_id: L1}
+        - {rule_id: PERS-03, line_id: L1}
+        - {rule_id: TECH-01, line_id: L1}
+        - {rule_id: TECH-02, line_id: L1}
+        - {rule_id: TECH-04, line_id: L1}
+  - id: only the uncertain line is undetermined, and a known line is still caught
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1, category: tobacco}, {<<: *line, line_id: L2, category: null}]}
+    expected:
+      findings: [{rule_id: PERS-03, severity: high, scope: item, line_ids: [L1]}]
+      undetermined:
+        - {rule_id: ALC-01, line_id: L2}
+        - {rule_id: ENT-02, line_id: L2}
+        - {rule_id: GIFT-02, line_id: L2}
+        - {rule_id: GIFT-03, line_id: L2}
+        - {rule_id: HOUSE-01, line_id: L2}
+        - {rule_id: LAUNDRY-01, line_id: L2}
+        - {rule_id: MEAL-02, line_id: null}
+        - {rule_id: PERS-01, line_id: L2}
+        - {rule_id: PERS-02, line_id: L2}
+        - {rule_id: PERS-03, line_id: L2}
+        - {rule_id: TECH-01, line_id: L2}
+        - {rule_id: TECH-02, line_id: L2}
+        - {rule_id: TECH-04, line_id: L2}
+  - id: food on another line settles the meal though one line is unknown
+    receipt: {<<: *receipt, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, line_id: L1, category: food_beverage}, {<<: *line, line_id: L2, category: foood}]}
+    expected:
+      findings: [{rule_id: MEAL-02, severity: low, scope: receipt, line_ids: []}]
+      undetermined:
+        - {rule_id: ALC-01, line_id: L2}
+        - {rule_id: ENT-02, line_id: L2}
+        - {rule_id: GIFT-02, line_id: L2}
+        - {rule_id: GIFT-03, line_id: L2}
+        - {rule_id: HOUSE-01, line_id: L2}
+        - {rule_id: LAUNDRY-01, line_id: L2}
+        - {rule_id: PERS-01, line_id: L2}
+        - {rule_id: PERS-02, line_id: L2}
+        - {rule_id: PERS-03, line_id: L2}
+        - {rule_id: TECH-01, line_id: L2}
+        - {rule_id: TECH-02, line_id: L2}
+        - {rule_id: TECH-04, line_id: L2}
+  - id: a missing secondary field is quiet, and not undetermined here
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: other, venue_type: null, item_kind: null, recipient_type: null}]}
+    expected: {findings: [], undetermined: []}
+  - id: a low confidence is not decided here
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohol, confidence: "0.1"}]}
+    expected: {findings: [{rule_id: ALC-01, severity: high, scope: item, line_ids: [L1]}], undetermined: []}
+
+details:
+  - id: an item finding
+    rule_id: ALC-01
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Chianti Classico, category: alcohol}]}
+    expected:
+      outcome: exception
+      receipt_id: RCP-001
+      status: raised
+      resolved_by: null
+      explanation: "Alcohol requires a documented entertainment context: Chianti Classico"
+      policy_doc: meals-and-entertainment-policy.md
+      source_quote: records an attendee count of two or more
+      provenance.translator: developer
+  - id: every fact the rule read is evidence, in order, including what is missing
+    rule_id: ALC-01
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohol}]}
+    expected:
+      evidence.0.fact: item.category
+      evidence.0.value: alcohol
+      evidence.1.fact: item.is_purchase
+      evidence.1.value: true
+      evidence.2.fact: receipt.attendee_count
+      evidence.2.value: null
+      evidence.3.fact: receipt.mcc
+      evidence.3.value: "5812"
+      evidence.4.fact: receipt.submitted_expense_type
+      evidence.4.value: Meals - Individual
+  - id: a receipt finding is explained by its rule
+    rule_id: DOC-01
+    receipt: {<<: *receipt, itemized: false, total_amount: "186.00", total_amount_usd: "186.00"}
+    expected:
+      outcome: exception
+      line_ids: []
+      explanation: Itemization threshold
+      policy_doc: receipt-documentation-requirements.md
+  - id: evidence keeps false as false and an amount as exact text
+    rule_id: DOC-01
+    receipt: {<<: *receipt, itemized: false, total_amount: "186.00", total_amount_usd: "186.00"}
+    expected:
+      evidence.0.fact: receipt.itemized
+      evidence.0.value: false
+      evidence.1.fact: receipt.total_amount_usd
+      evidence.1.value: "186.00"
+  - id: evidence keeps zero apart from missing
+    rule_id: LAUNDRY-01
+    receipt: {<<: *receipt, trip_nights: 0, line_items: [{<<: *line, category: laundry_service}]}
+    expected:
+      evidence.2.fact: receipt.trip_nights
+      evidence.2.value: "0"
+  - id: a derived fact is evidence
+    rule_id: TECH-02
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: computer_accessory, quantity: 2, unit_price: "250.00", amount: "500.00", amount_usd: "500.00"}]}
+    expected:
+      evidence.2.fact: item.unit_price_usd
+      evidence.2.value: "250.00"
+  - id: a review signal
+    rule_id: MCC-02
+    receipt: {<<: *receipt, mcc: "5411"}
+    expected: {outcome: review_signal, severity: null, line_ids: [], explanation: Medium-risk merchant category}
+
+rules:
+  - id: only active rules without a helper are run
+    rules:
+      - {<<: *check, rule_id: AA-01, select: {op: eq, field: item.category, value: food_beverage}}
+      - {<<: *check, rule_id: AA-02, status: retired, select: {op: eq, field: item.category, value: food_beverage}}
+      - {<<: *check, rule_id: AA-03, status: not_evaluable, select: {op: eq, field: item.category, value: food_beverage}}
+      - {<<: *check, rule_id: AA-04, helper: gift_cap, params: {cap_usd: {type: number, value: "50", unit: usd}, named_recipient_from_usd: {type: number, value: "10", unit: usd}}}
+      - {<<: *rule, rule_id: AA-05, kind: process, directive: guidance}
+      - {<<: *rule, rule_id: AA-06, kind: carve_out, modifies: [AA-01], requires_ref: baggage_delay, select: {op: eq, field: item.category, value: food_beverage}}
+    receipt: *receipt
+    expected:
+      findings: [{rule_id: AA-01, severity: low, scope: item, line_ids: [L1]}]
+      pending_helpers: [{rule_id: AA-04, helper: gift_cap}]
+      undetermined: []
+      complete: false
+  - id: a helper rule stays pending even where its condition would not hold
+    rules:
+      - {<<: *check, rule_id: AA-01, scope: receipt, helper: meal_cap, applies_when: {op: eq, field: receipt.entity, value: APAC}, params: {cap_usd: {type: number, value: "60", unit: usd}}}
+    receipt: *receipt
+    expected: {findings: [], pending_helpers: [{rule_id: AA-01, helper: meal_cap}], complete: false}
+  - id: a result is complete when every rule was decided
+    rules:
+      - {<<: *check, rule_id: AA-01, select: {op: eq, field: item.category, value: gift}}
+    receipt: *receipt
+    expected: {findings: [], pending_helpers: [], undetermined: [], complete: true}
+  - id: a result is not complete while a rule is undetermined, even with no helper rules
+    rules:
+      - {<<: *check, rule_id: AA-01, select: {op: eq, field: item.category, value: gift}}
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: foood}]}
+    expected: {findings: [], pending_helpers: [], undetermined: [{rule_id: AA-01, line_id: L1}], complete: false}
+  - id: a retired rule that could not be run is not refused
+    rules:
+      - {<<: *check, rule_id: AA-01, status: retired, select: {op: eq, field: item.no_such_field, value: x}}
+    receipt: *receipt
+    expected: {findings: [], complete: true}
+  - id: findings keep the order of the rules, then of the lines
+    rules:
+      - {<<: *check, rule_id: BB-02, select: {op: eq, field: item.category, value: gift}}
+      - {<<: *check, rule_id: AA-01, select: {op: eq, field: item.category, value: gift}}
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L2, category: gift}, {<<: *line, line_id: L1, category: gift}]}
+    expected:
+      findings:
+        - {rule_id: BB-02, severity: low, scope: item, line_ids: [L2]}
+        - {rule_id: BB-02, severity: low, scope: item, line_ids: [L1]}
+        - {rule_id: AA-01, severity: low, scope: item, line_ids: [L2]}
+        - {rule_id: AA-01, severity: low, scope: item, line_ids: [L1]}
+  - id: lines that do not match give no finding
+    rules:
+      - {<<: *check, rule_id: AA-01, select: {op: eq, field: item.category, value: gift}}
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1, category: other}, {<<: *line, line_id: L2, category: gift}, {<<: *line, line_id: L3, category: tobacco}]}
+    expected: {findings: [{rule_id: AA-01, severity: low, scope: item, line_ids: [L2]}]}
+
+  # applies_when decides for the receipt, and select for each line
+  - id: an item rule whose gate is shut catches nothing
+    rules: &gated
+      - {<<: *check, rule_id: AA-01, applies_when: {op: eq, field: receipt.entity, value: APAC}, select: {op: eq, field: item.category, value: gift}}
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: gift}]}
+    expected: {findings: []}
+  - id: an item rule whose gate is open reads each line
+    rules: *gated
+    receipt: {<<: *receipt, employee_country: IN, line_items: [{<<: *line, line_id: L1, category: gift}, {<<: *line, line_id: L2, category: other}]}
+    expected: {findings: [{rule_id: AA-01, severity: low, scope: item, line_ids: [L1]}]}
+  - id: a receipt rule is run once however many lines there are
+    rules:
+      - {<<: *check, rule_id: AA-01, scope: receipt, applies_when: {op: eq, field: receipt.mcc, value: "5812"}}
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1}, {<<: *line, line_id: L2}, {<<: *line, line_id: L3}]}
+    expected: {findings: [{rule_id: AA-01, severity: low, scope: receipt, line_ids: []}]}
+  - id: a receipt rule is run on a receipt with no lines
+    rules:
+      - {<<: *check, rule_id: AA-01, scope: receipt, applies_when: {op: eq, field: receipt.itemized, value: false}}
+    receipt: {<<: *receipt, itemized: false, line_items: []}
+    expected: {findings: [{rule_id: AA-01, severity: low, scope: receipt, line_ids: []}]}
+
+  # Nested conditions, with a threshold from the rule's own params
+  - id: all, any and not together
+    rules:
+      - <<: *check
+        rule_id: AA-01
+        params: {cap: {type: number, value: "100", unit: usd}}
+        select:
+          op: any
+          conditions:
+            - op: all
+              conditions:
+                - {op: eq, field: item.category, value: other}
+                - {op: gt, field: item.amount_usd, value: {param: cap}}
+            - op: not
+              condition: {op: in, field: item.category, values: [other, food_beverage]}
+    receipt:
+      <<: *receipt
+      line_items:
+        - {<<: *line, line_id: L1, category: other, unit_price: "100.01", amount: "100.01", amount_usd: "100.01"}
+        - {<<: *line, line_id: L2, category: other, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}
+        - {<<: *line, line_id: L3, category: gift}
+        - {<<: *line, line_id: L4, category: food_beverage}
+    expected:
+      findings:
+        - {rule_id: AA-01, severity: low, scope: item, line_ids: [L1]}
+        - {rule_id: AA-01, severity: low, scope: item, line_ids: [L3]}
+  - id: each rule uses its own params
+    rules:
+      - {<<: *check, rule_id: AA-01, params: {cap: {type: number, value: "20", unit: usd}}, select: {op: gt, field: item.amount_usd, value: {param: cap}}}
+      - {<<: *check, rule_id: AA-02, params: {cap: {type: number, value: "30", unit: usd}}, select: {op: gt, field: item.amount_usd, value: {param: cap}}}
+    receipt: *receipt
+    expected: {findings: [{rule_id: AA-01, severity: low, scope: item, line_ids: [L1]}]}
+
+  # Missing, false and zero
+  - &nights
+    id: a threshold reads zero as a value
+    rules:
+      - {<<: *check, rule_id: AA-01, scope: receipt, params: {least: {type: number, value: "0", unit: nights}}, applies_when: {op: gte, field: receipt.trip_nights, value: {param: least}}}
+    receipt: {<<: *receipt, trip_nights: 0}
+    expected: {findings: [{rule_id: AA-01, severity: low, scope: receipt, line_ids: []}]}
+  - {<<: *nights, id: a threshold on a missing value is false, receipt: {<<: *receipt, trip_nights: null}, expected: {findings: []}}
+  - &absent
+    id: missing is not true of zero
+    rules:
+      - {<<: *check, rule_id: AA-01, scope: receipt, applies_when: {op: missing, field: receipt.trip_nights}}
+    receipt: {<<: *receipt, trip_nights: 0}
+    expected: {findings: []}
+  - {<<: *absent, id: missing is true of a missing value, receipt: {<<: *receipt, trip_nights: null}, expected: {findings: [{rule_id: AA-01, severity: low, scope: receipt, line_ids: []}]}}
+  - &not_itemized
+    id: eq false reads false
+    rules:
+      - {<<: *check, rule_id: AA-01, scope: receipt, applies_when: {op: eq, field: receipt.itemized, value: false}}
+    receipt: {<<: *receipt, itemized: false}
+    expected: {findings: [{rule_id: AA-01, severity: low, scope: receipt, line_ids: []}]}
+  - {<<: *not_itemized, id: eq false does not read true, receipt: *receipt, expected: {findings: []}}
+
+  - id: the first severity case that holds wins
+    rules:
+      - <<: *check
+        rule_id: AA-01
+        select: {op: eq, field: item.category, value: other}
+        severity_cases:
+          - {when: {op: eq, field: item.item_kind, value: otc_medication}, severity: medium}
+          - {when: {op: eq, field: item.venue_type, value: golf}, severity: critical}
+          - {when: {op: eq, field: item.venue_type, value: golf}, severity: high}
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: other, venue_type: golf}]}
+    expected: {findings: [{rule_id: AA-01, severity: critical, scope: item, line_ids: [L1]}]}
+  - id: severity is decided for each line
+    rules:
+      - <<: *check
+        rule_id: AA-01
+        select: {op: eq, field: item.category, value: other}
+        severity_cases:
+          - {when: {op: eq, field: item.venue_type, value: golf}, severity: critical}
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1, category: other, venue_type: golf}, {<<: *line, line_id: L2, category: other}]}
+    expected:
+      findings:
+        - {rule_id: AA-01, severity: critical, scope: item, line_ids: [L1]}
+        - {rule_id: AA-01, severity: low, scope: item, line_ids: [L2]}
+  - id: an empty ruleset finds nothing
+    rules: []
+    receipt: *receipt
+    expected: {findings: [], complete: true}
+
+refused:
+  # An ordered comparison on a literal never reaches the evaluator: the schema refuses it.
+  - id: an ordered comparison on a literal
+    rules: [{<<: *check, rule_id: AA-01, select: {op: gt, field: item.amount_usd, value: "100"}}]
+    receipt: *receipt
+    expected: gt on item.amount_usd must compare against a param
+
+  # Each of these would otherwise stay quiet on every receipt.
+  - id: a number compared with text
+    rules: [{<<: *check, rule_id: AA-01, select: {op: eq, field: item.amount_usd, value: "28.00"}}]
+    receipt: *receipt
+    expected: "AA-01: item.amount_usd is a number and must compare against a param"
+  - id: a field no one has heard of
+    rules: [{<<: *check, rule_id: AA-01, select: {op: eq, field: item.categry, value: gift}}]
+    receipt: *receipt
+    expected: "AA-01: unknown field item.categry"
+  - id: a misspelt category in a rule
+    rules: [{<<: *check, rule_id: AA-01, select: {op: eq, field: item.category, value: alcohool}}]
+    receipt: *receipt
+    expected: "AA-01: 'alcohool' is not a known value for item.category"
+  - id: a list against a number
+    rules: [{<<: *check, rule_id: AA-01, select: {op: in, field: item.amount_usd, values: ["28.00"]}}]
+    receipt: *receipt
+    expected: "AA-01: in needs a text field"
+  - id: a threshold in the wrong unit
+    rules: [{<<: *check, rule_id: AA-01, params: {cap: {type: number, value: "100", unit: eur}}, select: {op: gt, field: item.amount_usd, value: {param: cap}}}]
+    receipt: *receipt
+    expected: "AA-01: cap is in eur, item.amount_usd is in usd"
+  - id: a receipt rule reading a line
+    rules:
+      - <<: *check
+        rule_id: AA-01
+        scope: receipt
+        applies_when: {op: eq, field: receipt.mcc, value: "5812"}
+        severity_cases: [{when: {op: eq, field: item.category, value: gift}, severity: high}]
+    receipt: *receipt
+    expected: "AA-01: a receipt rule cannot read item.category"
+  - id: a helper rule is checked too
+    rules: [{<<: *check, rule_id: AA-01, scope: receipt, helper: meal_cap, applies_when: {op: eq, field: receipt.entty, value: APAC}, params: {cap_usd: {type: number, value: "60", unit: usd}}}]
+    receipt: *receipt
+    expected: "AA-01: unknown field receipt.entty"
+  - id: a bad rule stops the run before any finding
+    rules:
+      - {<<: *check, rule_id: AA-01, select: {op: eq, field: item.category, value: food_beverage}}
+      - {<<: *check, rule_id: AA-02, select: {op: eq, field: item.categry, value: gift}}
+    receipt: *receipt
+    expected: "AA-02: unknown field item.categry"

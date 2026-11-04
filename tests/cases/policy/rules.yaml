@@ -1,0 +1,455 @@
+suite: rules
+
+# Single rules, written from real clauses, and the shapes the schema must refuse.
+#
+# accepted: `rule` must validate, and its fields must equal those in `expected`.
+#           Only the fields listed are compared.
+# refused:  `rule` must fail, with an error matching the pattern in `expected`.
+#
+# Quote numbers ("200"): the schema treats numbers and text differently.
+
+templates:
+  provenance: &provenance {translator: template, clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+
+  tech_02: &tech_02
+    kind: check
+    rule_id: TECH-02
+    policy_doc: technology-and-equipment-policy.md
+    title: Peripherals under $200
+    source_quote: "reimbursable up to **$200 per item**"
+    provenance: *provenance
+    applies_to: {classes: [computer_accessory]}
+    outcome: exception
+    scope: item
+    severity: medium
+    params:
+      cap_usd: {type: number, value: "200", unit: usd}
+    select:
+      op: all
+      conditions:
+        - {op: eq, field: item.category, value: computer_accessory}
+        - {op: gt, field: item.unit_price_usd, value: {param: cap_usd}}
+    waived_by_ref: pre_approval
+
+  baggage: &baggage
+    kind: carve_out
+    rule_id: PERS.BAGGAGE
+    policy_doc: non-reimbursable-items.md
+    title: Baggage-delay exception
+    source_quote: "essential toiletries are reimbursable up to **$150**"
+    provenance: *provenance
+    applies_to: {classes: [personal_care, clothing]}
+    modifies: [PERS-01, PERS-02]
+    requires_ref: baggage_delay
+    helper: baggage_allowance
+    params:
+      allowance_usd: {type: number, value: "150", unit: usd}
+      delay_hours: {type: number, value: "24", unit: hour}
+
+  exc_01: &exc_01
+    kind: process
+    rule_id: EXC-01
+    policy_doc: approval-and-exception-handling.md
+    title: Receipt disposition
+    source_quote: "Disposition is computed, not judged."
+    provenance: *provenance
+    applies_to: {classes: all}
+    directive: disposition
+    params:
+      flag_severities: {type: set, values: [critical, high, medium]}
+      review_severities: {type: set, values: [low]}
+
+accepted:
+  - id: TECH-02 a plain check replaces nothing
+    rule: *tech_02
+    expected:
+      rule_id: TECH-02
+      kind: check
+      replaces: []
+      applies_to: {classes: [computer_accessory], excludes: []}
+
+  - id: MCC-02 a whole-receipt review signal
+    rule:
+      kind: check
+      rule_id: MCC-02
+      policy_doc: merchant-category-risk.md
+      title: Medium-risk merchant category
+      source_quote: "A medium-risk MCC raises a **review signal** only."
+      provenance: *provenance
+      applies_to: {classes: all}
+      outcome: review_signal
+      scope: receipt
+      params:
+        medium_risk: {type: set, values: ["5813", "5912", "5311", "5411", "5732"]}
+      applies_when: {op: in, field: receipt.mcc, values: {param: medium_risk}}
+    expected:
+      rule_id: MCC-02
+      outcome: review_signal
+      severity: null
+      applies_to: {classes: all, excludes: []}
+
+  - id: ALC-01 a check with no params
+    rule:
+      kind: check
+      rule_id: ALC-01
+      policy_doc: meals-and-entertainment-policy.md
+      title: Alcohol requires a documented entertainment context
+      source_quote: "Alcohol is reimbursable"
+      provenance: *provenance
+      applies_to: {classes: [alcohol]}
+      outcome: exception
+      scope: item
+      severity: high
+      select: {op: eq, field: item.category, value: alcohol}
+    expected:
+      rule_id: ALC-01
+      params: {}
+
+  - id: REG-01 a check that replaces another rule
+    rule:
+      kind: check
+      rule_id: REG-01
+      policy_doc: regional-addendum.md
+      title: Alcohol
+      source_quote: "Alcohol is **never** reimbursable for APAC-entity employees"
+      provenance: *provenance
+      applies_to: {classes: [alcohol]}
+      outcome: exception
+      scope: item
+      severity: high
+      applies_when: {op: eq, field: receipt.entity, value: APAC}
+      select: {op: eq, field: item.category, value: alcohol}
+      replaces:
+        - {rule_id: ALC-01, level: receipt}
+    expected:
+      rule_id: REG-01
+      replaces:
+        - {rule_id: ALC-01, level: receipt}
+
+  - id: PERS.BAGGAGE a carve-out
+    rule: *baggage
+    expected:
+      kind: carve_out
+      applies_to: {classes: [personal_care, clothing], excludes: []}
+      modifies: [PERS-01, PERS-02]
+      requires_ref: baggage_delay
+
+  - id: EXC-01 a process rule
+    rule: *exc_01
+    expected:
+      kind: process
+      directive: disposition
+
+  - id: EXC-03 a threshold the docs do not state
+    rule:
+      kind: process
+      rule_id: EXC-03
+      policy_doc: approval-and-exception-handling.md
+      title: Uncertainty
+      source_quote: "raise a **review signal** with rule ID `EXC-03`"
+      provenance: *provenance
+      applies_to: {classes: all}
+      directive: uncertainty
+      params:
+        min_confidence: {type: number, value: "0.5", unit: ratio, source: project_decision}
+    expected:
+      params:
+        min_confidence: {type: number, value: "0.5", unit: ratio, source: project_decision}
+
+  - id: HEALTH-01 a helper rule with two severities
+    rule:
+      kind: check
+      rule_id: HEALTH-01
+      policy_doc: non-reimbursable-items.md
+      title: Over-the-counter medication
+      source_quote: "up to **$25** in total"
+      provenance: *provenance
+      applies_to: {classes: [health_otc, other]}
+      outcome: exception
+      scope: item
+      severity: low
+      severity_cases:
+        - when: {op: eq, field: item.item_kind, value: prescription_medication}
+          severity: medium
+      helper: otc_trip_cap
+      params:
+        trip_cap_usd: {type: number, value: "25", unit: usd}
+    expected:
+      severity: low
+      helper: otc_trip_cap
+      severity_cases:
+        - when: {op: eq, field: item.item_kind, value: prescription_medication}
+          severity: medium
+
+  - id: MEAL-02 fits without a helper
+    rule:
+      kind: check
+      rule_id: MEAL-02
+      policy_doc: meals-and-entertainment-policy.md
+      title: Attendee documentation
+      source_quote: "A missing attendee count is a **low** exception."
+      provenance: *provenance
+      applies_to: {classes: [food_beverage, alcohol, other]}
+      outcome: exception
+      scope: receipt
+      severity: low
+      params:
+        total_usd: {type: number, value: "150", unit: usd}
+      applies_when:
+        op: all
+        conditions:
+          - {op: eq, field: receipt.is_meal_receipt, value: true}
+          - {op: gt, field: receipt.total_amount_usd, value: {param: total_usd}}
+          - {op: missing, field: receipt.attendee_count}
+    expected:
+      rule_id: MEAL-02
+      helper: null
+
+  - id: ALC-02 an aggregate item rule through a helper
+    rule:
+      kind: check
+      rule_id: ALC-02
+      policy_doc: meals-and-entertainment-policy.md
+      title: Alcohol per-attendee cap
+      source_quote: "**$30 per attendee**"
+      provenance: *provenance
+      applies_to: {classes: [alcohol]}
+      outcome: exception
+      scope: item
+      severity: medium
+      helper: alcohol_per_attendee
+      params:
+        limit: {type: number, value: "30", unit: usd}
+    expected:
+      helper: alcohol_per_attendee
+      scope: item
+
+  - id: REG-04 an aggregate receipt rule through a helper
+    rule:
+      kind: check
+      rule_id: REG-04
+      policy_doc: regional-addendum.md
+      title: REG-04
+      source_quote: "quote"
+      provenance: *provenance
+      applies_to: {classes: all}
+      outcome: exception
+      scope: receipt
+      severity: low
+      helper: vat_threshold
+      params:
+        limit: {type: number, value: "50", unit: eur}
+    expected:
+      helper: vat_threshold
+      scope: receipt
+
+  - id: TIME-04 not evaluable and recorded without logic
+    rule:
+      kind: check
+      rule_id: TIME-04
+      policy_doc: transaction-pattern-rules.md
+      title: Weekend spend on a weekday trip
+      source_quote: "It applies only when the trip record includes those dates"
+      provenance: *provenance
+      applies_to: {classes: all}
+      status: not_evaluable
+      outcome: review_signal
+      scope: receipt
+    expected:
+      status: not_evaluable
+      select: null
+      applies_when: null
+
+  - id: field names and compared values are stored as written
+    rule:
+      <<: *tech_02
+      params: {}
+      select: {op: eq, field: item.brand, value: alchohol}
+    expected:
+      select: {op: eq, field: item.brand, value: alchohol}
+
+  - id: the schema does not know which fields are numeric
+    rule:
+      <<: *tech_02
+      select: {op: gt, field: item.category, value: {param: cap_usd}}
+    expected:
+      select: {op: gt, field: item.category, value: {param: cap_usd}}
+
+  - id: a rule can apply to every class except some
+    rule:
+      <<: *tech_02
+      applies_to: {classes: all, excludes: [service_fee, other]}
+    expected:
+      applies_to: {classes: all, excludes: [service_fee, other]}
+
+  - id: a rule may leave its classes undecided
+    rule: {<<: *tech_02, applies_to: null}
+    expected:
+      applies_to: null
+
+refused:
+  - id: excludes on a list of classes
+    rule:
+      <<: *tech_02
+      applies_to: {classes: [alcohol], excludes: [gift]}
+    expected: excludes only makes sense
+
+  - id: a clause hash that is not a SHA-256
+    rule:
+      <<: *tech_02
+      provenance: {translator: developer, clause_hash: c1, fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+    expected: clause_hash
+
+  - id: a fingerprint that is too short
+    rule:
+      <<: *tech_02
+      provenance: {translator: developer, clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+    expected: fingerprint
+
+  - id: a hash in capitals
+    rule:
+      <<: *tech_02
+      provenance: {translator: developer, clause_hash: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA, fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+    expected: clause_hash
+
+  - id: a prompt hash that is not a SHA-256
+    rule:
+      <<: *tech_02
+      provenance: {translator: llm, clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, model: some/model, prompt_hash: abc}
+    expected: prompt_hash
+
+  - id: an empty list of classes
+    rule:
+      <<: *tech_02
+      applies_to: {classes: []}
+    expected: at least 1 item
+
+  - id: exception without a severity
+    rule: {<<: *tech_02, severity: null}
+    expected: needs a severity
+
+  - id: review signal with a severity
+    rule: {<<: *tech_02, outcome: review_signal}
+    expected: no severity
+
+  - id: unknown key
+    rule: {<<: *tech_02, invented_field: true}
+    expected: invented_field
+
+  - id: unknown helper
+    rule: {<<: *tech_02, helper: made_up_helper}
+    expected: made_up_helper
+
+  - id: whole-receipt rule without applies_when
+    rule: {<<: *tech_02, scope: receipt, select: null}
+    expected: needs applies_when
+
+  - id: item rule without select or helper
+    rule: {<<: *tech_02, select: null}
+    expected: needs select or a helper
+
+  - id: condition uses an undefined param
+    rule: {<<: *tech_02, params: {}}
+    expected: undefined param
+
+  - id: threshold param is a set
+    rule:
+      <<: *tech_02
+      params:
+        cap_usd: {type: set, values: ["200"]}
+    expected: must be a NumberParam
+
+  - id: ordered comparison against text
+    rule:
+      <<: *tech_02
+      select: {op: gt, field: item.unit_price_usd, value: "200"}
+    expected: must compare against a param
+
+  - id: applies_when uses an item field
+    rule:
+      <<: *tech_02
+      applies_when: {op: eq, field: item.category, value: alcohol}
+    expected: applies_when is receipt-level
+
+  - id: unused param suggests a dropped condition
+    rule:
+      <<: *tech_02
+      params:
+        cap_usd: {type: number, value: "200", unit: usd}
+        other_usd: {type: number, value: "150", unit: usd}
+    expected: params never used
+
+  - id: llm translation must be reproducible
+    rule:
+      <<: *tech_02
+      provenance: {translator: llm, clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+    expected: model and prompt_hash
+
+  - id: carve-out with neither select nor helper
+    rule: {<<: *baggage, helper: null}
+    expected: exactly one
+
+  - id: process rule without its directive params
+    rule: {<<: *exc_01, params: {}}
+    expected: needs params
+
+  - id: rule-ID param is a number
+    rule:
+      <<: *exc_01
+      directive: reference_kinds
+      params:
+        pre_approval_rules: {type: number, value: "1", unit: count}
+        vp_approval_rules: {type: set, values: [TECH-02]}
+        manager_approval_rules: {type: set, values: [TECH-02]}
+        baggage_delay_rules: {type: set, values: [PERS.BAGGAGE]}
+    expected: must be a SetParam
+
+  - id: nested condition validates every branch
+    rule:
+      <<: *tech_02
+      select:
+        op: not
+        condition:
+          op: any
+          conditions:
+            - {op: gt, field: item.amount_usd, value: {param: missing_cap}}
+    expected: undefined param
+
+  - id: empty all condition
+    rule:
+      <<: *tech_02
+      select: {op: all, conditions: []}
+    expected: at least 1 item
+
+  - id: helper and select cannot both choose items
+    rule: {<<: *tech_02, helper: meal_cap}
+    expected: remove select
+
+  - id: carve-out cannot have both helper and select
+    rule:
+      <<: *baggage
+      select: {op: eq, field: item.category, value: personal_care}
+    expected: exactly one
+
+  - id: severity conditions validate parameter references
+    rule:
+      <<: *tech_02
+      severity_cases:
+        - when: {op: gt, field: item.amount_usd, value: {param: missing_cap}}
+          severity: high
+    expected: undefined param
+
+  - id: empty set parameter
+    rule:
+      <<: *exc_01
+      params:
+        flag_severities: {type: set, values: []}
+        review_severities: {type: set, values: [low]}
+    expected: at least 1 item
+
+  - id: nonfinite numeric threshold
+    rule:
+      <<: *tech_02
+      params:
+        cap_usd: {type: number, value: NaN, unit: usd}
+    expected: finite number

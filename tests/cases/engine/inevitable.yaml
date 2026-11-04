@@ -1,0 +1,279 @@
+suite: inevitable
+
+# Module 10.6. Worked out by reading each value the catalog gives recipient_type (client, employee,
+# government_official) against the policy, for lines whose category is known:
+#
+#   client               GIFT-01: over $50 for the recipient on this receipt, or $10 or more unnamed
+#   employee             GIFT-03, a medium exception: a recognition gift, at any positive amount
+#   government_official  GIFT-04, a critical exception, at any amount not a refund
+#
+# All three flag. So a line flags in every reading exactly when its client reading breaches GIFT-01.
+# inevitable is null, or {rule_ids, readings}: every rule that flags in some reading, and how many.
+
+templates:
+  line: &line {language: en, quantity: 1, description_raw: Item, confidence: "0.95"}
+  base: &base
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    merchant_name: Merchant
+    transaction_datetime: "2026-04-14T19:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    trip_id: TRIP-1
+    trip_nights: 5
+    itemized: true
+    total_amount: $lines
+    total_amount_usd: $lines
+  gifts: &gifts {<<: *base, mcc: "5947", submitted_expense_type: Client Gifts}
+  meal: &meal {<<: *base, mcc: "5812", submitted_expense_type: Meals - Individual}
+  no_rate: &no_rate {currency: EUR, fx_rate_to_usd: null, total_amount_usd: null}
+  gift_60: &gift_60 {<<: *line, line_id: L1, category: gift, unit_price: "60.00", amount: "60.00", amount_usd: "60.00", recipient_name: Xu}
+  gift_50: &gift_50 {<<: *gift_60, unit_price: "50.00", amount: "50.00", amount_usd: "50.00"}
+  gift_40: &gift_40 {<<: *gift_60, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}
+  gift_30_b: &gift_30_b {<<: *gift_60, line_id: L2, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}
+  gift_25_b: &gift_25_b {<<: *gift_60, line_id: L2, unit_price: "25.00", amount: "25.00", amount_usd: "25.00"}
+  client_30: &client_30 {<<: *gift_30_b, recipient_type: client}
+  client_55: &client_55 {<<: *client_30, unit_price: "55.00", amount: "55.00", amount_usd: "55.00"}
+  yan_60: &yan_60 {<<: *gift_60, line_id: L2, recipient_name: Yan}
+  yan_40: &yan_40 {<<: *gift_40, line_id: L2, recipient_name: Yan}
+  uncertain_minus: &uncertain_minus {<<: *line, line_id: L9, category: null, unit_price: "-15.00", amount: "-15.00", amount_usd: "-15.00", recipient_name: Xu, recipient_type: client}
+
+cases:
+  # Unknown recipient type, alone
+  - id: 60 with no recipient type flags in every reading
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_60]}]
+    expected:
+      R1:
+        disposition: flag
+        decided: false
+        active: []
+        unresolved: [GIFT-01]
+        notes: {GIFT-01: GIFT-04}
+        rules: {GIFT-04: undetermined}
+        audit: []
+        inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 3}
+  - id: the same in an incomplete context, as these rules rest on the one receipt
+    complete: false
+    receipts: [{<<: *gifts, line_items: [*gift_60]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 3}}}
+  - id: a recipient type outside the catalog is read the same way
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_60, recipient_type: martian}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], rules: {GIFT-01: undetermined, GIFT-04: undetermined}, inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 3}}}
+  - id: unnamed at 60 breaches the naming test in the client reading, so it flags too
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_60, recipient_name: null}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 3}}}
+  - id: exactly 50 is within the cap for a client, so it stays a review
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_50]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {GIFT-04: undetermined}, inevitable: null}}
+  - id: 40 with no recipient type is compliant for a client, so it stays a review
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_40]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {GIFT-01: undetermined, GIFT-04: undetermined}, inevitable: null}}
+
+  # With a known client gift to one name. In the client reading $40 and $30 are $70, over the cap. If the
+  # gift is not a client's it leaves the cap, but it is then GIFT-03 or GIFT-04, so no reading is compliant.
+  - id: 40 unknown and 30 known client flags in every reading, though the 30 alone would be within the cap
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_40, *client_30]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], unresolved: [GIFT-01], inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 3}}}
+  - id: 60 unknown and 55 known client flags on the confirmed client breach, and needs no proof
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_60, *client_55]}]
+    expected: {R1: {disposition: flag, decided: false, active: [GIFT-01], cited: {GIFT-01: [L2]}, unresolved: [GIFT-01], inevitable: null}}
+  - id: 10 unknown and 30 known client is within the cap for a client, so it stays a review
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_40, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}, *client_30]}]
+    expected: {R1: {disposition: review, decided: false, active: [], inevitable: null}}
+
+  # Explicit recipients have nothing to read
+  - id: an explicit client over the cap flags as ever
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_60, recipient_type: client}]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-01], inevitable: null}}
+  - id: an explicit client within the cap passes
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_40, recipient_type: client}]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], inevitable: null}}
+  - id: an explicit official flags as ever
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_40, recipient_type: government_official}]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-04], inevitable: null}}
+  - id: an explicit employee flags as ever
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_40, recipient_type: employee}]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-03], inevitable: null}}
+
+  # Low confidence: the category is not known, so what the line is cannot be read
+  - id: low confidence with no recipient type is not read
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_60, confidence: "0.30"}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], inevitable: null}}
+  - id: low confidence with a type outside the catalog is not read
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_60, confidence: "0.30", recipient_type: martian}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], inevitable: null}}
+  - id: a missing category with no recipient type is not read
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_60, category: null}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], inevitable: null}}
+
+  - id: a low-confidence line is not read beside a known gift that proves it, so only the known line has readings
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_60, {<<: *yan_40, confidence: "0.30"}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 3}}}
+
+  # Only a flag counts. As a client's, this medication is HEALTH-01, which is low, so that reading is a review.
+  - id: a reading with only a low exception does not flag, so there is no proof
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_60, category: health_otc, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}, {<<: *client_30, unit_price: "5.00", amount: "5.00", amount_usd: "5.00", recipient_name: Yan}]}]
+    expected: {R1: {disposition: review, decided: false, inevitable: null}}
+
+  # Zero and refunds
+  - id: a zero-value gift is compliant for a client, so it stays a review
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_60, unit_price: "0.00", amount: "0.00", amount_usd: "0.00"}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], inevitable: null}}
+  # Beside a known gift to someone else, as a receipt's true total cannot be below zero.
+  - id: a refund alone is compliant in every reading, so it stays a review
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_60, unit_price: "-40.00", amount: "-40.00", amount_usd: "-40.00"}, {<<: *client_30, recipient_name: Yan, unit_price: "45.00", amount: "45.00", amount_usd: "45.00"}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], inevitable: null}}
+  - id: an unknown refund read as a client's brings the unknown gift within the cap, so no proof
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_60, {<<: *gift_30_b, unit_price: "-15.00", amount: "-15.00", amount_usd: "-15.00"}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], inevitable: null}}
+  - id: an unknown refund too small to matter leaves every reading flagging
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_60, {<<: *gift_30_b, unit_price: "-5.00", amount: "-5.00", amount_usd: "-5.00"}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 9}}}
+
+  # A reading that cannot be evaluated ends the claim
+  - id: an uncertain line that could lower the client total means the client reading proves nothing
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_60, *uncertain_minus]}]
+    expected: {R1: {disposition: review, decided: false, active: [], inevitable: null}}
+  - id: an uncertain line too small to matter does not end the claim
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_60, {<<: *uncertain_minus, unit_price: "-5.00", amount: "-5.00", amount_usd: "-5.00"}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 3}}}
+  - id: with no USD amount GIFT-01 cannot be evaluated, so DOC-04 alone flags and nothing is proved
+    complete: true
+    receipts: [{<<: [*no_rate, *gifts], line_items: [{<<: *gift_60, amount_usd: null}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [DOC-04], inevitable: null}}
+
+  # Other expense types
+  - id: a gift alone on a meal receipt flags on DOC-03, and needs no proof
+    complete: true
+    receipts: [{<<: *meal, line_items: [*gift_60]}]
+    expected: {R1: {disposition: flag, active: [DOC-03], inevitable: null}}
+  - id: an unnamed gift on a meal receipt is no gift to a client, so that reading is compliant
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L3, category: food_beverage, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}, {<<: *gift_60, recipient_name: null}]}]
+    expected: {R1: {disposition: review, decided: false, active: [], inevitable: null}}
+
+  # Several recipients and lines
+  - id: two recipients each over the cap flag in all nine readings
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_60, *yan_60]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], unresolved: [GIFT-01], inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 9}}}
+  - id: one recipient over the cap is enough, whatever the other is
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_60, *yan_40]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 9}}}
+  - id: two recipients each within the cap are compliant if both are clients
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_40, *yan_40]}]
+    expected: {R1: {disposition: review, decided: false, active: [], inevitable: null}}
+  - id: two unknown gifts to one name that together pass the cap flag in every reading
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*gift_40, *gift_30_b]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 9}}}
+  - id: two unknown gifts to one name within the cap together are compliant if both are clients
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *gift_25_b, line_id: L1}, *gift_25_b]}]
+    expected: {R1: {disposition: review, decided: false, active: [], inevitable: null}}
+  - id: too many unresolved lines to read makes no claim
+    complete: true
+    receipts:
+      - <<: *gifts
+        line_items:
+          - {<<: *gift_60, line_id: L1, recipient_name: A}
+          - {<<: *gift_60, line_id: L2, recipient_name: B}
+          - {<<: *gift_60, line_id: L3, recipient_name: C}
+          - {<<: *gift_60, line_id: L4, recipient_name: D}
+          - {<<: *gift_60, line_id: L5, recipient_name: E}
+          - {<<: *gift_60, line_id: L6, recipient_name: F}
+    expected: {R1: {disposition: review, decided: false, active: [], unresolved: [GIFT-01], inevitable: null}}
+
+  # Across receipts, and TIME-03
+  - id: another employee's unresolved gift is not read
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [*gift_60]}
+      - {<<: *gifts, receipt_id: R2, employee_id: E-2, line_items: [*gift_30_b]}
+    expected:
+      R1: {disposition: flag, decided: false, inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 3}}
+      R2: {disposition: review, decided: false, active: [], inevitable: null}
+  - id: a compliant reading on one receipt leaves another that always flags as it is
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [*gift_60]}
+      - {<<: *gifts, receipt_id: R2, merchant_name: Other Shop, line_items: [{<<: *gift_30_b, recipient_name: Yan}]}
+    expected:
+      R1: {disposition: flag, decided: false, inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 9}}
+      R2: {disposition: review, decided: false, active: [], inevitable: null}
+  # With R1 a client's, the receipts split around the cap, which is TIME-03. With R1 otherwise, R1 flags
+  # on its own rule and R2 has only $30 to a client, so R2 has a compliant reading.
+  - id: a split proved in the client reading gives a proof on the unknown receipt alone
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *gift_40, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [*client_30]}
+    expected:
+      R1: {disposition: flag, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: {rule_ids: [GIFT-03, GIFT-04, TIME-03], readings: 3}}
+      R2: {disposition: review, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: null}
+  # The same, but TIME-03 cannot be decided on a partial context, so the client reading proves nothing.
+  - id: the same split is no proof in an incomplete context
+    complete: false
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *gift_40, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [*client_30]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: null}
+      R2: {disposition: review, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: null}
+  - id: two unknown receipts at one merchant have a compliant reading on each if they are not split
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *gift_25_b, line_id: L1}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [*gift_25_b]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: null}
+      R2: {disposition: review, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: null}
+  # MEAL-01 is over in every way TIME-03 resolves, but no recipient type decides that, so nothing is read.
+  - id: a day breach TIME-03 could replace is no proof, as no reading of a recipient type decides it
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, line_id: L1, category: food_beverage, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, line_id: L2, category: food_beverage, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *line, line_id: L3, category: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], unresolved: [MEAL-01], inevitable: null}
+      R2: {disposition: review, decided: false, active: [], unresolved: [MEAL-01], inevitable: null}
+
+# Only the outcome is run: 243 readings is slow to repeat in every order.
+at_the_cap:
+  - id: five unresolved lines are read
+    complete: true
+    receipts:
+      - <<: *gifts
+        line_items:
+          - {<<: *gift_60, line_id: L1, recipient_name: A}
+          - {<<: *gift_60, line_id: L2, recipient_name: B}
+          - {<<: *gift_60, line_id: L3, recipient_name: C}
+          - {<<: *gift_60, line_id: L4, recipient_name: D}
+          - {<<: *gift_60, line_id: L5, recipient_name: E}
+    expected: {R1: {disposition: flag, decided: false, active: [], inevitable: {rule_ids: [GIFT-01, GIFT-03, GIFT-04], readings: 243}}}

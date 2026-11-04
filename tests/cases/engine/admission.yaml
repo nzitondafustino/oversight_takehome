@@ -1,0 +1,282 @@
+suite: admission
+
+# The vocabulary boundary, against the real rules/fields.yaml unless a case gives its own.
+#
+# admitted:              `receipt` is admitted. expected names values in its JSON form.
+# left_out_admitted:     `receipt` without `field` is admitted.
+# refused:               `receipt` is refused. expected is an error regex.
+# left_out_refused:      `receipt` without `field` is refused.
+# regional:              the real rule `rule_id` on the first line of an admitted `receipt`.
+#                        expected.fires is true or false, and expected.replaced lists the real
+#                        rules out of play for it.
+# totals:                a receipt with Decimal(`decimal`) in the total `field` is admitted, from
+#                        both a mapping and a built Receipt. expected.total is the text it keeps.
+# totals_refused:        the same is refused, from both. expected is an error regex.
+# readmitted:            a Receipt built directly from `receipt`, then admitted.
+# readmitted_refused:    a Receipt built directly from `receipt` is not admitted.
+# copied_refused:        an admitted `receipt` copied with `update`, which skips validation,
+#                        is not admitted again.
+# catalog_refused:       `receipt` is refused because the catalog `fields` lists no values.
+# states:                classification_state of `field` on `line`, with `min_confidence`.
+# states_refused:        the same, for a field with no vocabulary.
+# state_catalog_refused: the same, with its own catalog `fields` that lists no values.
+
+templates:
+  line: &line
+    line_id: RCP-001-L1
+    description_raw: Prix fixe dinner
+    language: en
+    quantity: 1
+    unit_price: "28.00"
+    amount: "28.00"
+    amount_usd: "28.00"
+  receipt: &receipt
+    receipt_id: RCP-001
+    employee_id: E-1042
+    employee_country: US
+    entity: GLOBAL
+    submitted_expense_type: Meals - Individual
+    mcc: "5812"
+    itemized: true
+    line_items: [*line]
+
+admitted:
+  # A classifier's missing or unknown value does not stop a receipt.
+  - {id: no category, receipt: *receipt, expected: {line_items.0.category: null}}
+  - {id: no recipient type, receipt: *receipt, expected: {line_items.0.recipient_type: null}}
+  - {id: no venue type, receipt: *receipt, expected: {line_items.0.venue_type: null}}
+  - {id: no item kind, receipt: *receipt, expected: {line_items.0.item_kind: null}}
+  - {id: an unknown category, receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohool}]}, expected: {line_items.0.category: alcohool}}
+  - {id: an unknown recipient type, receipt: {<<: *receipt, line_items: [{<<: *line, recipient_type: vip}]}, expected: {line_items.0.recipient_type: vip}}
+  - {id: an unknown venue type, receipt: {<<: *receipt, line_items: [{<<: *line, venue_type: opera}]}, expected: {line_items.0.venue_type: opera}}
+  - {id: an unknown item kind, receipt: {<<: *receipt, line_items: [{<<: *line, item_kind: tablet}]}, expected: {line_items.0.item_kind: tablet}}
+
+  # An entity agreeing with its country, or derived from it when null.
+  - {id: US as GLOBAL, receipt: *receipt, expected: {employee_country: US, entity: GLOBAL}}
+  - {id: IN as APAC, receipt: {<<: *receipt, employee_country: IN, entity: APAC}, expected: {employee_country: IN, entity: APAC}}
+  - {id: FR as EMEA, receipt: {<<: *receipt, employee_country: FR, entity: EMEA}, expected: {employee_country: FR, entity: EMEA}}
+  - {id: a null entity is derived for US, receipt: {<<: *receipt, entity: null}, expected: {entity: GLOBAL}}
+  - {id: a null entity is derived for IN, receipt: {<<: *receipt, employee_country: IN, entity: null}, expected: {entity: APAC}}
+  - {id: a null entity is derived for DE, receipt: {<<: *receipt, employee_country: DE, entity: null}, expected: {entity: EMEA}}
+
+  # Midnight is a real time when it is stated.
+  - {id: explicit midnight is admitted, receipt: {<<: *receipt, transaction_datetime: "2026-04-14T00:00:00"}, expected: {transaction_datetime: "2026-04-14T00:00:00"}}
+
+  # A missing value that some rule reports stays admissible, so that the rule can report it.
+  - {id: no merchant name reaches DOC-02, receipt: *receipt, expected: {merchant_name: null}}
+  - {id: no total reaches DOC-02, receipt: *receipt, expected: {total_amount_usd: null}}
+  - {id: no attendee count reaches MEAL-02, receipt: *receipt, expected: {attendee_count: null}}
+  - {id: one attendee is a count, receipt: {<<: *receipt, attendee_count: 1}, expected: {attendee_count: 1}}
+  - {id: not itemized with no lines reaches DOC-01, receipt: {<<: *receipt, itemized: false, line_items: []}, expected: {line_items: []}}
+  - {id: no USD amount and no rate reaches DOC-04, receipt: {<<: *receipt, currency: EUR, line_items: [{<<: *line, amount_usd: null}]}, expected: {line_items.0.amount_usd: null}}
+  - {id: no USD amount and no currency reaches DOC-04, receipt: {<<: *receipt, line_items: [{<<: *line, amount_usd: null}]}, expected: {line_items.0.amount_usd: null}}
+
+  # Receipt totals given as text. A negative total is unsupported input, handled under refused.
+  - {id: a zero total as text, receipt: {<<: *receipt, total_amount: "0", total_amount_usd: "0.00"}, expected: {total_amount: "0", total_amount_usd: "0.00"}}
+  - {id: a positive total as text, receipt: {<<: *receipt, total_amount: "48.20", total_amount_usd: "48.20"}, expected: {total_amount: "48.20", total_amount_usd: "48.20"}}
+  - {id: a positive total as a float, receipt: {<<: *receipt, total_amount_usd: 48.2}, expected: {total_amount_usd: "48.2"}}
+
+  # Negative line amounts may be discounts or adjustments, and nothing reconciles them to the total.
+  - id: a discount line stays negative
+    receipt:
+      <<: *receipt
+      total_amount_usd: "20.00"
+      line_items:
+        - *line
+        - {<<: *line, line_id: RCP-001-L2, description_raw: Coupon, unit_price: "-8.00", amount: "-8.00", amount_usd: "-8.00"}
+    expected:
+      total_amount_usd: "20.00"
+      line_items.1.unit_price: "-8.00"
+      line_items.1.amount: "-8.00"
+      line_items.1.amount_usd: "-8.00"
+  - id: lines need not add up to the total
+    receipt: {<<: *receipt, total_amount: "1.00", total_amount_usd: "1.00", line_items: [{<<: *line, unit_price: "-500.00", amount: "-500.00", amount_usd: "-500.00"}]}
+    expected: {total_amount_usd: "1.00", line_items.0.amount_usd: "-500.00"}
+
+left_out_admitted:
+  - {id: no entity is derived for US, receipt: *receipt, field: entity, expected: {entity: GLOBAL}}
+  - {id: no entity is derived for IN, receipt: {<<: *receipt, employee_country: IN}, field: entity, expected: {entity: APAC}}
+  - {id: no entity is derived for FR, receipt: {<<: *receipt, employee_country: FR}, field: entity, expected: {entity: EMEA}}
+
+refused:
+  # Every error gives the field, the value and the allowed values.
+  - {id: a misspelt entity, receipt: {<<: *receipt, entity: APCA}, expected: "unknown entity 'APCA', allowed: \\['GLOBAL', 'APAC', 'EMEA'\\]"}
+  - {id: a lower-case entity is not corrected, receipt: {<<: *receipt, entity: apac}, expected: "unknown entity 'apac', allowed: "}
+  - {id: an entity with a space is not trimmed, receipt: {<<: *receipt, entity: "APAC "}, expected: "unknown entity 'APAC ', allowed: "}
+  - {id: a title-case entity is not corrected, receipt: {<<: *receipt, entity: Global}, expected: "unknown entity 'Global', allowed: "}
+  - {id: an entity the catalog lacks, receipt: {<<: *receipt, entity: LATAM}, expected: "unknown entity 'LATAM', allowed: "}
+  - id: a misspelt expense type
+    receipt: {<<: *receipt, submitted_expense_type: Client Entertainmnt}
+    expected: "unknown submitted_expense_type 'Client Entertainmnt', allowed: \\['Meals - Individual', 'Meals - Team', 'Client Entertainment', 'Client Gifts', 'Lodging', 'Travel - Other', 'Office Supplies', 'Computer Equipment', 'Software'\\]"
+  - {id: a lower-case expense type is not corrected, receipt: {<<: *receipt, submitted_expense_type: client entertainment}, expected: "unknown submitted_expense_type 'client entertainment', allowed: "}
+  - {id: an expense type with a space is not trimmed, receipt: {<<: *receipt, submitted_expense_type: "Client Entertainment "}, expected: "unknown submitted_expense_type 'Client Entertainment ', allowed: "}
+  - {id: an expense type with no spaces around its dash, receipt: {<<: *receipt, submitted_expense_type: Meals-Team}, expected: "unknown submitted_expense_type 'Meals-Team', allowed: "}
+  - {id: part of an expense type, receipt: {<<: *receipt, submitted_expense_type: Travel}, expected: "unknown submitted_expense_type 'Travel', allowed: "}
+  - {id: a null expense type, receipt: {<<: *receipt, submitted_expense_type: null}, expected: submitted_expense_type}
+  - {id: the receipt model still applies, receipt: {<<: *receipt, surprise: 1}, expected: surprise}
+
+  # An entity contradicting its country. IN as GLOBAL is the one that would bypass REG-01.
+  - {id: IN cannot be GLOBAL, receipt: {<<: *receipt, employee_country: IN, entity: GLOBAL}, expected: "RCP-001: entity 'GLOBAL' contradicts employee_country 'IN', which is in 'APAC'"}
+  - {id: JP cannot be GLOBAL, receipt: {<<: *receipt, employee_country: JP, entity: GLOBAL}, expected: "entity 'GLOBAL' contradicts employee_country 'JP', which is in 'APAC'"}
+  - {id: SG cannot be EMEA, receipt: {<<: *receipt, employee_country: SG, entity: EMEA}, expected: "entity 'EMEA' contradicts employee_country 'SG', which is in 'APAC'"}
+  - {id: FR cannot be GLOBAL, receipt: {<<: *receipt, employee_country: FR, entity: GLOBAL}, expected: "entity 'GLOBAL' contradicts employee_country 'FR', which is in 'EMEA'"}
+  - {id: US cannot be APAC, receipt: {<<: *receipt, employee_country: US, entity: APAC}, expected: "entity 'APAC' contradicts employee_country 'US', which is in 'GLOBAL'"}
+
+  # A country the catalog does not list is not taken to be GLOBAL.
+  - {id: an unlisted country given as GLOBAL, receipt: {<<: *receipt, employee_country: CA, entity: GLOBAL}, expected: "RCP-001: unsupported employee_country 'CA', allowed: \\['DE', 'ES', 'FR', 'GB', 'IE', 'IN', 'JP', 'NL', 'PT', 'SG', 'US'\\]"}
+  - {id: an unlisted country with a null entity, receipt: {<<: *receipt, employee_country: CA, entity: null}, expected: "unsupported employee_country 'CA'"}
+  - {id: a lower-case country is not corrected, receipt: {<<: *receipt, employee_country: in}, expected: "unsupported employee_country 'in'"}
+  - {id: a badly formed country, receipt: {<<: *receipt, employee_country: USA}, expected: "unsupported employee_country 'USA'"}
+  - {id: a country as a number, receipt: {<<: *receipt, employee_country: 7}, expected: employee_country}
+  - {id: a null country with a null entity, receipt: {<<: *receipt, employee_country: null, entity: null}, expected: employee_country}
+
+  # A date with no time cannot be admitted either.
+  - {id: a date object, receipt: {<<: *receipt, transaction_datetime: 2026-04-14}, expected: needs a time}
+  - {id: a date as text, receipt: {<<: *receipt, transaction_datetime: "2026-04-14"}, expected: needs a time}
+
+  # Input that would keep rules quiet with nothing to report.
+  - {id: blank text cannot pass for a merchant, receipt: {<<: *receipt, merchant_name: "   "}, expected: merchant_name}
+  - {id: blank text cannot pass for a trip, receipt: {<<: *receipt, trip_id: "  "}, expected: trip_id}
+  - {id: blank text cannot pass for a reference, receipt: {<<: *receipt, pre_approval_ref: " "}, expected: pre_approval_ref}
+  - {id: alcohol with no merchant code, receipt: {<<: *receipt, mcc: null, line_items: [{<<: *line, category: alcohol}]}, expected: "RCP-001: has no mcc"}
+  - {id: a merchant code in other digits, receipt: {<<: *receipt, mcc: "٥٩٢١"}, expected: mcc}
+  - {id: itemized with no lines, receipt: {<<: *receipt, line_items: []}, expected: "RCP-001: is itemized but lists no line items"}
+  - {id: an attendee count of zero, receipt: {<<: *receipt, attendee_count: 0}, expected: "RCP-001: attendee_count 0 cannot be right"}
+  - {id: a USD line with no USD amount, receipt: {<<: *receipt, currency: USD, line_items: [{<<: *line, amount_usd: null}]}, expected: "RCP-001: no amount_usd on \\['RCP-001-L1'\\]"}
+  - {id: a line with a rate and no USD amount, receipt: {<<: *receipt, currency: EUR, fx_rate_to_usd: "1.08", line_items: [{<<: *line, amount_usd: null}]}, expected: "no amount_usd on \\['RCP-001-L1'\\]"}
+
+  # A negative receipt total is unsupported input, not a policy violation.
+  - {id: a negative USD total as text, receipt: {<<: *receipt, total_amount_usd: "-186.00"}, expected: "RCP-001: total_amount_usd -186.00 is below zero, which is not supported input"}
+  - {id: a negative own-currency total as text, receipt: {<<: *receipt, total_amount: "-186.00"}, expected: "RCP-001: total_amount -186.00 is below zero"}
+  - {id: a negative USD total as a float, receipt: {<<: *receipt, total_amount_usd: -186.5}, expected: "total_amount_usd -186.5 is below zero"}
+  - {id: a negative total on a receipt that is not itemized, receipt: {<<: *receipt, itemized: false, total_amount_usd: "-500"}, expected: "total_amount_usd -500 is below zero"}
+  - {id: a positive USD total does not excuse a negative own-currency one, receipt: {<<: *receipt, total_amount: "-186.00", total_amount_usd: "186.00"}, expected: "total_amount -186.00 is below zero"}
+
+left_out_refused:
+  - {id: no expense type, receipt: *receipt, field: submitted_expense_type, expected: submitted_expense_type}
+  - {id: no country, receipt: *receipt, field: employee_country, expected: employee_country}
+  - {id: no entity and an unlisted country, receipt: {<<: *receipt, employee_country: CA}, field: entity, expected: "unsupported employee_country 'CA'"}
+
+regional:
+  # REG-01 cannot be bypassed: an admitted IN receipt is always APAC, however its entity was given.
+  - id: REG-01 fires for IN given as APAC
+    rule_id: REG-01
+    receipt: {<<: *receipt, employee_country: IN, entity: APAC, line_items: [{<<: *line, category: alcohol}]}
+    expected: {fires: true, replaced: [ALC-01, ALC-02, ALC-03, MEAL-01]}
+  - id: REG-01 fires for IN with the entity derived
+    rule_id: REG-01
+    receipt: {<<: *receipt, employee_country: IN, entity: null, line_items: [{<<: *line, category: alcohol}]}
+    expected: {fires: true, replaced: [ALC-01, ALC-02, ALC-03, MEAL-01]}
+  - id: REG-01 stays quiet for US
+    rule_id: REG-01
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohol}]}
+    expected: {fires: false, replaced: []}
+  - id: DOC-02 reports an admitted receipt with no merchant name
+    rule_id: DOC-02
+    receipt: *receipt
+    expected: {fires: true, replaced: []}
+  - id: DOC-04 reports an admitted line that could not be converted
+    rule_id: DOC-04
+    receipt: {<<: *receipt, currency: EUR, line_items: [{<<: *line, amount_usd: null}]}
+    expected: {fires: true, replaced: []}
+  - id: DOC-04 reports an admitted line with no currency at all
+    rule_id: DOC-04
+    receipt: {<<: *receipt, line_items: [{<<: *line, amount_usd: null}]}
+    expected: {fires: true, replaced: []}
+
+totals:
+  - {id: a zero USD total, field: total_amount_usd, decimal: "0", expected: {total: "0"}}
+  - {id: a zero USD total keeps its digits, field: total_amount_usd, decimal: "0.00", expected: {total: "0.00"}}
+  - {id: a zero own-currency total, field: total_amount, decimal: "0", expected: {total: "0"}}
+  - {id: a positive USD total keeps its digits, field: total_amount_usd, decimal: "48.20", expected: {total: "48.20"}}
+  - {id: a positive own-currency total keeps its digits, field: total_amount, decimal: "97100.00", expected: {total: "97100.00"}}
+  - {id: the smallest positive total stays exact, field: total_amount_usd, decimal: "0.0000000001", expected: {total: "1E-10"}}
+  - {id: a negative zero is zero and is left as it is, field: total_amount_usd, decimal: "-0.00", expected: {total: "-0.00"}}
+
+totals_refused:
+  - {id: a negative USD total, field: total_amount_usd, decimal: "-186.00", expected: "total_amount_usd -186.00 is below zero"}
+  - {id: a negative own-currency total, field: total_amount, decimal: "-186.00", expected: "total_amount -186.00 is below zero"}
+  - {id: a total just below zero, field: total_amount_usd, decimal: "-0.0000000001", expected: "total_amount_usd -1E-10 is below zero"}
+
+readmitted:
+  - {id: a valid Receipt is admitted, receipt: {<<: *receipt, employee_country: IN, entity: APAC}, expected: {employee_country: IN, entity: APAC}}
+  - {id: a Receipt keeps explicit midnight, receipt: {<<: *receipt, transaction_datetime: 2026-04-14T00:00:00}, expected: {transaction_datetime: "2026-04-14T00:00:00"}}
+  - {id: a Receipt keeps its classification, receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohool, confidence: "0"}]}, expected: {line_items.0.category: alcohool, line_items.0.confidence: "0"}}
+
+readmitted_refused:
+  - {id: a Receipt built as IN and GLOBAL, receipt: {<<: *receipt, employee_country: IN, entity: GLOBAL}, expected: "entity 'GLOBAL' contradicts employee_country 'IN', which is in 'APAC'"}
+  - {id: a Receipt built with an unknown entity, receipt: {<<: *receipt, entity: APCA}, expected: "unknown entity 'APCA'"}
+  - {id: a Receipt built with an unlisted country, receipt: {<<: *receipt, employee_country: CA}, expected: "unsupported employee_country 'CA'"}
+  - {id: a Receipt built with an unknown expense type, receipt: {<<: *receipt, submitted_expense_type: Travel}, expected: "unknown submitted_expense_type 'Travel'"}
+  - {id: a Receipt built with no merchant code, receipt: {<<: *receipt, mcc: null}, expected: "has no mcc"}
+  - {id: a Receipt built with a negative total, receipt: {<<: *receipt, total_amount_usd: "-186.00"}, expected: "total_amount_usd -186.00 is below zero"}
+
+copied_refused:
+  - {id: a copy moved to IN stays out of GLOBAL, receipt: *receipt, update: {employee_country: IN}, expected: "entity 'GLOBAL' contradicts employee_country 'IN'"}
+  - {id: a copy with a bare date, receipt: *receipt, update: {transaction_datetime: 2026-04-14}, expected: needs a time}
+  - {id: a copy with a negative total, receipt: {<<: *receipt, total_amount: "186.00", total_amount_usd: "186.00"}, update: {total_amount_usd: "-186.00"}, expected: "total_amount_usd -186.00 is below zero"}
+  - {id: a copy with blank text, receipt: *receipt, update: {merchant_name: "  "}, expected: merchant_name}
+  - {id: a copy with an attendee count as a bool, receipt: *receipt, update: {attendee_count: true}, expected: attendee_count}
+
+catalog_refused:
+  - {id: an empty catalog, receipt: *receipt, fields: {}, expected: receipt.entity lists no allowed values}
+  - {id: an entity with no values, receipt: *receipt, fields: {receipt.entity: {type: text}}, expected: receipt.entity lists no allowed values}
+  - {id: an entity with empty values, receipt: *receipt, fields: {receipt.entity: {type: text, values: []}}, expected: receipt.entity lists no allowed values}
+  - {id: no expense type in the catalog, receipt: *receipt, fields: {receipt.entity: {values: [GLOBAL]}}, expected: receipt.submitted_expense_type lists no allowed values}
+  - {id: an expense type with no values, receipt: *receipt, fields: {receipt.entity: {values: [GLOBAL]}, receipt.submitted_expense_type: {type: text}}, expected: receipt.submitted_expense_type lists no allowed values}
+  - id: an entity with no countries
+    receipt: *receipt
+    fields: {receipt.entity: {values: [GLOBAL]}, receipt.submitted_expense_type: {values: [Meals - Individual]}}
+    expected: receipt.entity lists no countries
+
+states:
+  # Category: confidence counts.
+  - {id: a category at high confidence, line: {<<: *line, category: alcohol, confidence: "1"}, field: category, min_confidence: "0.5", expected: {state: valid}}
+  - {id: a category at the threshold, line: {<<: *line, category: alcohol, confidence: "0.5"}, field: category, min_confidence: "0.5", expected: {state: valid}}
+  - {id: a category just below the threshold, line: {<<: *line, category: alcohol, confidence: "0.49"}, field: category, min_confidence: "0.5", expected: {state: low_confidence}}
+  - {id: a category at zero confidence, line: {<<: *line, category: alcohol, confidence: "0"}, field: category, min_confidence: "0.5", expected: {state: low_confidence}}
+  - {id: a category with no confidence, line: {<<: *line, category: alcohol}, field: category, min_confidence: "0.5", expected: {state: no_confidence}}
+  - {id: the threshold is the caller's when lower, line: {<<: *line, category: alcohol, confidence: "0.7"}, field: category, min_confidence: "0.6", expected: {state: valid}}
+  - {id: the threshold is the caller's when higher, line: {<<: *line, category: alcohol, confidence: "0.7"}, field: category, min_confidence: "0.8", expected: {state: low_confidence}}
+
+  # Category: missing and unknown, whatever the confidence.
+  - {id: no category and no confidence, line: *line, field: category, min_confidence: "0.5", expected: {state: missing}}
+  - {id: no category at zero confidence, line: {<<: *line, confidence: "0"}, field: category, min_confidence: "0.5", expected: {state: missing}}
+  - {id: no category at high confidence, line: {<<: *line, confidence: "0.99"}, field: category, min_confidence: "0.5", expected: {state: missing}}
+  - {id: a misspelt category at high confidence, line: {<<: *line, category: alcohool, confidence: "0.99"}, field: category, min_confidence: "0.5", expected: {state: unknown}}
+  - {id: a misspelt category at low confidence, line: {<<: *line, category: alcohool, confidence: "0"}, field: category, min_confidence: "0.5", expected: {state: unknown}}
+  - {id: a misspelt category with no confidence, line: {<<: *line, category: alcohool}, field: category, min_confidence: "0.5", expected: {state: unknown}}
+  - {id: a title-case category is not corrected, line: {<<: *line, category: Alcohol, confidence: "0.9"}, field: category, min_confidence: "0.5", expected: {state: unknown}}
+  - {id: a category with a space is not trimmed, line: {<<: *line, category: "alcohol ", confidence: "0.9"}, field: category, min_confidence: "0.5", expected: {state: unknown}}
+
+  # Secondary fields: the confidence is in the category, so it says nothing about them.
+  - {id: a recipient type with no confidence, line: {<<: *line, recipient_type: client}, field: recipient_type, min_confidence: "0.5", expected: {state: valid}}
+  - {id: a recipient type at zero confidence, line: {<<: *line, recipient_type: client, confidence: "0"}, field: recipient_type, min_confidence: "0.5", expected: {state: valid}}
+  - {id: a recipient type at high confidence, line: {<<: *line, recipient_type: client, confidence: "1"}, field: recipient_type, min_confidence: "0.5", expected: {state: valid}}
+  - {id: a venue type with no confidence, line: {<<: *line, venue_type: golf}, field: venue_type, min_confidence: "0.5", expected: {state: valid}}
+  - {id: a venue type at low confidence, line: {<<: *line, venue_type: golf, confidence: "0.49"}, field: venue_type, min_confidence: "0.5", expected: {state: valid}}
+  - {id: an item kind with no confidence, line: {<<: *line, item_kind: mobile_phone}, field: item_kind, min_confidence: "0.5", expected: {state: valid}}
+  - {id: an item kind at low confidence, line: {<<: *line, item_kind: mobile_phone, confidence: "0.49"}, field: item_kind, min_confidence: "0.5", expected: {state: valid}}
+  - {id: no recipient type, line: {<<: *line, confidence: "0.99"}, field: recipient_type, min_confidence: "0.5", expected: {state: missing}}
+  - {id: no venue type, line: *line, field: venue_type, min_confidence: "0.5", expected: {state: missing}}
+  - {id: no item kind, line: {<<: *line, confidence: "0"}, field: item_kind, min_confidence: "0.5", expected: {state: missing}}
+  - {id: an unknown recipient type, line: {<<: *line, recipient_type: vip, confidence: "0.99"}, field: recipient_type, min_confidence: "0.5", expected: {state: unknown}}
+  - {id: an unknown venue type, line: {<<: *line, venue_type: Golf}, field: venue_type, min_confidence: "0.5", expected: {state: unknown}}
+  - {id: an unknown item kind, line: {<<: *line, item_kind: tablet, confidence: "0"}, field: item_kind, min_confidence: "0.5", expected: {state: unknown}}
+
+  # One line can hold different states on different fields.
+  - {id: one line with a valid category, line: &mixed {<<: *line, category: gift, recipient_type: vip, confidence: "0.9"}, field: category, min_confidence: "0.5", expected: {state: valid}}
+  - {id: the same line with an unknown recipient type, line: *mixed, field: recipient_type, min_confidence: "0.5", expected: {state: unknown}}
+  - {id: the same line with no venue type, line: *mixed, field: venue_type, min_confidence: "0.5", expected: {state: missing}}
+
+states_refused:
+  - {id: a name has no vocabulary, line: *line, field: recipient_name, min_confidence: "0.5", expected: item.recipient_name lists no allowed values}
+  - {id: restricted has no vocabulary, line: *line, field: restricted, min_confidence: "0.5", expected: item.restricted lists no allowed values}
+  - {id: confidence has no vocabulary, line: *line, field: confidence, min_confidence: "0.5", expected: item.confidence lists no allowed values}
+
+state_catalog_refused:
+  - {id: category in an empty catalog, line: {<<: *line, category: alcohol}, field: category, fields: {}, expected: item.category lists no allowed values}
+  - {id: category with no values, line: {<<: *line, category: alcohol}, field: category, fields: {item.category: {type: text}}, expected: item.category lists no allowed values}
+  - {id: recipient type with no values, line: {<<: *line, recipient_type: client}, field: recipient_type, fields: {item.recipient_type: {type: text}}, expected: item.recipient_type lists no allowed values}
+  - {id: venue type with no values, line: {<<: *line, venue_type: golf}, field: venue_type, fields: {item.venue_type: {type: text}}, expected: item.venue_type lists no allowed values}
+  - {id: item kind with no values, line: {<<: *line, item_kind: mobile_phone}, field: item_kind, fields: {item.item_kind: {type: text}}, expected: item.item_kind lists no allowed values}

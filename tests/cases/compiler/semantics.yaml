@@ -1,0 +1,303 @@
+suite: semantics
+
+# What conditions and the real rules actually do, written by hand from the schema's
+# semantics and the policy. No receipts or gold answers are read.
+#
+# conditions:   `condition` on `facts`, with the number param `cap` = 100 usd and the set
+#               param `codes` = [a, b]. expected.result is true or false.
+# rules:        the real rule `rule_id` on `facts`. expected.fires is true or false.
+# replacements: the real rules on a receipt's `facts`. expected.replaced lists those out of play.
+
+conditions:
+  # False and 0 are different values, as are True and 1, though Python says otherwise
+  - {id: eq false on zero is false, condition: {op: eq, field: x, value: false}, facts: {x: 0}, expected: {result: false}}
+  - {id: eq true on one is false, condition: {op: eq, field: x, value: true}, facts: {x: 1}, expected: {result: false}}
+  - {id: ne false on zero is true, condition: {op: ne, field: x, value: false}, facts: {x: 0}, expected: {result: true}}
+  - {id: ne true on one is true, condition: {op: ne, field: x, value: true}, facts: {x: 1}, expected: {result: true}}
+  - {id: eq false on false is true, condition: {op: eq, field: x, value: false}, facts: {x: false}, expected: {result: true}}
+  - {id: ne false on false is false, condition: {op: ne, field: x, value: false}, facts: {x: false}, expected: {result: false}}
+  - {id: eq false on missing is false, condition: {op: eq, field: x, value: false}, facts: {}, expected: {result: false}}
+  - {id: eq a number param on an equal number is true, condition: {op: eq, field: x, value: {param: cap}}, facts: {x: 100}, expected: {result: true}}
+
+  # Missing values
+  - id: eq on a missing value is false
+    condition: {op: eq, field: x, value: a}
+    facts: {}
+    expected: {result: false}
+
+  - id: ne on a missing value is false too
+    condition: {op: ne, field: x, value: a}
+    facts: {}
+    expected: {result: false}
+
+  - id: not eq on a missing value is true, unlike ne
+    condition: {op: not, condition: {op: eq, field: x, value: a}}
+    facts: {}
+    expected: {result: true}
+
+  - id: an ordered comparison on a missing value is false
+    condition: {op: gt, field: x, value: {param: cap}}
+    facts: {}
+    expected: {result: false}
+
+  - id: not of an ordered comparison on a missing value is true
+    condition: {op: not, condition: {op: gte, field: x, value: {param: cap}}}
+    facts: {}
+    expected: {result: true}
+
+  - id: in on a missing value is false
+    condition: {op: in, field: x, values: {param: codes}}
+    facts: {}
+    expected: {result: false}
+
+  - id: not in on a missing value is true
+    condition: {op: not, condition: {op: in, field: x, values: {param: codes}}}
+    facts: {}
+    expected: {result: true}
+
+  - id: None counts as missing
+    condition: {op: missing, field: x}
+    facts: {x: null}
+    expected: {result: true}
+
+  - id: an absent field is missing
+    condition: {op: missing, field: x}
+    facts: {}
+    expected: {result: true}
+
+  - id: a present field is not missing
+    condition: {op: missing, field: x}
+    facts: {x: a}
+    expected: {result: false}
+
+  - id: false is a value, not missing
+    condition: {op: missing, field: x}
+    facts: {x: false}
+    expected: {result: false}
+
+  - id: zero is a value, not missing
+    condition: {op: missing, field: x}
+    facts: {x: 0}
+    expected: {result: false}
+
+  # Comparisons
+  - id: eq matches
+    condition: {op: eq, field: x, value: a}
+    facts: {x: a}
+    expected: {result: true}
+
+  - id: eq does not match
+    condition: {op: eq, field: x, value: a}
+    facts: {x: b}
+    expected: {result: false}
+
+  - id: ne on a different value
+    condition: {op: ne, field: x, value: a}
+    facts: {x: b}
+    expected: {result: true}
+
+  - id: ne on the same value
+    condition: {op: ne, field: x, value: a}
+    facts: {x: a}
+    expected: {result: false}
+
+  - id: eq against false
+    condition: {op: eq, field: x, value: false}
+    facts: {x: false}
+    expected: {result: true}
+
+  - id: eq against a number param
+    condition: {op: eq, field: x, value: {param: cap}}
+    facts: {x: 100.00}
+    expected: {result: true}
+
+  - id: gt above
+    condition: {op: gt, field: x, value: {param: cap}}
+    facts: {x: 100.01}
+    expected: {result: true}
+
+  - id: gt at the limit
+    condition: {op: gt, field: x, value: {param: cap}}
+    facts: {x: 100}
+    expected: {result: false}
+
+  - id: gte at the limit
+    condition: {op: gte, field: x, value: {param: cap}}
+    facts: {x: 100}
+    expected: {result: true}
+
+  - id: lt at the limit
+    condition: {op: lt, field: x, value: {param: cap}}
+    facts: {x: 100}
+    expected: {result: false}
+
+  - id: lte at the limit
+    condition: {op: lte, field: x, value: {param: cap}}
+    facts: {x: 100}
+    expected: {result: true}
+
+  - id: a decimal is compared exactly
+    condition: {op: lte, field: x, value: {param: cap}}
+    facts: {x: 100.000001}
+    expected: {result: false}
+
+  # In and combinations
+  - id: in a set param
+    condition: {op: in, field: x, values: {param: codes}}
+    facts: {x: b}
+    expected: {result: true}
+
+  - id: not in a set param
+    condition: {op: in, field: x, values: {param: codes}}
+    facts: {x: c}
+    expected: {result: false}
+
+  - id: in a written list
+    condition: {op: in, field: x, values: [c, d]}
+    facts: {x: d}
+    expected: {result: true}
+
+  - id: all needs every part
+    condition: {op: all, conditions: [{op: eq, field: x, value: a}, {op: eq, field: y, value: b}]}
+    facts: {x: a, y: c}
+    expected: {result: false}
+
+  - id: any needs one part
+    condition: {op: any, conditions: [{op: eq, field: x, value: z}, {op: eq, field: y, value: b}]}
+    facts: {x: a, y: b}
+    expected: {result: true}
+
+  - id: nested conditions
+    condition: {op: not, condition: {op: any, conditions: [{op: missing, field: x}, {op: eq, field: y, value: b}]}}
+    facts: {x: a, y: c}
+    expected: {result: true}
+
+rules:
+  # TECH-02: up to $200 per item, judged on the unit price
+  - {id: TECH-02 above the cap, rule_id: TECH-02, facts: {item.is_purchase: true, item.category: computer_accessory, item.unit_price_usd: 250}, expected: {fires: true}}
+  - {id: TECH-02 at the cap is allowed, rule_id: TECH-02, facts: {item.is_purchase: true, item.category: computer_accessory, item.unit_price_usd: 200}, expected: {fires: false}}
+  - {id: TECH-02 below the cap, rule_id: TECH-02, facts: {item.is_purchase: true, item.category: computer_accessory, item.unit_price_usd: 50}, expected: {fires: false}}
+  - {id: TECH-02 is only about accessories, rule_id: TECH-02, facts: {item.is_purchase: true, item.category: office_supplies, item.unit_price_usd: 250}, expected: {fires: false}}
+  - {id: TECH-02 with no price proves nothing, rule_id: TECH-02, facts: {item.is_purchase: true, item.category: computer_accessory}, expected: {fires: false}}
+
+  # LAUNDRY-01: only on trips of four or more nights; no trip record is an exception
+  - {id: LAUNDRY-01 on a short trip, rule_id: LAUNDRY-01, facts: {item.is_purchase: true, item.category: laundry_service, receipt.trip_nights: 3}, expected: {fires: true}}
+  - {id: LAUNDRY-01 at four nights is allowed, rule_id: LAUNDRY-01, facts: {item.is_purchase: true, item.category: laundry_service, receipt.trip_nights: 4}, expected: {fires: false}}
+  - {id: LAUNDRY-01 with no trip record, rule_id: LAUNDRY-01, facts: {item.is_purchase: true, item.category: laundry_service}, expected: {fires: true}}
+  - {id: LAUNDRY-01 is only about laundry, rule_id: LAUNDRY-01, facts: {item.is_purchase: true, item.category: lodging, receipt.trip_nights: 1}, expected: {fires: false}}
+
+  # ALC-01: only Client Entertainment with two or more attendees, for alcohol served on the premises
+  - {id: ALC-01 documented client dinner is allowed, rule_id: ALC-01, facts: {item.is_purchase: true, item.category: alcohol, receipt.mcc: "5812", receipt.submitted_expense_type: Client Entertainment, receipt.attendee_count: 2}, expected: {fires: false}}
+  - {id: ALC-01 client dinner for one, rule_id: ALC-01, facts: {item.is_purchase: true, item.category: alcohol, receipt.mcc: "5812", receipt.submitted_expense_type: Client Entertainment, receipt.attendee_count: 1}, expected: {fires: true}}
+  - {id: ALC-01 client dinner with no count, rule_id: ALC-01, facts: {item.is_purchase: true, item.category: alcohol, receipt.mcc: "5812", receipt.submitted_expense_type: Client Entertainment}, expected: {fires: true}}
+  - {id: ALC-01 team meal, rule_id: ALC-01, facts: {item.is_purchase: true, item.category: alcohol, receipt.mcc: "5812", receipt.submitted_expense_type: Meals - Team, receipt.attendee_count: 5}, expected: {fires: true}}
+  - {id: ALC-01 applies at a bar, rule_id: ALC-01, facts: {item.is_purchase: true, item.category: alcohol, receipt.mcc: "5813", receipt.submitted_expense_type: Meals - Individual}, expected: {fires: true}}
+  - {id: ALC-01 leaves retail to ALC-03, rule_id: ALC-01, facts: {item.is_purchase: true, item.category: alcohol, receipt.mcc: "5921", receipt.submitted_expense_type: Meals - Individual}, expected: {fires: false}}
+  - {id: ALC-01 is only about alcohol, rule_id: ALC-01, facts: {item.is_purchase: true, item.category: food_beverage, receipt.mcc: "5812", receipt.submitted_expense_type: Meals - Individual}, expected: {fires: false}}
+
+  # ALC-03: retail alcohol is never reimbursable
+  - {id: ALC-03 at a liquor store, rule_id: ALC-03, facts: {item.is_purchase: true, item.category: alcohol, receipt.mcc: "5921"}, expected: {fires: true}}
+  - {id: ALC-03 at a grocery store, rule_id: ALC-03, facts: {item.is_purchase: true, item.category: alcohol, receipt.mcc: "5411"}, expected: {fires: true}}
+  - {id: ALC-03 not at a restaurant, rule_id: ALC-03, facts: {item.is_purchase: true, item.category: alcohol, receipt.mcc: "5812"}, expected: {fires: false}}
+  - {id: ALC-03 not at a bar, rule_id: ALC-03, facts: {item.is_purchase: true, item.category: alcohol, receipt.mcc: "5813"}, expected: {fires: false}}
+  - {id: ALC-03 not at a hotel, rule_id: ALC-03, facts: {item.is_purchase: true, item.category: alcohol, receipt.mcc: "7011"}, expected: {fires: false}}
+  - {id: ALC-03 with no merchant code proves nothing, rule_id: ALC-03, facts: {item.is_purchase: true, item.category: alcohol}, expected: {fires: false}}
+
+  # REG-01: alcohol is never reimbursable for APAC
+  - {id: REG-01 for APAC, rule_id: REG-01, facts: {item.is_purchase: true, item.category: alcohol, receipt.entity: APAC}, expected: {fires: true}}
+  - {id: REG-01 not for EMEA, rule_id: REG-01, facts: {item.is_purchase: true, item.category: alcohol, receipt.entity: EMEA}, expected: {fires: false}}
+  - {id: REG-01 not for GLOBAL, rule_id: REG-01, facts: {item.is_purchase: true, item.category: alcohol, receipt.entity: GLOBAL}, expected: {fires: false}}
+  - {id: REG-01 is only about alcohol, rule_id: REG-01, facts: {item.is_purchase: true, item.category: food_beverage, receipt.entity: APAC}, expected: {fires: false}}
+
+  # GIFT-03: recognition gifts for employees
+  - {id: GIFT-03 a gift for an employee, rule_id: GIFT-03, facts: {item.is_purchase: true, item.category: gift, item.recipient_type: employee}, expected: {fires: true}}
+  - {id: GIFT-03 a gift of any class, rule_id: GIFT-03, facts: {item.is_purchase: true, item.category: jewelry, item.recipient_type: employee}, expected: {fires: true}}
+  - {id: GIFT-03 not food at a meal, rule_id: GIFT-03, facts: {item.is_purchase: true, item.category: food_beverage, item.recipient_type: employee}, expected: {fires: false}}
+  - {id: GIFT-03 not a gift card, rule_id: GIFT-03, facts: {item.is_purchase: true, item.category: gift_card, item.recipient_type: employee}, expected: {fires: false}}
+  - {id: GIFT-03 not for a client, rule_id: GIFT-03, facts: {item.is_purchase: true, item.category: gift, item.recipient_type: client}, expected: {fires: false}}
+  - {id: GIFT-03 needs a recipient, rule_id: GIFT-03, facts: {item.is_purchase: true, item.category: gift}, expected: {fires: false}}
+
+  # DOC-01: above $75 must be itemized
+  - {id: DOC-01 above and not itemized, rule_id: DOC-01, facts: {receipt.total_amount_usd: 75.01, receipt.itemized: false}, expected: {fires: true}}
+  - {id: DOC-01 at the threshold, rule_id: DOC-01, facts: {receipt.total_amount_usd: 75, receipt.itemized: false}, expected: {fires: false}}
+  - {id: DOC-01 above and itemized, rule_id: DOC-01, facts: {receipt.total_amount_usd: 500, receipt.itemized: true}, expected: {fires: false}}
+
+  # DOC-02: must show the merchant name, date and total
+  - {id: DOC-02 all present, rule_id: DOC-02, facts: {receipt.merchant_name: x, receipt.transaction_date: d, receipt.total_amount: 1}, expected: {fires: false}}
+  - {id: DOC-02 reads the total as printed and not its conversion, rule_id: DOC-02, facts: {receipt.merchant_name: x, receipt.transaction_date: d, receipt.total_amount_usd: 1}, expected: {fires: true}}
+  - {id: DOC-02 no merchant name, rule_id: DOC-02, facts: {receipt.transaction_date: d, receipt.total_amount: 1}, expected: {fires: true}}
+  - {id: ALC-01 a refund or zero line is no purchase, rule_id: ALC-01, facts: {item.is_purchase: false, item.category: alcohol, receipt.mcc: "5812"}, expected: {fires: false}}
+  - {id: ALC-03 a refund or zero line is no purchase, rule_id: ALC-03, facts: {item.is_purchase: false, item.category: alcohol, receipt.mcc: "5921"}, expected: {fires: false}}
+  - {id: REG-01 a refund or zero line is no purchase, rule_id: REG-01, facts: {item.is_purchase: false, item.category: alcohol, receipt.entity: APAC}, expected: {fires: false}}
+  - {id: GIFT-02 a refund or zero line is no purchase, rule_id: GIFT-02, facts: {item.is_purchase: false, item.category: gift_card}, expected: {fires: false}}
+  - {id: GIFT-03 a refund or zero line is no purchase, rule_id: GIFT-03, facts: {item.is_purchase: false, item.category: gift, item.recipient_type: employee}, expected: {fires: false}}
+  - {id: HOUSE-01 a refund or zero line is no purchase, rule_id: HOUSE-01, facts: {item.is_purchase: false, item.category: household_goods}, expected: {fires: false}}
+  - {id: PERS-01 a refund or zero line is no purchase, rule_id: PERS-01, facts: {item.is_purchase: false, item.category: personal_care}, expected: {fires: false}}
+  - {id: PERS-02 a refund or zero line is no purchase, rule_id: PERS-02, facts: {item.is_purchase: false, item.category: clothing}, expected: {fires: false}}
+  - {id: ENT-01 a refund or zero line is no purchase, rule_id: ENT-01, facts: {item.is_purchase: false, item.venue_type: golf}, expected: {fires: false}}
+  - {id: ENT-02 a refund or zero line is no purchase, rule_id: ENT-02, facts: {item.is_purchase: false, item.category: gambling}, expected: {fires: false}}
+  - {id: TECH-01 a refund or zero line is no purchase, rule_id: TECH-01, facts: {item.is_purchase: false, item.category: personal_electronics}, expected: {fires: false}}
+  - {id: TECH-02 a refund or zero line is no purchase, rule_id: TECH-02, facts: {item.is_purchase: false, item.category: computer_accessory, item.unit_price_usd: 201}, expected: {fires: false}}
+  - {id: TECH-03 a refund or zero line is no purchase, rule_id: TECH-03, facts: {item.is_purchase: false, item.item_kind: mobile_phone}, expected: {fires: false}}
+  - {id: LAUNDRY-01 a refund or zero line is no purchase, rule_id: LAUNDRY-01, facts: {item.is_purchase: false, item.category: laundry_service, receipt.trip_nights: 1}, expected: {fires: false}}
+  - {id: GIFT-02 a purchase, rule_id: GIFT-02, facts: {item.is_purchase: true, item.category: gift_card}, expected: {fires: true}}
+  - {id: HOUSE-01 a purchase, rule_id: HOUSE-01, facts: {item.is_purchase: true, item.category: household_goods}, expected: {fires: true}}
+  - {id: PERS-01 a purchase, rule_id: PERS-01, facts: {item.is_purchase: true, item.category: personal_care}, expected: {fires: true}}
+  - {id: PERS-02 a purchase, rule_id: PERS-02, facts: {item.is_purchase: true, item.category: clothing}, expected: {fires: true}}
+  - {id: ENT-01 a purchase, rule_id: ENT-01, facts: {item.is_purchase: true, item.venue_type: golf}, expected: {fires: true}}
+  - {id: ENT-02 a purchase, rule_id: ENT-02, facts: {item.is_purchase: true, item.category: gambling}, expected: {fires: true}}
+  - {id: TECH-01 a purchase, rule_id: TECH-01, facts: {item.is_purchase: true, item.category: personal_electronics}, expected: {fires: true}}
+  - {id: TECH-03 a purchase, rule_id: TECH-03, facts: {item.is_purchase: true, item.item_kind: mobile_phone}, expected: {fires: true}}
+  - {id: PERS-03 a purchase, rule_id: PERS-03, facts: {item.category: tobacco, item.is_purchase: true}, expected: {fires: true}}
+  - {id: PERS-03 a refund or a zero line, rule_id: PERS-03, facts: {item.category: tobacco, item.is_purchase: false}, expected: {fires: false}}
+  - {id: PERS-03 a purchase of something else, rule_id: PERS-03, facts: {item.category: gift, item.is_purchase: true}, expected: {fires: false}}
+  - {id: DOC-02 no total, rule_id: DOC-02, facts: {receipt.merchant_name: x, receipt.transaction_date: d}, expected: {fires: true}}
+
+  # DOC-04: other currencies must record the currency and rate
+  - {id: DOC-04 euros with no rate, rule_id: DOC-04, facts: {receipt.currency: EUR}, expected: {fires: true}}
+  - {id: DOC-04 euros with a rate, rule_id: DOC-04, facts: {receipt.currency: EUR, receipt.fx_rate_to_usd: 1.1}, expected: {fires: false}}
+  - {id: DOC-04 dollars need no rate, rule_id: DOC-04, facts: {receipt.currency: USD}, expected: {fires: false}}
+  - {id: DOC-04 no currency, rule_id: DOC-04, facts: {receipt.fx_rate_to_usd: 1.1}, expected: {fires: true}}
+
+  # MEAL-02: above $150 must record attendees
+  - {id: MEAL-02 above with no count, rule_id: MEAL-02, facts: {receipt.is_meal_receipt: true, receipt.total_amount_usd: 150.01}, expected: {fires: true}}
+  - {id: MEAL-02 at the threshold, rule_id: MEAL-02, facts: {receipt.is_meal_receipt: true, receipt.total_amount_usd: 150}, expected: {fires: false}}
+  - {id: MEAL-02 with a count, rule_id: MEAL-02, facts: {receipt.is_meal_receipt: true, receipt.total_amount_usd: 500, receipt.attendee_count: 4}, expected: {fires: false}}
+  - {id: MEAL-02 only on a meal receipt, rule_id: MEAL-02, facts: {receipt.is_meal_receipt: false, receipt.total_amount_usd: 500}, expected: {fires: false}}
+
+  # MCC-01 and MCC-02: risk tiers
+  - {id: MCC-01 a high-risk merchant, rule_id: MCC-01, facts: {receipt.mcc: "7995"}, expected: {fires: true}}
+  - {id: MCC-01 not a medium-risk merchant, rule_id: MCC-01, facts: {receipt.mcc: "5813"}, expected: {fires: false}}
+  - {id: MCC-02 a medium-risk merchant, rule_id: MCC-02, facts: {receipt.mcc: "5813"}, expected: {fires: true}}
+  - {id: MCC-02 not a high-risk merchant, rule_id: MCC-02, facts: {receipt.mcc: "7995"}, expected: {fires: false}}
+
+  # TIME-01: from 00:00 up to, but not including, 05:00
+  - {id: TIME-01 at midnight, rule_id: TIME-01, facts: {receipt.local_hour: 0}, expected: {fires: true}}
+  - {id: TIME-01 before five, rule_id: TIME-01, facts: {receipt.local_hour: 4}, expected: {fires: true}}
+  - {id: TIME-01 at five is not overnight, rule_id: TIME-01, facts: {receipt.local_hour: 5}, expected: {fires: false}}
+  - {id: TIME-01 late evening is not overnight, rule_id: TIME-01, facts: {receipt.local_hour: 23}, expected: {fires: false}}
+
+  # TIME-02: individual travel expense with no trip
+  - {id: TIME-02 lodging with no trip, rule_id: TIME-02, facts: {receipt.submitted_expense_type: Lodging}, expected: {fires: true}}
+  - {id: TIME-02 lodging on a trip, rule_id: TIME-02, facts: {receipt.submitted_expense_type: Lodging, receipt.trip_id: T1}, expected: {fires: false}}
+  - {id: TIME-02 individual meal with no trip, rule_id: TIME-02, facts: {receipt.submitted_expense_type: Meals - Individual}, expected: {fires: true}}
+  - {id: TIME-02 other travel with no trip, rule_id: TIME-02, facts: {receipt.submitted_expense_type: Travel - Other}, expected: {fires: true}}
+  - {id: TIME-02 client entertainment is not covered, rule_id: TIME-02, facts: {receipt.submitted_expense_type: Client Entertainment}, expected: {fires: false}}
+  - {id: TIME-02 team meals are not covered, rule_id: TIME-02, facts: {receipt.submitted_expense_type: Meals - Team}, expected: {fires: false}}
+
+replacements:
+  - id: APAC replaces the alcohol rules and the global meal cap
+    facts: {receipt.entity: APAC}
+    expected: {replaced: [ALC-01, ALC-02, ALC-03, MEAL-01]}
+
+  - id: EMEA replaces only the global meal cap
+    facts: {receipt.entity: EMEA}
+    expected: {replaced: [MEAL-01]}
+
+  - id: GLOBAL replaces nothing
+    facts: {receipt.entity: GLOBAL}
+    expected: {replaced: []}
+
+  - id: an unknown entity replaces nothing
+    facts: {}
+    expected: {replaced: []}

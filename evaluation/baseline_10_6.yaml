@@ -1,0 +1,10 @@
+# Benchmarks A to F as reported at the Module 10.6 freeze, from the scratch script used until then.
+# The harness must reproduce these exactly. F's rule figures were never recorded, so only its dispositions are.
+# strict is matched / (matched + extras + receipts with an EXC-03 signal), and recall is matched / 37.
+scenarios:
+  A: {matched: 37, extras: 0, strict_denominator: 38, evidence_exact: 28, evidence_total: 28, flag: 18, review: 5, pass: 9, accuracy: 32, decided: 31}
+  B: {matched: 35, extras: 0, strict_denominator: 38, evidence_exact: 26, evidence_total: 26, flag: 17, review: 6, pass: 9, accuracy: 31, decided: 29}
+  C: {matched: 13, extras: 0, strict_denominator: 44, evidence_exact: 4, evidence_total: 4, flag: 4, review: 28, pass: 0, accuracy: 9, decided: 1}
+  D: {matched: 13, extras: 0, strict_denominator: 44, evidence_exact: 4, evidence_total: 4, flag: 4, review: 28, pass: 0, accuracy: 9, decided: 1}
+  E: {matched: 13, extras: 0, strict_denominator: 45, evidence_exact: 4, evidence_total: 4, flag: 4, review: 28, pass: 0, accuracy: 9, decided: 0}
+  F: {flag: 16, review: 16, pass: 0, accuracy: 21, decided: 0}

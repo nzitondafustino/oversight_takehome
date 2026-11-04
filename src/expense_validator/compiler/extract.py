@@ -1,0 +1,135 @@
+"""Finds the rules in a policy document, without any LLM.
+
+This is the Parse step of the compiler. It splits a document into clauses, keeps
+each clause's text as written, and picks out the values that regexes can find
+reliably. Anything it cannot read as a rule goes in `context`, so no text is lost.
+
+Clause text runs until the next rule, heading or bold note. Thresholds are read
+from the forms the policy uses: money, nights, hours, clock times, attendee counts
+and receipt counts. A number written any other way stays in the text only.
+"""
+
+import re
+from dataclasses import dataclass
+from decimal import Decimal
+
+CLAUSE = re.compile(r"^\*\*([A-Z]+-\d{2}) — (.+?)\.\*\*\s*(.*)$")
+RULE_LIKE = re.compile(r"^\*\*[A-Z]+-\d")
+NOTE = re.compile(r"^\*\*[^*]+\.\*\*")
+HEADING = re.compile(r"^(#+) (.+)$")
+
+RULE_ID = re.compile(r"\b[A-Z]+-\d{2}\b")
+SEVERITY = re.compile(r"\*\*(critical|high|medium|low)\*\*")
+REVIEW_SIGNAL = "**review signal**"
+NUMBER_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
+DIGITS = r"\d[\d,]*(?:\.\d+)?"
+NUMBER = rf"(?:{DIGITS}|{'|'.join(NUMBER_WORDS)})"
+THRESHOLDS = [
+    (re.compile(rf"\$({DIGITS})"), "usd"),
+    (re.compile(rf"\bEUR ({DIGITS})"), "eur"),
+    (re.compile(rf"\b({NUMBER})(?:\s+or\s+more)?\s+nights?\b", re.IGNORECASE), "nights"),
+    (re.compile(rf"\b({NUMBER})\s+hours?\b", re.IGNORECASE), "hour"),
+    (re.compile(r"\b(\d{2}):\d{2}\b"), "hour"),
+    (re.compile(rf"\battendee\s+count\s+of\s+({NUMBER})\b", re.IGNORECASE), "count"),
+    (re.compile(rf"\b({NUMBER})\s+or\s+more\s+receipts\b", re.IGNORECASE), "count"),
+]
+
+
+@dataclass(frozen=True)
+class Threshold:
+    value: Decimal
+    unit: str
+
+
+@dataclass(frozen=True)
+class Clause:
+    rule_id: str
+    title: str
+    policy_doc: str
+    section: str | None
+    text: str
+    severities: list[str]
+    review_signal: bool
+    thresholds: list[Threshold]
+    references: list[str]
+
+
+@dataclass(frozen=True)
+class PolicyDocument:
+    policy_doc: str
+    title: str | None
+    clauses: list[Clause]
+    context: list[str]
+
+
+def _unique(values: list) -> list:
+    return list(dict.fromkeys(values))
+
+
+def _number(written: str) -> Decimal:
+    return Decimal(NUMBER_WORDS.get(written.lower(), written.replace(",", "")))
+
+
+def _thresholds(text: str) -> list[Threshold]:
+    found = [
+        (match.start(), Threshold(_number(match.group(1)), unit))
+        for pattern, unit in THRESHOLDS
+        for match in pattern.finditer(text)
+    ]
+    return _unique([threshold for _, threshold in sorted(found, key=lambda pair: pair[0])])
+
+
+def _clause(heading: re.Match, lines: list[str], policy_doc: str, section: str | None) -> Clause:
+    rule_id, title, first_line = heading.groups()
+    text = "\n".join([first_line, *lines]).strip()
+    return Clause(
+        rule_id=rule_id,
+        title=title,
+        policy_doc=policy_doc,
+        section=section,
+        text=text,
+        severities=_unique(SEVERITY.findall(text)),
+        review_signal=REVIEW_SIGNAL in text,
+        thresholds=_thresholds(text),
+        references=[found for found in _unique(RULE_ID.findall(text)) if found != rule_id],
+    )
+
+
+def extract_document(text: str, policy_doc: str) -> PolicyDocument:
+    """Refuses a malformed rule heading, because reading it as prose would lose a rule."""
+    title = None
+    section = None
+    blocks: list[tuple[re.Match | None, str | None, list[str]]] = []
+    current = None
+    after_blank = True
+
+    for number, line in enumerate(text.splitlines(), start=1):
+        heading = HEADING.match(line)
+        clause = CLAUSE.match(line)
+        if heading:
+            current = None
+            if len(heading.group(1)) == 1 and title is None:
+                title = heading.group(2)
+            else:
+                section = heading.group(2)
+        elif clause:
+            current = (clause, section, [])
+            blocks.append(current)
+        elif RULE_LIKE.match(line):
+            raise ValueError(f"{policy_doc}:{number}: malformed rule heading: {line}")
+        else:
+            ends_clause = current is not None and current[0] is not None and after_blank and NOTE.match(line)
+            if line.strip() and (current is None or ends_clause):
+                current = (None, None, [])
+                blocks.append(current)
+            if current is not None:
+                current[2].append(line)
+        after_blank = not line.strip()
+
+    clauses = [_clause(match, lines, policy_doc, where) for match, where, lines in blocks if match]
+    ids = [clause.rule_id for clause in clauses]
+    duplicates = sorted({rule_id for rule_id in ids if ids.count(rule_id) > 1})
+    if duplicates:
+        raise ValueError(f"{policy_doc}: duplicate rule ids: {duplicates}")
+    context = ["\n".join(lines).strip() for match, _, lines in blocks if match is None]
+    return PolicyDocument(policy_doc=policy_doc, title=title, clauses=clauses, context=context)

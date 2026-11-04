@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Offline Policy Compiler</title>
+<!-- Icons: Lucide v0.454.0, ISC License, https://lucide.dev -->
+<style>
+  :root {
+    --ink: #0f172a; --muted: #475569; --line: #64748b;
+    --red: #e11d2e; --green: #16a34a; --blue: #2563eb;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #fff; }
+  body { font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: var(--ink); }
+  #canvas { position: relative; width: 1900px; height: 945px; overflow: hidden; background: #fff; }
+
+  h1 { position: absolute; top: 2px; left: 0; width: 100%; margin: 0; text-align: center; font-size: 52px; font-weight: 700; letter-spacing: -.5px; }
+  .subtitle { position: absolute; top: 68px; left: 0; width: 100%; text-align: center; font-size: 21px; font-weight: 500; color: #334155; }
+  .scope { position: absolute; left: 560px; top: 110px; width: 780px; height: 52px; display: flex; align-items: center; justify-content: center; gap: 14px; background: linear-gradient(#fbfdff, #f1f5fb); border: 1.5px solid #cbd5e1; border-radius: 26px; box-shadow: 0 2px 6px rgba(30, 41, 59, .07); font-size: 22px; font-weight: 700; white-space: nowrap; }
+  .scope em { font-style: normal; color: var(--blue); }
+  .scope .ico { width: 30px; height: 30px; color: var(--blue); }
+
+  .panel { position: absolute; border-radius: 20px; border: 1.5px solid; box-shadow: 0 3px 10px rgba(30, 41, 59, .07); }
+  .ingest    { left: 20px;   top: 240px; width: 202px; height: 276px; background: linear-gradient(#f5f9ff, #e8f1fe); border-color: #a9cdf8; }
+  .detect    { left: 235px;  top: 228px; width: 420px; height: 288px; background: linear-gradient(#fbf7ff, #f3ebfe); border-color: #d6bcf7; }
+  .translate { left: 670px;  top: 240px; width: 357px; height: 276px; background: linear-gradient(#f5f9ff, #e8f1fe); border-color: #a9cdf8; }
+  .validate  { left: 1042px; top: 188px; width: 400px; height: 360px; background: linear-gradient(#fffbf0, #fff3dd); border-color: #fbd38d; }
+  .publish   { left: 1471px; top: 240px; width: 423px; height: 276px; background: linear-gradient(#f4fdf7, #e7f9ee); border-color: #9be6b8; }
+
+  .stage { position: absolute; display: flex; align-items: center; gap: 10px; font-size: 26px; font-weight: 700; letter-spacing: -.2px; line-height: 1.1; white-space: nowrap; }
+  .stage small { display: block; font-size: 16px; font-weight: 600; letter-spacing: 0; margin-top: 2px; }
+  .badge { width: 38px; height: 38px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 21px; font-weight: 700; flex: none; }
+
+  .tile { display: flex; align-items: center; justify-content: center; border-radius: 15px; color: #fff; flex: none; box-shadow: 0 3px 7px rgba(30, 41, 59, .2); }
+  .tile.lg { width: 62px; height: 62px; }
+  .tile.md { width: 46px; height: 46px; border-radius: 12px; }
+  .ico { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .tile.lg .ico { width: 34px; height: 34px; }
+  .tile.md .ico { width: 26px; height: 26px; }
+
+  .c-ingest { background: linear-gradient(145deg, #3b82f6, #1d4ed8); }
+  .c-detect { background: linear-gradient(145deg, #a855f7, #6d28d9); }
+  .c-translate { background: linear-gradient(145deg, #3b82f6, #1d4ed8); }
+  .c-validate { background: linear-gradient(145deg, #fbab2c, #ea7a0c); }
+  .c-publish { background: linear-gradient(145deg, #22c55e, #15803d); }
+  .c-dev { background: linear-gradient(145deg, #475569, #1e293b); }
+
+  .node { position: absolute; transform: translateX(-50%); text-align: center; white-space: nowrap; }
+  .node .tile { margin: 0 auto; }
+  .node b { display: block; font-size: 18px; font-weight: 700; line-height: 1.2; margin-top: 10px; }
+  .node span { display: block; font-size: 15px; line-height: 1.22; color: var(--muted); margin-top: 3px; }
+
+  .chip { position: absolute; left: 487px; width: 160px; height: 52px; display: flex; align-items: center; gap: 9px; padding: 0 8px; background: #fff; border: 1.5px solid #e3dcfb; border-radius: 13px; box-shadow: 0 1px 3px rgba(30, 41, 59, .08); white-space: nowrap; }
+  .chip .dot { width: 32px; height: 32px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; flex: none; }
+  .chip .dot .ico { width: 18px; height: 18px; stroke-width: 2.8; }
+  .chip b { display: block; font-size: 15px; font-weight: 700; line-height: 1.15; }
+  .chip span { display: block; font-size: 12.5px; line-height: 1.15; color: var(--muted); }
+
+  .row { position: absolute; left: 1064px; display: flex; align-items: center; gap: 12px; height: 56px; white-space: nowrap; }
+  .row b { display: block; font-size: 17px; font-weight: 700; line-height: 1.1; }
+  .row span { display: block; font-size: 14px; line-height: 1.12; color: var(--muted); }
+
+  svg.wires { position: absolute; inset: 0; width: 1900px; height: 945px; pointer-events: none; }
+  svg.wires > path, .legend svg > path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .flow { stroke: var(--line); stroke-width: 2.5; }
+  .fail { stroke: var(--red); stroke-width: 3; }
+  .ok { stroke: var(--green); stroke-width: 3; }
+  .back { stroke: var(--blue); stroke-width: 2.6; stroke-dasharray: 8 7; }
+
+  .pill { position: absolute; display: flex; align-items: center; justify-content: center; border-radius: 17px; border: 1.5px solid; font-size: 15.5px; font-weight: 700; white-space: nowrap; }
+  .pill.bad { left: 1037px; top: 596px; width: 266px; height: 34px; background: #fff1f2; border-color: #fca5a5; color: #d11a2a; }
+  .pill.good { left: 1331px; top: 650px; width: 185px; height: 34px; background: #f0fdf4; border-color: #6fd694; color: #15803d; }
+  .needs { position: absolute; left: 700px; top: 620px; width: 112px; text-align: right; font-size: 16px; font-weight: 700; line-height: 1.25; color: #1d4ed8; }
+  .note { position: absolute; font-size: 14px; line-height: 1.25; color: var(--muted); white-space: nowrap; }
+
+  .card { position: absolute; background: linear-gradient(#fbfdff, #f3f6fb); border: 1.5px solid #cbd5e1; border-radius: 16px; box-shadow: 0 3px 10px rgba(30, 41, 59, .07); }
+  .developer { left: 954px; top: 694px; width: 398px; height: 98px; display: flex; align-items: center; gap: 16px; padding: 0 22px; }
+  .developer b { display: block; font-size: 22px; font-weight: 700; }
+  .developer span { display: block; font-size: 15px; color: #334155; margin-top: 2px; white-space: nowrap; }
+
+  .outputs { left: 35px; top: 606px; width: 450px; height: 208px; padding: 12px 22px; }
+  .card-head { display: flex; align-items: center; gap: 12px; font-size: 23px; font-weight: 700; }
+  .outputs ul { margin: 6px 0 0 2px; padding: 0; list-style: none; }
+  .outputs li { display: flex; align-items: center; gap: 12px; height: 27px; font-size: 16px; color: #1e293b; white-space: nowrap; }
+  .outputs li .ico { width: 20px; height: 20px; color: var(--green); flex: none; }
+
+  .legend { left: 1572px; top: 616px; width: 318px; height: 190px; padding: 14px 22px; }
+  .legend svg { position: absolute; left: 22px; top: 0; width: 58px; height: 190px; }
+  .legend .item { position: absolute; left: 90px; font-size: 15px; color: #1e293b; white-space: nowrap; }
+
+  .benefits { position: absolute; left: 18px; top: 838px; width: 1874px; height: 94px; border-radius: 20px; background: linear-gradient(#f4f7fc, #e9eff9); border: 1.5px solid #e2e8f0; display: flex; align-items: center; }
+  .benefits h2 { margin: 0 0 0 28px; width: 210px; flex: none; font-size: 27px; font-weight: 700; white-space: nowrap; }
+  .benefit { flex: 1; display: flex; align-items: center; gap: 16px; height: 56px; padding-left: 28px; border-left: 1.5px solid #cbd5e1; font-size: 18px; line-height: 1.22; color: #1e293b; white-space: nowrap; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="archive" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1" /> <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /> <path d="M10 12h4" /></symbol>
+  <symbol id="bot" viewBox="0 0 24 24"><path d="M12 8V4H8" /> <rect width="16" height="12" x="4" y="8" rx="2" /> <path d="M2 14h2" /> <path d="M20 14h2" /> <path d="M15 13v2" /> <path d="M9 13v2" /></symbol>
+  <symbol id="circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="m9 12 2 2 4-4" /></symbol>
+  <symbol id="circle-check-big" viewBox="0 0 24 24"><path d="M21.801 10A10 10 0 1 1 17 3.335" /> <path d="m9 11 3 3L22 4" /></symbol>
+  <symbol id="code-xml" viewBox="0 0 24 24"><path d="m18 16 4-4-4-4" /> <path d="m6 8-4 4 4 4" /> <path d="m14.5 4-5 16" /></symbol>
+  <symbol id="database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3" /> <path d="M3 5V19A9 3 0 0 0 21 19V5" /> <path d="M3 12A9 3 0 0 0 21 12" /></symbol>
+  <symbol id="file-search" viewBox="0 0 24 24"><path d="M14 2v4a2 2 0 0 0 2 2h4" /> <path d="M4.268 21a2 2 0 0 0 1.727 1H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v3" /> <path d="m9 18-1.5-1.5" /> <circle cx="5" cy="14" r="3" /></symbol>
+  <symbol id="file-text" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /> <path d="M14 2v4a2 2 0 0 0 2 2h4" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" /></symbol>
+  <symbol id="flask-conical" viewBox="0 0 24 24"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2" /> <path d="M8.5 2h7" /> <path d="M7 16h10" /></symbol>
+  <symbol id="layers" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" /> <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" /> <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" /></symbol>
+  <symbol id="layout-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1" /> <rect width="7" height="7" x="14" y="3" rx="1" /> <rect width="7" height="7" x="14" y="14" rx="1" /> <rect width="7" height="7" x="3" y="14" rx="1" /></symbol>
+  <symbol id="list-checks" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4" /> <path d="m3 7 2 2 4-4" /> <path d="M13 6h8" /> <path d="M13 12h8" /> <path d="M13 18h8" /></symbol>
+  <symbol id="minus" viewBox="0 0 24 24"><path d="M5 12h14" /></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></symbol>
+  <symbol id="refresh-cw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /></symbol>
+  <symbol id="scale" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" /> <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" /> <path d="M7 21h10" /> <path d="M12 3v18" /> <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" /></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /> <path d="m21 21-4.3-4.3" /></symbol>
+  <symbol id="shield-check" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /> <path d="m9 12 2 2 4-4" /></symbol>
+  <symbol id="square-pen" viewBox="0 0 24 24"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /> <path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" /></symbol>
+  <symbol id="swords" viewBox="0 0 24 24"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" /> <line x1="13" x2="19" y1="19" y2="13" /> <line x1="16" x2="20" y1="16" y2="20" /> <line x1="19" x2="21" y1="21" y2="19" /> <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5" /> <line x1="5" x2="9" y1="14" y2="18" /> <line x1="7" x2="4" y1="17" y2="20" /> <line x1="3" x2="5" y1="19" y2="21" /></symbol>
+  <symbol id="tag" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" /> <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" /></symbol>
+  <symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <circle cx="12" cy="12" r="6" /> <circle cx="12" cy="12" r="2" /></symbol>
+  <symbol id="user-cog" viewBox="0 0 24 24"><circle cx="18" cy="15" r="3" /> <circle cx="9" cy="7" r="4" /> <path d="M10 15H6a4 4 0 0 0-4 4v2" /> <path d="m21.7 16.4-.9-.3" /> <path d="m15.2 13.9-.9-.3" /> <path d="m16.6 18.7.3-.9" /> <path d="m19.1 12.2.3-.9" /> <path d="m19.6 18.7-.4-1" /> <path d="m16.8 12.3-.4-1" /> <path d="m14.3 16.6 1-.4" /> <path d="m20.7 13.8 1-.4" /></symbol>
+  <symbol id="zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></symbol>
+</svg>
+<div id="canvas">
+  <h1>Offline Policy Compiler</h1>
+  <div class="subtitle">Compile, translate, validate, and publish new or changed policy documents to a structured, versioned rule repository</div>
+  <div class="scope"><svg class="ico"><use href="#target"/></svg><div>Scope: Processes only <em>new, changed,</em> or <em>removed</em> policies</div></div>
+
+  <div class="panel ingest"></div>
+  <div class="panel detect"></div>
+  <div class="panel translate"></div>
+  <div class="panel validate"></div>
+  <div class="panel publish"></div>
+
+  <div class="stage" style="left:36px;top:254px"><div class="badge c-ingest">1</div>Ingest</div>
+  <div class="stage" style="left:251px;top:240px"><div class="badge c-detect">2</div><div>Detect Changes<small>(Incremental, unchanged rules reused)</small></div></div>
+  <div class="stage" style="left:686px;top:254px"><div class="badge c-translate">3</div>Translate</div>
+  <div class="stage" style="left:1060px;top:198px"><div class="badge c-validate">4</div><div>Validate<small>(Changes + Rule Compatibility)</small></div></div>
+  <div class="stage" style="left:1487px;top:252px"><div class="badge c-publish">5</div><div>Publish<small>(Update Rule Repository)</small></div></div>
+
+  <div class="node" style="left:121px;top:318px"><div class="tile lg c-ingest"><svg class="ico"><use href="#file-text"/></svg></div><b>Policy docs</b><span>(new, changed,<br>or removed)</span><span style="margin-top:6px">PDF · DOCX · Markdown</span></div>
+
+  <div class="node" style="left:300px;top:353px"><div class="tile lg c-detect"><svg class="ico"><use href="#scale"/></svg></div><b>Compare</b><span>clause and its<br>dependencies, vs<br>latest approved</span></div>
+  <div class="node" style="left:410px;top:353px"><div class="tile lg c-detect"><svg class="ico"><use href="#list-checks"/></svg></div><b>Classify</b><span>change type</span></div>
+
+  <div class="chip" style="top:298px"><div class="dot" style="background:#16a34a"><svg class="ico"><use href="#plus"/></svg></div><div><b>New</b><span>(add rules)</span></div></div>
+  <div class="chip" style="top:358px"><div class="dot" style="background:#2563eb"><svg class="ico"><use href="#square-pen"/></svg></div><div><b>Changed</b><span>(update rules)</span></div></div>
+  <div class="chip" style="top:418px"><div class="dot" style="background:#e11d2e"><svg class="ico"><use href="#minus"/></svg></div><div><b>Removed</b><span>(retire, skips LLM)</span></div></div>
+
+  <div class="node" style="left:728px;top:353px"><div class="tile lg c-translate"><svg class="ico"><use href="#search"/></svg></div><b>Parse</b><span>regex: IDs,<br>values, text<br>+ structure</span></div>
+  <div class="node" style="left:846px;top:353px"><div class="tile lg c-translate"><svg class="ico"><use href="#bot"/></svg></div><b>LLM Transform</b><span>convert to<br>structured rules<br>(JSON/YAML)</span></div>
+  <div class="node" style="left:972px;top:353px"><div class="tile lg c-translate"><svg class="ico"><use href="#shield-check"/></svg></div><b>Pre-validate</b><span>schema, types,<br>references</span></div>
+
+  <div class="row" style="top:247px"><div class="tile md c-validate"><svg class="ico"><use href="#code-xml"/></svg></div><div><b>Syntax</b><span>schema &amp; data types</span></div></div>
+  <div class="row" style="top:303px"><div class="tile md c-validate"><svg class="ico"><use href="#file-search"/></svg></div><div><b>Source</b><span>traceability to<br>original text</span></div></div>
+  <div class="row" style="top:359px"><div class="tile md c-validate"><svg class="ico"><use href="#layout-grid"/></svg></div><div><b>Coverage</b><span>all policy areas<br>addressed</span></div></div>
+  <div class="row" style="top:415px"><div class="tile md c-validate"><svg class="ico"><use href="#flask-conical"/></svg></div><div><b>Behaviour</b><span>independent<br>test cases</span></div></div>
+  <div class="row" style="top:473px"><div class="tile md c-validate"><svg class="ico"><use href="#swords"/></svg></div><div><b>Conflicts</b><span>no overlapping or<br>contradictory rules</span></div></div>
+
+  <div class="node" style="left:1372px;top:342px"><div class="tile lg c-publish"><svg class="ico"><use href="#circle-check-big"/></svg></div><b>All checks pass</b><span>ready to publish</span></div>
+
+  <div class="node" style="left:1542px;top:330px"><div class="tile lg c-publish"><svg class="ico"><use href="#tag"/></svg></div><b>Version &amp; Tag</b><span>create policy<br>version<br>(e.g., v1.2.0)</span></div>
+  <div class="node" style="left:1678px;top:330px"><div class="tile lg c-publish"><svg class="ico"><use href="#refresh-cw"/></svg></div><b>Apply Changes</b><span>add, update, and<br>remove rules<br>(atomic update)</span></div>
+  <div class="node" style="left:1816px;top:330px"><div class="tile lg c-publish"><svg class="ico"><use href="#archive"/></svg></div><b>Archive</b><span>previous version<br>(for audit &amp; rollback)</span></div>
+
+  <div class="card developer">
+    <div class="tile lg c-dev"><svg class="ico"><use href="#user-cog"/></svg></div>
+    <div><b>Developer</b><span>Review, adjust rules, re-run, and sign off.</span></div>
+  </div>
+
+  <svg class="wires" viewBox="0 0 1900 945" aria-hidden="true">
+    <defs>
+      <marker id="a-flow" markerWidth="15" markerHeight="15" refX="11" refY="6.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L13,6.5 L0,13 z" fill="#64748b"/></marker>
+      <marker id="a-red" markerWidth="17" markerHeight="17" refX="13" refY="7.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L15,7.5 L0,15 z" fill="#e11d2e"/></marker>
+      <marker id="a-green" markerWidth="17" markerHeight="17" refX="13" refY="7.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L15,7.5 L0,15 z" fill="#16a34a"/></marker>
+      <marker id="a-blue" markerWidth="17" markerHeight="17" refX="13" refY="7.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L15,7.5 L0,15 z" fill="#2563eb"/></marker>
+    </defs>
+
+    <!-- Scope rule -->
+    <path class="flow" d="M336 136 H558"/>
+    <path class="flow" d="M1342 136 H1564"/>
+
+    <!-- Between stages -->
+    <path class="flow" marker-end="url(#a-flow)" d="M212 384 H265"/>
+    <path class="flow" marker-end="url(#a-flow)" d="M649 384 H694"/>
+    <path class="flow" marker-end="url(#a-flow)" d="M1006 384 H1054"/>
+
+    <!-- Detect -->
+    <path class="flow" marker-end="url(#a-flow)" d="M333 384 H375"/>
+    <path class="flow" marker-end="url(#a-flow)" d="M450 384 Q458 384 458 376 V334 Q458 324 468 324 H484"/>
+    <path class="flow" marker-end="url(#a-flow)" d="M450 384 Q458 384 458 392 V434 Q458 444 468 444 H484"/>
+    <path class="flow" marker-end="url(#a-flow)" d="M441 384 H484"/>
+
+    <!-- Translate -->
+    <path class="flow" marker-end="url(#a-flow)" d="M762 384 H812"/>
+    <path class="flow" marker-end="url(#a-flow)" d="M880 384 H938"/>
+
+    <!-- Validate: every check feeds the gate -->
+    <path class="flow" d="M1292 283 V493"/>
+    <path class="flow" d="M1268 275 H1284 Q1292 275 1292 283"/>
+    <path class="flow" d="M1228 331 H1292"/>
+    <path class="flow" d="M1236 387 H1292"/>
+    <path class="flow" d="M1214 443 H1292"/>
+    <path class="flow" d="M1260 501 H1284 Q1292 501 1292 493"/>
+    <path class="flow" marker-end="url(#a-flow)" d="M1292 372 H1338"/>
+
+    <!-- Publish -->
+    <path class="ok" marker-end="url(#a-green)" d="M1406 372 H1508"/>
+    <path class="flow" marker-end="url(#a-flow)" d="M1576 360 H1644"/>
+    <path class="flow" marker-end="url(#a-flow)" d="M1712 360 H1782"/>
+
+    <!-- Failure, revision and approval -->
+    <path class="fail" d="M958 518 V596 Q958 613 975 613 H1037"/>
+    <path class="fail" d="M1372 460 V596 Q1372 613 1355 613 H1303"/>
+    <path class="fail" marker-end="url(#a-red)" d="M1170 630 V692"/>
+    <path class="back" marker-end="url(#a-blue)" d="M952 743 H846 Q826 743 826 723 V520"/>
+    <path class="ok" d="M1275 694 V684 Q1275 667 1292 667 H1331"/>
+    <path class="ok" marker-end="url(#a-green)" d="M1516 667 H1532 Q1552 667 1552 650 V520"/>
+  </svg>
+
+  <div class="needs">Revise and<br>revalidate</div>
+  <div class="pill bad">Fail (errors, conflicts, or no fit)</div>
+  <div class="pill good">Approved (publish)</div>
+  <div class="note" style="left:1366px;top:694px">Sign-off: first load, new logic,<br>removals, sets, project<br>decisions. Policy thresholds<br>auto-publish.</div>
+
+  <div class="card outputs">
+    <div class="card-head"><div class="tile md c-dev"><svg class="ico"><use href="#database"/></svg></div>Outputs</div>
+    <ul>
+      <li><svg class="ico"><use href="#circle-check"/></svg>Structured, validated policy rules</li>
+      <li><svg class="ico"><use href="#circle-check"/></svg>Versioned policy repository</li>
+      <li><svg class="ico"><use href="#circle-check"/></svg>Audit trail and change history</li>
+      <li><svg class="ico"><use href="#circle-check"/></svg>Traceability to source documents</li>
+      <li><svg class="ico"><use href="#circle-check"/></svg>Removal of retired policy rules</li>
+    </ul>
+  </div>
+
+  <div class="card legend">
+    <div class="card-head" style="height:44px">Legend</div>
+    <svg viewBox="0 0 58 190" aria-hidden="true">
+      <path class="ok" marker-end="url(#a-green)" d="M2 74 H52"/>
+      <path class="fail" marker-end="url(#a-red)" d="M2 104 H52"/>
+      <path class="back" marker-end="url(#a-blue)" d="M2 134 H52"/>
+      <path class="flow" marker-end="url(#a-flow)" d="M2 164 H52"/>
+    </svg>
+    <div class="item" style="top:64px">Main flow (success)</div>
+    <div class="item" style="top:94px">Validation failure (fix required)</div>
+    <div class="item" style="top:124px">Feedback / iteration</div>
+    <div class="item" style="top:154px">Internal validation flow</div>
+  </div>
+
+  <div class="benefits">
+    <h2>Key Benefits</h2>
+    <div class="benefit"><div class="tile md c-validate"><svg class="ico"><use href="#zap"/></svg></div><div>Automated and repeatable<br>policy compilation</div></div>
+    <div class="benefit"><div class="tile md c-detect"><svg class="ico"><use href="#target"/></svg></div><div>High quality and<br>consistent rule extraction</div></div>
+    <div class="benefit"><div class="tile md c-translate"><svg class="ico"><use href="#layers"/></svg></div><div>Full traceability and<br>version control</div></div>
+    <div class="benefit"><div class="tile md c-publish"><svg class="ico"><use href="#shield-check"/></svg></div><div>Reduced manual effort<br>and faster policy updates</div></div>
+  </div>
+</div>
+</body>
+</html>

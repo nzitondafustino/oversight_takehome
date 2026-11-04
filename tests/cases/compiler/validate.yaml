@@ -1,0 +1,366 @@
+suite: validate
+
+# The Validate step, on rules built from `logic` and the clauses in `text`, with the real
+# fields in rules/fields.yaml.
+#
+# expected: every issue, exactly and in order. Empty means the rules are valid.
+
+templates:
+  text: &text "**AA-01 — One.** Up to **$200**, or a **high** exception.\n\n**BB-02 — Two.** A **medium** exception.\n"
+  allowed_text: &one_rule "**AA-01 — One.** Up to **$200**, or a **high** exception.\n"
+  plain_text: &plain "**AA-01 — One.** A **high** exception.\n"
+
+  rule: &rule
+    rule_id: AA-01
+    kind: check
+    outcome: exception
+    scope: item
+    severity: high
+    source_quote: "**high** exception"
+    select: {op: eq, field: item.category, value: alcohol}
+
+  capped: &capped
+    <<: *rule
+    params:
+      cap: {type: number, value: "200", unit: usd}
+    select: {op: gt, field: item.unit_price_usd, value: {param: cap}}
+
+  second: &second
+    <<: *rule
+    rule_id: BB-02
+    severity: medium
+    source_quote: "A **medium** exception"
+    select: {op: eq, field: item.category, value: tobacco}
+
+cases:
+  - id: valid rules have no issues
+    text: *text
+    logic: {ruleset_version: v1, rules: [*capped, *second]}
+    expected: []
+
+  # Fields
+  - id: an unknown field
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, select: {op: eq, field: item.brand, value: x}}
+    expected: ["error fields: AA-01: unknown field item.brand"]
+
+  - id: a misspelled category
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, select: {op: eq, field: item.category, value: alchohol}}
+    expected: ["error fields: AA-01: 'alchohol' is not a known value for item.category"]
+
+  - id: a misspelled value in a set param
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - <<: *rule
+          params:
+            banned: {type: set, values: [alchohol]}
+          select: {op: in, field: item.category, values: {param: banned}}
+    expected: ["error fields: AA-01: 'alchohol' is not a known value for item.category"]
+
+  - id: an unknown field nested deep in a condition
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - <<: *rule
+          select:
+            op: not
+            condition:
+              op: any
+              conditions:
+                - {op: missing, field: item.brand}
+    expected: ["error fields: AA-01: unknown field item.brand"]
+
+  - id: an ordered comparison on a text field
+    text: *one_rule
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *capped, select: {op: gt, field: item.category, value: {param: cap}}}
+    expected: ["error fields: AA-01: item.category is text, cannot compare with a number"]
+
+  - id: a number written as text
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, select: {op: eq, field: item.unit_price_usd, value: "200"}}
+    expected: ["error fields: AA-01: item.unit_price_usd is a number and must compare against a param"]
+
+  - id: a boolean on a text field
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, select: {op: eq, field: item.category, value: true}}
+    expected: ["error fields: AA-01: item.category is text, cannot compare with True"]
+
+  - id: text on a boolean field
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, select: {op: eq, field: item.restricted, value: "yes"}}
+    expected: ["error fields: AA-01: item.restricted is bool, cannot compare with 'yes'"]
+
+  - id: in on a numeric field
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, select: {op: in, field: item.unit_price_usd, values: ["200"]}}
+    expected: ["error fields: AA-01: in needs a text field, item.unit_price_usd is number"]
+
+  - id: a param in the wrong unit for its field
+    text: "**AA-01 — One.** Up to EUR 200, or a **high** exception.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - <<: *capped
+          params:
+            cap: {type: number, value: "200", unit: eur}
+    expected: ["error fields: AA-01: cap is in eur, item.unit_price_usd is in usd"]
+
+  # Helpers
+  - id: a helper with the right params
+    text: *one_rule
+    logic:
+      ruleset_version: v1
+      rules:
+        - <<: *rule
+          select: null
+          helper: otc_trip_cap
+          params:
+            trip_cap_usd: {type: number, value: "200", unit: usd}
+    expected: []
+
+  - id: a helper with the wrong param name
+    text: *one_rule
+    logic:
+      ruleset_version: v1
+      rules:
+        - <<: *rule
+          select: null
+          helper: otc_trip_cap
+          params:
+            cap: {type: number, value: "200", unit: usd}
+    expected: ["error helpers: AA-01: otc_trip_cap needs params {'trip_cap_usd': 'usd'}, got {'cap': 'usd'}"]
+
+  - id: a helper with the wrong unit
+    text: "**AA-01 — One.** Up to EUR 200, or a **high** exception.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - <<: *rule
+          select: null
+          helper: otc_trip_cap
+          params:
+            trip_cap_usd: {type: number, value: "200", unit: eur}
+    expected: ["error helpers: AA-01: otc_trip_cap needs params {'trip_cap_usd': 'usd'}, got {'trip_cap_usd': 'eur'}"]
+
+  - id: a helper with the wrong scope
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, scope: receipt, select: null, helper: government_official}
+    expected: ["error helpers: AA-01: government_official needs scope item"]
+
+  - id: a carve-out helper on a check
+    text: "**AA-01 — One.** Up to $150, over 24 hours, or a **high** exception.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - <<: *rule
+          select: null
+          helper: baggage_allowance
+          params:
+            allowance_usd: {type: number, value: "150", unit: usd}
+            min_delay_hours: {type: number, value: "24", unit: hour}
+    expected:
+      - "error helpers: AA-01: baggage_allowance belongs on a carve_out rule, not a check"
+      - "error helpers: AA-01: baggage_allowance needs scope None"
+
+  # Conflicts
+  - id: the same logic with different severities
+    text: *text
+    logic:
+      ruleset_version: v1
+      rules:
+        - *capped
+        - {<<: *second, params: {cap: {type: number, value: "200", unit: usd}}, select: {op: gt, field: item.unit_price_usd, value: {param: cap}}}
+    expected:
+      - "error conflicts: AA-01: AA-01 and BB-02 catch the same thing with different results"
+      - "error faithful: BB-02: cap is 200 usd, not in its clause"
+
+  - id: duplicates, even with different param names
+    text: "**AA-01 — One.** A **high** exception.\n\n**BB-02 — Two.** A **high** exception.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, params: {x: {type: set, values: [alcohol]}}, select: {op: in, field: item.category, values: {param: x}}}
+        - {<<: *rule, rule_id: BB-02, params: {y: {type: set, values: [alcohol]}}, select: {op: in, field: item.category, values: {param: y}}}
+    expected: ["error conflicts: AA-01: AA-01 and BB-02 are duplicates"]
+
+  - id: a rule that replaces the other is not a conflict
+    text: "**AA-01 — One.** A **high** exception.\n\n**BB-02 — Two.** A **high** exception.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - *rule
+        - {<<: *rule, rule_id: BB-02, replaces: [{rule_id: AA-01, level: receipt}]}
+    expected: []
+
+  - id: the same lines under different gates is a warning
+    text: "**AA-01 — One.** A **high** exception.\n\n**BB-02 — Two.** A **high** exception.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - *rule
+        - {<<: *rule, rule_id: BB-02, applies_when: {op: eq, field: receipt.entity, value: EMEA}}
+    expected: ["warning conflicts: AA-01: AA-01 and BB-02 select the same lines and neither replaces the other"]
+
+  - id: gates that exclude each other are not a conflict
+    text: "**AA-01 — One.** A **high** exception.\n\n**BB-02 — Two.** A **high** exception.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, applies_when: {op: eq, field: receipt.entity, value: EMEA}}
+        - {<<: *rule, rule_id: BB-02, applies_when: {op: not, condition: {op: eq, field: receipt.entity, value: EMEA}}}
+    expected: []
+
+  - id: replacing a rule that is not a check
+    text: "**AA-01 — One.** A **high** exception.\n\n**BB-02 — Two.** Settings.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, replaces: [{rule_id: BB-02, level: receipt}]}
+        - {rule_id: BB-02, kind: process, directive: guidance, source_quote: "Settings"}
+    expected: ["error conflicts: AA-01: replaces BB-02, which is not a check"]
+
+  - id: replacing a rule with a different outcome
+    text: "**AA-01 — One.** A **high** exception.\n\n**BB-02 — Two.** A **review signal**.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, replaces: [{rule_id: BB-02, level: finding}]}
+        - {<<: *rule, rule_id: BB-02, outcome: review_signal, severity: null, source_quote: "**review signal**", select: {op: eq, field: item.category, value: tobacco}}
+    expected: ["error conflicts: AA-01: replaces BB-02, which has a different outcome"]
+
+  - id: line level needs two item rules
+    text: "**AA-01 — One.** A **high** exception.\n\n**BB-02 — Two.** A **high** exception.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, replaces: [{rule_id: BB-02, level: line}]}
+        - {<<: *rule, rule_id: BB-02, scope: receipt, select: null, applies_when: {op: eq, field: receipt.entity, value: EMEA}}
+    expected: ["error conflicts: AA-01: replaces BB-02 at line level, but both must be item rules"]
+
+  - id: receipt level needs the same scope
+    text: "**AA-01 — One.** A **high** exception.\n\n**BB-02 — Two.** A **high** exception.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, replaces: [{rule_id: BB-02, level: receipt}]}
+        - {<<: *rule, rule_id: BB-02, scope: receipt, select: null, applies_when: {op: eq, field: receipt.entity, value: EMEA}}
+    expected: ["error conflicts: AA-01: replaces BB-02 at receipt level, but their scopes differ"]
+
+  - id: a finding can be replaced across scopes
+    text: "**AA-01 — One.** A **high** exception.\n\n**BB-02 — Two.** A **high** exception.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, replaces: [{rule_id: BB-02, level: finding}]}
+        - {<<: *rule, rule_id: BB-02, scope: receipt, select: null, applies_when: {op: eq, field: receipt.entity, value: EMEA}}
+    expected: []
+
+  # References and evidence
+  - id: a waiver the reference rule does not list
+    text: "**AA-01 — One.** A **high** exception.\n\n**BB-02 — Two.** Settings.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, waived_by_ref: pre_approval}
+        - rule_id: BB-02
+          kind: process
+          directive: reference_kinds
+          source_quote: "Settings"
+          params:
+            pre_approval_rules: {type: set, values: [BB-02]}
+            vp_approval_rules: {type: set, values: [BB-02]}
+            manager_approval_rules: {type: set, values: [BB-02]}
+            baggage_delay_rules: {type: set, values: [BB-02]}
+    expected:
+      - "error references: BB-02: baggage_delay_rules lists ['BB-02'], rules say []"
+      - "error references: BB-02: manager_approval_rules lists ['BB-02'], rules say []"
+      - "error references: BB-02: pre_approval_rules lists ['BB-02'], rules say ['AA-01']"
+      - "error references: BB-02: vp_approval_rules lists ['BB-02'], rules say []"
+
+  - id: an evidence list that leaves out a whole-receipt rule
+    text: "**AA-01 — One.** A **high** exception.\n\n**BB-02 — Two.** Settings.\n"
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, scope: receipt, select: null, applies_when: {op: eq, field: receipt.entity, value: EMEA}}
+        - rule_id: BB-02
+          kind: process
+          directive: evidence
+          source_quote: "Settings"
+          params:
+            whole_receipt_rules: {type: set, values: [BB-02]}
+    expected: ["error evidence: BB-02: lists ['BB-02'], whole-receipt exceptions are ['AA-01']"]
+
+  # Faithful to the clause
+  - id: a number that differs from the clause
+    text: *one_rule
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *capped, params: {cap: {type: number, value: "250", unit: usd}}}
+    expected:
+      - "error faithful: AA-01: cap is 250 usd, not in its clause"
+      - "error faithful: AA-01: clause states 200 usd, held by no rule"
+
+  - id: a severity that differs from the clause
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, severity: low}
+    expected: ["error faithful: AA-01: severity ['low'], its clause states ['high']"]
+
+  - id: a review signal the clause does not state
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, outcome: review_signal, severity: null}
+    expected: ["error faithful: AA-01: review signal, but its clause states none"]
+
+  - id: a project decision is not compared with the clause
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - <<: *rule
+          params:
+            cap: {type: number, value: "9", unit: usd, source: project_decision}
+          select: {op: gt, field: item.unit_price_usd, value: {param: cap}}
+    expected: []
+
+  - id: a retired rule is not checked
+    text: *plain
+    logic:
+      ruleset_version: v1
+      rules:
+        - {<<: *rule, status: retired, severity: low, select: {op: eq, field: item.brand, value: x}}
+    expected: []

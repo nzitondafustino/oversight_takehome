@@ -1,0 +1,385 @@
+suite: evaluation
+
+# evaluate_receipts, the public entry point, on the real ruleset and catalog.
+#
+# cases:   `receipts` with `complete`, reading the result for `receipt_id`. expected holds any of:
+#          disposition; decided; reasons, by code, basis and rule_ids; exceptions, signals and
+#          unresolved, as rule IDs; uncertainty, how many signals; open, the rule IDs left open;
+#          and audit, by rule_id and resolution.
+# refused: the run cannot go ahead, for `customer_id`. expected is an error regex.
+
+templates:
+  line: &line
+    line_id: L1
+    description_raw: Item
+    language: en
+    quantity: 1
+    unit_price: "40.00"
+    amount: "40.00"
+    amount_usd: "40.00"
+    category: food_beverage
+    confidence: "0.9"
+  meal: &meal
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    submitted_expense_type: Meals - Individual
+    merchant_name: Verona Grill
+    mcc: "5812"
+    transaction_datetime: "2026-04-14T12:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: $lines
+    total_amount_usd: $lines
+    trip_id: T1
+    trip_nights: 5
+    itemized: true
+    line_items: [*line]
+  travel: &travel
+    <<: *meal
+    submitted_expense_type: Travel - Other
+    mcc: "5651"
+  gear: &gear
+    <<: *meal
+    submitted_expense_type: Computer Equipment
+    mcc: "5045"
+    line_items: [{<<: *line, category: computer_accessory, unit_price: "329.00", amount: "329.00", amount_usd: "329.00"}]
+  clean_flag: &clean_flag
+    disposition: flag
+    decided: true
+
+cases:
+  # Nothing against it
+  - id: every check resolved and nothing found is a pass
+    receipt_id: R1
+    complete: true
+    receipts: [*meal]
+    expected:
+      disposition: pass
+      decided: true
+      reasons: [{code: nothing_found, basis: EXC-01, rule_ids: []}]
+      exceptions: []
+      signals: []
+      uncertainty: 0
+      open: []
+      audit: []
+
+  # Exceptions, by the severities in EXC-01
+  - id: a high exception flags
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: alcohol}]}]
+    expected:
+      <<: *clean_flag
+      reasons: [{code: exception_flags, basis: EXC-01, rule_ids: [ALC-01]}]
+  - id: a critical exception flags
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, recipient_type: government_official}]}]
+    expected: {<<: *clean_flag, exceptions: [GIFT-04], reasons: [{code: exception_flags, basis: EXC-01, rule_ids: [GIFT-04]}]}
+  - id: a medium exception flags
+    receipt_id: R1
+    complete: true
+    receipts: [*gear]
+    expected: {<<: *clean_flag, exceptions: [TECH-02], reasons: [{code: exception_flags, basis: EXC-01, rule_ids: [TECH-02]}]}
+  - id: only a low exception is a review, as EXC-01 says
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, submitted_expense_type: Software, mcc: "5734", line_items: [{<<: *line, category: software_subscription}]}]
+    expected:
+      disposition: review
+      decided: true
+      exceptions: [TECH-04]
+      reasons: [{code: exception_reviews, basis: EXC-01, rule_ids: [TECH-04]}]
+  - id: a low and a medium exception flag, with both reasons
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, trip_nights: 3, line_items: [{<<: *line, line_id: L1, category: laundry_service}, {<<: *line, line_id: L2, category: clothing}]}]
+    expected:
+      disposition: flag
+      decided: true
+      reasons:
+        - {code: exception_flags, basis: EXC-01, rule_ids: [PERS-02]}
+        - {code: exception_reviews, basis: EXC-01, rule_ids: [LAUNDRY-01]}
+  - id: a merged rule reporting a higher severity flags for it
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, trip_id: null, trip_nights: null, line_items: [{<<: *line, line_id: L1, category: health_otc}, {<<: *line, line_id: L2, category: other, item_kind: prescription_medication}]}]
+    expected: {disposition: flag, exceptions: [HEALTH-01]}
+
+  # Signals
+  - id: a review signal with no exception is a review
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, mcc: "5411"}]
+    expected:
+      disposition: review
+      decided: true
+      signals: [MCC-02]
+      reasons: [{code: review_signal, basis: EXC-01, rule_ids: [MCC-02]}]
+  - id: an uncertainty signal with no exception is a review
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, recipient_type: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}, {<<: *line, line_id: L2}]}]
+    expected:
+      disposition: review
+      decided: false
+      uncertainty: 1
+      # With no recipient type, this gift could be an official's.
+      reasons: [{code: uncertainty, basis: EXC-03, rule_ids: [EXC-03]}, {code: incomplete_evidence, basis: project_decision, rule_ids: [GIFT-04]}]
+  - id: an exception with uncertainty flags, and stays undecided
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, category: alcohol, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}, {<<: *line, line_id: L2, category: gift, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected:
+      disposition: flag
+      decided: false
+      exceptions: [ALC-01]
+      uncertainty: 1
+      reasons:
+        - {code: exception_flags, basis: EXC-01, rule_ids: [ALC-01]}
+        - {code: uncertainty, basis: EXC-03, rule_ids: [EXC-03]}
+        - {code: incomplete_evidence, basis: project_decision, rule_ids: [GIFT-04]}
+
+  # Low confidence through the public entry point: the bypass is closed
+  - id: a low confidence tobacco line gives no PERS-03, only a review
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, line_items: [{<<: *line, category: tobacco, confidence: "0.1"}]}]
+    expected: {disposition: review, decided: false, exceptions: [], uncertainty: 1}
+  - id: the same line at the threshold flags
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, line_items: [{<<: *line, category: tobacco, confidence: "0.5"}]}]
+    expected: {disposition: flag, exceptions: [DOC-03, PERS-03], uncertainty: 0, decided: true}
+  - id: no confidence at all gets no finding either
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, line_items: [{<<: *line, category: tobacco, confidence: null}]}]
+    expected: {disposition: review, decided: false, exceptions: [], uncertainty: 1}
+  - id: a category-independent finding on an uncertain line flags, and stays undecided
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: other, confidence: "0.1", venue_type: golf}]}]
+    expected: {disposition: flag, decided: false, exceptions: [ENT-01], uncertainty: 1}
+
+  # Incomplete evidence: a project decision, not EXC-01
+  - id: a partial context with no exception is a review
+    receipt_id: R1
+    complete: false
+    receipts: [*meal]
+    expected:
+      disposition: review
+      decided: false
+      open: [MEAL-01, TIME-03]
+      reasons: [{code: incomplete_evidence, basis: project_decision, rule_ids: [MEAL-01, TIME-03]}]
+  - id: an undetermined helper with no exception is a review
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, employee_country: FR, currency: USD}]
+    expected:
+      disposition: review
+      decided: false
+      open: [REG-03, REG-04]
+      reasons: [{code: incomplete_evidence, basis: project_decision, rule_ids: [REG-03, REG-04]}]
+  - id: a partial context with an exception flags, and stays undecided
+    receipt_id: R1
+    complete: false
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: alcohol}]}]
+    expected:
+      disposition: flag
+      decided: false
+      reasons:
+        - {code: exception_flags, basis: EXC-01, rule_ids: [ALC-01]}
+        - {code: incomplete_evidence, basis: project_decision, rule_ids: [MEAL-01, TIME-03]}
+
+  # Unresolved is not an exception, and not clean
+  - id: a large non-itemized receipt flags with TIME-03 open, as it cannot be part of a split
+    receipt_id: R1
+    complete: false
+    receipts: [{<<: *meal, submitted_expense_type: Lodging, mcc: "7011", itemized: false, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, category: other}]}]
+    expected:
+      disposition: flag
+      decided: false
+      exceptions: [DOC-01]
+      unresolved: []
+      reasons: [{code: exception_flags, basis: EXC-01, rule_ids: [DOC-01]}, {code: incomplete_evidence, basis: project_decision, rule_ids: [TIME-03]}]
+  - id: an unresolved carve-out is a review, not a flag
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: clothing}]}]
+    expected:
+      disposition: review
+      decided: false
+      exceptions: []
+      unresolved: [PERS-02]
+      reasons: [{code: incomplete_evidence, basis: project_decision, rule_ids: [PERS-02]}]
+
+  # Audit history alone is a pass
+  # Worked from the policy, at a rate of 1.08. EUR 35.00 + EUR 34.91 on one day is $37.80 + $37.70 = $75.50.
+  # MEAL-01: above the $75 domestic cap, on each meal that day. REG-03: at or below EUR 70 = $75.60, so no
+  # breach, and it replaces MEAL-01 for an EMEA employee. REG-04: neither receipt is above EUR 50.
+  # TIME-03: two merchants, so no split. So nothing is active, and MEAL-01 is audit history.
+  - id: a finding replaced, with nothing active, is a pass
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, employee_country: FR, currency: EUR, fx_rate_to_usd: "1.08", line_items: [{<<: *line, unit_price: "35.00", amount: "35.00", amount_usd: "37.80"}]}
+      - {<<: *meal, receipt_id: R2, merchant_name: Other Bistro, employee_country: FR, currency: EUR, fx_rate_to_usd: "1.08", line_items: [{<<: *line, line_id: L2, unit_price: "34.91", amount: "34.91", amount_usd: "37.70"}]}
+    expected:
+      disposition: pass
+      decided: true
+      exceptions: []
+      audit: [{rule_id: MEAL-01, resolution: replaced}]
+  # On one receipt the same $75.50 is EUR 69.91, above REG-04's EUR 50, a low exception and so a review.
+  - id: a replaced finding counts for nothing, beside the low exception a total this size has
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, employee_country: FR, currency: EUR, fx_rate_to_usd: "1.08", line_items: [{<<: *line, unit_price: "69.91", amount: "69.91", amount_usd: "75.50"}]}]
+    expected:
+      disposition: review
+      decided: true
+      exceptions: [REG-04]
+      audit: [{rule_id: MEAL-01, resolution: replaced}]
+  - id: a finding waived, with nothing active, is a pass
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gear, pre_approval_ref: PA-1}]
+    expected: {disposition: pass, decided: true, exceptions: [], audit: [{rule_id: TECH-02, resolution: waived}]}
+  - id: a finding excused, with nothing active, is a pass
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *line, category: clothing}]}]
+    expected: {disposition: pass, decided: true, exceptions: [], audit: [{rule_id: PERS-02, resolution: excused}]}
+  - id: an uncitable finding is no exception, and is audit history
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}, {<<: *line, line_id: L2, category: service_fee, venue_type: golf}]}]
+    expected: {disposition: pass, decided: true, exceptions: [], audit: [{rule_id: ENT-01, resolution: uncitable}]}
+  - id: audit history beside an active exception does not change the flag
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, employee_country: IN, currency: INR, fx_rate_to_usd: "0.012", total_amount: "3333.33", line_items: [{<<: *line, category: alcohol, unit_price: "3333.33", amount: "3333.33"}]}]
+    expected: {disposition: flag, exceptions: [REG-01], audit: [{rule_id: ALC-01, resolution: replaced}]}
+
+  # Adversarial: a waiver or carve-out reaches only what it covers
+  - id: a confirmed exception beside an unresolved helper flags, and stays undecided
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, employee_country: FR, currency: USD, line_items: [{<<: *line, category: tobacco}, {<<: *line, line_id: L2, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected: {disposition: flag, decided: false, exceptions: [PERS-03], open: [REG-03, REG-04]}
+  - id: every approval on file waives no unrelated exception
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, pre_approval_ref: PA-1, vp_approval_ref: VP-1, manager_approval_ref: MG-1, line_items: [{<<: *line, category: alcohol}]}]
+    expected: {disposition: flag, decided: true, exceptions: [ALC-01], audit: []}
+  - id: a baggage claim excuses no unrelated exception
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *line, line_id: L1, category: tobacco}, {<<: *line, line_id: L2, category: clothing}]}]
+    expected: {disposition: flag, decided: true, exceptions: [PERS-03], audit: [{rule_id: PERS-02, resolution: excused}]}
+  - id: a review signal alone leaves the receipt decided, with no incomplete reason
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, mcc: "5411"}]
+    expected: {disposition: review, decided: true, reasons: [{code: review_signal, basis: EXC-01, rule_ids: [MCC-02]}]}
+  - id: confidence just below the threshold gives no finding
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, line_items: [{<<: *line, category: tobacco, confidence: "0.4999"}]}]
+    expected: {disposition: review, exceptions: [], decided: false}
+  - id: incomplete context across receipts is named, with no exception
+    receipt_id: R1
+    complete: false
+    receipts:
+      - *meal
+      - {<<: *meal, receipt_id: R2, merchant_name: Other}
+    expected: {disposition: review, decided: false, exceptions: [], open: [MEAL-01, TIME-03]}
+
+  # TIME-03 needs at least two receipts, so with every receipt known one alone is settled
+  - id: the worked example, a breach from known lines stays active beside the uncertain wine
+    receipt_id: R1
+    complete: true
+    receipts: &worked [{<<: *meal, total_amount: "120.00", total_amount_usd: "120.00", line_items: [{<<: *line, line_id: L1, description_raw: Ribeye, unit_price: "90.00", amount: "90.00", amount_usd: "90.00", confidence: "0.95"}, {<<: *line, line_id: L2, description_raw: Wine, category: alcohol, unit_price: "20.00", amount: "20.00", amount_usd: "20.00", confidence: "0.30"}, {<<: *line, line_id: L3, description_raw: Gratuity, category: service_fee, unit_price: "10.00", amount: "10.00", amount_usd: "10.00", confidence: "0.95"}]}]
+    expected:
+      disposition: flag
+      decided: false
+      exceptions: [MEAL-01]
+      unresolved: []
+      uncertainty: 1
+      reasons:
+        - {code: exception_flags, basis: EXC-01, rule_ids: [MEAL-01]}
+        - {code: uncertainty, basis: EXC-03, rule_ids: [EXC-03]}
+        - {code: incomplete_evidence, basis: project_decision, rule_ids: [ALC-01, ENT-02, GIFT-02, GIFT-03, HEALTH-01, HOUSE-01, LAUNDRY-01, PERS-01, PERS-02, PERS-03, TECH-01, TECH-02, TECH-04]}
+  - id: the worked example in a partial context leaves TIME-03 and the cap open
+    receipt_id: R1
+    complete: false
+    receipts: *worked
+    expected: {disposition: review, decided: false, exceptions: [], unresolved: [], uncertainty: 1}
+  - id: above every possible cap in a partial context is open, as a receipt not seen could lower the day
+    receipt_id: R1
+    complete: false
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "100.01", amount: "100.01", amount_usd: "100.01"}, {<<: *line, line_id: L2, category: alcohol, unit_price: "5.00", amount: "5.00", amount_usd: "5.00", confidence: "0.30"}]}]
+    expected: {disposition: review, decided: false, exceptions: [], unresolved: [], uncertainty: 1}
+  - id: a receipt known to be over the cap rules out a split, so its breach stays active
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, confidence: "0.30"}]}
+    expected: {disposition: flag, decided: true, exceptions: [MEAL-01], unresolved: [], open_includes_time: false}
+  - id: two receipts that could still be a split leave a known day breach unresolved
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, line_id: L1, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *line, line_id: L2, confidence: "0.30", unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {disposition: review, decided: false, exceptions: [], unresolved: [MEAL-01], open_includes_time: true}
+  - id: a breach with a second receipt at another merchant stays active
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+      - {<<: *meal, receipt_id: R2, merchant_name: Other, line_items: [{<<: *line, confidence: "0.30"}]}
+    expected: {disposition: flag, decided: true, exceptions: [MEAL-01], unresolved: []}
+  - id: a breach with a second receipt on another date stays active
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+      - {<<: *meal, receipt_id: R2, transaction_datetime: "2026-04-15T12:00:00", line_items: [{<<: *line, confidence: "0.30"}]}
+    expected: {disposition: flag, decided: true, exceptions: [MEAL-01], unresolved: []}
+  - id: a breach with a second receipt by another employee stays active
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-2, line_items: [{<<: *line, confidence: "0.30"}]}
+    expected: {disposition: flag, decided: true, exceptions: [MEAL-01], unresolved: []}
+
+  # Several receipts
+  - id: one receipt's exception does not flag another
+    receipt_id: R2
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, category: alcohol, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}], merchant_name: Other}
+    expected: {disposition: pass, decided: true, exceptions: []}
+  - id: an uncertain line on another receipt leaves this one's shared day open
+    receipt_id: R1
+    complete: true
+    receipts:
+      - *meal
+      - {<<: *meal, receipt_id: R2, merchant_name: Other, line_items: [{<<: *line, confidence: "0.1"}]}
+    expected: {disposition: review, decided: false, uncertainty: 0, open: [MEAL-01], reasons: [{code: incomplete_evidence, basis: project_decision, rule_ids: [MEAL-01]}]}
+
+refused:
+  - {id: a blank customer, customer_id: "  ", receipts: [*meal], expected: needs a customer_id}
+  - {id: an entity contradicting its country, customer_id: northwind, receipts: [{<<: *meal, employee_country: IN, entity: GLOBAL}], expected: "entity 'GLOBAL' contradicts employee_country 'IN'"}
+  - {id: an unsupported country, customer_id: northwind, receipts: [{<<: *meal, employee_country: CA}], expected: "unsupported employee_country 'CA'"}
+  - {id: a date with no time, customer_id: northwind, receipts: [{<<: *meal, transaction_datetime: "2026-04-14"}], expected: needs a time}
+  - {id: a negative total, customer_id: northwind, receipts: [{<<: *meal, total_amount_usd: "-5.00"}], expected: is below zero}
+  - {id: a row still carrying its answers, customer_id: northwind, receipts: [{<<: *meal, labels: {disposition: pass}}], expected: labels}
+  - {id: one bad receipt stops the whole run, customer_id: northwind, receipts: [*meal, {<<: *meal, receipt_id: R2, mcc: null}], expected: "R2: has no mcc"}
+  - {id: an entity from the wrong region for its country, customer_id: northwind, receipts: [{<<: *meal, employee_country: FR, entity: APAC}], expected: "entity 'APAC' contradicts employee_country 'FR'"}
+  - {id: one id with different contents, customer_id: northwind, receipts: [*meal, {<<: *meal, total_amount: "41.00", total_amount_usd: "41.00"}], expected: "R1: appears twice with different contents"}

@@ -1,0 +1,438 @@
+suite: completeness
+
+# Module 10.5. Expected outcomes come from the source wording quoted here, not from a run.
+#
+# refund_rules: one row per rule that could fire on a line's sign. A status is as in
+# adversarial_policy.yaml: confirmed is active, undetermined is unresolved or open, compliant is neither.
+# 329 is above TECH-02's $200, and each line is priced by the runner.
+
+templates:
+  line: &line {language: en, quantity: 1, description_raw: Item, confidence: "0.95"}
+  base: &base
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    merchant_name: Merchant
+    transaction_datetime: "2026-04-14T19:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    trip_id: TRIP-1
+    trip_nights: 5
+    itemized: true
+    total_amount: $lines
+    total_amount_usd: $lines
+  meal: &meal {<<: *base, mcc: "5812", submitted_expense_type: Meals - Individual}
+  retail: &retail {<<: *base, mcc: "5499", submitted_expense_type: Travel - Other}
+  travel: &travel {<<: *base, mcc: "5651", submitted_expense_type: Travel - Other}
+  gifts: &gifts {<<: *base, mcc: "5947", submitted_expense_type: Client Gifts}
+  computer: &computer {<<: *base, mcc: "5045", submitted_expense_type: Computer Equipment}
+  entertainment: &entertainment {<<: *base, mcc: "5812", submitted_expense_type: Client Entertainment, attendee_count: 2}
+  no_rate: &no_rate {currency: EUR, fx_rate_to_usd: null, total_amount_usd: null}
+  no_total: &no_total {total_amount: null, total_amount_usd: null}
+
+  # non-itemized: `other` is exempt from EXC-03
+  charge_500: &charge_500 {<<: *line, line_id: L1, category: other, unit_price: "500.00", amount: "500.00", amount_usd: null}
+  food_no_usd: &food_no_usd {<<: *line, line_id: L1, category: food_beverage, unit_price: "500.00", amount: "500.00", amount_usd: null}
+  accessory: &accessory {<<: *line, line_id: L1, category: computer_accessory, unit_price: "200.00", amount: "200.00", amount_usd: "200.00"}
+  tobacco: &tobacco {<<: *line, line_id: L2, category: tobacco, unit_price: "25.00", amount: "25.00", amount_usd: null}
+  pens: &pens {<<: *line, line_id: L1, category: office_supplies, unit_price: "500.00", amount: "500.00", amount_usd: null}
+
+  # recipients
+  x_none_40: &x_none_40 {<<: *line, line_id: L1, category: gift, unit_price: "40.00", amount: "40.00", amount_usd: "40.00", recipient_name: Xu}
+  x_none_60: &x_none_60 {<<: *x_none_40, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}
+  x_none_25: &x_none_25 {<<: *x_none_40, line_id: L3, unit_price: "25.00", amount: "25.00", amount_usd: "25.00"}
+  x_none_minus: &x_none_minus {<<: *x_none_40, line_id: L9, unit_price: "-10.00", amount: "-10.00", amount_usd: "-10.00"}
+  x_client_30: &x_client_30 {<<: *line, line_id: L2, category: gift, unit_price: "30.00", amount: "30.00", amount_usd: "30.00", recipient_name: Xu, recipient_type: client}
+  x_client_55: &x_client_55 {<<: *x_client_30, unit_price: "55.00", amount: "55.00", amount_usd: "55.00"}
+  x_official_40: &x_official_40 {<<: *x_none_40, recipient_type: government_official}
+  x_official_60: &x_official_60 {<<: *x_none_60, recipient_type: government_official}
+  x_official_minus_5: &x_official_minus_5 {<<: *x_official_40, line_id: L9, unit_price: "-5.00", amount: "-5.00", amount_usd: "-5.00"}
+  x_official_minus_15: &x_official_minus_15 {<<: *x_official_40, line_id: L9, unit_price: "-15.00", amount: "-15.00", amount_usd: "-15.00"}
+  x_official_minus_10: &x_official_minus_10 {<<: *x_official_40, line_id: L9, unit_price: "-10.00", amount: "-10.00", amount_usd: "-10.00"}
+  y_client_55: &y_client_55 {<<: *x_client_55, line_id: L4, recipient_name: Yan}
+  y_none_60: &y_none_60 {<<: *x_none_60, line_id: L4, recipient_name: Yan}
+  fee: &fee {<<: *line, line_id: L5, category: service_fee, unit_price: "3.00", amount: "3.00", amount_usd: "3.00"}
+
+refund_rules:
+  # Reimbursement restrictions and prohibited purchases: a refund or a zero line is neither.
+  - id: ALC-01
+    rule: ALC-01
+    source: Alcohol is reimbursable **only** on a receipt
+    receipt: *meal
+    line: {<<: *line, category: alcohol}
+    expected: {rule_id: ALC-01, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: ALC-03
+    rule: ALC-03
+    source: Alcohol purchased from a package store
+    receipt: *retail
+    line: {<<: *line, category: alcohol}
+    expected: {rule_id: ALC-03, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: REG-01
+    rule: REG-01
+    source: Alcohol is **never** reimbursable for APAC-entity employees
+    receipt: {<<: *meal, employee_country: IN}
+    line: {<<: *line, category: alcohol}
+    expected: {rule_id: REG-01, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: PERS-01
+    rule: PERS-01
+    source: massage are not reimbursable
+    receipt: *travel
+    line: {<<: *line, category: personal_care}
+    expected: {rule_id: PERS-01, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: PERS-02
+    rule: PERS-02
+    source: ties and bags are not reimbursable
+    receipt: *travel
+    line: {<<: *line, category: clothing}
+    expected: {rule_id: PERS-02, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: PERS-03
+    rule: PERS-03
+    source: e-liquids are not reimbursable
+    receipt: *retail
+    line: {<<: *line, category: tobacco}
+    expected: {rule_id: PERS-03, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: HOUSE-01
+    rule: HOUSE-01
+    source: home décor are not reimbursable
+    receipt: *retail
+    line: {<<: *line, category: household_goods}
+    expected: {rule_id: HOUSE-01, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  # "At any amount" sets no floor on a purchase. A refund is not reimbursed, and nothing was paid for a zero line.
+  - id: GIFT-02
+    rule: GIFT-02
+    source: are **never** reimbursable, at any amount and for any recipient
+    receipt: *gifts
+    line: {<<: *line, category: gift_card, recipient_type: client}
+    expected: {rule_id: GIFT-02, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: GIFT-03
+    rule: GIFT-03
+    source: must be processed through HR and are not reimbursable
+    receipt: *gifts
+    line: {<<: *line, category: gift, recipient_type: employee}
+    expected: {rule_id: GIFT-03, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: ENT-01
+    rule: ENT-01
+    source: venue spend requires prior VP approval
+    receipt: *entertainment
+    line: {<<: *line, category: other, venue_type: golf}
+    expected: {rule_id: ENT-01, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: ENT-02
+    rule: ENT-02
+    source: Gambling spend of any kind is prohibited
+    receipt: *retail
+    line: {<<: *line, category: gambling}
+    expected: {rule_id: ENT-02, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: TECH-01
+    rule: TECH-01
+    source: Purchase of any of these on an expense report
+    receipt: *computer
+    line: {<<: *line, category: personal_electronics}
+    expected: {rule_id: TECH-01, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: TECH-02
+    rule: TECH-02
+    source: judged on the item's unit price in USD
+    receipt: *computer
+    line: {<<: *line, category: computer_accessory}
+    expected: {rule_id: TECH-02, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: TECH-03
+    rule: TECH-03
+    source: never reimbursable on an expense report
+    receipt: *computer
+    line: {<<: *line, category: other, item_kind: mobile_phone}
+    expected: {rule_id: TECH-03, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: LAUNDRY-01
+    rule: LAUNDRY-01
+    source: Reimbursable only on trips of **four or more nights**
+    receipt: {<<: *travel, trip_nights: 2}
+    line: {<<: *line, category: laundry_service}
+    expected: {rule_id: LAUNDRY-01, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: HEALTH-01 prescription
+    rule: HEALTH-01
+    source: Prescription medication is never reimbursable
+    receipt: *travel
+    line: {<<: *line, category: other, item_kind: prescription_medication}
+    expected: {rule_id: HEALTH-01, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+  - id: HEALTH-01 OTC with no trip
+    rule: HEALTH-01
+    source: OTC medication is reimbursable only on a receipt linked to a trip
+    receipt: {<<: *travel, trip_id: null, trip_nights: null}
+    line: {<<: *line, category: health_otc}
+    expected: {rule_id: HEALTH-01, purchase: confirmed, refund: compliant, zero: compliant, beside: [L1]}
+
+  # Not about a purchase, so not gated
+  # "Provided", so a refund is not. "Anything of value", so a zero-priced gift still is.
+  - id: GIFT-04
+    rule: GIFT-04
+    source: anything of value provided to a government official
+    receipt: *gifts
+    line: {<<: *line, category: gift, recipient_type: government_official}
+    expected: {rule_id: GIFT-04, purchase: confirmed, refund: compliant, zero: confirmed, beside: [L1]}
+  # A requirement on what appears on the report, whatever it cost.
+  - id: TECH-04
+    rule: TECH-04
+    source: Any software or SaaS subscription on an expense report requires a manager approval reference
+    receipt: *computer
+    line: {<<: *line, category: software_subscription}
+    expected: {rule_id: TECH-04, purchase: confirmed, refund: confirmed, zero: confirmed, beside: [L1, L2]}
+  # About the merchant, not the lines.
+  - id: MCC-01
+    rule: MCC-01
+    source: whatever the line items say
+    receipt: {<<: *retail, mcc: "5993"}
+    line: {<<: *line, category: ground_transport}
+    expected: {rule_id: MCC-01, purchase: confirmed, refund: confirmed, zero: confirmed, beside: []}
+
+usd:
+  # The reproduction
+  - id: a non-itemized EUR 500 with no rate cannot show DOC-01 is met, and DOC-04 still flags
+    complete: true
+    receipts: [{<<: [*no_rate, *travel], itemized: false, total_amount: "500.00", line_items: [*charge_500]}]
+    expected: {R1: {disposition: flag, decided: false, active: [DOC-04], rules: {DOC-01: undetermined, DOC-02: compliant, DOC-04: confirmed}}}
+  - id: the same in an incomplete context
+    complete: false
+    receipts: [{<<: [*no_rate, *travel], itemized: false, total_amount: "500.00", line_items: [*charge_500]}]
+    expected: {R1: {disposition: flag, decided: false, active: [DOC-04], rules: {DOC-01: undetermined, DOC-04: confirmed}}}
+  - id: no total at all on a non-itemized receipt leaves DOC-01 open beside DOC-02
+    complete: true
+    receipts: [{<<: [*no_total, *travel], itemized: false, line_items: [{<<: *charge_500, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [DOC-02], rules: {DOC-01: undetermined, DOC-02: confirmed}}}
+  - id: an itemized receipt with no USD total owes nothing to DOC-01
+    complete: true
+    receipts: [{<<: [*no_rate, *base], mcc: "5943", submitted_expense_type: Office Supplies, total_amount: "500.00", line_items: [*pens]}]
+    expected: {R1: {disposition: flag, decided: true, active: [DOC-04], rules: {DOC-01: compliant, DOC-04: confirmed}}}
+  # Module 11C.1 changed this from DOC-01 confirmed: nothing supports a USD value given with no rate.
+  - id: a USD total given beside a missing rate is not read, so DOC-01 stays open
+    complete: true
+    receipts: [{<<: *travel, currency: EUR, fx_rate_to_usd: null, itemized: false, total_amount: "500.00", total_amount_usd: "550.00", line_items: [{<<: *charge_500, unit_price: "550.00", amount: "550.00", amount_usd: "550.00"}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [DOC-04], rules: {DOC-01: undetermined, DOC-04: confirmed}}}
+  # Boundaries, when the USD value is known: "above" leaves the threshold itself within.
+  - id: DOC-01 exactly at 75
+    complete: true
+    receipts: [{<<: *travel, itemized: false, total_amount: "75.00", total_amount_usd: "75.00", line_items: [{<<: *charge_500, unit_price: "75.00", amount: "75.00", amount_usd: "75.00"}]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], rules: {DOC-01: compliant}}}
+  - id: DOC-01 just above 75
+    complete: true
+    receipts: [{<<: *travel, itemized: false, total_amount: "75.01", total_amount_usd: "75.01", line_items: [{<<: *charge_500, unit_price: "75.01", amount: "75.01", amount_usd: "75.01"}]}]
+    expected: {R1: {disposition: flag, decided: true, active: [DOC-01], rules: {DOC-01: confirmed}}}
+  - id: a printed 75 in euros with no rate is not at the threshold, as 75 is in USD
+    complete: true
+    receipts: [{<<: [*no_rate, *travel], itemized: false, total_amount: "75.00", line_items: [*charge_500]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {DOC-01: undetermined, DOC-04: confirmed}}}
+  - id: MEAL-02 exactly at 150, in USD
+    complete: true
+    receipts: [{<<: *meal, itemized: false, total_amount: "150.00", total_amount_usd: "150.00", line_items: [{<<: *charge_500, unit_price: "150.00", amount: "150.00", amount_usd: "150.00"}]}]
+    expected: {R1: {decided: true, rules: {MEAL-02: compliant}}}
+  - id: MEAL-02 just above 150, in USD
+    complete: true
+    receipts: [{<<: *meal, itemized: false, total_amount: "150.01", total_amount_usd: "150.01", line_items: [{<<: *charge_500, unit_price: "150.01", amount: "150.01", amount_usd: "150.01"}]}]
+    expected: {R1: {decided: true, rules: {MEAL-02: confirmed}}}
+  - id: MEAL-02 is open with no USD total and no attendee count
+    complete: true
+    receipts: [{<<: [*no_rate, *meal], total_amount: "500.00", line_items: [*food_no_usd]}]
+    expected: {R1: {disposition: flag, decided: false, active: [DOC-04], rules: {MEAL-01: undetermined, MEAL-02: undetermined, DOC-04: confirmed}}}
+  - id: MEAL-02 is settled by an attendee count whatever the total is
+    complete: true
+    receipts: [{<<: [*no_rate, *meal], attendee_count: 2, total_amount: "500.00", line_items: [*food_no_usd]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {MEAL-01: undetermined, MEAL-02: compliant, DOC-04: confirmed}}}
+  - id: TECH-02 exactly at 200
+    complete: true
+    receipts: [{<<: *computer, line_items: [*accessory]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], rules: {TECH-02: compliant}}}
+  - id: TECH-02 just above 200
+    complete: true
+    receipts: [{<<: *computer, line_items: [{<<: *accessory, unit_price: "200.01", amount: "200.01", amount_usd: "200.01"}]}]
+    expected: {R1: {disposition: flag, decided: true, active: [TECH-02], rules: {TECH-02: confirmed}}}
+  - id: TECH-02 is open on an accessory with no USD amount
+    complete: true
+    receipts: [{<<: [*no_rate, *computer], line_items: [{<<: *accessory, amount_usd: null}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [DOC-04], rules: {TECH-02: undetermined, DOC-04: confirmed}}}
+  - id: TECH-02 does not stay open on a refund with no USD amount, as the printed sign settles it
+    complete: true
+    receipts: [{<<: [*no_rate, *computer], line_items: [{<<: *accessory, unit_price: "-200.00", amount: "-200.00", amount_usd: null}, {<<: *pens, line_id: L3}]}]
+    expected: {R1: {disposition: flag, decided: true, rules: {TECH-02: compliant, DOC-04: confirmed}}}
+  - id: a line of another category does not open TECH-02 by having no USD amount
+    complete: true
+    receipts: [{<<: [*no_rate, *base], mcc: "5943", submitted_expense_type: Office Supplies, line_items: [*pens]}]
+    expected: {R1: {disposition: flag, decided: true, rules: {TECH-02: compliant, DOC-04: confirmed}}}
+  # Helpers read USD too
+  - id: ALC-02 is open with no USD amounts
+    complete: true
+    receipts: [{<<: [*no_rate, *entertainment], line_items: [{<<: *food_no_usd, category: alcohol}]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {ALC-02: undetermined, DOC-04: confirmed}}}
+  - id: GIFT-01 is open with no USD amounts
+    complete: true
+    receipts: [{<<: [*no_rate, *gifts], line_items: [{<<: *x_client_55, amount_usd: null}]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {GIFT-01: undetermined, DOC-04: confirmed}}}
+  - id: HEALTH-01 is open with no USD amounts
+    complete: true
+    receipts: [{<<: [*no_rate, *travel], line_items: [{<<: *food_no_usd, category: health_otc}]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {HEALTH-01: undetermined, DOC-04: confirmed}}}
+  - id: the baggage allowance is open with no USD amounts
+    complete: true
+    receipts: [{<<: [*no_rate, *travel], baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *food_no_usd, category: clothing}]}]
+    expected: {R1: {disposition: flag, decided: false, rules: {PERS-02: undetermined, DOC-04: confirmed}}}
+  - id: TIME-03 is open on a non-itemized receipt with no USD total at one merchant
+    complete: true
+    receipts:
+      - {<<: [*no_rate, *travel], itemized: false, total_amount: "40.00", line_items: [*charge_500]}
+      - {<<: [*no_rate, *travel], receipt_id: R2, itemized: false, total_amount: "40.00", line_items: [{<<: *charge_500, line_id: L2}]}
+    expected:
+      R1: {disposition: flag, decided: false, rules: {TIME-03: undetermined, DOC-04: confirmed}}
+      R2: {disposition: flag, decided: false, rules: {TIME-03: undetermined, DOC-04: confirmed}}
+  # What is confirmed stands, and an open rule never downgrades it
+  - id: tobacco with no USD amount stands beside what is open
+    complete: true
+    receipts: [{<<: [*no_rate, *travel], itemized: false, total_amount: "500.00", line_items: [*charge_500, *tobacco]}]
+    expected: {R1: {disposition: flag, decided: false, cited: {PERS-03: [L2]}, rules: {PERS-03: confirmed, DOC-01: undetermined, DOC-04: confirmed}}}
+
+officials:
+  # The reproduction
+  # If ordinary, $70 for Xu breaches the cap. If an official's, GIFT-04 takes the line and $30 is within it.
+  - id: a named gift with no recipient type is not called ordinary, so the cap and GIFT-04 are both open
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_none_40, *x_client_30]}]
+    expected:
+      R1:
+        disposition: flag
+        decided: false
+        active: []
+        unresolved: [GIFT-01]
+        notes: {GIFT-01: GIFT-04}
+        uncertainty: [{line_id: L1, field: recipient_type, state: missing}]
+        rules: {GIFT-01: undetermined, GIFT-04: undetermined}
+  - id: the same in an incomplete context
+    complete: false
+    receipts: [{<<: *gifts, line_items: [*x_none_40, *x_client_30]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], rules: {GIFT-01: undetermined, GIFT-04: undetermined}}}
+  - id: over the cap alone with no recipient type is a possible replacement, kept with its source
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_none_60]}]
+    expected:
+      R1:
+        disposition: flag
+        decided: false
+        active: []
+        unresolved: [GIFT-01]
+        notes: {GIFT-01: GIFT-04}
+        evidence: {GIFT-01: {L1: {helper.recipient_total_usd: "60.00"}}}
+        rules: {GIFT-04: undetermined}
+  - id: unnamed and over 10 with no recipient type is a possible replacement too
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *x_none_60, recipient_name: null}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], unresolved: [GIFT-01], rules: {GIFT-04: undetermined}}}
+  - id: known ordinary gifts over the cap stand, whatever an uncertain gift to that name is
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_none_60, *x_client_55]}]
+    expected: {R1: {disposition: flag, decided: false, active: [GIFT-01], cited: {GIFT-01: [L2]}, unresolved: [GIFT-01], rules: {GIFT-04: undetermined}}}
+  - id: a recipient over the cap stands beside an uncertain gift to someone else
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_none_40, *y_client_55]}]
+    expected: {R1: {disposition: flag, decided: false, active: [GIFT-01], cited: {GIFT-01: [L4]}, unresolved: [], rules: {GIFT-04: undetermined}}}
+  - id: two recipients with no type, each over the cap, are each only possible
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_none_60, *y_none_60]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], unresolved: [GIFT-01], rules: {GIFT-04: undetermined}}}
+  - id: a known official stands, and a second gift to that name with no type stays open
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_official_40, {<<: *x_client_30, recipient_type: null}]}]
+    expected: {R1: {disposition: flag, decided: false, active: [GIFT-04], severities: {GIFT-04: critical}, cited: {GIFT-04: [L1]}, rules: {GIFT-01: undetermined}}}
+  - id: known official, known ordinary and unknown gifts to one name keep the cap open and GIFT-04 on its line
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_official_40, *x_client_30, *x_none_25]}]
+    expected: {R1: {disposition: flag, decided: false, active: [GIFT-04], cited: {GIFT-04: [L1]}, unresolved: [GIFT-01], rules: {GIFT-01: undetermined}}}
+  - id: an uncertain refund to that name could bring ordinary gifts within the cap
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_client_55, *x_none_minus]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {GIFT-01: undetermined, GIFT-04: compliant}}}
+  - id: an uncertain refund too small to matter leaves the breach confirmed, and is not cited
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *x_client_55, unit_price: "70.00", amount: "70.00", amount_usd: "70.00"}, {<<: *x_none_minus, unit_price: "-5.00", amount: "-5.00", amount_usd: "-5.00"}]}]
+    expected:
+      R1:
+        disposition: flag
+        decided: false
+        active: [GIFT-01]
+        unresolved: []
+        cited: {GIFT-01: [L2]}
+        evidence: {GIFT-01: {L2: {helper.recipient_total_usd: "65.00"}}}
+  - id: a known official's refund does not lower ordinary gifts to that name
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_client_55, *x_official_minus_10]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-01], cited: {GIFT-01: [L2]}, rules: {GIFT-04: compliant}}}
+  - id: an official's refund is not cited, and an official over the cap is replaced on the purchase alone
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_official_60, *x_official_minus_5]}]
+    expected:
+      R1:
+        disposition: flag
+        decided: true
+        active: [GIFT-04]
+        cited: {GIFT-04: [L1]}
+        replaced: [{rule_id: GIFT-01, line_ids: [L1], resolved_by: GIFT-04}]
+  - id: an official brought within the cap by a refund has nothing to replace
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_official_60, *x_official_minus_15]}]
+    expected: {R1: {disposition: flag, decided: true, active: [GIFT-04], cited: {GIFT-04: [L1]}, audit: []}}
+  # The classifier has one confidence, on the category. A low one blanks the category and leaves the
+  # recipient type as written, so a low-confidence official is open. No recipient-type confidence is added.
+  - id: a low-confidence line typed as an official is open, not cleared
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *x_official_40, confidence: "0.30"}, *x_client_30]}]
+    expected:
+      R1:
+        disposition: review
+        decided: false
+        active: []
+        uncertainty: [{line_id: L1, field: category, state: low_confidence}]
+        rules: {GIFT-01: undetermined, GIFT-04: undetermined}
+  - id: a low-confidence line typed as a client leaves the cap open
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *x_none_40, recipient_type: client, confidence: "0.30"}, *x_client_30]}]
+    expected: {R1: {disposition: review, decided: false, active: [], rules: {GIFT-01: undetermined, GIFT-04: compliant}}}
+  - id: a recipient type outside the catalog leaves both open
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *x_none_40, recipient_type: martian}, *x_client_30]}]
+    expected: {R1: {disposition: flag, decided: false, active: [], rules: {GIFT-01: undetermined, GIFT-04: undetermined}}}
+  - id: a named gift on another expense type with no recipient type leaves both open
+    complete: true
+    receipts: [{<<: *travel, line_items: [{<<: *x_none_60, recipient_type: null}]}]
+    expected: {R1: {decided: false, rules: {GIFT-01: undetermined, GIFT-04: undetermined}}}
+  - id: a service fee on a gift receipt is not cited by GIFT-04, so it opens nothing
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_client_30, *fee]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], rules: {GIFT-04: compliant}}}
+  - id: all recipient types known decides the receipt
+    complete: true
+    receipts: [{<<: *gifts, line_items: [*x_client_30]}]
+    expected: {R1: {disposition: pass, decided: true, active: [], rules: {GIFT-01: compliant, GIFT-04: compliant}}}
+  - id: two gifts with no type at one merchant leave TIME-03 open rather than calling a split
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *x_none_40, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [{<<: *x_client_30, recipient_type: null}]}
+    expected:
+      R1: {disposition: review, decided: false, active: [], rules: {TIME-03: undetermined, GIFT-04: undetermined}}
+      R2: {disposition: review, decided: false, active: [], rules: {TIME-03: undetermined, GIFT-04: undetermined}}
+  - id: an ordinary split stands beside a gift with no type on another merchant
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *x_client_30, line_id: L1}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [*x_client_30]}
+      - {<<: *gifts, receipt_id: R3, merchant_name: Other Shop, line_items: [{<<: *x_none_25, recipient_name: Yan}]}
+    expected:
+      R1: {disposition: flag, decided: true, active: [TIME-03]}
+      R2: {disposition: flag, decided: true, active: [TIME-03]}
+      R3: {disposition: review, decided: false, active: [], rules: {GIFT-04: undetermined}}
+
+# u stands for a USD field with no value. k holds a value.
+unknowns:
+  - {id: a comparison on it is unknown, condition: {op: eq, field: u, value: a}, facts: {}, expected: {result: null}}
+  - {id: a false branch settles an all, condition: {op: all, conditions: [{op: eq, field: u, value: a}, {op: eq, field: k, value: no}]}, facts: {k: a}, expected: {result: false}}
+  - {id: an all with a true branch stays unknown, condition: {op: all, conditions: [{op: eq, field: u, value: a}, {op: eq, field: k, value: a}]}, facts: {k: a}, expected: {result: null}}
+  - {id: a true branch settles an any, condition: {op: any, conditions: [{op: eq, field: u, value: a}, {op: eq, field: k, value: a}]}, facts: {k: a}, expected: {result: true}}
+  - {id: an any with a false branch stays unknown, condition: {op: any, conditions: [{op: eq, field: u, value: a}, {op: eq, field: k, value: no}]}, facts: {k: a}, expected: {result: null}}
+  - {id: not of unknown is unknown, condition: {op: not, condition: {op: eq, field: u, value: a}}, facts: {}, expected: {result: null}}
+  - {id: not of a known answer flips it, condition: {op: not, condition: {op: eq, field: k, value: a}}, facts: {k: a}, expected: {result: false}}
+  - {id: testing for absence is a known answer, condition: {op: missing, field: u}, facts: {}, expected: {result: true}}
+  - {id: a comparison with a value is read as usual, condition: {op: eq, field: u, value: a}, facts: {u: a}, expected: {result: true}}
+  - {id: a missing field that is not unknowable reads as false, condition: {op: eq, field: other, value: a}, facts: {}, expected: {result: false}}

@@ -1,0 +1,1038 @@
+suite: helpers
+
+# The named helpers, with the real rules, so the real thresholds, unless a case says otherwise.
+#
+# outcomes:   run_helper for `rule_id` on `receipt_id`, from a context of `receipts`. `complete`
+#             says whether those are all the receipts. expected.findings lists them by rule_id,
+#             severity, scope, receipt_id and line_ids, and expected.undetermined by rule_id and line_id.
+# details:    the first finding. expected names values in its JSON form.
+# runs:       run_checks with only the rules in `rule_ids`, passing the context if `with_context`.
+#             expected holds any of findings, pending_helpers, undetermined and complete.
+# baggage:    baggage_allowance on `receipt_id`. expected holds line_ids, total_usd and within.
+# contexts:   build_context. expected.receipt_ids lists what it holds, in order.
+# refused:    build_context or run_helper cannot go ahead. expected is an error regex.
+# recipients: what a classifier would read from the three lines in the data that name someone.
+#             The gold labels hold only categories, so the helper comparison stands in these.
+
+templates:
+  line: &line
+    line_id: L1
+    description_raw: Grilled salmon
+    language: en
+    quantity: 1
+    unit_price: "40.00"
+    amount: "40.00"
+    amount_usd: "40.00"
+    category: food_beverage
+    confidence: "0.9"
+  meal: &meal
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    submitted_expense_type: Meals - Individual
+    merchant_name: Verona Grill
+    mcc: "5812"
+    transaction_datetime: "2026-04-14T12:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: "40.00"
+    total_amount_usd: "40.00"
+    itemized: true
+    line_items: [*line]
+  gifts: &gifts
+    <<: *meal
+    submitted_expense_type: Client Gifts
+    mcc: "5944"
+  # $40.00 is 37.04 euros at this rate, to the nearest cent.
+  emea: &emea
+    <<: *meal
+    employee_country: FR
+    currency: EUR
+    fx_rate_to_usd: "1.08"
+    total_amount: "37.04"
+    line_items: [{<<: *line, unit_price: "37.04", amount: "37.04"}]
+
+outcomes:
+  # meal_cap: MEAL-01, $75 domestic and $100 international, per person per day
+  - {id: at the domestic cap, rule_id: MEAL-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "75.00", amount: "75.00", amount_usd: "75.00"}]}], expected: {findings: [], undetermined: []}}
+  - id: just above the domestic cap
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "75.01", amount: "75.01", amount_usd: "75.01"}]}]
+    expected: {findings: [{rule_id: MEAL-01, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: a receipt that is no meal is not raised for another that breaks the cap
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, submitted_expense_type: Lodging, line_items: [{<<: *line, category: lodging}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}
+    expected: {findings: [], undetermined: []}
+  - {id: not a meal, rule_id: MEAL-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Lodging, line_items: [{<<: *line, category: lodging, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}], expected: {findings: [], undetermined: []}}
+  - {id: divided by the attendee count, rule_id: MEAL-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, attendee_count: 4, line_items: [{<<: *line, unit_price: "300.00", amount: "300.00", amount_usd: "300.00"}]}], expected: {findings: [], undetermined: []}}
+  - id: just above the cap once divided
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, attendee_count: 4, line_items: [{<<: *line, unit_price: "300.04", amount: "300.04", amount_usd: "300.04"}]}]
+    expected: {findings: [{rule_id: MEAL-01, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - {id: a division that repeats lands exactly on the cap, rule_id: MEAL-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, attendee_count: 3, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}, {<<: *meal, receipt_id: R2, merchant_name: Other, attendee_count: 3, line_items: [{<<: *line, unit_price: "125.00", amount: "125.00", amount_usd: "125.00"}]}], expected: {findings: [], undetermined: []}}
+  - {id: only food drink and gratuity count, rule_id: MEAL-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "70.00", amount: "70.00", amount_usd: "70.00"}, {<<: *line, line_id: L2, category: gift, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}], expected: {findings: [], undetermined: []}}
+  - id: a gratuity counts
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "70.00", amount: "70.00", amount_usd: "70.00"}, {<<: *line, line_id: L2, category: service_fee, unit_price: "5.01", amount: "5.01", amount_usd: "5.01"}]}]
+    expected: {findings: [{rule_id: MEAL-01, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: not itemized uses the receipt total
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, itemized: false, total_amount: "75.01", total_amount_usd: "75.01", line_items: [{<<: *line, category: other, unit_price: "1.00", amount: "1.00", amount_usd: "1.00"}]}]
+    expected: {findings: [{rule_id: MEAL-01, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: one employee's meals on one date add up, and both receipts are raised
+    rule_id: MEAL-01
+    receipt_id: R2
+    complete: true
+    receipts: &two_meals
+      - {<<: *meal, merchant_name: Morning Cafe, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, merchant_name: Evening Bistro, transaction_datetime: "2026-04-14T20:00:00", line_items: [{<<: *line, unit_price: "35.01", amount: "35.01", amount_usd: "35.01"}]}
+    expected: {findings: [{rule_id: MEAL-01, severity: medium, scope: receipt, receipt_id: R2, line_ids: []}], undetermined: []}
+  - id: the other of the two meals is raised too
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: *two_meals
+    expected: {findings: [{rule_id: MEAL-01, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: another date does not add up
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "70.00", amount: "70.00", amount_usd: "70.00"}]}
+      - {<<: *meal, receipt_id: R2, transaction_datetime: "2026-04-15T12:00:00", line_items: [{<<: *line, unit_price: "70.00", amount: "70.00", amount_usd: "70.00"}]}
+    expected: {findings: [], undetermined: []}
+  - id: another employee does not add up
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "70.00", amount: "70.00", amount_usd: "70.00"}]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-2, line_items: [{<<: *line, unit_price: "70.00", amount: "70.00", amount_usd: "70.00"}]}
+    expected: {findings: [], undetermined: []}
+  - {id: international at its cap, rule_id: MEAL-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, currency: EUR, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}], expected: {findings: [], undetermined: []}}
+  - id: international just above its cap
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, currency: EUR, line_items: [{<<: *line, unit_price: "100.01", amount: "100.01", amount_usd: "100.01"}]}]
+    expected: {findings: [{rule_id: MEAL-01, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: a day that mixes the two takes the higher cap
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, merchant_name: Home, line_items: [{<<: *line, unit_price: "50.00", amount: "50.00", amount_usd: "50.00"}]}
+      - {<<: *meal, receipt_id: R2, merchant_name: Away, currency: EUR, line_items: [{<<: *line, unit_price: "50.00", amount: "50.00", amount_usd: "50.00"}]}
+    expected: {findings: [], undetermined: []}
+  - {id: a missing category leaves the spend unknown, rule_id: MEAL-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: null}]}], expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}}
+  - {id: an unknown category leaves the spend unknown, rule_id: MEAL-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: foood}]}], expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}}
+  - {id: a receipt that is no meal has no open question in a partial context, rule_id: MEAL-01, receipt_id: R1, complete: false, receipts: [{<<: *meal, submitted_expense_type: Lodging, line_items: [{<<: *line, category: lodging}]}], expected: {findings: [], undetermined: []}}
+  - id: known food above the cap is a breach, though another line is not known
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "75.01", amount: "75.01", amount_usd: "75.01"}, {<<: *line, line_id: L2, category: null, unit_price: "1.00", amount: "1.00", amount_usd: "1.00"}]}]
+    expected: {findings: [{rule_id: MEAL-01, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: known food at the cap stays open while another line is not known
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "75.00", amount: "75.00", amount_usd: "75.00"}, {<<: *line, line_id: L2, category: null, unit_price: "1.00", amount: "1.00", amount_usd: "1.00"}]}]
+    expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}
+  - id: a receipt not known to be a meal is not raised for another's breach
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, category: null}]}
+      - {<<: *meal, receipt_id: R2, merchant_name: Other, line_items: [{<<: *line, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}
+    expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}
+  - {id: a missing USD amount leaves the spend unknown, rule_id: MEAL-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, currency: EUR, fx_rate_to_usd: null, line_items: [{<<: *line, amount_usd: null}]}], expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}}
+  - {id: no date on this receipt, rule_id: MEAL-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, transaction_datetime: null}], expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}}
+  - id: no date on another receipt by this employee
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [*meal, {<<: *meal, receipt_id: R2, transaction_datetime: null}]
+    expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}
+  - {id: a partial context cannot show the cap is respected, rule_id: MEAL-01, receipt_id: R1, complete: false, receipts: [*meal], expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}}
+  - {id: a partial context at the highest cap proves nothing, rule_id: MEAL-01, receipt_id: R1, complete: false, receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}], expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}}
+  - id: a partial context above the highest cap proves no breach, as a receipt not seen could lower the day
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: false
+    receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "100.01", amount: "100.01", amount_usd: "100.01"}]}]
+    expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}
+
+  # A helper can be given a mixture of lines with and without a USD amount, though evaluate_receipts
+  # never does: its view blanks them all together. Only the sign of one with none is known.
+  - id: a possible alcohol discount with no USD amount leaves the total with no lower bound
+    rule_id: ALC-02
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, attendee_count: 2, currency: EUR, fx_rate_to_usd: null, total_amount_usd: null, line_items: [{<<: *line, category: alcohol, unit_price: "65.00", amount: "65.00", amount_usd: "65.00"}, {<<: *line, line_id: L2, category: null, unit_price: "-10.00", amount: "-10.00", amount_usd: null}]}]
+    expected: {findings: [], undetermined: [{rule_id: ALC-02, line_id: L2}]}
+  - id: a known alcohol discount with no USD amount leaves the total with no lower bound
+    rule_id: ALC-02
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, attendee_count: 2, currency: EUR, fx_rate_to_usd: null, total_amount_usd: null, line_items: [{<<: *line, category: alcohol, unit_price: "65.00", amount: "65.00", amount_usd: "65.00"}, {<<: *line, line_id: L2, category: alcohol, unit_price: "-10.00", amount: "-10.00", amount_usd: null}]}]
+    expected: {findings: [], undetermined: [{rule_id: ALC-02, line_id: L2}]}
+  - id: a charge with no USD amount cannot lower a known alcohol breach
+    rule_id: ALC-02
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, attendee_count: 2, currency: EUR, fx_rate_to_usd: null, total_amount_usd: null, line_items: [{<<: *line, category: alcohol, unit_price: "65.00", amount: "65.00", amount_usd: "65.00"}, {<<: *line, line_id: L2, category: null, unit_price: "10.00", amount: "10.00", amount_usd: null}]}]
+    expected: {findings: [{rule_id: ALC-02, severity: medium, scope: item, receipt_id: R1, line_ids: [L1]}], undetermined: [{rule_id: ALC-02, line_id: L2}]}
+  - id: a known gift discount with no USD amount leaves the recipient with no lower bound
+    rule_id: GIFT-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gifts, currency: EUR, fx_rate_to_usd: null, total_amount_usd: null, line_items: [{<<: *line, category: gift, recipient_name: Ana, recipient_type: client, unit_price: "55.00", amount: "55.00", amount_usd: "55.00"}, {<<: *line, line_id: L2, category: gift, recipient_name: Ana, recipient_type: client, unit_price: "-10.00", amount: "-10.00", amount_usd: null}]}]
+    expected: {findings: [], undetermined: [{rule_id: GIFT-01, line_id: L2}, {rule_id: GIFT-01, line_id: L1}]}
+  - id: a possible gift discount with no USD amount leaves the recipient with no lower bound
+    rule_id: GIFT-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gifts, currency: EUR, fx_rate_to_usd: null, total_amount_usd: null, line_items: [{<<: *line, category: gift, recipient_name: Ana, recipient_type: client, unit_price: "55.00", amount: "55.00", amount_usd: "55.00"}, {<<: *line, line_id: L2, category: null, recipient_name: Ana, recipient_type: client, unit_price: "-10.00", amount: "-10.00", amount_usd: null}]}]
+    expected: {findings: [], undetermined: [{rule_id: GIFT-01, line_id: L2}, {rule_id: GIFT-01, line_id: L1}]}
+  - id: a known medication discount with no USD amount leaves the trip with no lower bound
+    rule_id: HEALTH-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, trip_id: T1, trip_nights: 3, currency: EUR, fx_rate_to_usd: null, total_amount_usd: null, line_items: [{<<: *line, category: health_otc, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}, {<<: *line, line_id: L2, category: health_otc, unit_price: "-10.00", amount: "-10.00", amount_usd: null}]}]
+    expected: {findings: [], undetermined: [{rule_id: HEALTH-01, line_id: L1}, {rule_id: HEALTH-01, line_id: L2}]}
+
+  # meal_cap: REG-02, $60, and REG-03, EUR 70 at the euro rate on the date
+  - {id: REG-02 is shut for a US employee, rule_id: REG-02, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}], expected: {findings: [], undetermined: []}}
+  - {id: REG-02 at its cap, rule_id: REG-02, receipt_id: R1, complete: true, receipts: [{<<: *meal, employee_country: IN, line_items: [{<<: *line, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}]}], expected: {findings: [], undetermined: []}}
+  - id: REG-02 just above its cap
+    rule_id: REG-02
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, employee_country: IN, line_items: [{<<: *line, unit_price: "60.01", amount: "60.01", amount_usd: "60.01"}]}]
+    expected: {findings: [{rule_id: REG-02, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - {id: REG-03 at EUR 70 at the receipt's rate, rule_id: REG-03, receipt_id: R1, complete: true, receipts: [{<<: *emea, line_items: [{<<: *line, unit_price: "70.00", amount: "70.00", amount_usd: "75.60"}]}], expected: {findings: [], undetermined: []}}
+  - id: REG-03 just above EUR 70 at the receipt's rate
+    rule_id: REG-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *emea, line_items: [{<<: *line, unit_price: "70.01", amount: "70.01", amount_usd: "75.61"}]}]
+    expected: {findings: [{rule_id: REG-03, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - {id: REG-03 outside the euro has no rate to use, rule_id: REG-03, receipt_id: R1, complete: true, receipts: [{<<: *emea, currency: USD, fx_rate_to_usd: "1", total_amount: "40.00", line_items: [*line]}], expected: {findings: [], undetermined: [{rule_id: REG-03, line_id: null}]}}
+  - id: REG-03 outside the euro can use the euro rate that day
+    rule_id: REG-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *emea, currency: USD, fx_rate_to_usd: "1", total_amount: "40.00", line_items: [{<<: *line, unit_price: "75.61", amount: "75.61", amount_usd: "75.61"}]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-9, currency: EUR, fx_rate_to_usd: "1.08", total_amount: "37.04", line_items: [{<<: *line, unit_price: "37.04", amount: "37.04"}]}
+    expected: {findings: [{rule_id: REG-03, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: REG-03 on a euro receipt uses its own rate, whatever others that day say
+    rule_id: REG-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *emea, line_items: [{<<: *line, unit_price: "70.01", amount: "70.01", amount_usd: "75.61"}]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-9, currency: EUR, fx_rate_to_usd: "1.20", total_amount: "33.33", line_items: [{<<: *line, unit_price: "33.33", amount: "33.33"}]}
+    expected: {findings: [{rule_id: REG-03, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: REG-03 outside the euro cannot use the euro rate on another date
+    rule_id: REG-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *emea, currency: USD, fx_rate_to_usd: "1", total_amount: "40.00", line_items: [*line]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-9, currency: EUR, fx_rate_to_usd: "1.08", total_amount: "37.04", line_items: [{<<: *line, unit_price: "37.04", amount: "37.04"}], transaction_datetime: "2026-04-15T12:00:00"}
+    expected: {findings: [], undetermined: [{rule_id: REG-03, line_id: null}]}
+  - id: REG-03 with two euro rates that day has no one rate to use
+    rule_id: REG-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *emea, currency: USD, fx_rate_to_usd: "1", total_amount: "40.00", line_items: [*line]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-8, currency: EUR, fx_rate_to_usd: "1.08", total_amount: "37.04", line_items: [{<<: *line, unit_price: "37.04", amount: "37.04"}]}
+      - {<<: *meal, receipt_id: R3, employee_id: E-9, currency: EUR, fx_rate_to_usd: "1.09", total_amount: "36.70", line_items: [{<<: *line, unit_price: "36.70", amount: "36.70"}]}
+    expected: {findings: [], undetermined: [{rule_id: REG-03, line_id: null}]}
+
+  # split_transactions: TIME-03
+  - id: two receipts around the meal cap, and both are raised
+    rule_id: TIME-03
+    receipt_id: R2
+    complete: true
+    receipts: &split
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "35.01", amount: "35.01", amount_usd: "35.01"}]}
+    expected: {findings: [{rule_id: TIME-03, severity: high, scope: receipt, receipt_id: R2, line_ids: []}], undetermined: []}
+  - {id: the other half of the split, rule_id: TIME-03, receipt_id: R1, complete: true, receipts: *split, expected: {findings: [{rule_id: TIME-03, severity: high, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}}
+  - id: together exactly at the cap is no split
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}, {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "35.00", amount: "35.00", amount_usd: "35.00"}]}]
+    expected: {findings: [], undetermined: []}
+  - id: one receipt exactly at the cap can be part of a split
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "75.00", amount: "75.00", amount_usd: "75.00"}]}, {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "0.01", amount: "0.01", amount_usd: "0.01"}]}]
+    expected: {findings: [{rule_id: TIME-03, severity: high, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: one receipt already above the cap is no split
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "75.01", amount: "75.01", amount_usd: "75.01"}]}, {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected: {findings: [], undetermined: []}
+  - {id: one receipt alone is no split, rule_id: TIME-03, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "75.00", amount: "75.00", amount_usd: "75.00"}]}], expected: {findings: [], undetermined: []}}
+  - id: another merchant is no split
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}, {<<: *meal, receipt_id: R2, merchant_name: Other, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}]
+    expected: {findings: [], undetermined: []}
+  - id: another date is no split
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}, {<<: *meal, receipt_id: R2, transaction_datetime: "2026-04-15T12:00:00", line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}]
+    expected: {findings: [], undetermined: []}
+  - id: another employee is no split
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}, {<<: *meal, receipt_id: R2, employee_id: E-2, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}]
+    expected: {findings: [], undetermined: []}
+  - id: the meal cap is compared per person
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, attendee_count: 4, line_items: [{<<: *line, unit_price: "140.00", amount: "140.00", amount_usd: "140.00"}]}, {<<: *meal, receipt_id: R2, attendee_count: 4, line_items: [{<<: *line, unit_price: "160.00", amount: "160.00", amount_usd: "160.00"}]}]
+    expected: {findings: [], undetermined: []}
+  - id: an APAC employee is split around the regional cap
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, employee_country: IN, line_items: [{<<: *line, unit_price: "31.00", amount: "31.00", amount_usd: "31.00"}]}
+      - {<<: *meal, receipt_id: R2, employee_country: IN, line_items: [{<<: *line, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+    expected: {findings: [{rule_id: TIME-03, severity: high, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: around the itemization threshold when none is itemized
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, submitted_expense_type: Lodging, itemized: false, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *line, category: other}]}
+      - {<<: *meal, submitted_expense_type: Lodging, receipt_id: R2, itemized: false, total_amount: "35.01", total_amount_usd: "35.01", line_items: [{<<: *line, category: other}]}
+    expected: {findings: [{rule_id: TIME-03, severity: high, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: exactly at the itemization threshold is no split
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, submitted_expense_type: Lodging, itemized: false, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *line, category: other}]}
+      - {<<: *meal, submitted_expense_type: Lodging, receipt_id: R2, itemized: false, total_amount: "35.00", total_amount_usd: "35.00", line_items: [{<<: *line, category: other}]}
+    expected: {findings: [], undetermined: []}
+  - id: an itemized receipt in the group stops the itemization test
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, submitted_expense_type: Lodging, itemized: false, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *line, category: other}]}
+      - {<<: *meal, submitted_expense_type: Lodging, receipt_id: R2, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *line, category: lodging}]}
+    expected: {findings: [], undetermined: []}
+  - id: around the gift cap for one recipient
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "20.01", amount: "20.01", amount_usd: "20.01"}]}
+    expected: {findings: [{rule_id: TIME-03, severity: high, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: exactly at the gift cap is no split
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}]}
+    expected: {findings: [], undetermined: []}
+  - id: gifts to two recipients are no split
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: B. Silva, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+    expected: {findings: [], undetermined: []}
+  - {id: a partial context cannot show there is no split, rule_id: TIME-03, receipt_id: R1, complete: false, receipts: [*meal], expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}}
+  - {id: a partial context cannot confirm a split that looks clear, rule_id: TIME-03, receipt_id: R1, complete: false, receipts: *split, expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}}
+  - {id: no merchant name to group by, rule_id: TIME-03, receipt_id: R1, complete: true, receipts: [{<<: *meal, merchant_name: null}], expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}}
+  - {id: no date to group by, rule_id: TIME-03, receipt_id: R1, complete: true, receipts: [{<<: *meal, transaction_datetime: null}], expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}}
+  - id: no merchant name on another receipt that day
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [*meal, {<<: *meal, receipt_id: R2, merchant_name: null}]
+    expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
+  - id: a missing category in the group leaves it open
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [*meal, {<<: *meal, receipt_id: R2, line_items: [{<<: *line, category: null}]}]
+    expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
+  # Too few receipts in a complete context can never be a split, whatever is unknown about them
+  - {id: one receipt with an unknown line is settled, rule_id: TIME-03, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: null}]}], expected: {findings: [], undetermined: []}}
+  - {id: one receipt with an unknown line in a partial context stays open, rule_id: TIME-03, receipt_id: R1, complete: false, receipts: [{<<: *meal, line_items: [{<<: *line, category: null}]}], expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}}
+  - id: many lines on one receipt are still one receipt
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, category: null}, {<<: *line, line_id: L2, category: null}, {<<: *line, line_id: L3, category: foood}]}]
+    expected: {findings: [], undetermined: []}
+  - id: many clear lines over the cap on one receipt are no split
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *line, line_id: L2, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}]
+    expected: {findings: [], undetermined: []}
+  - id: two receipts with unknown lines stay open
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: null}]}, {<<: *meal, receipt_id: R2, line_items: [{<<: *line, category: null}]}]
+    expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
+  - id: a repeated receipt with an unknown line is still one receipt
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: null}]}, {<<: *meal, line_items: [{<<: *line, category: null}]}]
+    expected: {findings: [], undetermined: []}
+  - id: another merchant with an unknown line makes no group
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: null}]}, {<<: *meal, receipt_id: R2, merchant_name: Other, line_items: [{<<: *line, category: null}]}]
+    expected: {findings: [], undetermined: []}
+  - id: another date with an unknown line makes no group
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: null}]}, {<<: *meal, receipt_id: R2, transaction_datetime: "2026-04-15T12:00:00", line_items: [{<<: *line, category: null}]}]
+    expected: {findings: [], undetermined: []}
+  - id: another employee with an unknown line makes no group
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: null}]}, {<<: *meal, receipt_id: R2, employee_id: E-2, line_items: [{<<: *line, category: null}]}]
+    expected: {findings: [], undetermined: []}
+  - id: an undated receipt by this employee could still join the group
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: [*meal, {<<: *meal, receipt_id: R2, transaction_datetime: null}]
+    expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
+
+  # A necessary condition proved false settles TIME-03, whatever else is unknown
+  - id: one receipt over the cap at its least rules out a meal split
+    rule_id: TIME-03
+    receipt_id: R2
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "75.01", amount: "75.01", amount_usd: "75.01"}, {<<: *line, line_id: L2, category: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {findings: [], undetermined: []}
+  - id: a possible discount that brings it to the cap leaves a meal split open
+    rule_id: TIME-03
+    receipt_id: R2
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "85.00", amount: "85.00", amount_usd: "85.00"}, {<<: *line, line_id: L2, category: null, unit_price: "-10.00", amount: "-10.00", amount_usd: "-10.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
+  - id: spend at its most at the cap together rules out a meal split
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, line_id: L1, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}, {<<: *line, line_id: L2, category: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {findings: [], undetermined: []}
+  - id: spend at its most just above the cap together leaves a meal split open
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, line_id: L1, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}, {<<: *line, line_id: L2, category: null, unit_price: "5.01", amount: "5.01", amount_usd: "5.01"}]}
+    expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
+  - id: a possible discount does not lower spend at its most, so a meal split stays open
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, line_id: L1, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *line, line_id: L2, category: null, unit_price: "-10.00", amount: "-10.00", amount_usd: "-10.00"}]}
+    expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
+  - id: a non-itemized meal with no total has no most, so a meal split stays open
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+      - {<<: *meal, receipt_id: R2, itemized: false, total_amount: null, total_amount_usd: null, line_items: [{<<: *line, category: other}]}
+    expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
+  - id: meals with no cap to compare stay open, as nothing is ruled out
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, currency: null, fx_rate_to_usd: null, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, currency: null, fx_rate_to_usd: null, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+    expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
+  - id: an unconverted line has no most, so a meal split stays open
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+      - {<<: *meal, receipt_id: R2, currency: EUR, fx_rate_to_usd: null, line_items: [{<<: *line, amount_usd: null}]}
+    expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
+  - id: a possible meal that could be international does not rule out a split by the lower cap
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "80.00", amount: "80.00", amount_usd: "80.00"}]}
+      - {<<: *meal, receipt_id: R2, currency: EUR, line_items: [{<<: *line, category: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
+  - id: one non-itemized total over the threshold rules out a split, though another is unknown
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, submitted_expense_type: Lodging, itemized: false, total_amount: "75.01", total_amount_usd: "75.01", line_items: [{<<: *line, category: other}]}
+      - {<<: *meal, submitted_expense_type: Lodging, receipt_id: R2, itemized: false, total_amount: null, total_amount_usd: null, line_items: [{<<: *line, category: other}]}
+    expected: {findings: [], undetermined: []}
+  - id: one non-itemized total at the threshold with another unknown stays open
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, submitted_expense_type: Lodging, itemized: false, total_amount: "75.00", total_amount_usd: "75.00", line_items: [{<<: *line, category: other}]}
+      - {<<: *meal, submitted_expense_type: Lodging, receipt_id: R2, itemized: false, total_amount: null, total_amount_usd: null, line_items: [{<<: *line, category: other}]}
+    expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
+
+  # meal_cap: spend at its least
+  - id: a possible discount with no USD amount leaves the spend with no least
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, currency: EUR, fx_rate_to_usd: null, line_items: [{<<: *line, line_id: L1, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}, {<<: *line, line_id: L2, category: null, unit_price: "-10.00", amount: "-10.00", amount_usd: null}]}]
+    expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}
+  - id: a possible charge with no USD amount leaves the least as it is
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, currency: EUR, fx_rate_to_usd: null, line_items: [{<<: *line, line_id: L1, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}, {<<: *line, line_id: L2, category: null, amount_usd: null}]}]
+    expected: {findings: [{rule_id: MEAL-01, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: a known meal line with a discount and no USD amount leaves the spend with no least
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, currency: EUR, fx_rate_to_usd: null, line_items: [{<<: *line, line_id: L1, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}, {<<: *line, line_id: L2, unit_price: "-10.00", amount: "-10.00", amount_usd: null}]}]
+    expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}
+  - id: a receipt only possibly a meal can lower the day with a discount
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, merchant_name: Morning, line_items: [{<<: *line, unit_price: "80.00", amount: "80.00", amount_usd: "80.00"}]}
+      - {<<: *meal, receipt_id: R2, merchant_name: Evening, line_items: [{<<: *line, category: null, unit_price: "-10.00", amount: "-10.00", amount_usd: "-10.00"}]}
+    expected: {findings: [], undetermined: [{rule_id: MEAL-01, line_id: null}]}
+
+  - id: a clear split is reported though another test is open
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, submitted_expense_type: Lodging, itemized: false, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *line, category: null}]}
+      - {<<: *meal, submitted_expense_type: Lodging, receipt_id: R2, itemized: false, total_amount: "35.01", total_amount_usd: "35.01", line_items: [{<<: *line, category: null}]}
+    expected: {findings: [{rule_id: TIME-03, severity: high, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+
+  - id: an established split with another threshold open gives both a finding and an open question
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, submitted_expense_type: Client Gifts, itemized: false, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *line, category: null}]}
+      - {<<: *meal, submitted_expense_type: Client Gifts, receipt_id: R2, itemized: false, total_amount: "35.01", total_amount_usd: "35.01", line_items: [{<<: *line, category: null}]}
+    expected: {findings: [{rule_id: TIME-03, severity: high, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: [{rule_id: TIME-03, line_id: null}]}
+
+  # gift_cap: GIFT-01, $50 per recipient on a receipt, and a name from $10
+  - {id: a named gift at the cap, rule_id: GIFT-01, receipt_id: R1, complete: true, receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift, recipient_name: A. Moreau, recipient_type: client, unit_price: "50.00", amount: "50.00", amount_usd: "50.00"}]}], expected: {findings: [], undetermined: []}}
+  - id: a named gift just above the cap
+    rule_id: GIFT-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift, recipient_name: A. Moreau, recipient_type: client, unit_price: "50.01", amount: "50.01", amount_usd: "50.01"}]}]
+    expected: {findings: [{rule_id: GIFT-01, severity: medium, scope: item, receipt_id: R1, line_ids: [L1]}], undetermined: []}
+  - id: any item on a Client Gifts receipt is a gift whatever its category
+    rule_id: GIFT-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *line, category: jewelry, recipient_name: A. Moreau, unit_price: "180.00", amount: "180.00", amount_usd: "180.00"}]}]
+    expected: {findings: [{rule_id: GIFT-01, severity: medium, scope: item, receipt_id: R1, line_ids: [L1]}], undetermined: []}
+  - id: lines naming one recipient add up, and every one is cited
+    rule_id: GIFT-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *line, line_id: L1, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}, {<<: *line, line_id: L2, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "20.01", amount: "20.01", amount_usd: "20.01"}, {<<: *line, line_id: L3, category: gift, recipient_type: client, recipient_name: B. Silva, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}]}]
+    expected:
+      findings:
+        - {rule_id: GIFT-01, severity: medium, scope: item, receipt_id: R1, line_ids: [L1]}
+        - {rule_id: GIFT-01, severity: medium, scope: item, receipt_id: R1, line_ids: [L2]}
+      undetermined: []
+  - id: an unnamed gift at $10
+    rule_id: GIFT-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}]
+    expected: {findings: [{rule_id: GIFT-01, severity: medium, scope: item, receipt_id: R1, line_ids: [L1]}], undetermined: []}
+  - {id: an unnamed gift just under $10, rule_id: GIFT-01, receipt_id: R1, complete: true, receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift, unit_price: "9.99", amount: "9.99", amount_usd: "9.99"}]}], expected: {findings: [], undetermined: []}}
+  - id: unnamed gifts are each tested on their own
+    rule_id: GIFT-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *line, line_id: L1, category: gift, unit_price: "9.99", amount: "9.99", amount_usd: "9.99"}, {<<: *line, line_id: L2, category: gift, unit_price: "9.99", amount: "9.99", amount_usd: "9.99"}]}]
+    expected: {findings: [], undetermined: []}
+  - {id: a gift card falls under GIFT-02 alone, rule_id: GIFT-01, receipt_id: R1, complete: true, receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift_card, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}], expected: {findings: [], undetermined: []}}
+  - {id: a gratuity is not a gift, rule_id: GIFT-01, receipt_id: R1, complete: true, receipts: [{<<: *gifts, line_items: [{<<: *line, category: service_fee, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}], expected: {findings: [], undetermined: []}}
+  - {id: a named meal guest is not a gift, rule_id: GIFT-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, recipient_name: A. Moreau, recipient_type: client, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}], expected: {findings: [], undetermined: []}}
+  - {id: an employee gift falls under GIFT-03, rule_id: GIFT-01, receipt_id: R1, complete: true, receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift, recipient_name: A. Moreau, recipient_type: employee, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}], expected: {findings: [], undetermined: []}}
+  - id: a line naming a client elsewhere is a gift
+    rule_id: GIFT-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, recipient_name: A. Moreau, recipient_type: client, unit_price: "50.01", amount: "50.01", amount_usd: "50.01"}]}]
+    expected: {findings: [{rule_id: GIFT-01, severity: medium, scope: item, receipt_id: R1, line_ids: [L1]}], undetermined: []}
+  - id: an official's gift stays a raw candidate until GIFT-04 replaces it
+    rule_id: GIFT-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, recipient_name: R. Delgado, recipient_type: government_official, unit_price: "50.01", amount: "50.01", amount_usd: "50.01"}]}]
+    expected: {findings: [{rule_id: GIFT-01, severity: medium, scope: item, receipt_id: R1, line_ids: [L1]}], undetermined: []}
+  - {id: a line naming nobody elsewhere is not a gift, rule_id: GIFT-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}], expected: {findings: [], undetermined: []}}
+  - {id: a named line with no recipient type elsewhere, rule_id: GIFT-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, recipient_name: A. Moreau, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}], expected: {findings: [], undetermined: [{rule_id: GIFT-01, line_id: L1}]}}
+  - {id: an unknown recipient type, rule_id: GIFT-01, receipt_id: R1, complete: true, receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift, recipient_name: A. Moreau, recipient_type: vip, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}], expected: {findings: [], undetermined: [{rule_id: GIFT-01, line_id: L1}]}}
+  - {id: a missing category on a Client Gifts receipt, rule_id: GIFT-01, receipt_id: R1, complete: true, receipts: [{<<: *gifts, line_items: [{<<: *line, category: null, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}], expected: {findings: [], undetermined: [{rule_id: GIFT-01, line_id: L1}]}}
+  - {id: a gift with no USD amount, rule_id: GIFT-01, receipt_id: R1, complete: true, receipts: [{<<: *gifts, currency: EUR, fx_rate_to_usd: null, line_items: [{<<: *line, category: gift, amount_usd: null}]}], expected: {findings: [], undetermined: [{rule_id: GIFT-01, line_id: L1}]}}
+
+  # government_official: GIFT-04, at any amount, meals too, gratuities never
+  - id: every line provided to an official, at any amount, but not a gratuity
+    rule_id: GIFT-04
+    receipt_id: R1
+    complete: true
+    receipts:
+      - <<: *meal
+        line_items:
+          - {<<: *line, line_id: L1, recipient_type: government_official, unit_price: "0.01", amount: "0.01", amount_usd: "0.01"}
+          - {<<: *line, line_id: L2, category: gift, recipient_type: government_official}
+          - {<<: *line, line_id: L3, category: service_fee, recipient_type: government_official}
+          - {<<: *line, line_id: L4, recipient_type: client}
+          - {<<: *line, line_id: L5}
+    expected:
+      findings:
+        - {rule_id: GIFT-04, severity: critical, scope: item, receipt_id: R1, line_ids: [L1]}
+        - {rule_id: GIFT-04, severity: critical, scope: item, receipt_id: R1, line_ids: [L2]}
+      undetermined: []
+  - {id: an unknown recipient type could be an official, rule_id: GIFT-04, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, recipient_type: vip}]}], expected: {findings: [], undetermined: [{rule_id: GIFT-04, line_id: L1}]}}
+  - {id: an official's line with no category could be a gratuity, rule_id: GIFT-04, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: null, recipient_type: government_official}]}], expected: {findings: [], undetermined: [{rule_id: GIFT-04, line_id: L1}]}}
+
+  # otc_trip_cap: HEALTH-01, $25 across a trip, and low or medium by kind
+  - {id: at the trip cap, rule_id: HEALTH-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, trip_id: T1, trip_nights: 3, line_items: [{<<: *line, category: health_otc, unit_price: "25.00", amount: "25.00", amount_usd: "25.00"}]}], expected: {findings: [], undetermined: []}}
+  - id: just above the trip cap
+    rule_id: HEALTH-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, trip_id: T1, trip_nights: 3, line_items: [{<<: *line, category: health_otc, unit_price: "25.01", amount: "25.01", amount_usd: "25.01"}]}]
+    expected: {findings: [{rule_id: HEALTH-01, severity: low, scope: item, receipt_id: R1, line_ids: [L1]}], undetermined: []}
+  - id: no trip at any amount
+    rule_id: HEALTH-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: health_otc, unit_price: "0.01", amount: "0.01", amount_usd: "0.01"}]}]
+    expected: {findings: [{rule_id: HEALTH-01, severity: low, scope: item, receipt_id: R1, line_ids: [L1]}], undetermined: []}
+  - id: a trip's receipts add up, and each one's own lines are cited
+    rule_id: HEALTH-01
+    receipt_id: R2
+    complete: true
+    receipts:
+      - {<<: *meal, trip_id: T1, trip_nights: 3, line_items: [{<<: *line, category: health_otc, unit_price: "15.00", amount: "15.00", amount_usd: "15.00"}]}
+      - {<<: *meal, receipt_id: R2, trip_id: T1, trip_nights: 3, line_items: [{<<: *line, line_id: L9, category: health_otc, unit_price: "10.01", amount: "10.01", amount_usd: "10.01"}, {<<: *line, line_id: L8, category: food_beverage}]}
+    expected: {findings: [{rule_id: HEALTH-01, severity: low, scope: item, receipt_id: R2, line_ids: [L9]}], undetermined: []}
+  - id: another trip does not add up
+    rule_id: HEALTH-01
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, trip_id: T1, trip_nights: 3, line_items: [{<<: *line, category: health_otc, unit_price: "15.00", amount: "15.00", amount_usd: "15.00"}]}
+      - {<<: *meal, receipt_id: R2, trip_id: T2, trip_nights: 3, line_items: [{<<: *line, category: health_otc, unit_price: "15.00", amount: "15.00", amount_usd: "15.00"}]}
+    expected: {findings: [], undetermined: []}
+  - id: prescription medication at any amount is medium, on a trip or not
+    rule_id: HEALTH-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, trip_id: T1, trip_nights: 3, line_items: [{<<: *line, category: other, item_kind: prescription_medication, unit_price: "0.01", amount: "0.01", amount_usd: "0.01"}]}]
+    expected: {findings: [{rule_id: HEALTH-01, severity: medium, scope: item, receipt_id: R1, line_ids: [L1]}], undetermined: []}
+  - id: an item kind of OTC counts whatever the category
+    rule_id: HEALTH-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: other, item_kind: otc_medication}]}]
+    expected: {findings: [{rule_id: HEALTH-01, severity: low, scope: item, receipt_id: R1, line_ids: [L1]}], undetermined: []}
+  - id: prescription medication does not use up the OTC cap
+    rule_id: HEALTH-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, trip_id: T1, trip_nights: 3, line_items: [{<<: *line, line_id: L1, category: health_otc, unit_price: "25.00", amount: "25.00", amount_usd: "25.00"}, {<<: *line, line_id: L2, category: health_otc, item_kind: prescription_medication, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected: {findings: [{rule_id: HEALTH-01, severity: medium, scope: item, receipt_id: R1, line_ids: [L2]}], undetermined: []}
+  - {id: other lines are not medication, rule_id: HEALTH-01, receipt_id: R1, complete: true, receipts: [*meal], expected: {findings: [], undetermined: []}}
+  - {id: a line with no category could be medication, rule_id: HEALTH-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: null}]}], expected: {findings: [], undetermined: [{rule_id: HEALTH-01, line_id: L1}]}}
+  - {id: an unknown item kind, rule_id: HEALTH-01, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: other, item_kind: tablet}]}], expected: {findings: [], undetermined: [{rule_id: HEALTH-01, line_id: L1}]}}
+  - {id: a partial context cannot show the trip is under the cap, rule_id: HEALTH-01, receipt_id: R1, complete: false, receipts: [{<<: *meal, trip_id: T1, trip_nights: 3, line_items: [{<<: *line, category: health_otc, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}], expected: {findings: [], undetermined: [{rule_id: HEALTH-01, line_id: L1}]}}
+  - id: a partial context above the cap proves no breach, as a receipt not seen could lower the trip
+    rule_id: HEALTH-01
+    receipt_id: R1
+    complete: false
+    receipts: [{<<: *meal, trip_id: T1, trip_nights: 3, line_items: [{<<: *line, category: health_otc, unit_price: "25.01", amount: "25.01", amount_usd: "25.01"}]}]
+    expected: {findings: [], undetermined: [{rule_id: HEALTH-01, line_id: L1}]}
+  - id: an unclear line elsewhere on the trip leaves it open
+    rule_id: HEALTH-01
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, trip_id: T1, trip_nights: 3, line_items: [{<<: *line, category: health_otc, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+      - {<<: *meal, receipt_id: R2, trip_id: T1, trip_nights: 3, line_items: [{<<: *line, category: null}]}
+    expected: {findings: [], undetermined: [{rule_id: HEALTH-01, line_id: L1}]}
+
+  # alcohol_per_attendee: ALC-02, $30 per attendee where ALC-01 permits the alcohol
+  - &permitted
+    id: at the cap per attendee
+    rule_id: ALC-02
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, attendee_count: 2, line_items: [{<<: *line, category: alcohol, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}]}]
+    expected: {findings: [], undetermined: []}
+  - id: just above the cap per attendee, and every alcohol line is cited
+    rule_id: ALC-02
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, attendee_count: 2, line_items: [{<<: *line, line_id: L1, category: alcohol, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}, {<<: *line, line_id: L2, category: alcohol, unit_price: "30.01", amount: "30.01", amount_usd: "30.01"}, {<<: *line, line_id: L3, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}]
+    expected:
+      findings:
+        - {rule_id: ALC-02, severity: medium, scope: item, receipt_id: R1, line_ids: [L1]}
+        - {rule_id: ALC-02, severity: medium, scope: item, receipt_id: R1, line_ids: [L2]}
+      undetermined: []
+  - {id: not permitted on a solo meal, rule_id: ALC-02, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: alcohol, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}], expected: {findings: [], undetermined: []}}
+  - {id: not permitted for one attendee, rule_id: ALC-02, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, attendee_count: 1, line_items: [{<<: *line, category: alcohol, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}], expected: {findings: [], undetermined: []}}
+  - {id: retail alcohol is ALC-03 alone, rule_id: ALC-02, receipt_id: R1, complete: true, receipts: [{<<: *meal, mcc: "5411", submitted_expense_type: Client Entertainment, attendee_count: 2, line_items: [{<<: *line, category: alcohol, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}], expected: {findings: [], undetermined: []}}
+  - {id: a line with no category could be alcohol, rule_id: ALC-02, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, attendee_count: 2, line_items: [{<<: *line, category: null}]}], expected: {findings: [], undetermined: [{rule_id: ALC-02, line_id: L1}]}}
+  - id: a breach is reported though another line is open
+    rule_id: ALC-02
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, attendee_count: 2, line_items: [{<<: *line, line_id: L1, category: alcohol, unit_price: "60.01", amount: "60.01", amount_usd: "60.01"}, {<<: *line, line_id: L2, category: foood}]}]
+    expected: {findings: [{rule_id: ALC-02, severity: medium, scope: item, receipt_id: R1, line_ids: [L1]}], undetermined: [{rule_id: ALC-02, line_id: L2}]}
+
+  # expense_type_mismatch: DOC-03
+  - id: no line in a category the type covers
+    rule_id: DOC-03
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, submitted_expense_type: Office Supplies, line_items: [{<<: *line, category: personal_electronics}]}]
+    expected: {findings: [{rule_id: DOC-03, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - {id: one line in a category the type covers is enough, rule_id: DOC-03, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Office Supplies, line_items: [{<<: *line, line_id: L1, category: personal_electronics}, {<<: *line, line_id: L2, category: office_supplies}]}], expected: {findings: [], undetermined: []}}
+  - {id: only service fees and other leaves nothing to test, rule_id: DOC-03, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Office Supplies, line_items: [{<<: *line, line_id: L1, category: service_fee}, {<<: *line, line_id: L2, category: other}]}], expected: {findings: [], undetermined: []}}
+  - {id: no lines at all, rule_id: DOC-03, receipt_id: R1, complete: true, receipts: [{<<: *meal, itemized: false, line_items: []}], expected: {findings: [], undetermined: []}}
+  - {id: a missing category could be covered, rule_id: DOC-03, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Office Supplies, line_items: [{<<: *line, category: null}]}], expected: {findings: [], undetermined: [{rule_id: DOC-03, line_id: null}]}}
+  - {id: an unknown category could be covered, rule_id: DOC-03, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Office Supplies, line_items: [{<<: *line, line_id: L1, category: personal_electronics}, {<<: *line, line_id: L2, category: foood}]}], expected: {findings: [], undetermined: [{rule_id: DOC-03, line_id: null}]}}
+  - {id: a covered line settles it though another is unknown, rule_id: DOC-03, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1}, {<<: *line, line_id: L2, category: foood}]}], expected: {findings: [], undetermined: []}}
+
+  # vat_threshold: REG-04, above EUR 50, and a VAT number is never on the record
+  - {id: shut for a US employee, rule_id: REG-04, receipt_id: R1, complete: true, receipts: [{<<: *meal, total_amount: "500.00", total_amount_usd: "500.00"}], expected: {findings: [], undetermined: []}}
+  - {id: at EUR 50, rule_id: REG-04, receipt_id: R1, complete: true, receipts: [{<<: *emea, total_amount: "50.00", total_amount_usd: "54.00"}], expected: {findings: [], undetermined: []}}
+  - id: just above EUR 50
+    rule_id: REG-04
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *emea, total_amount: "50.01", total_amount_usd: "54.01"}]
+    expected: {findings: [{rule_id: REG-04, severity: low, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - {id: no total, rule_id: REG-04, receipt_id: R1, complete: true, receipts: [{<<: *emea, total_amount: null}], expected: {findings: [], undetermined: [{rule_id: REG-04, line_id: null}]}}
+  - {id: another currency with no euro rate, rule_id: REG-04, receipt_id: R1, complete: true, receipts: [{<<: *emea, currency: USD, fx_rate_to_usd: "1", total_amount: "500.00", total_amount_usd: "500.00", line_items: [*line]}], expected: {findings: [], undetermined: [{rule_id: REG-04, line_id: null}]}}
+  - id: another currency above EUR 50 at the euro rate that day
+    rule_id: REG-04
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *emea, currency: USD, fx_rate_to_usd: "1", total_amount: "54.01", total_amount_usd: "54.01", line_items: [*line]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-9, currency: EUR, fx_rate_to_usd: "1.08", total_amount: "37.04", line_items: [{<<: *line, unit_price: "37.04", amount: "37.04"}]}
+    expected: {findings: [{rule_id: REG-04, severity: low, scope: receipt, receipt_id: R1, line_ids: []}], undetermined: []}
+  - id: another currency at EUR 50 at the euro rate that day
+    rule_id: REG-04
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *emea, currency: USD, fx_rate_to_usd: "1", total_amount: "54.00", total_amount_usd: "54.00", line_items: [*line]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-9, currency: EUR, fx_rate_to_usd: "1.08", total_amount: "37.04", line_items: [{<<: *line, unit_price: "37.04", amount: "37.04"}]}
+    expected: {findings: [], undetermined: []}
+
+details:
+  - id: provenance comes from the rule
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, attendee_count: 2, line_items: [{<<: *line, unit_price: "429.60", amount: "429.60", amount_usd: "429.60"}]}]
+    expected:
+      outcome: exception
+      status: raised
+      policy_doc: meals-and-entertainment-policy.md
+      source_quote: Spend above the cap is a **medium** exception
+      provenance.translator: developer
+      explanation: "Daily meal cap: 214.8 per person on this date against a cap of 75"
+  - id: a breach resting on spend at its least says so
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "90.00", amount: "90.00", amount_usd: "90.00"}, {<<: *line, line_id: L2, category: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected: {explanation: "Daily meal cap: at least 90 per person on this date against a cap of 75"}
+  - id: what a helper worked out is cited, exactly
+    rule_id: MEAL-01
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, attendee_count: 2, line_items: [{<<: *line, unit_price: "429.60", amount: "429.60", amount_usd: "429.60"}]}]
+    expected:
+      evidence.0.fact: helper.day_usd_per_person
+      evidence.0.value: "214.8000000000"
+      evidence.1.fact: helper.cap_usd
+      evidence.1.value: "75"
+      evidence.2.fact: helper.receipts_that_day
+      evidence.2.value: R1
+  - id: a split around the meal cap names MEAL-01 as what it replaces
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts: *split
+    expected: {replaces: [{rule_id: MEAL-01, line_ids: []}], evidence.1.fact: helper.split_around, evidence.1.value: MEAL-01}
+  - id: a split for an APAC employee names REG-02
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, employee_country: IN, line_items: [{<<: *line, unit_price: "31.00", amount: "31.00", amount_usd: "31.00"}]}
+      - {<<: *meal, receipt_id: R2, employee_country: IN, line_items: [{<<: *line, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+    expected: {replaces: [{rule_id: REG-02, line_ids: []}]}
+  - id: a split for an EMEA employee names REG-03
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *emea, line_items: [{<<: *line, unit_price: "37.04", amount: "37.04", amount_usd: "40.00"}]}
+      - {<<: *emea, receipt_id: R2, line_items: [{<<: *line, unit_price: "33.33", amount: "33.33", amount_usd: "36.00"}]}
+    expected: {replaces: [{rule_id: REG-03, line_ids: []}]}
+  - id: a split around the itemization threshold names DOC-01
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, submitted_expense_type: Lodging, itemized: false, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *line, category: other}]}
+      - {<<: *meal, submitted_expense_type: Lodging, receipt_id: R2, itemized: false, total_amount: "35.01", total_amount_usd: "35.01", line_items: [{<<: *line, category: other}]}
+    expected: {replaces: [{rule_id: DOC-01, line_ids: []}]}
+  - id: a split around a gift cap names GIFT-01 on that recipient's lines alone
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *line, line_id: L1, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}, {<<: *line, line_id: L2, category: gift, recipient_type: client, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "20.01", amount: "20.01", amount_usd: "20.01"}]}
+    expected: {replaces: [{rule_id: GIFT-01, line_ids: [L1]}]}
+  - id: a split around two thresholds names both, in order
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, itemized: false, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *line, category: other}]}
+      - {<<: *meal, receipt_id: R2, itemized: false, total_amount: "35.01", total_amount_usd: "35.01", line_items: [{<<: *line, category: other}]}
+    expected:
+      replaces: [{rule_id: DOC-01, line_ids: []}, {rule_id: MEAL-01, line_ids: []}]
+      evidence.1.value: DOC-01, MEAL-01
+  - id: a receipt in a gift split with no gift to that recipient names no target
+    rule_id: TIME-03
+    receipt_id: R3
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "20.01", amount: "20.01", amount_usd: "20.01"}]}
+      - {<<: *gifts, receipt_id: R3, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: B. Silva, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {replaces: [], evidence.1.value: null}
+  - id: an item finding cites its line
+    rule_id: GIFT-04
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, description_raw: Gift basket, category: gift, recipient_type: government_official}]}]
+    expected:
+      line_ids: [L1]
+      explanation: "Government officials: Gift basket: provided to a government official"
+      policy_doc: gifts-and-awards-policy.md
+  - id: a missing VAT number is cited as missing
+    rule_id: REG-04
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *emea, total_amount: "50.01", total_amount_usd: "54.01"}]
+    expected:
+      evidence.0.fact: receipt.entity
+      evidence.0.value: EMEA
+      evidence.1.fact: helper.vat_number
+      evidence.1.value: null
+
+runs:
+  - id: with no context the helper rules stay pending
+    rule_ids: [MEAL-01, TIME-03]
+    receipt_id: R1
+    complete: true
+    with_context: false
+    receipts: [*meal]
+    expected: {findings: [], pending_helpers: [{rule_id: MEAL-01, helper: meal_cap}, {rule_id: TIME-03, helper: split_transactions}], undetermined: [], complete: false}
+  - id: a complete context decides them, with nothing pending
+    rule_ids: [MEAL-01, TIME-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [*meal]
+    expected: {findings: [], pending_helpers: [], undetermined: [], complete: true}
+  - id: a breach is a finding, and the result is still complete
+    rule_ids: [MEAL-01, TIME-03]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, unit_price: "75.01", amount: "75.01", amount_usd: "75.01"}]}]
+    expected: {findings: [{rule_id: MEAL-01, severity: medium, scope: receipt, receipt_id: R1, line_ids: []}], pending_helpers: [], undetermined: [], complete: true}
+  - id: a partial context leaves them undetermined, not clean
+    rule_ids: [MEAL-01, TIME-03]
+    receipt_id: R1
+    complete: false
+    with_context: true
+    receipts: [*meal]
+    expected: {findings: [], pending_helpers: [], undetermined: [{rule_id: MEAL-01, line_id: null}, {rule_id: TIME-03, line_id: null}], complete: false}
+  - id: a helper rule and a condition rule keep the order of the ruleset
+    rule_ids: [ALC-01, ALC-02, MCC-02]
+    receipt_id: R1
+    complete: true
+    with_context: true
+    receipts: [{<<: *meal, mcc: "5813", submitted_expense_type: Client Entertainment, attendee_count: 2, line_items: [{<<: *line, category: alcohol, unit_price: "60.01", amount: "60.01", amount_usd: "60.01"}]}]
+    expected:
+      findings:
+        - {rule_id: ALC-02, severity: medium, scope: item, receipt_id: R1, line_ids: [L1]}
+        - {rule_id: MCC-02, severity: null, scope: receipt, receipt_id: R1, line_ids: []}
+      complete: true
+
+baggage:
+  - id: no reference is not within the allowance
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: personal_care, essential_toiletry: true, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}]
+    expected: {line_ids: [L1], total_usd: null, within: false}
+  - id: another kind of reference is not a delay reference
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, pre_approval_ref: PA-1, vp_approval_ref: VP-1, manager_approval_ref: MG-1, line_items: [{<<: *line, category: personal_care, essential_toiletry: true, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}]
+    expected: {line_ids: [L1], total_usd: null, within: false}
+  - id: at the allowance
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: personal_care, essential_toiletry: true, unit_price: "150.00", amount: "150.00", amount_usd: "150.00"}]}]
+    expected: {line_ids: [L1], total_usd: "150.00", within: true}
+  - id: just above the allowance
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: personal_care, essential_toiletry: true, unit_price: "150.01", amount: "150.01", amount_usd: "150.01"}]}]
+    expected: {line_ids: [L1], total_usd: "150.01", within: false}
+  - id: toiletries and clothing share one allowance per delay across receipts
+    receipt_id: R2
+    complete: true
+    receipts:
+      - {<<: *meal, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: personal_care, essential_toiletry: true, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+      - {<<: *meal, receipt_id: R2, baggage_delay_ref: BAG-1, line_items: [{<<: *line, line_id: L2, category: clothing, unit_price: "50.01", amount: "50.01", amount_usd: "50.01"}, {<<: *line, line_id: L3, category: food_beverage}]}
+    expected: {line_ids: [L2], total_usd: "150.01", within: false}
+  - id: another delay has its own allowance
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: personal_care, essential_toiletry: true, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+      - {<<: *meal, receipt_id: R2, baggage_delay_ref: BAG-2, line_items: [{<<: *line, category: clothing, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+    expected: {line_ids: [L1], total_usd: "100.00", within: true}
+  - id: another employee has their own allowance
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: personal_care, essential_toiletry: true, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-2, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: clothing, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}
+    expected: {line_ids: [L1], total_usd: "100.00", within: true}
+  - id: a partial context cannot show it is within
+    receipt_id: R1
+    complete: false
+    receipts: [{<<: *meal, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: personal_care, essential_toiletry: true, unit_price: "100.00", amount: "100.00", amount_usd: "100.00"}]}]
+    expected: {line_ids: [L1], total_usd: "100.00", within: null}
+  - id: a known discount with no USD amount leaves the allowance with no lower bound
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, baggage_delay_ref: BAG-1, currency: EUR, fx_rate_to_usd: null, total_amount_usd: null, line_items: [{<<: *line, category: clothing, unit_price: "155.00", amount: "155.00", amount_usd: "155.00"}, {<<: *line, line_id: L2, category: clothing, unit_price: "-10.00", amount: "-10.00", amount_usd: null}]}]
+    expected: {line_ids: [L1, L2], total_usd: "155.00", within: null}
+  - id: a partial context above it proves nothing, as a receipt not seen could lower the total
+    receipt_id: R1
+    complete: false
+    receipts: [{<<: *meal, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: personal_care, essential_toiletry: true, unit_price: "150.01", amount: "150.01", amount_usd: "150.01"}]}]
+    expected: {line_ids: [L1], total_usd: "150.01", within: null}
+  - id: personal care not known to be an essential toiletry leaves it open
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: personal_care, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}]
+    expected: {line_ids: [L1], total_usd: "0", within: null}
+  - id: personal care known not to be an essential toiletry does not use up the allowance
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, baggage_delay_ref: BAG-1, line_items: [{<<: *line, line_id: L1, category: clothing, unit_price: "150.00", amount: "150.00", amount_usd: "150.00"}, {<<: *line, line_id: L2, category: personal_care, essential_toiletry: false, unit_price: "120.00", amount: "120.00", amount_usd: "120.00"}]}]
+    expected: {line_ids: [L1], total_usd: "150.00", within: true}
+  - id: a line with no category leaves it open
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, baggage_delay_ref: BAG-1, line_items: [{<<: *line, line_id: L1, category: personal_care, essential_toiletry: true, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}, {<<: *line, line_id: L2, category: null}]}]
+    expected: {line_ids: [L1], total_usd: "10.00", within: null}
+
+contexts:
+  - {id: receipts are held in id order, customer_id: northwind, complete: true, receipts: [{<<: *meal, receipt_id: R2}, {<<: *meal, receipt_id: R1}], expected: {receipt_ids: [R1, R2], complete: true}}
+  - {id: a repeat counts once, customer_id: northwind, complete: true, receipts: [*meal, *meal], expected: {receipt_ids: [R1], complete: true}}
+  - {id: a partial context says so, customer_id: northwind, complete: false, receipts: [*meal], expected: {receipt_ids: [R1], complete: false}}
+  - {id: an empty context is allowed, customer_id: northwind, complete: true, receipts: [], expected: {receipt_ids: [], complete: true}}
+  - {id: an entity is derived on the way in, customer_id: northwind, complete: true, receipts: [{<<: *meal, employee_country: IN}], expected: {receipt_ids: [R1], complete: true}}
+
+refused:
+  - {id: one id with different contents, customer_id: northwind, complete: true, receipts: [*meal, {<<: *meal, total_amount: "41.00", total_amount_usd: "41.00"}], expected: "R1: appears twice with different contents"}
+  - {id: a receipt that fails admission, customer_id: northwind, complete: true, receipts: [{<<: *meal, employee_country: IN, entity: GLOBAL}], expected: "entity 'GLOBAL' contradicts employee_country 'IN'"}
+  - {id: a date with no time, customer_id: northwind, complete: true, receipts: [{<<: *meal, transaction_datetime: "2026-04-14"}], expected: needs a time}
+  - {id: no customer, customer_id: "  ", complete: true, receipts: [*meal], expected: a receipt context needs a customer_id}
+
+recipients:
+  - {id: RCP-018-L1, line_id: RCP-018-L1, expected: {recipient_name: A. Moreau, recipient_type: client}}
+  - {id: RCP-022-L1, line_id: RCP-022-L1, expected: {recipient_name: R. Delgado, recipient_type: government_official}}
+  - {id: RCP-022-L2, line_id: RCP-022-L2, expected: {recipient_name: R. Delgado, recipient_type: government_official}}

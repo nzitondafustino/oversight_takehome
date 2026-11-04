@@ -1,0 +1,400 @@
+suite: report
+
+# build_report, after every other step, on the real ruleset unless a case gives its own `rules`.
+#
+# real:     `receipt_id`, in a context of `receipts` that is `complete`, for customer `northwind`.
+# made_up:  the same, with `rules`.
+# refused:  build_report cannot go ahead. expected is an error regex.
+#
+# expected holds any of: exceptions, unresolved, replaced, waived, excused and uncitable, each by
+# rule_id, severity and line_ids; signals, by rule_id and line_ids; uncertainty, by line_id, field and
+# reason; open, by rule_id, whole_receipt, line_ids and entries; decided; and sources, the rule IDs
+# and line IDs of every source in every group, in order.
+
+templates:
+  line: &line
+    line_id: L1
+    description_raw: Item
+    language: en
+    quantity: 1
+    unit_price: "40.00"
+    amount: "40.00"
+    amount_usd: "40.00"
+    category: food_beverage
+    confidence: "0.9"
+  meal: &meal
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    submitted_expense_type: Meals - Individual
+    merchant_name: Verona Grill
+    mcc: "5812"
+    transaction_datetime: "2026-04-14T12:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: $lines
+    total_amount_usd: $lines
+    trip_id: T1
+    trip_nights: 5
+    itemized: true
+    line_items: [*line]
+  travel: &travel
+    <<: *meal
+    submitted_expense_type: Travel - Other
+    mcc: "5651"
+  gear: &gear
+    <<: *meal
+    submitted_expense_type: Computer Equipment
+    mcc: "5045"
+    line_items: [{<<: *line, category: computer_accessory, unit_price: "329.00", amount: "329.00", amount_usd: "329.00"}]
+  provenance: &provenance
+    translator: developer
+    clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  base: &base
+    policy_doc: doc.md
+    title: A rule
+    source_quote: quote
+    provenance: *provenance
+  threshold: &threshold
+    <<: *base
+    rule_id: EXC-03
+    kind: process
+    directive: uncertainty
+    params: {min_confidence: {type: number, value: "0.5", unit: ratio, source: project_decision}}
+  item_rule: &item_rule
+    <<: *base
+    kind: check
+    outcome: exception
+    severity: low
+    scope: item
+    select: {op: eq, field: item.category, value: food_beverage}
+  whole_rule: &whole_rule
+    <<: *base
+    kind: check
+    outcome: exception
+    severity: low
+    scope: receipt
+    applies_when: {op: eq, field: receipt.mcc, value: "5812"}
+
+real:
+  # One rule, several lines
+  - id: every line a rule caught, in one exception
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, category: alcohol, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}, {<<: *line, line_id: L2, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}, {<<: *line, line_id: L3, category: alcohol, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}]}]
+    expected:
+      exceptions: [{rule_id: ALC-01, severity: high, line_ids: [L1, L3]}]
+      sources: [{rule_id: ALC-01, line_ids: [L1]}, {rule_id: ALC-01, line_ids: [L3]}]
+      decided: true
+  - id: lines are in receipt order, not by name
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L9, category: alcohol, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}, {<<: *line, line_id: L1, category: alcohol, unit_price: "20.00", amount: "20.00", amount_usd: "20.00"}]}]
+    expected: {exceptions: [{rule_id: ALC-01, severity: high, line_ids: [L9, L1]}]}
+
+  # Several rules, one line
+  - id: different rules on one line stay apart
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: alcohol, venue_type: golf}]}]
+    expected:
+      exceptions:
+        - {rule_id: ALC-01, severity: high, line_ids: [L1]}
+        - {rule_id: ENT-01, severity: medium, line_ids: [L1]}
+
+  # Whole-receipt rules
+  - id: a whole-receipt exception cites no line
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, mcc: "5921"}]
+    expected: {exceptions: [{rule_id: MCC-01, severity: high, line_ids: []}]}
+  - id: several whole-receipt exceptions stay apart
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, merchant_name: null, currency: EUR, fx_rate_to_usd: null, line_items: [{<<: *line, amount_usd: null}]}]
+    expected:
+      exceptions:
+        - {rule_id: DOC-02, severity: medium, line_ids: []}
+        - {rule_id: DOC-04, severity: medium, line_ids: []}
+  - id: a review signal from a rule is not an exception
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, mcc: "5411"}]
+    expected: {exceptions: [], signals: [{rule_id: MCC-02, line_ids: []}]}
+
+  # The highest severity, with each source keeping its own
+  - id: mixed severities report the highest
+    receipt_id: R1
+    complete: true
+    receipts:
+      - <<: *travel
+        trip_id: null
+        trip_nights: null
+        line_items:
+          - {<<: *line, line_id: L1, category: health_otc}
+          - {<<: *line, line_id: L2, category: other, item_kind: prescription_medication}
+          - {<<: *line, line_id: L3, category: health_otc}
+    expected:
+      exceptions: [{rule_id: HEALTH-01, severity: medium, line_ids: [L1, L2, L3]}]
+      source_severities: [low, medium, low]
+
+  # A gratuity or service fee is never cited
+  - id: a gratuity a rule caught is kept as a source, but not cited
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, category: other, venue_type: golf}, {<<: *line, line_id: L2, category: service_fee, venue_type: golf}]}]
+    expected:
+      exceptions: [{rule_id: ENT-01, severity: medium, line_ids: [L1]}]
+      sources: [{rule_id: ENT-01, line_ids: [L1]}, {rule_id: ENT-01, line_ids: [L2]}]
+  - id: an exception with only a gratuity to cite cannot be raised
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, category: service_fee, venue_type: golf}]}]
+    expected:
+      exceptions: []
+      uncitable: [{rule_id: ENT-01, severity: medium, line_ids: []}]
+      sources: [{rule_id: ENT-01, line_ids: [L1]}]
+
+  # Resolutions are never merged
+  - id: replaced findings are audit history, and do not count
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, employee_country: IN, currency: INR, fx_rate_to_usd: "0.012", total_amount: "3333.33", line_items: [{<<: *line, category: alcohol, unit_price: "3333.33", amount: "3333.33"}]}]
+    expected:
+      exceptions: [{rule_id: REG-01, severity: high, line_ids: [L1]}]
+      replaced: [{rule_id: ALC-01, severity: high, line_ids: [L1]}]
+  - id: waived findings are audit history, and do not count
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gear, pre_approval_ref: PA-1}]
+    expected:
+      exceptions: []
+      waived: [{rule_id: TECH-02, severity: medium, line_ids: [L1]}]
+      decided: true
+  - id: excused findings are audit history, and do not count
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *line, category: clothing}]}]
+    expected:
+      exceptions: []
+      excused: [{rule_id: PERS-02, severity: medium, line_ids: [L1]}]
+      decided: true
+  - id: a rejected carve-out leaves an exception
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, line_items: [{<<: *line, category: clothing}]}]
+    expected: {exceptions: [{rule_id: PERS-02, severity: medium, line_ids: [L1]}], excused: [], decided: true}
+  - id: an undetermined carve-out is not an exception yet, and not excused
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: clothing}]}]
+    expected:
+      exceptions: []
+      excused: []
+      unresolved: [{rule_id: PERS-02, severity: medium, line_ids: [L1]}]
+      decided: false
+  - id: each source keeps its own note, though lines and notes sort differently
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *line, line_id: L9, category: personal_care, essential_toiletry: false}, {<<: *line, line_id: L1, category: personal_care, essential_toiletry: false}]}]
+    expected:
+      exceptions: [{rule_id: PERS-01, severity: medium, line_ids: [L9, L1]}]
+      source_notes:
+        - {line_ids: [L9], note: L9 is not an item the allowance covers}
+        - {line_ids: [L1], note: L1 is not an item the allowance covers}
+  - id: identical notes are kept for each source, not merged away
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, line_items: [{<<: *line, line_id: L2, category: clothing}, {<<: *line, line_id: L1, category: clothing}]}]
+    expected:
+      source_notes:
+        - {line_ids: [L2], note: no baggage_delay_ref is on file}
+        - {line_ids: [L1], note: no baggage_delay_ref is on file}
+  - id: a source with no note keeps none, beside one with a note
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, mcc: "5411", line_items: [{<<: *line, category: alcohol, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected:
+      source_notes:
+        - {line_ids: [L1], note: null}
+        - {line_ids: [], note: null}
+  - id: one rule with active and excused lines makes two groups
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, baggage_delay_ref: BAG-1, baggage_delay_hours: "30", line_items: [{<<: *line, line_id: L1, category: personal_care, essential_toiletry: true}, {<<: *line, line_id: L2, category: personal_care, essential_toiletry: false}]}]
+    expected:
+      exceptions: [{rule_id: PERS-01, severity: medium, line_ids: [L2]}]
+      excused: [{rule_id: PERS-01, severity: medium, line_ids: [L1]}]
+  - id: one rule with active and replaced lines makes two groups
+    receipt_id: R1
+    complete: true
+    receipts:
+      - <<: *meal
+        submitted_expense_type: Client Gifts
+        mcc: "5947"
+        line_items:
+          - {<<: *line, line_id: L1, category: gift, recipient_name: R. Delgado, recipient_type: government_official, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}
+          - {<<: *line, line_id: L2, category: gift, recipient_name: A. Moreau, recipient_type: client, unit_price: "60.00", amount: "60.00", amount_usd: "60.00"}
+    expected:
+      exceptions:
+        - {rule_id: GIFT-01, severity: medium, line_ids: [L2]}
+        - {rule_id: GIFT-04, severity: critical, line_ids: [L1]}
+      replaced: [{rule_id: GIFT-01, severity: medium, line_ids: [L1]}]
+
+  - id: a waived finding on a gratuity stays waived, as only an active one can be uncitable
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, vp_approval_ref: VP-1, line_items: [{<<: *line, category: service_fee, venue_type: golf}]}]
+    expected: {exceptions: [], uncitable: [], waived: [{rule_id: ENT-01, severity: medium, line_ids: []}]}
+  - id: an exception one receipt proves stands beside an open TIME-03
+    receipt_id: R1
+    complete: false
+    receipts: [{<<: *meal, itemized: false, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, category: other}]}]
+    expected:
+      exceptions: [{rule_id: DOC-01, severity: medium, line_ids: []}, {rule_id: MEAL-02, severity: low, line_ids: []}]
+      unresolved: []
+      open_includes: [{rule_id: MEAL-01, whole_receipt: true, line_ids: [], entries: 1}, {rule_id: TIME-03, whole_receipt: true, line_ids: [], entries: 1}]
+      decided: false
+  - id: a possible replacement leaves the exception unresolved
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *line, line_id: L2, category: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected:
+      unresolved:
+        - {rule_id: MEAL-01, severity: medium, line_ids: []}
+      open_includes: [{rule_id: TIME-03, whole_receipt: true, line_ids: [], entries: 1}]
+      decided: false
+  - id: several signals across lines are one group, with each reason kept
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, confidence: "0.1"}, {<<: *line, line_id: L2, category: foood}, {<<: *line, line_id: L3, category: gift}]}]
+    expected:
+      uncertainty:
+        - {line_id: L1, field: category, reason: category_uncertain}
+        - {line_id: L2, field: category, reason: category_uncertain}
+        - {line_id: L3, field: recipient_type, reason: secondary_field_uncertain}
+      groups_of_uncertainty: 1
+      decided: false
+  - id: several signals on one line are one group, with none double counted
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, baggage_delay_ref: BAG-1, submitted_expense_type: Client Gifts, line_items: [{<<: *line, category: personal_care, venue_type: opera, item_kind: tablet}]}]
+    expected:
+      uncertainty:
+        - {line_id: L1, field: essential_toiletry, reason: secondary_field_uncertain}
+        - {line_id: L1, field: item_kind, reason: secondary_field_uncertain}
+        - {line_id: L1, field: recipient_type, reason: secondary_field_uncertain}
+        - {line_id: L1, field: venue_type, reason: secondary_field_uncertain}
+      groups_of_uncertainty: 1
+      uncertainty_lines: [L1]
+  - id: a signal and a confirmed exception stay apart
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1, category: tobacco}, {<<: *line, line_id: L2, venue_type: made_up}, {<<: *line, line_id: L3, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}]
+    expected:
+      exceptions: [{rule_id: PERS-03, severity: high, line_ids: [L1]}]
+      uncertainty: [{line_id: L2, field: venue_type, reason: secondary_field_uncertain}]
+      decided: false
+  - id: no signal means no uncertainty group
+    receipt_id: R1
+    complete: true
+    receipts: [*meal]
+    expected: {exceptions: [], uncertainty: [], groups_of_uncertainty: 0, open: [], decided: true}
+
+  # Open questions are summaries, not violations
+  - id: what could not be decided is one question per rule
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *travel, line_items: [{<<: *line, line_id: L1, category: null}, {<<: *line, line_id: L2, category: null}]}]
+    expected:
+      exceptions: []
+      open_includes:
+        - {rule_id: ALC-03, whole_receipt: false, line_ids: [L1, L2], entries: 2}
+        - {rule_id: DOC-03, whole_receipt: true, line_ids: [], entries: 1}
+      decided: false
+  - id: a partial context is a question, with no exception
+    receipt_id: R1
+    complete: false
+    receipts: [*meal]
+    expected:
+      exceptions: []
+      open:
+        - {rule_id: MEAL-01, whole_receipt: true, line_ids: [], entries: 1}
+        - {rule_id: TIME-03, whole_receipt: true, line_ids: [], entries: 1}
+      decided: false
+
+  # Receipts stay apart
+  - id: a breach on one receipt is reported only on its own
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, category: alcohol}]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-2, line_items: [{<<: *line, line_id: L1, category: tobacco}, {<<: *line, line_id: L2, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {exceptions: [{rule_id: ALC-01, severity: high, line_ids: [L1]}]}
+  - id: the other receipt reports its own
+    receipt_id: R2
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, category: alcohol}]}
+      - {<<: *meal, receipt_id: R2, employee_id: E-2, line_items: [{<<: *line, line_id: L1, category: tobacco}, {<<: *line, line_id: L2, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {exceptions: [{rule_id: PERS-03, severity: high, line_ids: [L1]}]}
+
+made_up:
+  - id: only rules EXC-04 lists are whole-receipt
+    rules:
+      - *threshold
+      - {<<: *whole_rule, rule_id: AA-01}
+      - {<<: *base, rule_id: EXC-04, kind: process, directive: evidence, params: {whole_receipt_rules: {type: set, values: [AA-01]}}}
+    receipt_id: R1
+    complete: true
+    receipts: [*meal]
+    expected: {exceptions: [{rule_id: AA-01, severity: low, line_ids: []}]}
+  - id: an item review signal is not merged, as EXC-04 speaks of exceptions
+    rules:
+      - *threshold
+      - {<<: *item_rule, rule_id: AA-01, outcome: review_signal, severity: null}
+      - {<<: *whole_rule, rule_id: BB-01}
+      - {<<: *base, rule_id: EXC-04, kind: process, directive: evidence, params: {whole_receipt_rules: {type: set, values: [BB-01]}}}
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *meal, line_items: [{<<: *line, line_id: L1}, {<<: *line, line_id: L2}]}]
+    expected: {signals: [{rule_id: AA-01, line_ids: [L1]}, {rule_id: AA-01, line_ids: [L2]}]}
+
+refused:
+  - id: an active evidence directive is needed
+    rules: [*threshold, {<<: *whole_rule, rule_id: AA-01}]
+    receipt_id: R1
+    complete: true
+    receipts: [*meal]
+    expected: no active evidence directive
+  - id: a retired evidence directive does not count
+    rules:
+      - *threshold
+      - {<<: *whole_rule, rule_id: AA-01}
+      - {<<: *base, rule_id: EXC-04, kind: process, directive: evidence, status: retired, params: {whole_receipt_rules: {type: set, values: [AA-01]}}}
+    receipt_id: R1
+    complete: true
+    receipts: [*meal]
+    expected: no active evidence directive
+  - id: a whole-receipt exception EXC-04 does not list
+    rules:
+      - *threshold
+      - {<<: *whole_rule, rule_id: AA-01}
+      - {<<: *whole_rule, rule_id: BB-01}
+      - {<<: *base, rule_id: EXC-04, kind: process, directive: evidence, params: {whole_receipt_rules: {type: set, values: [BB-01]}}}
+    receipt_id: R1
+    complete: true
+    receipts: [*meal]
+    expected: "AA-01: is a whole-receipt finding, but EXC-04 does not list it"
+  - id: an item exception EXC-04 lists as whole-receipt
+    rules:
+      - *threshold
+      - {<<: *item_rule, rule_id: AA-01}
+      - {<<: *base, rule_id: EXC-04, kind: process, directive: evidence, params: {whole_receipt_rules: {type: set, values: [AA-01]}}}
+    receipt_id: R1
+    complete: true
+    receipts: [*meal]
+    expected: "AA-01: is an item finding, but EXC-04 lists it as whole-receipt"

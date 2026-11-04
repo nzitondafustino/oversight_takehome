@@ -1,0 +1,7 @@
+# Recipients a developer read by hand from the printed line text, for oracle scenarios only.
+# The dataset's answers hold no recipient fields, so these are not gold labels and were not made by any
+# classifier. The same three lines are RECIPIENTS in tests/engine/test_helpers.py.
+recipients:
+  RCP-018-L1: {recipient_name: A. Moreau, recipient_type: client}
+  RCP-022-L1: {recipient_name: R. Delgado, recipient_type: government_official}
+  RCP-022-L2: {recipient_name: R. Delgado, recipient_type: government_official}

@@ -1,0 +1,794 @@
+suite: extraction
+
+# Rule extraction from the policy documents. Parse step only, no LLM.
+#
+# documents: everything found in a real file under data/policy-docs/.
+#   rule_ids is exact and in order. context_starts gives how each non-rule block begins.
+# clauses: one real rule, with every extracted field compared exactly.
+#   starts and ends mark where its text begins and stops, with wrapped lines joined.
+# inline: the same check as documents, on text written here, for shapes the real
+#   files do not all contain. texts gives a clause's exact text, with lines joined,
+#   and thresholds its exact thresholds.
+# refused: text that must fail, with an error matching the pattern in `expected`.
+
+documents:
+  - id: approval and exception handling
+    policy_doc: approval-and-exception-handling.md
+    expected:
+      title: Approval and Exception Handling
+      rule_ids: [EXC-01, EXC-02, EXC-03, EXC-04]
+      context_starts: ["| Severity | Meaning |"]
+
+  - id: gifts and awards
+    policy_doc: gifts-and-awards-policy.md
+    expected:
+      title: Gifts and Awards Policy
+      rule_ids: [GIFT-01, GIFT-02, GIFT-03, GIFT-04]
+      context_starts: ["A **gift** is anything"]
+
+  - id: meals and entertainment
+    policy_doc: meals-and-entertainment-policy.md
+    expected:
+      title: Meals and Entertainment Policy
+      rule_ids: [MEAL-01, MEAL-02, ALC-01, ALC-02, ALC-03, ENT-01, ENT-02]
+      context_starts: ["Applies to all employees", "**Note on identification.**"]
+
+  - id: merchant category risk
+    policy_doc: merchant-category-risk.md
+    expected:
+      title: Merchant Category Code (MCC) Risk
+      rule_ids: [MCC-01, MCC-02, MCC-03]
+      context_starts: ["Merchant category codes describe"]
+
+  - id: non-reimbursable items
+    policy_doc: non-reimbursable-items.md
+    expected:
+      title: Non-Reimbursable Items
+      rule_ids: [PERS-01, PERS-02, PERS-03, HOUSE-01, HEALTH-01, LAUNDRY-01]
+      context_starts: []
+
+  - id: receipt documentation
+    policy_doc: receipt-documentation-requirements.md
+    expected:
+      title: Receipt and Documentation Requirements
+      rule_ids: [DOC-01, DOC-02, DOC-03, DOC-04]
+      context_starts: []
+
+  - id: regional addendum
+    policy_doc: regional-addendum.md
+    expected:
+      title: Regional Addendum
+      rule_ids: [REG-01, REG-02, REG-03, REG-04, REG-05]
+      context_starts: ["Regional rules **override**"]
+
+  - id: technology and equipment
+    policy_doc: technology-and-equipment-policy.md
+    expected:
+      title: Technology and Equipment Policy
+      rule_ids: [TECH-01, TECH-02, TECH-03, TECH-04]
+      context_starts: []
+
+  - id: transaction patterns
+    policy_doc: transaction-pattern-rules.md
+    expected:
+      title: Transaction Pattern Rules
+      rule_ids: [TIME-01, TIME-02, TIME-03, TIME-04]
+      context_starts: ["These rules look at when"]
+
+clauses:
+  - id: EXC-01
+    policy_doc: approval-and-exception-handling.md
+    rule_id: EXC-01
+    expected:
+      title: Receipt disposition
+      section: Disposition
+      severities: [critical, high, medium, low]
+      review_signal: false
+      thresholds: []
+      references: []
+      starts: "A receipt's disposition is determined"
+      ends: "must always produce the same disposition."
+
+  - id: EXC-02
+    policy_doc: approval-and-exception-handling.md
+    rule_id: EXC-02
+    expected:
+      title: Approval references
+      section: Disposition
+      severities: []
+      review_signal: false
+      thresholds: []
+      references: [TECH-02, ENT-01, TECH-04, PERS-01, PERS-02]
+      starts: "Every approval or exception reference"
+      ends: "A reference does not waive any other rule."
+
+  - id: EXC-03
+    policy_doc: approval-and-exception-handling.md
+    rule_id: EXC-03
+    expected:
+      title: Uncertainty
+      section: Disposition
+      severities: []
+      review_signal: true
+      thresholds: []
+      references: []
+      starts: "Where the category of an item"
+      ends: "a false accusation against an employee."
+
+  - id: EXC-04
+    policy_doc: approval-and-exception-handling.md
+    rule_id: EXC-04
+    expected:
+      title: Evidence
+      section: Disposition
+      severities: []
+      review_signal: false
+      thresholds: []
+      references: [MCC-01, MEAL-01, MEAL-02, DOC-01, DOC-02, DOC-03, DOC-04, REG-02, REG-03, REG-04, TIME-03]
+      starts: "Every exception must cite the rule identifier"
+      ends: "Each rule appears at most once per receipt."
+
+  - id: GIFT-01
+    policy_doc: gifts-and-awards-policy.md
+    rule_id: GIFT-01
+    expected:
+      title: Client gift cap
+      section: null
+      severities: [medium]
+      review_signal: false
+      thresholds: [{value: "50", unit: usd}, {value: "10", unit: usd}]
+      references: [GIFT-02]
+      starts: "Gifts to clients and prospects are capped"
+      ends: "one exception cites every line involved."
+
+  - id: GIFT-02
+    policy_doc: gifts-and-awards-policy.md
+    rule_id: GIFT-02
+    expected:
+      title: Gift cards and cash equivalents
+      section: null
+      severities: [high]
+      review_signal: false
+      thresholds: []
+      references: []
+      starts: "Gift cards, prepaid cards, vouchers"
+      ends: "This is a **high** exception."
+
+  - id: GIFT-03
+    policy_doc: gifts-and-awards-policy.md
+    rule_id: GIFT-03
+    expected:
+      title: Employee gifts and awards
+      section: null
+      severities: [medium]
+      review_signal: false
+      thresholds: []
+      references: []
+      starts: "Recognition gifts for employees"
+      ends: "This is a **medium** exception."
+
+  - id: GIFT-04
+    policy_doc: gifts-and-awards-policy.md
+    rule_id: GIFT-04
+    expected:
+      title: Government officials
+      section: null
+      severities: [critical]
+      review_signal: false
+      thresholds: []
+      references: [EXC-04, GIFT-01]
+      starts: "Gifts, meals, or anything of value"
+      ends: "never to the standard audit queue."
+
+  - id: MEAL-01 keeps its bullets
+    policy_doc: meals-and-entertainment-policy.md
+    rule_id: MEAL-01
+    expected:
+      title: Daily meal cap
+      section: Meal limits
+      severities: [medium]
+      review_signal: false
+      thresholds: [{value: "75", unit: usd}, {value: "100", unit: usd}]
+      references: [REG-02, REG-03]
+      starts: "Meal spend is capped at"
+      ends: "reported under REG-02 or REG-03 instead of MEAL-01."
+
+  - id: MEAL-02
+    policy_doc: meals-and-entertainment-policy.md
+    rule_id: MEAL-02
+    expected:
+      title: Attendee documentation
+      section: Meal limits
+      severities: [low]
+      review_signal: false
+      thresholds: [{value: "150", unit: usd}]
+      references: [MEAL-01]
+      starts: "Any meal receipt (as defined in MEAL-01)"
+      ends: "A missing attendee count is a **low** exception."
+
+  - id: ALC-01
+    policy_doc: meals-and-entertainment-policy.md
+    rule_id: ALC-01
+    expected:
+      title: Alcohol requires a documented entertainment context
+      section: Alcohol
+      severities: [high]
+      review_signal: false
+      thresholds: [{value: "2", unit: count}]
+      references: []
+      starts: "Alcohol is reimbursable **only**"
+      ends: "is a **high** exception."
+
+  - id: ALC-02 keeps the italic scope paragraph
+    policy_doc: meals-and-entertainment-policy.md
+    rule_id: ALC-02
+    expected:
+      title: Alcohol per-attendee cap
+      section: Alcohol
+      severities: [medium]
+      review_signal: false
+      thresholds: [{value: "30", unit: usd}]
+      references: [ALC-01, ALC-03]
+      starts: "Where alcohol is permitted under ALC-01"
+      ends: "is retail and is governed by ALC-03 alone."
+
+  - id: ALC-03 stops before the bold note
+    policy_doc: meals-and-entertainment-policy.md
+    rule_id: ALC-03
+    expected:
+      title: Retail alcohol
+      section: Alcohol
+      severities: [high]
+      review_signal: false
+      thresholds: []
+      references: [MCC-01]
+      starts: "Alcohol purchased from a package store"
+      ends: "See also MCC-01 in `merchant-category-risk.md`."
+
+  - id: ENT-01
+    policy_doc: meals-and-entertainment-policy.md
+    rule_id: ENT-01
+    expected:
+      title: Entertainment venues
+      section: Entertainment
+      severities: [medium]
+      review_signal: false
+      thresholds: []
+      references: [EXC-02]
+      starts: "Golf, sporting events, theatre"
+      ends: "Without one this is a **medium** exception."
+
+  - id: ENT-02
+    policy_doc: meals-and-entertainment-policy.md
+    rule_id: ENT-02
+    expected:
+      title: Gambling
+      section: Entertainment
+      severities: [high]
+      review_signal: false
+      thresholds: []
+      references: []
+      starts: "Gambling spend of any kind"
+      ends: "is a **high** exception."
+
+  - id: MCC-01
+    policy_doc: merchant-category-risk.md
+    rule_id: MCC-01
+    expected:
+      title: High-risk merchant category
+      section: null
+      severities: [high]
+      review_signal: false
+      thresholds: []
+      references: []
+      starts: "A transaction at a high-risk MCC"
+      ends: "any routine business purpose."
+
+  - id: MCC-02
+    policy_doc: merchant-category-risk.md
+    rule_id: MCC-02
+    expected:
+      title: Medium-risk merchant category
+      section: null
+      severities: []
+      review_signal: true
+      thresholds: []
+      references: []
+      starts: "A medium-risk MCC raises a **review signal** only."
+      ends: "an exception on the same receipt."
+
+  - id: MCC-03
+    policy_doc: merchant-category-risk.md
+    rule_id: MCC-03
+    expected:
+      title: Bars and taverns
+      section: null
+      severities: []
+      review_signal: false
+      thresholds: []
+      references: [ALC-01, ALC-02, ALC-03]
+      starts: "A bar (MCC 5813) serves alcohol"
+      ends: "never treated as retail under ALC-03."
+
+  - id: PERS-01 keeps the baggage-delay exception
+    policy_doc: non-reimbursable-items.md
+    rule_id: PERS-01
+    expected:
+      title: Personal care and grooming
+      section: Personal care
+      severities: [medium]
+      review_signal: false
+      thresholds: [{value: "24", unit: hour}, {value: "150", unit: usd}]
+      references: [EXC-02]
+      starts: "Toiletries, cosmetics, razors"
+      ends: "provided the delay reference is recorded (see EXC-02)."
+
+  - id: PERS-02
+    policy_doc: non-reimbursable-items.md
+    rule_id: PERS-02
+    expected:
+      title: Clothing and footwear
+      section: Personal care
+      severities: [medium]
+      review_signal: false
+      thresholds: [{value: "150", unit: usd}]
+      references: []
+      starts: "Clothing, footwear, and fashion accessories"
+      ends: "Above it, the exception cites every line involved."
+
+  - id: PERS-03
+    policy_doc: non-reimbursable-items.md
+    rule_id: PERS-03
+    expected:
+      title: Tobacco and vaping
+      section: Personal care
+      severities: [high]
+      review_signal: false
+      thresholds: []
+      references: []
+      starts: "Cigarettes, cigars, loose tobacco"
+      ends: "This is a **high** exception."
+
+  - id: HOUSE-01
+    policy_doc: non-reimbursable-items.md
+    rule_id: HOUSE-01
+    expected:
+      title: Household goods
+      section: Household
+      severities: [medium]
+      review_signal: false
+      thresholds: []
+      references: []
+      starts: "Cleaning supplies, laundry products"
+      ends: "This is a **medium** exception."
+
+  - id: HEALTH-01 has two severities
+    policy_doc: non-reimbursable-items.md
+    rule_id: HEALTH-01
+    expected:
+      title: Over-the-counter medication
+      section: Health and services
+      severities: [low, medium]
+      review_signal: false
+      thresholds: [{value: "25", unit: usd}]
+      references: []
+      starts: "OTC medication is reimbursable only"
+      ends: "is a **medium** exception."
+
+  - id: LAUNDRY-01 has a threshold that is not money
+    policy_doc: non-reimbursable-items.md
+    rule_id: LAUNDRY-01
+    expected:
+      title: Laundry and dry cleaning
+      section: Health and services
+      severities: [low]
+      review_signal: false
+      thresholds: [{value: "4", unit: nights}]
+      references: []
+      starts: "Reimbursable only on trips of **four or more nights**"
+      ends: "it is a **low** exception."
+
+  - id: DOC-01
+    policy_doc: receipt-documentation-requirements.md
+    rule_id: DOC-01
+    expected:
+      title: Itemization threshold
+      section: null
+      severities: [medium]
+      review_signal: false
+      thresholds: [{value: "75", unit: usd}]
+      references: []
+      starts: "Any receipt with a total above"
+      ends: "the contents cannot be audited."
+
+  - id: DOC-02
+    policy_doc: receipt-documentation-requirements.md
+    rule_id: DOC-02
+    expected:
+      title: Legibility
+      section: null
+      severities: [medium]
+      review_signal: false
+      thresholds: []
+      references: []
+      starts: "A receipt must show the merchant name"
+      ends: "is a **medium** exception."
+
+  - id: DOC-03 keeps its table
+    policy_doc: receipt-documentation-requirements.md
+    rule_id: DOC-03
+    expected:
+      title: Expense type must match the contents
+      section: null
+      severities: [medium]
+      review_signal: false
+      thresholds: []
+      references: [TECH-01]
+      starts: "A receipt is misclassified when"
+      ends: "still not reimbursable under TECH-01."
+
+  - id: DOC-04
+    policy_doc: receipt-documentation-requirements.md
+    rule_id: DOC-04
+    expected:
+      title: Foreign currency
+      section: null
+      severities: [medium]
+      review_signal: false
+      thresholds: []
+      references: []
+      starts: "Receipts in a currency other than USD"
+      ends: "evaluated on the **USD** converted amount."
+
+  - id: REG-01
+    policy_doc: regional-addendum.md
+    rule_id: REG-01
+    expected:
+      title: Alcohol
+      section: APAC entity — employees in IN, JP, SG
+      severities: [high]
+      review_signal: false
+      thresholds: []
+      references: [ALC-01, ALC-02, ALC-03, MCC-01]
+      starts: "Alcohol is **never** reimbursable for APAC-entity"
+      ends: "such as MCC-01, still apply."
+
+  - id: REG-02
+    policy_doc: regional-addendum.md
+    rule_id: REG-02
+    expected:
+      title: Meal cap
+      section: APAC entity — employees in IN, JP, SG
+      severities: [medium]
+      review_signal: false
+      thresholds: [{value: "60", unit: usd}]
+      references: [MEAL-01]
+      starts: "The APAC daily meal cap is"
+      ends: "reported as REG-02, not MEAL-01."
+
+  - id: REG-03 is in euros
+    policy_doc: regional-addendum.md
+    rule_id: REG-03
+    expected:
+      title: Meal cap
+      section: EMEA entity — employees in GB, DE, FR, NL, IE, PT, ES
+      severities: [medium]
+      review_signal: false
+      thresholds: [{value: "70", unit: eur}]
+      references: [MEAL-01]
+      starts: "The EMEA daily meal cap is"
+      ends: "reported as REG-03, not MEAL-01."
+
+  - id: REG-04 is in euros
+    policy_doc: regional-addendum.md
+    rule_id: REG-04
+    expected:
+      title: VAT documentation
+      section: EMEA entity — employees in GB, DE, FR, NL, IE, PT, ES
+      severities: [low]
+      review_signal: false
+      thresholds: [{value: "50", unit: eur}]
+      references: []
+      starts: "Receipts above EUR 50"
+      ends: "treat it as missing."
+
+  - id: REG-05
+    policy_doc: regional-addendum.md
+    rule_id: REG-05
+    expected:
+      title: Conversion rate
+      section: All regions
+      severities: []
+      review_signal: false
+      thresholds: []
+      references: [DOC-04]
+      starts: "Currency conversion uses the rate"
+      ends: "a missing rate is reported under DOC-04."
+
+  - id: TECH-01
+    policy_doc: technology-and-equipment-policy.md
+    rule_id: TECH-01
+    expected:
+      title: Personal electronics are not reimbursable
+      section: Personal electronics
+      severities: [high]
+      review_signal: false
+      thresholds: []
+      references: []
+      starts: "This includes, and is not limited to"
+      ends: "regardless of stated business purpose."
+
+  - id: TECH-02 has a dollar sign in its title
+    policy_doc: technology-and-equipment-policy.md
+    rule_id: TECH-02
+    expected:
+      title: Peripherals under $200
+      section: Accessories and peripherals
+      severities: [medium]
+      review_signal: false
+      thresholds: [{value: "200", unit: usd}]
+      references: [EXC-02]
+      starts: "Computer accessories and peripherals"
+      ends: "without one it is a **medium** exception."
+
+  - id: TECH-03
+    policy_doc: technology-and-equipment-policy.md
+    rule_id: TECH-03
+    expected:
+      title: Mobile handsets
+      section: Phones and software
+      severities: [high]
+      review_signal: false
+      thresholds: []
+      references: []
+      starts: "Mobile phone hardware is procured centrally"
+      ends: "This is a **high** exception."
+
+  - id: TECH-04
+    policy_doc: technology-and-equipment-policy.md
+    rule_id: TECH-04
+    expected:
+      title: Software subscriptions
+      section: Phones and software
+      severities: [low]
+      review_signal: false
+      thresholds: []
+      references: [EXC-02]
+      starts: "Any software or SaaS subscription"
+      ends: "Without one this is a **low** exception."
+
+  - id: TIME-01
+    policy_doc: transaction-pattern-rules.md
+    rule_id: TIME-01
+    expected:
+      title: Overnight transactions
+      section: null
+      severities: []
+      review_signal: true
+      thresholds: [{value: "0", unit: hour}, {value: "5", unit: hour}]
+      references: []
+      starts: "A transaction timed from"
+      ends: "local time at the merchant."
+
+  - id: TIME-02
+    policy_doc: transaction-pattern-rules.md
+    rule_id: TIME-02
+    expected:
+      title: No associated trip
+      section: null
+      severities: []
+      review_signal: true
+      thresholds: []
+      references: []
+      starts: "An individual travel expense"
+      ends: "without travel and are not covered."
+
+  - id: TIME-03 is an exception among review signals
+    policy_doc: transaction-pattern-rules.md
+    rule_id: TIME-03
+    expected:
+      title: Split transactions
+      section: null
+      severities: [high]
+      review_signal: false
+      thresholds: [{value: "2", unit: count}, {value: "75", unit: usd}, {value: "50", unit: usd}]
+      references: [DOC-01, MEAL-01, REG-02, REG-03, GIFT-01]
+      starts: "Two or more receipts by the same employee"
+      ends: "not a separate breach of that threshold."
+
+  - id: TIME-04
+    policy_doc: transaction-pattern-rules.md
+    rule_id: TIME-04
+    expected:
+      title: Weekend spend on a weekday trip
+      section: null
+      severities: []
+      review_signal: true
+      thresholds: []
+      references: [TIME-02]
+      starts: "A transaction dated on a weekend"
+      ends: "where there is no trip record at all, TIME-02 covers it."
+
+inline:
+  - id: a heading ends a clause
+    text: |
+      # Doc
+
+      **AA-01 — One.** First clause.
+
+      ## Next
+
+      Plain prose after the heading.
+    expected:
+      title: Doc
+      rule_ids: [AA-01]
+      context_starts: ["Plain prose"]
+      texts: {AA-01: "First clause."}
+
+  - id: a bold note ends a clause
+    text: |
+      **AA-01 — One.** First clause.
+
+      **Note on something.** Not a rule.
+    expected:
+      title: null
+      rule_ids: [AA-01]
+      context_starts: ["**Note on something.**"]
+      texts: {AA-01: "First clause."}
+
+  - id: a bold note inside a paragraph does not end a clause
+    text: |
+      **AA-01 — One.** First clause
+      **Not a new paragraph.** Still the clause.
+    expected:
+      title: null
+      rule_ids: [AA-01]
+      context_starts: []
+      texts: {AA-01: "First clause **Not a new paragraph.** Still the clause."}
+
+  - id: bold at the start of a wrapped line does not end a clause
+    text: |
+      **AA-01 — One.** This is a
+
+      **high** exception.
+    expected:
+      title: null
+      rule_ids: [AA-01]
+      context_starts: []
+      texts: {AA-01: "This is a **high** exception."}
+
+  - id: an italic paragraph stays in its clause
+    text: |
+      **AA-01 — One.** First clause.
+
+      *Some exception.* It still belongs here.
+
+      **AA-02 — Two.** Second clause.
+    expected:
+      title: null
+      rule_ids: [AA-01, AA-02]
+      context_starts: []
+      texts:
+        AA-01: "First clause. *Some exception.* It still belongs here."
+        AA-02: "Second clause."
+
+  - id: a rule ID in prose is not a clause
+    text: |
+      # Doc
+
+      See MCC-01 and **MCC-02** for more.
+    expected:
+      title: Doc
+      rule_ids: []
+      context_starts: ["See MCC-01"]
+
+  - id: a full stop inside a title
+    text: |
+      **AA-01 — Cap of $1.50 per item.** First clause.
+    expected:
+      title: null
+      rule_ids: [AA-01]
+      context_starts: []
+      texts: {AA-01: "First clause."}
+
+  - id: a heading with no text after it
+    text: |
+      **AA-01 — One.**
+    expected:
+      title: null
+      rule_ids: [AA-01]
+      context_starts: []
+      texts: {AA-01: ""}
+
+  - id: windows line endings
+    text: "# Doc\r\n\r\n**AA-01 — One.** First\r\nclause.\r\n"
+    expected:
+      title: Doc
+      rule_ids: [AA-01]
+      context_starts: []
+      texts: {AA-01: "First clause."}
+
+  - id: an empty document
+    text: ""
+    expected:
+      title: null
+      rule_ids: []
+      context_starts: []
+
+  - id: bold ending in a full stop later in the line is not the title
+    text: |
+      **AA-01 — One.** It is **never allowed.** No exceptions.
+    expected:
+      title: null
+      rule_ids: [AA-01]
+      context_starts: []
+      texts: {AA-01: "It is **never allowed.** No exceptions."}
+
+  - id: only the first top-level heading is the title
+    text: |
+      # First
+
+      # Second
+
+      **AA-01 — One.** First clause.
+    expected:
+      title: First
+      rule_ids: [AA-01]
+      context_starts: []
+
+  - id: thresholds keep their order across currencies, with decimals and commas
+    text: |
+      **AA-01 — One.** Above EUR 50, or $20, or $1,500.50, or $20 again.
+    expected:
+      title: null
+      rule_ids: [AA-01]
+      context_starts: []
+      thresholds:
+        AA-01:
+          - {value: "50", unit: eur}
+          - {value: "20", unit: usd}
+          - {value: "1500.50", unit: usd}
+
+  - id: thresholds written with digits and in the singular
+    text: |
+      **AA-01 — One.** At least 3 nights, or 1 hour, or 1 night, or 2 or more receipts.
+    expected:
+      title: null
+      rule_ids: [AA-01]
+      context_starts: []
+      thresholds:
+        AA-01:
+          - {value: "3", unit: nights}
+          - {value: "1", unit: hour}
+          - {value: "1", unit: nights}
+          - {value: "2", unit: count}
+
+  - id: other numbers are not thresholds
+    text: |
+      **AA-01 — One.** Two items, on 3 receipts, over nine days, at most once.
+    expected:
+      title: null
+      rule_ids: [AA-01]
+      context_starts: []
+      thresholds: {AA-01: []}
+
+refused:
+  - id: heading with a hyphen instead of a dash
+    text: "**AA-01 - One.** First clause."
+    expected: "doc.md:1: malformed rule heading"
+
+  - id: heading with a colon
+    text: "# Doc\n\n**AA-01: One.** First clause."
+    expected: "doc.md:3: malformed rule heading"
+
+  - id: heading without its closing full stop
+    text: "**AA-01 — One** First clause."
+    expected: malformed rule heading
+
+  - id: rule number with one digit
+    text: "**AA-1 — One.** First clause."
+    expected: malformed rule heading
+
+  - id: duplicate rule ID
+    text: "**AA-01 — One.** First.\n\n**AA-01 — Again.** Second."
+    expected: "duplicate rule ids: \\['AA-01'\\]"

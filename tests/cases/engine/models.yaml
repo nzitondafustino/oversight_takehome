@@ -1,0 +1,521 @@
+suite: models
+
+# The receipt and result models: what they accept, refuse and keep through JSON.
+#
+# accepted:         `data` builds `model` (Receipt, LineItem, Evidence, Finding, EvaluationResult).
+#                   expected names values in its JSON form, where a name can go deeper, such as
+#                   line_items.0.category. Each case also round-trips and must be unchangeable.
+# refused:          `data` does not build `model`. expected is an error regex. An unquoted date
+#                   here loads as a Python date, and !!binary as bytes.
+# json_refused:     `data`, sent as JSON text, does not build `model`.
+# left_out_refused: `data` without `field` does not build `model`.
+# evidence_numbers: Evidence given Decimal(`decimal`). expected.value is the text it keeps.
+# classified:       a `line` given classifier `output`. expected names values on the new line,
+#                   and what the receipt printed must not change.
+# receipt_classified: a `receipt` given `outputs` by line ID. Its own fields must not change.
+
+templates:
+  provenance: &provenance
+    translator: developer
+    clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  line: &line
+    line_id: RCP-001-L1
+    description_raw: Grilled salmon entree
+    language: en
+    quantity: 1
+    unit_price: "28.00"
+    amount: "28.00"
+    amount_usd: "28.00"
+  receipt: &receipt
+    receipt_id: RCP-001
+    employee_id: E-1042
+    employee_country: US
+    entity: GLOBAL
+    submitted_expense_type: Meals - Individual
+    itemized: true
+    line_items: [*line]
+  finding: &finding
+    rule_id: ALC-01
+    outcome: exception
+    severity: high
+    scope: item
+    receipt_id: RCP-001
+    line_ids: [RCP-001-L1]
+    explanation: Wine on a solo meal.
+    policy_doc: meals-and-entertainment-policy.md
+    source_quote: records an attendee count of two or more
+    provenance: *provenance
+  result: &result
+    receipt_id: RCP-001
+    customer_id: northwind
+    ruleset_version: v1
+    disposition: flag
+    findings: [*finding]
+
+accepted:
+  # Receipts
+  - id: a receipt with several line items
+    model: Receipt
+    data:
+      <<: *receipt
+      merchant_name: Harvest Table Kitchen
+      mcc: "5812"
+      line_items:
+        - {<<: *line, line_id: RCP-001-L1, category: food_beverage}
+        - {<<: *line, line_id: RCP-001-L2, category: food_beverage}
+        - {<<: *line, line_id: RCP-001-L3, category: food_beverage}
+    expected:
+      line_items.0.line_id: RCP-001-L1
+      line_items.1.line_id: RCP-001-L2
+      line_items.2.line_id: RCP-001-L3
+      merchant_name: Harvest Table Kitchen
+      mcc: "5812"
+  - id: a receipt with no line items
+    model: Receipt
+    data: {<<: *receipt, line_items: []}
+    expected: {line_items: []}
+  - id: optional receipt fields left out are missing
+    model: Receipt
+    data: *receipt
+    expected: &all_missing
+      merchant_name: null
+      mcc: null
+      mcc_description: null
+      transaction_datetime: null
+      currency: null
+      fx_rate_to_usd: null
+      total_amount: null
+      total_amount_usd: null
+      attendee_count: null
+      trip_id: null
+      trip_nights: null
+      pre_approval_ref: null
+      vp_approval_ref: null
+      manager_approval_ref: null
+      baggage_delay_ref: null
+  - id: optional receipt fields given as null are missing
+    model: Receipt
+    data:
+      <<: *receipt
+      merchant_name: null
+      mcc: null
+      mcc_description: null
+      transaction_datetime: null
+      currency: null
+      fx_rate_to_usd: null
+      total_amount: null
+      total_amount_usd: null
+      attendee_count: null
+      trip_id: null
+      trip_nights: null
+      pre_approval_ref: null
+      vp_approval_ref: null
+      manager_approval_ref: null
+      baggage_delay_ref: null
+    expected: *all_missing
+  - id: false and zero are values and survive JSON
+    model: Receipt
+    data:
+      <<: *receipt
+      itemized: false
+      attendee_count: 0
+      trip_nights: 0
+      total_amount_usd: "0"
+      line_items: [{<<: *line, restricted: false, confidence: "0", amount_usd: "0"}]
+    expected:
+      itemized: false
+      attendee_count: 0
+      trip_nights: 0
+      total_amount_usd: "0"
+      line_items.0.restricted: false
+      line_items.0.confidence: "0"
+      line_items.0.amount_usd: "0"
+  - id: money given as a float is exact
+    model: Receipt
+    data: {<<: *receipt, fx_rate_to_usd: 0.0067, total_amount_usd: 48.2}
+    expected: {fx_rate_to_usd: "0.0067", total_amount_usd: "48.2"}
+  - id: money given as text keeps its digits
+    model: Receipt
+    data: {<<: *receipt, total_amount_usd: "0.10"}
+    expected: {total_amount_usd: "0.10"}
+  - id: a local datetime with a time
+    model: Receipt
+    data: {<<: *receipt, transaction_datetime: "2026-04-14T19:22:00"}
+    expected: {transaction_datetime: "2026-04-14T19:22:00"}
+  - id: a Python datetime
+    model: Receipt
+    data: {<<: *receipt, transaction_datetime: 2026-04-14T19:22:00}
+    expected: {transaction_datetime: "2026-04-14T19:22:00"}
+  - id: explicit midnight as text
+    model: Receipt
+    data: {<<: *receipt, transaction_datetime: "2026-04-14T00:00:00"}
+    expected: {transaction_datetime: "2026-04-14T00:00:00"}
+  - id: explicit midnight with a space and no seconds
+    model: Receipt
+    data: {<<: *receipt, transaction_datetime: "2026-04-14 00:00"}
+    expected: {transaction_datetime: "2026-04-14T00:00:00"}
+  - id: explicit midnight as a Python datetime
+    model: Receipt
+    data: {<<: *receipt, transaction_datetime: 2026-04-14T00:00:00}
+    expected: {transaction_datetime: "2026-04-14T00:00:00"}
+
+  - id: a delay in hours is exact, and zero is a value
+    model: Receipt
+    data: {<<: *receipt, baggage_delay_hours: "0"}
+    expected: {baggage_delay_hours: "0"}
+  - id: no delay stated is missing
+    model: Receipt
+    data: *receipt
+    expected: {baggage_delay_hours: null}
+
+  # Line items
+  - id: a line with no classification has no values for it
+    model: LineItem
+    data: *line
+    expected:
+      category: null
+      restricted: null
+      confidence: null
+      recipient_name: null
+      recipient_type: null
+      venue_type: null
+      item_kind: null
+      essential_toiletry: null
+  - id: a line with no USD amount
+    model: LineItem
+    data: {<<: *line, amount_usd: null}
+    expected: {amount_usd: null}
+  - id: a line keeps the fields classification adds
+    model: LineItem
+    data: {<<: *line, category: gift, restricted: true, confidence: "0.82", recipient_name: J. Doe, recipient_type: client}
+    expected: {category: gift, restricted: true, confidence: "0.82", recipient_name: J. Doe, recipient_type: client}
+  - id: no category and no confidence
+    model: LineItem
+    data: *line
+    expected: {category: null, confidence: null}
+  - id: a category and no confidence
+    model: LineItem
+    data: {<<: *line, category: alcohol}
+    expected: {category: alcohol, confidence: null}
+  - id: a confidence and no category
+    model: LineItem
+    data: {<<: *line, confidence: "0.3"}
+    expected: {category: null, confidence: "0.3"}
+  - id: a category and a confidence
+    model: LineItem
+    data: {<<: *line, category: alcohol, confidence: "0.9"}
+    expected: {category: alcohol, confidence: "0.9"}
+  - id: a confidence of zero is a value
+    model: LineItem
+    data: {<<: *line, category: alcohol, confidence: "0"}
+    expected: {category: alcohol, confidence: "0"}
+
+  # Evidence
+  - id: evidence with no value says the fact was missing
+    model: Evidence
+    data: {fact: receipt.attendee_count, value: null}
+    expected: {value: null}
+  - id: evidence keeps false as false
+    model: Evidence
+    data: {fact: receipt.itemized, value: false}
+    expected: {value: false}
+  - id: evidence keeps zero as exact text
+    model: Evidence
+    data: {fact: receipt.trip_nights, value: 0}
+    expected: {value: "0"}
+  - id: evidence keeps text
+    model: Evidence
+    data: {fact: item.category, value: alcohol}
+    expected: {value: alcohol}
+
+  # Findings
+  - id: an item finding targets one line
+    model: Finding
+    data: *finding
+    expected: {receipt_id: RCP-001, line_ids: [RCP-001-L1], status: raised, resolved_by: null}
+  - id: a receipt finding may name no lines
+    model: Finding
+    data: {<<: *finding, rule_id: TIME-03, scope: receipt, line_ids: []}
+    expected: {line_ids: []}
+  - id: a receipt finding may name one line
+    model: Finding
+    data: {<<: *finding, rule_id: TIME-03, scope: receipt, line_ids: [RCP-001-L1]}
+    expected: {line_ids: [RCP-001-L1]}
+  - id: a receipt finding may name several lines
+    model: Finding
+    data: {<<: *finding, rule_id: TIME-03, scope: receipt, line_ids: [RCP-001-L1, RCP-001-L2]}
+    expected: {line_ids: [RCP-001-L1, RCP-001-L2]}
+  - id: a whole-receipt review signal has no severity
+    model: Finding
+    data: {<<: *finding, rule_id: MCC-02, outcome: review_signal, severity: null, scope: receipt, line_ids: []}
+    expected: {severity: null, line_ids: []}
+  - id: a waived finding can name a rule with a suffix
+    model: Finding
+    data: {<<: *finding, status: waived, resolved_by: PERS.BAGGAGE}
+    expected: {status: waived, resolved_by: PERS.BAGGAGE}
+  - id: a waived finding need not name a rule
+    model: Finding
+    data: {<<: *finding, status: waived}
+    expected: {status: waived, resolved_by: null}
+  - id: a replaced finding names what replaced it
+    model: Finding
+    data: {<<: *finding, status: replaced, resolved_by: TIME-03}
+    expected: {status: replaced, resolved_by: TIME-03}
+  - id: a finding can name what it established it replaces
+    model: Finding
+    data: {<<: *finding, rule_id: TIME-03, scope: receipt, line_ids: [], replaces: [{rule_id: MEAL-01}, {rule_id: GIFT-01, line_ids: [L1, L2]}]}
+    expected: {replaces.0.rule_id: MEAL-01, replaces.0.line_ids: [], replaces.1.line_ids: [L1, L2]}
+  - id: a finding names no replacement by default
+    model: Finding
+    data: *finding
+    expected: {replaces: []}
+  - id: evidence on a finding keeps missing, false and zero apart
+    model: Finding
+    data:
+      <<: *finding
+      evidence:
+        - {fact: receipt.attendee_count, value: null}
+        - {fact: receipt.itemized, value: false}
+        - {fact: receipt.trip_nights, value: 0}
+        - {fact: item.category, value: alcohol}
+    expected:
+      evidence.0.value: null
+      evidence.1.value: false
+      evidence.2.value: "0"
+      evidence.3.value: alcohol
+  - id: an uncertainty signal on an item with no category and no confidence
+    model: Finding
+    data:
+      <<: *finding
+      rule_id: EXC-03
+      outcome: review_signal
+      severity: null
+      evidence:
+        - {fact: item.category, value: null}
+        - {fact: item.confidence, value: null}
+    expected: {rule_id: EXC-03, evidence.0.value: null, evidence.1.value: null}
+
+  # Evaluation results
+  - id: a result can pass
+    model: EvaluationResult
+    data: {<<: *result, disposition: pass}
+    expected: {disposition: pass, findings.0.provenance.translator: developer}
+  - id: a result can go to review
+    model: EvaluationResult
+    data: {<<: *result, disposition: review}
+    expected: {disposition: review}
+  - id: a result can flag
+    model: EvaluationResult
+    data: *result
+    expected: {receipt_id: RCP-001, customer_id: northwind, ruleset_version: v1, disposition: flag}
+  - id: a result needs no findings
+    model: EvaluationResult
+    data: {<<: *result, disposition: pass, findings: []}
+    expected: {findings: []}
+  - id: a result holds findings of every status
+    model: EvaluationResult
+    data:
+      <<: *result
+      findings:
+        - *finding
+        - {<<: *finding, rule_id: PERS-01, status: waived, resolved_by: PERS.BAGGAGE}
+        - {<<: *finding, rule_id: DOC-01, scope: receipt, line_ids: [], status: replaced, resolved_by: TIME-03}
+    expected: {findings.0.status: raised, findings.1.status: waived, findings.2.status: replaced}
+
+refused:
+  # Receipts
+  - {id: an unexpected receipt field, model: Receipt, data: {<<: *receipt, surprise: 1}, expected: surprise}
+  - {id: an unexpected line field, model: Receipt, data: {<<: *receipt, line_items: [{<<: *line, surprise: 1}]}, expected: surprise}
+  - {id: a blank receipt id, model: Receipt, data: {<<: *receipt, receipt_id: ""}, expected: receipt_id}
+  - {id: itemized as null, model: Receipt, data: {<<: *receipt, itemized: null}, expected: itemized}
+  - {id: itemized as zero, model: Receipt, data: {<<: *receipt, itemized: 0}, expected: itemized}
+  - {id: itemized as text, model: Receipt, data: {<<: *receipt, itemized: "false"}, expected: itemized}
+  - {id: an attendee count as a bool, model: Receipt, data: {<<: *receipt, attendee_count: true}, expected: attendee_count}
+  - {id: an attendee count as text, model: Receipt, data: {<<: *receipt, attendee_count: "3"}, expected: attendee_count}
+  - {id: a negative attendee count, model: Receipt, data: {<<: *receipt, attendee_count: -1}, expected: attendee_count}
+  - {id: trip nights as a bool, model: Receipt, data: {<<: *receipt, trip_nights: false}, expected: trip_nights}
+  - {id: a rate of zero, model: Receipt, data: {<<: *receipt, fx_rate_to_usd: 0}, expected: fx_rate_to_usd}
+  - {id: an amount that is not a number, model: Receipt, data: {<<: *receipt, total_amount_usd: "NaN"}, expected: total_amount_usd}
+  - {id: an amount as a bool, model: Receipt, data: {<<: *receipt, total_amount_usd: true}, expected: total_amount_usd}
+  - {id: an amount as words, model: Receipt, data: {<<: *receipt, total_amount_usd: lots}, expected: total_amount_usd}
+  - {id: a merchant code as a number, model: Receipt, data: {<<: *receipt, mcc: 5812}, expected: mcc}
+  - {id: a short merchant code, model: Receipt, data: {<<: *receipt, mcc: "58"}, expected: mcc}
+  - {id: a lower-case currency, model: Receipt, data: {<<: *receipt, currency: usd}, expected: currency}
+  - {id: a long country code, model: Receipt, data: {<<: *receipt, employee_country: USA}, expected: employee_country}
+  - {id: a blank merchant name, model: Receipt, data: {<<: *receipt, merchant_name: ""}, expected: merchant_name}
+  - {id: spaces for a merchant name, model: Receipt, data: {<<: *receipt, merchant_name: "   "}, expected: merchant_name}
+  - {id: a tab for a merchant name, model: Receipt, data: {<<: *receipt, merchant_name: "\t"}, expected: merchant_name}
+  - {id: spaces for a trip id, model: Receipt, data: {<<: *receipt, trip_id: "  "}, expected: trip_id}
+  - {id: spaces for a reference, model: Receipt, data: {<<: *receipt, pre_approval_ref: " "}, expected: pre_approval_ref}
+  - {id: an empty pre-approval, model: Receipt, data: {<<: *receipt, pre_approval_ref: ""}, expected: pre_approval_ref}
+  - {id: an empty VP approval, model: Receipt, data: {<<: *receipt, vp_approval_ref: ""}, expected: vp_approval_ref}
+  - {id: spaces for a VP approval, model: Receipt, data: {<<: *receipt, vp_approval_ref: "  "}, expected: vp_approval_ref}
+  - {id: spaces for a manager approval, model: Receipt, data: {<<: *receipt, manager_approval_ref: "\t"}, expected: manager_approval_ref}
+  - {id: spaces for a delay reference, model: Receipt, data: {<<: *receipt, baggage_delay_ref: " "}, expected: baggage_delay_ref}
+  - {id: a reference as a number, model: Receipt, data: {<<: *receipt, pre_approval_ref: 412}, expected: pre_approval_ref}
+  - {id: a reference as a bool, model: Receipt, data: {<<: *receipt, vp_approval_ref: true}, expected: vp_approval_ref}
+  - {id: a reference as a list, model: Receipt, data: {<<: *receipt, manager_approval_ref: [MG-1]}, expected: manager_approval_ref}
+  - {id: a negative delay, model: Receipt, data: {<<: *receipt, baggage_delay_hours: "-1"}, expected: baggage_delay_hours}
+  - {id: a delay as words, model: Receipt, data: {<<: *receipt, baggage_delay_hours: a day}, expected: baggage_delay_hours}
+  - {id: a delay as a bool, model: Receipt, data: {<<: *receipt, baggage_delay_hours: true}, expected: baggage_delay_hours}
+  - {id: essential as text, model: LineItem, data: {<<: *line, essential_toiletry: "yes"}, expected: essential_toiletry}
+  - {id: essential as a number, model: LineItem, data: {<<: *line, essential_toiletry: 1}, expected: essential_toiletry}
+  - {id: a reference field that does not exist, model: Receipt, data: {<<: *receipt, cfo_approval_ref: CF-1}, expected: cfo_approval_ref}
+  - {id: a merchant code in other digits, model: Receipt, data: {<<: *receipt, mcc: "٥٩٢١"}, expected: mcc}
+  - {id: a date with no time, model: Receipt, data: {<<: *receipt, transaction_datetime: "2026-04-14"}, expected: needs a time}
+  - {id: a Python date, model: Receipt, data: {<<: *receipt, transaction_datetime: 2026-04-14}, expected: needs a time}
+  - {id: a date with no time as bytes, model: Receipt, data: {<<: *receipt, transaction_datetime: !!binary "MjAyNi0wNC0xNA=="}, expected: needs a time}
+  - {id: a datetime with a time zone, model: Receipt, data: {<<: *receipt, transaction_datetime: "2026-04-14T19:22:00Z"}, expected: transaction_datetime}
+  - {id: two lines with one id, model: Receipt, data: {<<: *receipt, line_items: [*line, *line]}, expected: duplicate line ids}
+  - {id: a quantity of zero, model: Receipt, data: {<<: *receipt, line_items: [{<<: *line, quantity: 0}]}, expected: quantity}
+  - {id: a fractional quantity, model: Receipt, data: {<<: *receipt, line_items: [{<<: *line, quantity: 1.5}]}, expected: quantity}
+  - {id: a quantity as a bool, model: Receipt, data: {<<: *receipt, line_items: [{<<: *line, quantity: true}]}, expected: quantity}
+  - {id: a quantity as text, model: Receipt, data: {<<: *receipt, line_items: [{<<: *line, quantity: "2"}]}, expected: quantity}
+  - {id: a quantity as a whole float, model: Receipt, data: {<<: *receipt, line_items: [{<<: *line, quantity: 2.0}]}, expected: quantity}
+  - {id: restricted as zero, model: Receipt, data: {<<: *receipt, line_items: [{<<: *line, restricted: 0}]}, expected: restricted}
+  - {id: a confidence above one, model: Receipt, data: {<<: *receipt, line_items: [{<<: *line, confidence: "1.2"}]}, expected: confidence}
+  - {id: a row with its answers, model: Receipt, data: {<<: *receipt, labels: {disposition: pass}}, expected: labels}
+  - {id: a row with its notes, model: Receipt, data: {<<: *receipt, notes: the trap}, expected: notes}
+  - {id: a line with its answers, model: Receipt, data: {<<: *receipt, line_items: [{<<: *line, labels: {category: alcohol, restricted: true}}]}, expected: labels}
+
+  # Evidence
+  - {id: evidence as a float, model: Evidence, data: {fact: receipt.total_amount_usd, value: 234.5}, expected: value}
+  - {id: evidence as a float zero that would become false, model: Evidence, data: {fact: receipt.total_amount_usd, value: 0.0}, expected: value}
+  - {id: evidence as a float one that would become true, model: Evidence, data: {fact: receipt.total_amount_usd, value: 1.0}, expected: value}
+
+  # Findings
+  - {id: an exception with no severity, model: Finding, data: {<<: *finding, severity: null}, expected: an exception needs a severity}
+  - {id: a review signal with a severity, model: Finding, data: {<<: *finding, outcome: review_signal}, expected: a review signal has no severity}
+  - {id: an item finding with no line, model: Finding, data: {<<: *finding, line_ids: []}, expected: an item finding targets exactly one line}
+  - {id: an item finding with two lines, model: Finding, data: {<<: *finding, line_ids: [RCP-001-L1, RCP-001-L2]}, expected: an item finding targets exactly one line}
+  - {id: a raised finding naming a resolver, model: Finding, data: {<<: *finding, resolved_by: TIME-03}, expected: a raised finding has not been resolved}
+  - {id: a replaced finding naming nothing, model: Finding, data: {<<: *finding, status: replaced}, expected: must name the rule that replaced it}
+  - {id: a badly formed rule id, model: Finding, data: {<<: *finding, rule_id: not-a-rule}, expected: rule_id}
+  - {id: a badly formed resolver, model: Finding, data: {<<: *finding, status: waived, resolved_by: not-a-rule}, expected: resolved_by}
+  - {id: an unknown severity, model: Finding, data: {<<: *finding, severity: urgent}, expected: severity}
+  - {id: an unknown outcome, model: Finding, data: {<<: *finding, outcome: warning}, expected: outcome}
+  - {id: an unknown scope, model: Finding, data: {<<: *finding, scope: line}, expected: scope}
+  - {id: an unknown status, model: Finding, data: {<<: *finding, status: open}, expected: status}
+  - {id: a blank explanation, model: Finding, data: {<<: *finding, explanation: ""}, expected: explanation}
+  - {id: a blank line id, model: Finding, data: {<<: *finding, line_ids: [""]}, expected: line_ids}
+  - {id: provenance that fails its own check, model: Finding, data: {<<: *finding, provenance: {<<: *provenance, translator: llm}}, expected: must record its model}
+  - {id: a replacement target that is no rule id, model: Finding, data: {<<: *finding, replaces: [{rule_id: not-a-rule}]}, expected: rule_id}
+  - {id: a replacement target with a blank line, model: Finding, data: {<<: *finding, replaces: [{rule_id: MEAL-01, line_ids: [" "]}]}, expected: line_ids}
+  - {id: a replacement target with an unexpected field, model: Finding, data: {<<: *finding, replaces: [{rule_id: MEAL-01, level: line}]}, expected: level}
+  - {id: an unexpected finding field, model: Finding, data: {<<: *finding, surprise: 1}, expected: surprise}
+
+  # Evaluation results
+  - {id: an unknown disposition, model: EvaluationResult, data: {<<: *result, disposition: reject}, expected: disposition}
+  - {id: a blank customer, model: EvaluationResult, data: {<<: *result, customer_id: ""}, expected: customer_id}
+  - {id: a blank ruleset version, model: EvaluationResult, data: {<<: *result, ruleset_version: ""}, expected: ruleset_version}
+  - {id: a finding for another receipt, model: EvaluationResult, data: {<<: *result, findings: [{<<: *finding, receipt_id: RCP-002}]}, expected: has findings for other receipts}
+  - {id: an unexpected result field, model: EvaluationResult, data: {<<: *result, surprise: 1}, expected: surprise}
+
+json_refused:
+  - {id: a date with no time in JSON, model: Receipt, data: {<<: *receipt, transaction_datetime: "2026-04-14"}, expected: needs a time}
+
+left_out_refused:
+  - {id: receipt without receipt_id, model: Receipt, data: *receipt, field: receipt_id, expected: receipt_id}
+  - {id: receipt without employee_id, model: Receipt, data: *receipt, field: employee_id, expected: employee_id}
+  - {id: receipt without employee_country, model: Receipt, data: *receipt, field: employee_country, expected: employee_country}
+  - {id: receipt without entity, model: Receipt, data: *receipt, field: entity, expected: entity}
+  - {id: receipt without submitted_expense_type, model: Receipt, data: *receipt, field: submitted_expense_type, expected: submitted_expense_type}
+  - {id: receipt without itemized, model: Receipt, data: *receipt, field: itemized, expected: itemized}
+  - {id: receipt without line_items, model: Receipt, data: *receipt, field: line_items, expected: line_items}
+  - {id: evidence without a value, model: Evidence, data: {fact: receipt.attendee_count, value: null}, field: value, expected: value}
+  - {id: finding without rule_id, model: Finding, data: *finding, field: rule_id, expected: rule_id}
+  - {id: finding without outcome, model: Finding, data: *finding, field: outcome, expected: outcome}
+  - {id: finding without scope, model: Finding, data: *finding, field: scope, expected: scope}
+  - {id: finding without receipt_id, model: Finding, data: *finding, field: receipt_id, expected: receipt_id}
+  - {id: finding without explanation, model: Finding, data: *finding, field: explanation, expected: explanation}
+  - {id: finding without policy_doc, model: Finding, data: *finding, field: policy_doc, expected: policy_doc}
+  - {id: finding without source_quote, model: Finding, data: *finding, field: source_quote, expected: source_quote}
+  - {id: finding without provenance, model: Finding, data: *finding, field: provenance, expected: provenance}
+  - {id: result without receipt_id, model: EvaluationResult, data: *result, field: receipt_id, expected: receipt_id}
+  - {id: result without customer_id, model: EvaluationResult, data: *result, field: customer_id, expected: customer_id}
+  - {id: result without ruleset_version, model: EvaluationResult, data: *result, field: ruleset_version, expected: ruleset_version}
+  - {id: result without disposition, model: EvaluationResult, data: *result, field: disposition, expected: disposition}
+
+evidence_numbers:
+  - {id: a decimal keeps its digits, decimal: "234.00", expected: {value: "234.00"}}
+  - {id: a decimal zero is not false, decimal: "0", expected: {value: "0"}}
+
+classified:
+  - id: valid output keeps the printed fields
+    line: *line
+    output: {category: gift, restricted: true, confidence: 0.82}
+    expected: {category: gift, restricted: true, confidence: "0.82", line_id: RCP-001-L1, amount_usd: "28.00"}
+  - id: output keeps earlier values it does not mention
+    line: {<<: *line, category: gift, confidence: "0.9"}
+    output: {recipient_type: client}
+    expected: {category: gift, confidence: "0.9", recipient_type: client}
+  - id: a classifier can report that it found no category
+    line: {<<: *line, category: gift}
+    output: {category: null, confidence: "0.1"}
+    expected: {category: null, confidence: "0.1"}
+  - id: a classifier can say a line is an essential toiletry
+    line: *line
+    output: {essential_toiletry: true}
+    expected: {essential_toiletry: true}
+  - id: a classifier can say a line is not one
+    line: {<<: *line, essential_toiletry: true}
+    output: {essential_toiletry: false}
+    expected: {essential_toiletry: false}
+  - id: a category outside the catalog is kept as written
+    line: *line
+    output: {category: not in the catalog, confidence: "0.9"}
+    expected: {category: not in the catalog}
+  - id: a recipient type outside the catalog is kept as written
+    line: *line
+    output: {recipient_type: not in the catalog}
+    expected: {recipient_type: not in the catalog}
+  - id: a venue type outside the catalog is kept as written
+    line: *line
+    output: {venue_type: not in the catalog}
+    expected: {venue_type: not in the catalog}
+  - id: an item kind outside the catalog is kept as written
+    line: *line
+    output: {item_kind: not in the catalog}
+    expected: {item_kind: not in the catalog}
+
+classified_refused:
+  - {id: a confidence above one, line: *line, output: {confidence: 1.5}, expected: confidence}
+  - {id: a negative confidence, line: *line, output: {confidence: -0.1}, expected: confidence}
+  - {id: a confidence as words, line: *line, output: {confidence: high}, expected: confidence}
+  - {id: a confidence as a bool, line: *line, output: {confidence: true}, expected: confidence}
+  - {id: restricted as words, line: *line, output: {restricted: "yes"}, expected: restricted}
+  - {id: restricted as a number, line: *line, output: {restricted: 1}, expected: restricted}
+  - {id: a blank category, line: *line, output: {category: ""}, expected: category}
+  - {id: spaces for a category, line: *line, output: {category: "  "}, expected: category}
+  - {id: a category as a number, line: *line, output: {category: 7}, expected: category}
+  - {id: a field no line has, line: *line, output: {reasoning: looks like wine}, expected: may not set}
+  - {id: overwriting the line id, line: *line, output: {line_id: RCP-001-L9}, expected: may not set}
+  - {id: overwriting the amount, line: *line, output: {amount_usd: "0"}, expected: may not set}
+
+receipt_classified:
+  - id: a line with no output stays unclassified
+    receipt:
+      <<: *receipt
+      merchant_name: Verona Grill
+      attendee_count: 0
+      transaction_datetime: "2026-04-14T00:30:00"
+      line_items:
+        - {<<: *line, line_id: RCP-001-L1}
+        - {<<: *line, line_id: RCP-001-L2}
+    outputs:
+      RCP-001-L1: {category: alcohol, confidence: "0.9"}
+    expected:
+      line_items.0.category: alcohol
+      line_items.0.confidence: "0.9"
+      line_items.1.category: null
+      line_items.1.confidence: null
+  - id: classifying keeps explicit midnight
+    receipt: {<<: *receipt, transaction_datetime: 2026-04-14T00:00:00}
+    outputs:
+      RCP-001-L1: {category: alcohol}
+    expected: {transaction_datetime: "2026-04-14T00:00:00", line_items.0.category: alcohol}
+
+receipt_classified_refused:
+  - {id: invalid output for a line, receipt: *receipt, outputs: {RCP-001-L1: {confidence: 1.5}}, expected: confidence}
+  - {id: output for a line not on the receipt, receipt: *receipt, outputs: {RCP-999-L1: {category: alcohol}}, expected: unknown lines}

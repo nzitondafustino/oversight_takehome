@@ -1,0 +1,199 @@
+suite: facts
+
+# Flat facts from a validated receipt, read by the real evaluator and the real rules.
+#
+# receipt:       receipt_facts of `receipt`. expected names facts and their exact values, where
+#                amounts are text, so 0, "0", false and null all differ.
+# item:          item_facts of the first line on `receipt`.
+# catalog_refused: receipt_facts is refused because the catalog `fields` lists no categories.
+# receipt_rules: the real rule `rule_id` on receipt_facts. expected.fires is true or false.
+# item_rules:    the real rule `rule_id` on item_facts of the first line.
+# replacements:  the real rules on receipt_facts. expected.replaced lists those out of play.
+
+templates:
+  line: &line
+    line_id: RCP-001-L1
+    description_raw: Prix fixe dinner
+    language: en
+    quantity: 1
+    unit_price: "28.00"
+    amount: "28.00"
+    amount_usd: "28.00"
+  receipt: &receipt
+    receipt_id: RCP-001
+    employee_id: E-1042
+    employee_country: US
+    entity: GLOBAL
+    submitted_expense_type: Meals - Individual
+    itemized: true
+    line_items: [*line]
+  dated: &dated "2026-04-14T19:22:00"
+
+receipt:
+  # Fields under their own names
+  - id: receipt fields become facts
+    receipt: {<<: *receipt, merchant_name: Verona Grill, mcc: "5812", total_amount: "234.00", total_amount_usd: "234.00", attendee_count: 4}
+    expected:
+      receipt.receipt_id: RCP-001
+      receipt.merchant_name: Verona Grill
+      receipt.mcc: "5812"
+      receipt.total_amount_usd: "234.00"
+      receipt.attendee_count: 4
+
+  # The date and hour
+  - id: the date and hour come from the local datetime
+    receipt: {<<: *receipt, transaction_datetime: *dated}
+    expected: {receipt.transaction_date: "2026-04-14", receipt.local_hour: 19}
+  - id: midnight is an hour and not missing
+    receipt: {<<: *receipt, transaction_datetime: "2026-04-14T00:10:00"}
+    expected: {receipt.local_hour: 0}
+  - id: explicit midnight is hour zero
+    receipt: {<<: *receipt, transaction_datetime: "2026-04-14T00:00:00"}
+    expected: {receipt.transaction_date: "2026-04-14", receipt.local_hour: 0}
+  - id: a Python datetime gives its hour
+    receipt: {<<: *receipt, transaction_datetime: 2026-04-14T19:22:00}
+    expected: {receipt.transaction_date: "2026-04-14", receipt.local_hour: 19}
+  - id: no datetime leaves the date and hour missing
+    receipt: *receipt
+    expected: {receipt.transaction_date: null, receipt.local_hour: null}
+
+  # Missing values
+  - id: missing, false and zero stay apart
+    receipt: {<<: *receipt, itemized: false, attendee_count: 0, trip_nights: 0, total_amount: "0", total_amount_usd: "0"}
+    expected:
+      receipt.itemized: false
+      receipt.attendee_count: 0
+      receipt.trip_nights: 0
+      receipt.total_amount_usd: "0"
+      receipt.merchant_name: null
+      receipt.fx_rate_to_usd: null
+
+  # A meal receipt, as MEAL-01 defines it
+  - {id: declared as a meal with food, receipt: {<<: *receipt, line_items: [{<<: *line, category: food_beverage}]}, expected: {receipt.is_meal_receipt: true}}
+  - {id: declared as a meal with drink, receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohol}]}, expected: {receipt.is_meal_receipt: true}}
+  - {id: a team meal, receipt: {<<: *receipt, submitted_expense_type: Meals - Team, line_items: [{<<: *line, category: food_beverage}]}, expected: {receipt.is_meal_receipt: true}}
+  - {id: client entertainment, receipt: {<<: *receipt, submitted_expense_type: Client Entertainment, line_items: [{<<: *line, category: alcohol}]}, expected: {receipt.is_meal_receipt: true}}
+  - {id: a gratuity alone is not food, receipt: {<<: *receipt, line_items: [{<<: *line, category: service_fee}]}, expected: {receipt.is_meal_receipt: false}}
+  - {id: a gift is not food, receipt: {<<: *receipt, line_items: [{<<: *line, category: gift}]}, expected: {receipt.is_meal_receipt: false}}
+  - {id: an itemized meal with no lines, receipt: {<<: *receipt, line_items: []}, expected: {receipt.is_meal_receipt: false}}
+  - {id: food declared as lodging, receipt: {<<: *receipt, submitted_expense_type: Lodging, line_items: [{<<: *line, category: food_beverage}]}, expected: {receipt.is_meal_receipt: false}}
+  - {id: not itemized and not declared as a meal, receipt: {<<: *receipt, submitted_expense_type: Lodging, itemized: false}, expected: {receipt.is_meal_receipt: false}}
+  - {id: not itemized and declared as a meal, receipt: {<<: *receipt, itemized: false}, expected: {receipt.is_meal_receipt: true}}
+  - {id: not itemized with an other line, receipt: {<<: *receipt, itemized: false, line_items: [{<<: *line, category: other}]}, expected: {receipt.is_meal_receipt: true}}
+  - {id: not known while its one line has no category, receipt: *receipt, expected: {receipt.is_meal_receipt: null}}
+  - id: not known while any line has no category
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1, category: service_fee}, {<<: *line, line_id: L2}]}
+    expected: {receipt.is_meal_receipt: null}
+  - id: food settles it with a line unclassified
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1, category: food_beverage}, {<<: *line, line_id: L2}]}
+    expected: {receipt.is_meal_receipt: true}
+
+  # An unknown category is not known to be a non-meal any more than a missing one is.
+  - {id: not known while its one line has an unknown category, receipt: {<<: *receipt, line_items: [{<<: *line, category: foood}]}, expected: {receipt.is_meal_receipt: null}}
+  - id: not known while any line has an unknown category
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1, category: service_fee}, {<<: *line, line_id: L2, category: foood}]}
+    expected: {receipt.is_meal_receipt: null}
+  - id: food settles it with a line of an unknown category
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1, category: food_beverage}, {<<: *line, line_id: L2, category: foood}]}
+    expected: {receipt.is_meal_receipt: true}
+  - id: not a meal once every category is known
+    receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1, category: service_fee}, {<<: *line, line_id: L2, category: gift}]}
+    expected: {receipt.is_meal_receipt: false}
+  - {id: an unknown category declared as lodging is not a meal, receipt: {<<: *receipt, submitted_expense_type: Lodging, line_items: [{<<: *line, category: foood}]}, expected: {receipt.is_meal_receipt: false}}
+  - {id: not itemized settles it whatever the category, receipt: {<<: *receipt, itemized: false, line_items: [{<<: *line, category: foood}]}, expected: {receipt.is_meal_receipt: true}}
+
+catalog_refused:
+  - {id: an empty catalog, receipt: {<<: *receipt, line_items: [{<<: *line, category: gift}]}, fields: {}, expected: item.category lists no allowed values}
+  - {id: a category with no values, receipt: {<<: *receipt, line_items: [{<<: *line, category: gift}]}, fields: {item.category: {type: text}}, expected: item.category lists no allowed values}
+
+item:
+  - id: item and receipt fields are both present
+    receipt: {<<: *receipt, mcc: "5812", line_items: [{<<: *line, category: alcohol, confidence: "0.8", restricted: false}]}
+    expected:
+      item.line_id: RCP-001-L1
+      item.category: alcohol
+      item.confidence: "0.8"
+      item.restricted: false
+      item.amount_usd: "28.00"
+      receipt.mcc: "5812"
+      receipt.is_meal_receipt: true
+
+  # The unit price in USD
+  - id: the unit price is per unit
+    receipt: {<<: *receipt, line_items: [{<<: *line, quantity: 4, unit_price: "34.00", amount: "136.00", amount_usd: "136.00"}]}
+    expected: {item.unit_price_usd: "34.00"}
+  - id: no USD amount leaves the unit price missing and not zero
+    receipt: {<<: *receipt, line_items: [{<<: *line, amount_usd: null}]}
+    expected: {item.unit_price_usd: null}
+  - id: a zero USD amount is a zero unit price
+    receipt: {<<: *receipt, line_items: [{<<: *line, unit_price: "0", amount: "0", amount_usd: "0"}]}
+    expected: {item.unit_price_usd: "0"}
+
+  # Uncertain classifications are passed on as they are
+  - {id: a missing category, receipt: *receipt, expected: {item.category: null}}
+  - {id: an unknown category, receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohool}]}, expected: {item.category: alcohool}}
+  - {id: a missing confidence is not assumed, receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohol}]}, expected: {item.confidence: null}}
+  - {id: a zero confidence is kept, receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohol, confidence: "0"}]}, expected: {item.confidence: "0"}}
+  - {id: a low confidence is kept, receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohol, confidence: "0.3"}]}, expected: {item.confidence: "0.3"}}
+  - {id: a missing recipient type, receipt: *receipt, expected: {item.recipient_type: null}}
+  - {id: a missing venue type, receipt: *receipt, expected: {item.venue_type: null}}
+  - {id: a missing item kind, receipt: *receipt, expected: {item.item_kind: null}}
+  - {id: an unknown recipient type, receipt: {<<: *receipt, line_items: [{<<: *line, recipient_type: vip}]}, expected: {item.recipient_type: vip}}
+  - {id: an unknown venue type, receipt: {<<: *receipt, line_items: [{<<: *line, venue_type: golff}]}, expected: {item.venue_type: golff}}
+  - {id: an unknown item kind, receipt: {<<: *receipt, line_items: [{<<: *line, item_kind: tablet}]}, expected: {item.item_kind: tablet}}
+  - id: a possible golf charge with no venue keeps what a later check needs
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Green fees - Pebble Creek, category: other}]}
+    expected:
+      item.venue_type: null
+      item.category: other
+      item.description_raw: Green fees - Pebble Creek
+      receipt.submitted_expense_type: Meals - Individual
+
+receipt_rules:
+  - {id: MCC-01 on a high-risk code, rule_id: MCC-01, receipt: {<<: *receipt, mcc: "5921"}, expected: {fires: true}}
+  - {id: MCC-01 on a restaurant, rule_id: MCC-01, receipt: {<<: *receipt, mcc: "5812"}, expected: {fires: false}}
+  - {id: TIME-01 just after midnight, rule_id: TIME-01, receipt: {<<: *receipt, transaction_datetime: "2026-04-14T00:10:00"}, expected: {fires: true}}
+  - {id: TIME-01 at explicit midnight, rule_id: TIME-01, receipt: {<<: *receipt, transaction_datetime: "2026-04-14T00:00:00"}, expected: {fires: true}}
+  - {id: TIME-01 at the end of the window, rule_id: TIME-01, receipt: {<<: *receipt, transaction_datetime: "2026-04-14T05:00:00"}, expected: {fires: false}}
+  - {id: TIME-01 with no datetime, rule_id: TIME-01, receipt: *receipt, expected: {fires: false}}
+  - {id: TIME-02 with no trip, rule_id: TIME-02, receipt: *receipt, expected: {fires: true}}
+  - {id: TIME-02 with a trip, rule_id: TIME-02, receipt: {<<: *receipt, trip_id: TRIP-0091}, expected: {fires: false}}
+  - {id: DOC-01 not itemized above the threshold, rule_id: DOC-01, receipt: {<<: *receipt, itemized: false, total_amount: "186.00", total_amount_usd: "186.00"}, expected: {fires: true}}
+  - {id: DOC-01 itemized above the threshold, rule_id: DOC-01, receipt: {<<: *receipt, total_amount: "186.00", total_amount_usd: "186.00"}, expected: {fires: false}}
+  - {id: DOC-02 with no merchant, rule_id: DOC-02, receipt: {<<: *receipt, transaction_datetime: *dated, total_amount: "1", total_amount_usd: "1"}, expected: {fires: true}}
+  - {id: DOC-02 with everything, rule_id: DOC-02, receipt: {<<: *receipt, merchant_name: Verona, transaction_datetime: *dated, total_amount: "1"}, expected: {fires: false}}
+  - {id: DOC-04 foreign with no rate, rule_id: DOC-04, receipt: {<<: *receipt, currency: EUR}, expected: {fires: true}}
+  - {id: DOC-04 foreign with a rate, rule_id: DOC-04, receipt: {<<: *receipt, currency: EUR, fx_rate_to_usd: "1.08"}, expected: {fires: false}}
+  - {id: DOC-04 in USD, rule_id: DOC-04, receipt: {<<: *receipt, currency: USD}, expected: {fires: false}}
+  - {id: MEAL-02 above the threshold with no count, rule_id: MEAL-02, receipt: {<<: *receipt, itemized: false, total_amount: "186.00", total_amount_usd: "186.00"}, expected: {fires: true}}
+  - {id: MEAL-02 above the threshold with a count, rule_id: MEAL-02, receipt: {<<: *receipt, itemized: false, total_amount: "186.00", total_amount_usd: "186.00", attendee_count: 4}, expected: {fires: false}}
+  - {id: MEAL-02 stays quiet on an unknown category because it is not known to be a meal, rule_id: MEAL-02, receipt: {<<: *receipt, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, category: foood}]}, expected: {fires: false}}
+
+item_rules:
+  - {id: ALC-01 on a solo meal, rule_id: ALC-01, receipt: {<<: *receipt, mcc: "5812", line_items: [{<<: *line, category: alcohol}]}, expected: {fires: true}}
+  - {id: ALC-01 at a client dinner, rule_id: ALC-01, receipt: {<<: *receipt, mcc: "5812", submitted_expense_type: Client Entertainment, attendee_count: 4, line_items: [{<<: *line, category: alcohol}]}, expected: {fires: false}}
+  - {id: ALC-01 at a client dinner for one, rule_id: ALC-01, receipt: {<<: *receipt, mcc: "5812", submitted_expense_type: Client Entertainment, attendee_count: 1, line_items: [{<<: *line, category: alcohol}]}, expected: {fires: true}}
+  - {id: ALC-03 at a supermarket, rule_id: ALC-03, receipt: {<<: *receipt, mcc: "5411", line_items: [{<<: *line, category: alcohol}]}, expected: {fires: true}}
+  - {id: ALC-03 with no merchant code, rule_id: ALC-03, receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohol}]}, expected: {fires: false}}
+  - {id: REG-01 in APAC, rule_id: REG-01, receipt: {<<: *receipt, entity: APAC, line_items: [{<<: *line, category: alcohol}]}, expected: {fires: true}}
+  - {id: REG-01 elsewhere, rule_id: REG-01, receipt: {<<: *receipt, line_items: [{<<: *line, category: alcohol}]}, expected: {fires: false}}
+  - {id: LAUNDRY-01 on a short trip, rule_id: LAUNDRY-01, receipt: {<<: *receipt, trip_nights: 3, line_items: [{<<: *line, category: laundry_service}]}, expected: {fires: true}}
+  - {id: LAUNDRY-01 on a long trip, rule_id: LAUNDRY-01, receipt: {<<: *receipt, trip_nights: 4, line_items: [{<<: *line, category: laundry_service}]}, expected: {fires: false}}
+  - {id: LAUNDRY-01 with zero nights, rule_id: LAUNDRY-01, receipt: {<<: *receipt, trip_nights: 0, line_items: [{<<: *line, category: laundry_service}]}, expected: {fires: true}}
+  - {id: LAUNDRY-01 with no trip, rule_id: LAUNDRY-01, receipt: {<<: *receipt, line_items: [{<<: *line, category: laundry_service}]}, expected: {fires: true}}
+  - {id: TECH-02 above the cap, rule_id: TECH-02, receipt: {<<: *receipt, line_items: [{<<: *line, category: computer_accessory, unit_price: "329.00", amount: "329.00", amount_usd: "329.00"}]}, expected: {fires: true}}
+  - {id: TECH-02 at the cap, rule_id: TECH-02, receipt: {<<: *receipt, line_items: [{<<: *line, category: computer_accessory, unit_price: "200.00", amount: "200.00", amount_usd: "200.00"}]}, expected: {fires: false}}
+  - {id: TECH-02 is per unit, rule_id: TECH-02, receipt: {<<: *receipt, line_items: [{<<: *line, category: computer_accessory, quantity: 2, unit_price: "200.00", amount: "400.00", amount_usd: "400.00"}]}, expected: {fires: false}}
+  - {id: TECH-02 with no USD amount, rule_id: TECH-02, receipt: {<<: *receipt, line_items: [{<<: *line, category: computer_accessory, amount_usd: null}]}, expected: {fires: false}}
+
+  # A false condition on an uncertain value is not evidence of compliance: the item cases above
+  # show these values survive for the uncertainty step to see.
+  - {id: ALC-01 stays quiet with no category, rule_id: ALC-01, receipt: {<<: *receipt, mcc: "5812"}, expected: {fires: false}}
+  - {id: ALC-01 stays quiet on a misspelt category, rule_id: ALC-01, receipt: {<<: *receipt, mcc: "5812", line_items: [{<<: *line, category: alcohool}]}, expected: {fires: false}}
+  - {id: ENT-01 stays quiet with no venue, rule_id: ENT-01, receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Green fees - Pebble Creek, category: other}]}, expected: {fires: false}}
+  - {id: ENT-01 stays quiet on a misspelt venue, rule_id: ENT-01, receipt: {<<: *receipt, line_items: [{<<: *line, category: other, venue_type: golff}]}, expected: {fires: false}}
+
+replacements:
+  - {id: APAC replaces the alcohol rules and the meal cap, receipt: {<<: *receipt, entity: APAC}, expected: {replaced: [ALC-01, ALC-02, ALC-03, MEAL-01]}}
+  - {id: EMEA replaces the meal cap, receipt: {<<: *receipt, entity: EMEA}, expected: {replaced: [MEAL-01]}}
+  - {id: GLOBAL replaces nothing, receipt: *receipt, expected: {replaced: []}}

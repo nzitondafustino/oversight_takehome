@@ -1,0 +1,195 @@
+suite: agreement
+
+# The regex reading of `text` against a recorded LLM reading in `response`. No API calls.
+#
+# cases:   expected lists each rule with the fields that did not agree, by status.
+#          {} means every field agreed. only_regex or only_llm means one reading missed the rule.
+# refused: an LLM response that must be rejected, with an error matching `expected`.
+
+templates:
+  text: &text "## Limits\n\n**AA-01 — One.** Up to **$200** per item, or a **high** exception (see BB-02).\n"
+
+  rule: &rule
+    rule_id: AA-01
+    title: One
+    section: Limits
+    severities: [high]
+    review_signal: false
+    thresholds: [{value: "200", unit: usd}]
+    references: [BB-02]
+    quote: "per item"
+
+cases:
+  - id: every field agrees
+    text: *text
+    response: {rules: [*rule]}
+    expected: {AA-01: {}}
+
+  - id: a different severity
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, severities: [low]}
+    expected: {AA-01: {disagree: [severities]}}
+
+  - id: a different number
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, thresholds: [{value: "250", unit: usd}]}
+    expected: {AA-01: {disagree: [thresholds]}}
+
+  - id: the same number in a different unit
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, thresholds: [{value: "200", unit: eur}]}
+    expected: {AA-01: {disagree: [thresholds]}}
+
+  - id: the same number written differently
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, thresholds: [{value: "200.00", unit: usd}]}
+    expected: {AA-01: {}}
+
+  - id: a number only the LLM found
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, thresholds: [{value: "200", unit: usd}, {value: "5", unit: nights}]}
+    expected: {AA-01: {disagree: [thresholds]}}
+
+  - id: a different title
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, title: Other}
+    expected: {AA-01: {disagree: [title]}}
+
+  - id: a title with its full stop still agrees
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, title: One.}
+    expected: {AA-01: {}}
+
+  - id: a different section
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, section: null}
+    expected: {AA-01: {disagree: [section]}}
+
+  - id: a different review signal
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, review_signal: true}
+    expected: {AA-01: {disagree: [review_signal]}}
+
+  - id: a different reference
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, references: []}
+    expected: {AA-01: {disagree: [references]}}
+
+  - id: an invented quote
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, quote: "never reimbursable"}
+    expected: {AA-01: {disagree: [quote]}}
+
+  - id: a quote without the bold markers still agrees
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, quote: "Up to $200 per item"}
+    expected: {AA-01: {}}
+
+  - id: several fields can disagree at once
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, title: Other, severities: []}
+    expected: {AA-01: {disagree: [title, severities]}}
+
+  - id: a rule only the regex found
+    text: *text
+    response: {rules: []}
+    expected: {AA-01: only_regex}
+
+  - id: a rule only the LLM found
+    text: *text
+    response:
+      rules:
+        - *rule
+        - {<<: *rule, rule_id: CC-03}
+    expected: {AA-01: {}, CC-03: only_llm}
+
+  - id: no thresholds on a clause with no numbers agrees
+    text: "**AA-01 — One.** Never allowed.\n"
+    response:
+      rules:
+        - {<<: *rule, section: null, severities: [], thresholds: [], references: [], quote: "Never allowed"}
+    expected: {AA-01: {}}
+
+  - id: no thresholds on a clause with a number is unconfirmed
+    text: "**AA-01 — One.** Within 30 days.\n"
+    response:
+      rules:
+        - {<<: *rule, section: null, severities: [], thresholds: [], references: [], quote: "Within"}
+    expected: {AA-01: {unconfirmed: [thresholds]}}
+
+  - id: no thresholds on a clause with a number word is unconfirmed
+    text: "**AA-01 — One.** Within three days.\n"
+    response:
+      rules:
+        - {<<: *rule, section: null, severities: [], thresholds: [], references: [], quote: "Within"}
+    expected: {AA-01: {unconfirmed: [thresholds]}}
+
+  - id: a number the regex cannot read but the LLM can is a disagreement
+    text: "**AA-01 — One.** Within 30 days.\n"
+    response:
+      rules:
+        - {<<: *rule, section: null, severities: [], thresholds: [{value: "30", unit: count}], references: [], quote: "Within"}
+    expected: {AA-01: {disagree: [thresholds]}}
+
+  - id: a mention of another rule is not a number
+    text: "**AA-01 — One.** See BB-02.\n"
+    response:
+      rules:
+        - {<<: *rule, section: null, severities: [], thresholds: [], quote: "See"}
+    expected: {AA-01: {}}
+
+  - id: a response in a code fence is still read
+    text: *text
+    response: "```json\n{\"rules\": []}\n```"
+    expected: {AA-01: only_regex}
+
+refused:
+  - id: not JSON
+    response: "I found one rule."
+    expected: "Invalid JSON"
+
+  - id: a missing field
+    response: '{"rules": [{"rule_id": "AA-01"}]}'
+    expected: "title"
+
+  - id: an unknown field
+    response: '{"rules": [], "notes": "extra"}'
+    expected: "notes"
+
+  - id: an unknown severity
+    response: '{"rules": [{"rule_id": "AA-01", "title": "One", "section": null, "severities": ["urgent"], "review_signal": false, "thresholds": [], "references": [], "quote": "q"}]}'
+    expected: "severities"
+
+  - id: an unknown unit
+    response: '{"rules": [{"rule_id": "AA-01", "title": "One", "section": null, "severities": [], "review_signal": false, "thresholds": [{"value": "1", "unit": "days"}], "references": [], "quote": "q"}]}'
+    expected: "unit"
+
+  - id: a repeated rule ID
+    response: '{"rules": [{"rule_id": "AA-01", "title": "One", "section": null, "severities": [], "review_signal": false, "thresholds": [], "references": [], "quote": "q"}, {"rule_id": "AA-01", "title": "One", "section": null, "severities": [], "review_signal": false, "thresholds": [], "references": [], "quote": "q"}]}'
+    expected: "duplicate rule ids"

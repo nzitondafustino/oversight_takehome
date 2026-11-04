@@ -21,6 +21,8 @@ Optional `templates` can hold YAML anchors; anchors are local to a file.
 | --- | --- | --- | --- |
 | policy_engine | isolation | evaluations | Ordered `runs` summaries from repeated evaluations using one engine. |
 | policy_engine | configuration | path, value, receipts | Original receipt outcome after attempted caller-side and engine-side catalog mutations. |
+| policy_engine | configuration_refused | field_changes, rule_changes, remove_rules | Error regex: incompatible configuration must fail at construction, before evaluating receipts. Null field changes remove an entry. |
+| policy_engine | catalog_values | values | `values`: exact scalar values retained in a frozen catalog sequence. |
 | submission_integrity | exploits | receipts, reason | `error`: the exact error that refuses it, and it can get no result at all. |
 | submission_integrity | refused | receipt | Error regex: these amounts contradict each other. |
 | submission_integrity | admitted | receipt | Values in its JSON form, as admitted and unchanged. |

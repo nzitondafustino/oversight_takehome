@@ -10,7 +10,7 @@ import yaml
 
 CASES = Path(__file__).parent / "cases"
 SECTIONS = {
-    "policy_engine": {"isolation", "configuration"},
+    "policy_engine": {"isolation", "configuration", "configuration_refused", "catalog_values"},
     "submission_integrity": {"exploits", "adversarial", "refused", "admitted", "unresolved", "unsupported_refused", "unverified_usd", "decided", "itemization_claims"},
     "rules": {"accepted", "refused"},
     "rulesets": {"accepted", "refused"},
@@ -77,6 +77,8 @@ SECTIONS = {
 INPUTS = {
     ("policy_engine", "isolation"): {"evaluations"},
     ("policy_engine", "configuration"): {"path", "value", "receipts"},
+    ("policy_engine", "configuration_refused"): {"field_changes", "rule_changes", "remove_rules"},
+    ("policy_engine", "catalog_values"): {"values"},
     ("submission_integrity", "exploits"): {"receipts", "reason"},
     ("submission_integrity", "refused"): {"receipt"},
     ("submission_integrity", "admitted"): {"receipt"},

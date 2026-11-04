@@ -36,6 +36,7 @@ templates:
     total_amount: "329.00"
     total_amount_usd: "329.00"
     line_items: [{<<: *food, description_raw: Monitor, category: computer_accessory, unit_price: "329.00", amount: "329.00", amount_usd: "329.00"}]
+  invalid: &invalid {field_changes: {}, rule_changes: {}, remove_rules: []}
 
 isolation:
   - id: reused engine keeps customers receipts completeness and failed runs apart
@@ -78,3 +79,172 @@ configuration:
     value: 0
     receipts: [*gear]
     expected: {disposition: flag, exceptions: [TECH-02]}
+
+catalog_values:
+  - id: catalog scalar types keep their values inside frozen sequences
+    values: [text, 7, 1.25, true, false, null]
+    expected: {values: [text, 7, 1.25, true, false, null]}
+
+configuration_refused:
+  - <<: *invalid
+    id: missing mandatory category catalog
+    field_changes: {item.category: null}
+    expected: item.category
+  - <<: *invalid
+    id: a field definition must be a mapping
+    field_changes: {item.category: category}
+    expected: item.category must be a field catalog mapping
+  - <<: *invalid
+    id: unknown field type
+    field_changes: {receipt.merchant_name: {type: date}}
+    expected: receipt.merchant_name needs type
+  - <<: *invalid
+    id: a mapping cannot be used as a field type
+    field_changes: {receipt.merchant_name: {type: {unexpected: value}}}
+    expected: receipt.merchant_name needs type
+  - <<: *invalid
+    id: vocabulary cannot be a bare string
+    field_changes: {item.category: {type: text, values: alcohol}}
+    expected: item.category.values must be a nonempty list of strings
+  - <<: *invalid
+    id: vocabulary cannot be empty
+    field_changes: {item.category: {type: text, values: []}}
+    expected: item.category.values must be a nonempty list
+  - <<: *invalid
+    id: vocabulary values must be strings
+    field_changes: {item.category: {type: text, values: [true]}}
+    expected: item.category.values must be a nonempty list of strings
+  - <<: *invalid
+    id: incompatible field units
+    field_changes: {item.unit_price_usd: {type: number, unit: eur}}
+    expected: cap_usd is in usd, item.unit_price_usd is in eur
+  - <<: *invalid
+    id: unknown unit
+    field_changes: {item.unit_price_usd: {type: number, unit: dollars}}
+    expected: incompatible unit
+  - <<: *invalid
+    id: missing monetary input contract
+    field_changes: {input_contract: null}
+    expected: no input_contract
+  - <<: *invalid
+    id: malformed monetary input contract
+    field_changes: {input_contract: {version: 0}}
+    expected: version
+  - <<: *invalid
+    id: negative currency precision
+    field_changes:
+      input_contract: {version: 1, minor_units: {USD: -1}, missing_currency_minor_units: 0, usd_tolerance: "0.005", max_abs_amount: "1000000000000000", max_decimal_places: 10}
+    expected: nonnegative currency precisions
+  - <<: *invalid
+    id: missing country to entity mapping
+    field_changes: {receipt.entity: {type: text, values: [GLOBAL, APAC, EMEA]}}
+    expected: entity countries
+  - <<: *invalid
+    id: country listed in two entities
+    field_changes: {receipt.entity: {type: text, values: [GLOBAL, APAC, EMEA], countries: {GLOBAL: [US], APAC: [US]}}}
+    expected: country US occurs more than once
+  - <<: *invalid
+    id: mapping an unknown entity
+    field_changes: {receipt.entity: {type: text, values: [GLOBAL], countries: {MADE_UP: [US]}}}
+    expected: unknown entity MADE_UP
+  - <<: *invalid
+    id: missing employee home currencies
+    field_changes: {receipt.employee_country: {type: text}}
+    expected: home_currency mappings
+  - <<: *invalid
+    id: missing a home currency for a supported country
+    field_changes: {receipt.employee_country: {type: text, home_currency: {US: USD}}}
+    expected: needs a home_currency supported by input_contract
+  - <<: *invalid
+    id: unsupported mutable YAML set is rejected rather than shared
+    field_changes: {receipt.merchant_name: {type: text, metadata: !!set {value: null}}}
+    expected: unsupported field catalog value type.*set
+  - <<: *invalid
+    id: unsupported YAML timestamp is rejected
+    field_changes: {receipt.merchant_name: {type: text, metadata: 2026-04-14}}
+    expected: unsupported field catalog value type.*date
+  - <<: *invalid
+    id: mapping keys must be strings
+    field_changes: {receipt.merchant_name: {type: text, metadata: {1: value}}}
+    expected: mapping keys must be strings
+  - <<: *invalid
+    id: unknown rule field
+    rule_changes: {ALC-01: {select: {op: eq, field: item.not_a_fact, value: alcohol}}}
+    expected: ALC-01.*unknown field item.not_a_fact
+  - <<: *invalid
+    id: incompatible helper parameter units
+    rule_changes: {GIFT-01: {params: {cap_usd: {type: number, value: "50", unit: eur}, named_recipient_from_usd: {type: number, value: "10", unit: usd}}}}
+    expected: GIFT-01.*gift_cap needs params
+  - <<: *invalid
+    id: unsupported carveout implementation
+    rule_changes: {PERS.BAGGAGE: {helper: null, select: {op: eq, field: item.category, value: clothing}}}
+    expected: supports only baggage_allowance carve-outs
+  - <<: *invalid
+    id: missing disposition directive
+    remove_rules: [EXC-01]
+    expected: exactly one active disposition directive
+  - <<: *invalid
+    id: missing uncertainty directive
+    remove_rules: [EXC-03]
+    expected: exactly one active uncertainty directive
+  - <<: *invalid
+    id: missing evidence directive
+    remove_rules: [EXC-04]
+    expected: exactly one active evidence directive
+  - <<: *invalid
+    id: duplicate uncertainty directives
+    rule_changes: {EXC-04: {directive: uncertainty, params: {min_confidence: {type: number, value: "0.5", unit: ratio}}}}
+    expected: exactly one active uncertainty directive
+  - <<: *invalid
+    id: wrong uncertainty parameter type
+    rule_changes: {EXC-03: {params: {min_confidence: {type: set, values: [low]}}}}
+    expected: min_confidence must be a number
+  - <<: *invalid
+    id: confidence threshold outside probability range
+    rule_changes: {EXC-03: {params: {min_confidence: {type: number, value: "1.1", unit: ratio}}}}
+    expected: between 0 and 1
+  - <<: *invalid
+    id: confidence threshold with wrong units
+    rule_changes: {EXC-03: {params: {min_confidence: {type: number, value: "0.5", unit: usd}}}}
+    expected: ratio units
+  - <<: *invalid
+    id: inconsistent approval declaration
+    rule_changes: {TECH-02: {waived_by_ref: vp_approval}}
+    expected: TECH-02.*accepts vp_approval.*says pre_approval
+  - <<: *invalid
+    id: evidence list misses a receipt exception
+    rule_changes: {EXC-04: {params: {whole_receipt_rules: {type: set, values: [MCC-01, MEAL-01, MEAL-02, DOC-02, DOC-03, DOC-04, REG-02, REG-03, REG-04, TIME-03]}}}}
+    expected: evidence directive must list the receipt-level exception rules
+  - <<: *invalid
+    id: helper parameters are missing
+    rule_changes: {GIFT-01: {params: {cap_usd: {type: number, value: "50", unit: usd}}}}
+    expected: GIFT-01.*gift_cap needs params
+  - <<: *invalid
+    id: disposition directive misses a severity
+    rule_changes: {EXC-01: {params: {flag_severities: {type: set, values: [high, medium]}, review_severities: {type: set, values: [low]}}}}
+    expected: does not map every severity.*critical
+  - <<: *invalid
+    id: replacement cannot target a process rule
+    rule_changes: {REG-01: {replaces: [{rule_id: EXC-03, level: receipt}]}}
+    expected: REG-01.*replaces EXC-03, which is not a check
+  - <<: *invalid
+    id: replacement scopes must agree at receipt level
+    rule_changes: {REG-01: {replaces: [{rule_id: MEAL-01, level: receipt}]}}
+    expected: REG-01.*their scopes differ
+  - <<: *invalid
+    id: replacement at line level requires two item rules
+    rule_changes: {REG-01: {replaces: [{rule_id: MEAL-01, level: line}]}}
+    expected: REG-01.*both must be item rules
+  - <<: *invalid
+    id: replacement outcomes must agree
+    rule_changes: {REG-01: {replaces: [{rule_id: MCC-02, level: finding}]}}
+    expected: REG-01.*different outcome
+  - <<: *invalid
+    id: carveout must modify an exception
+    rule_changes: {PERS.BAGGAGE: {modifies: [MCC-02]}}
+    expected: PERS.BAGGAGE.*modifies MCC-02, which raises no exception
+  - <<: *invalid
+    id: declaring a nonexistent fact in the catalog cannot make it available at runtime
+    field_changes: {item.not_a_fact: {type: text}}
+    rule_changes: {ALC-01: {select: {op: eq, field: item.not_a_fact, value: alcohol}}}
+    expected: ALC-01.*unknown runtime fact item.not_a_fact

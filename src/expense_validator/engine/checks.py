@@ -20,7 +20,6 @@ false. It does not stay open where another condition already settles the rule.
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from expense_validator.compiler.validate import check_fields
 from expense_validator.engine.facts import item_facts, receipt_facts
 from expense_validator.engine.helpers import (
     ReceiptContext,
@@ -34,6 +33,7 @@ from expense_validator.engine.inputs import allowed_values
 from expense_validator.engine.models import Finding, LineItem, Receipt
 from expense_validator.policy.evaluate import evaluate, evaluate_with_unknowns, matches
 from expense_validator.policy.schema import AllOf, CheckRule, RuleSet
+from expense_validator.policy.validation import field_errors
 
 
 @dataclass(frozen=True)
@@ -83,7 +83,7 @@ def run_checks(
 
 def _refuse_invalid_rule(rule: CheckRule, fields: Mapping[str, dict]) -> None:
     """Such a rule would stay quiet on every receipt, as a comparison of unlike values is false."""
-    problems = [issue.message for issue in check_fields(rule, fields)]
+    problems = field_errors(rule, fields)
     if rule.scope == "receipt":
         problems += [f"a receipt rule cannot read {name}" for name in fields_read_by(rule) if name.startswith("item.")]
     if problems:

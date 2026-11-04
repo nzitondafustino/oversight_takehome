@@ -2,13 +2,17 @@
 
 from copy import deepcopy
 from dataclasses import FrozenInstanceError
+from pathlib import Path
+import os
+import subprocess
+import sys
 
 import pytest
 from pydantic import ValidationError
 from yaml_cases import exact, load_cases, selected
 
 from expense_validator.compiler.validate import read_fields
-from expense_validator.config import load_config
+from expense_validator.config import ROOT, load_config
 from expense_validator.engine import evaluation
 from expense_validator.engine.policy_engine import PolicyEngine
 from expense_validator.policy.schema import RuleSet
@@ -111,6 +115,65 @@ def test_configuration_types_are_explicit():
         PolicyEngine(ruleset=RULESET.model_dump(), fields=FIELDS)
     with pytest.raises(TypeError, match="catalog mapping"):
         PolicyEngine(ruleset=RULESET, fields=None)
+    with pytest.raises(ValueError, match="receipt.entity"):
+        PolicyEngine(ruleset=RULESET, fields={})
+
+
+@pytest.mark.parametrize("case", load_cases("policy_engine", "configuration_refused"))
+def test_invalid_configuration_is_rejected_before_evaluation(case, monkeypatch):
+    fields = deepcopy(FIELDS)
+    for name, value in case["field_changes"].items():
+        if value is None:
+            fields.pop(name, None)
+        else:
+            fields[name] = value
+    rules = [
+        {**rule.model_dump(), **case["rule_changes"].get(rule.rule_id, {})}
+        for rule in RULESET.rules
+        if rule.rule_id not in case["remove_rules"]
+    ]
+    ruleset = RuleSet.model_validate({**RULESET.model_dump(), "rules": rules})
+
+    def must_not_evaluate(*args, **kwargs):
+        raise AssertionError("configuration validation must not evaluate receipts")
+
+    monkeypatch.setattr(evaluation, "evaluate_receipts", must_not_evaluate)
+    with pytest.raises(ValueError, match=case["expected"]):
+        PolicyEngine(ruleset=ruleset, fields=fields)
+
+
+@pytest.mark.parametrize("case", load_cases("policy_engine", "catalog_values"))
+def test_supported_catalog_scalars_are_preserved_without_mutable_aliases(case):
+    fields = deepcopy(FIELDS)
+    values = deepcopy(case["values"])
+    fields["receipt.merchant_name"]["metadata"] = values
+    engine = PolicyEngine(ruleset=RULESET, fields=fields)
+    frozen = engine.fields["receipt.merchant_name"]["metadata"]
+    assert exact(frozen) == exact(case["expected"]["values"])
+    with pytest.raises(TypeError):
+        frozen[0] = "changed"
+    values.clear()
+    assert exact(frozen) == exact(case["expected"]["values"])
+
+
+def test_initialization_reads_no_policy_files(monkeypatch):
+    def must_not_read(*args, **kwargs):
+        raise AssertionError("initialization must use only the supplied configuration")
+
+    monkeypatch.setattr(Path, "read_text", must_not_read)
+    monkeypatch.setattr(Path, "read_bytes", must_not_read)
+    PolicyEngine(ruleset=RULESET, fields=FIELDS)
+
+
+def test_runtime_imports_do_not_load_the_compiler():
+    result = subprocess.run(
+        [sys.executable, "-c", "import sys; from expense_validator.engine.policy_engine import PolicyEngine; assert not any(name.startswith('expense_validator.compiler') for name in sys.modules)"],
+        env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_snapshot_preserves_the_callers_rule_order():

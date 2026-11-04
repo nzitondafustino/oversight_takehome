@@ -19,19 +19,14 @@ from expense_validator.policy.schema import (
     AllOf,
     CarveOutRule,
     CheckRule,
-    Compare,
     Condition,
-    In,
-    Missing,
     NumberParam,
-    ParamRef,
     ProcessRule,
     Replacement,
     Rule,
     RuleSet,
-    walk,
 )
-from expense_validator.policy.vocabulary import HELPER_CONTRACTS
+from expense_validator.policy.validation import field_errors, helper_errors, replacement_errors
 
 
 @dataclass(frozen=True)
@@ -72,74 +67,11 @@ def _error(check: str, rule: Rule, message: str) -> Issue:
 
 
 def check_fields(rule: Rule, fields: dict[str, dict]) -> list[Issue]:
-    if isinstance(rule, ProcessRule):
-        return []
-    issues = []
-    for condition in rule.conditions():
-        for node in walk(condition):
-            if isinstance(node, (Compare, In, Missing)):
-                issues.extend(_check_node(rule, node, fields))
-    return issues
-
-
-def _check_node(rule: Rule, node: Compare | In | Missing, fields: dict[str, dict]) -> list[Issue]:
-    field = fields.get(node.field)
-    if field is None:
-        return [_error("fields", rule, f"unknown field {node.field}")]
-    if isinstance(node, Missing):
-        return []
-    if isinstance(node, In):
-        if field["type"] != "text":
-            return [_error("fields", rule, f"in needs a text field, {node.field} is {field['type']}")]
-        values = rule.params[node.values.param].values if isinstance(node.values, ParamRef) else node.values
-        return _check_values(rule, node.field, field, values)
-    if isinstance(node.value, ParamRef):
-        return _check_number(rule, node, field)
-    if node.op in {"gt", "gte", "lt", "lte"} or isinstance(node.value, bool) != (field["type"] == "bool"):
-        return [_error("fields", rule, f"{node.field} is {field['type']}, cannot compare with {node.value!r}")]
-    if field["type"] == "number":
-        return [_error("fields", rule, f"{node.field} is a number and must compare against a param")]
-    return _check_values(rule, node.field, field, [node.value])
-
-
-def _check_number(rule: Rule, node: Compare, field: dict) -> list[Issue]:
-    if field["type"] != "number":
-        return [_error("fields", rule, f"{node.field} is {field['type']}, cannot compare with a number")]
-    param = rule.params[node.value.param]
-    if "unit" in field and param.unit != field["unit"]:
-        return [_error("fields", rule, f"{node.value.param} is in {param.unit}, {node.field} is in {field['unit']}")]
-    return []
-
-
-def _check_values(rule: Rule, name: str, field: dict, values) -> list[Issue]:
-    allowed = field.get("values")
-    if allowed is None or isinstance(values, bool):
-        return []
-    return [
-        _error("fields", rule, f"{value!r} is not a known value for {name}")
-        for value in values
-        if not isinstance(value, bool) and value not in allowed
-    ]
-
-
-# --- Helpers: each helper runs on the right kind of rule, with the params it needs ---
+    return [_error("fields", rule, message) for message in field_errors(rule, fields)]
 
 
 def _check_helper(rule: Rule) -> list[Issue]:
-    helper = getattr(rule, "helper", None)
-    if helper is None:
-        return []
-    contract = HELPER_CONTRACTS[helper]
-    issues = []
-    if rule.kind != contract["kind"]:
-        issues.append(_error("helpers", rule, f"{helper} belongs on a {contract['kind']} rule, not a {rule.kind}"))
-    if getattr(rule, "scope", None) != contract.get("scope"):
-        issues.append(_error("helpers", rule, f"{helper} needs scope {contract.get('scope')}"))
-    params = {name: param.unit for name, param in rule.params.items() if isinstance(param, NumberParam)}
-    if len(params) != len(rule.params) or params not in contract["params"]:
-        expected = " or ".join(str(option) for option in contract["params"])
-        issues.append(_error("helpers", rule, f"{helper} needs params {expected}, got {params}"))
-    return issues
+    return [_error("helpers", rule, message) for message in helper_errors(rule)]
 
 
 # --- Conflicts: two rules that catch the same thing and neither replaces the other ---
@@ -217,19 +149,7 @@ def _check_targets(rules: list[Rule], by_id: dict[str, Rule]) -> list[Issue]:
 
 
 def _check_replacement(rule: CheckRule, replacement: Replacement, target: Rule | None) -> list[Issue]:
-    name = replacement.rule_id
-    if not isinstance(target, CheckRule):
-        return [_error("conflicts", rule, f"replaces {name}, which is not a check")]
-    issues = []
-    if target.outcome != rule.outcome:
-        issues.append(_error("conflicts", rule, f"replaces {name}, which has a different outcome"))
-    # Removing lines only means something between two rules about lines.
-    if replacement.level == "line" and (rule.scope, target.scope) != ("item", "item"):
-        issues.append(_error("conflicts", rule, f"replaces {name} at line level, but both must be item rules"))
-    # Only a finding can be swapped across scopes, as a split replaces the breach it was split around.
-    if replacement.level == "receipt" and rule.scope != target.scope:
-        issues.append(_error("conflicts", rule, f"replaces {name} at receipt level, but their scopes differ"))
-    return issues
+    return [_error("conflicts", rule, message) for message in replacement_errors(rule, replacement, target)]
 
 
 # --- References and evidence: the process rules agree with the rules they describe ---

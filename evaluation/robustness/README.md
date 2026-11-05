@@ -26,4 +26,5 @@ PYTHONPATH=src .venv/bin/python -m expense_validator.classification.robustness -
 - Strict accuracy reads `gold.category`. Acceptable accuracy also allows the readings in `gold.acceptable`, so report them apart. A failed line is wrong on both.
 - The same prompt gives different answers on repeated uncached calls, even at temperature 0, so one run's difference on one line can be chance.
 - A run has too few errors to judge calibration. Its ECE and Brier score say only that the model reported less confidence than it was right.
+- The isolated lines record no quantity, price or currency. A `Receipt` needs them, so the script fills in placeholders and then removes them from every request: the model never sees them. The whole receipts send their real amounts.
 - The labels and the prompt are by one author, and the set holds no `lodging` or `software_subscription` gold lines.

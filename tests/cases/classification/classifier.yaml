@@ -131,26 +131,73 @@ provider_refused:
   - {id: a server error, status: 500, body: {error: {code: 500, message: Broken}}, expected: "classification request failed: InternalServerResponseError"}
 
 line_inputs:
-  - id: an English line has no translation, and the expense type stays out
-    receipt: *receipt
+  # The data has no product name apart from the description, so no case has a product_name key.
+  - id: an English line has no translation, and the expense type and policy facts stay out
+    receipt: {<<: *receipt, attendee_count: 4, trip_id: T-1, trip_nights: 2, pre_approval_ref: PA-2026-1}
     translations: null
     expected:
-      fields: [{description: Lunch, language: en, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true}]
-  - id: a translated line carries its translation beside the original
+      fields: [{original_description: Lunch, description_language: en, receipt_language: en, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, quantity: 1, unit_price: "12.50", currency: USD}]
+  - id: a translated line keeps its original beside the translation
     receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Vino tinto, language: es}]}
     translations: {Vino tinto: Red wine}
     expected:
-      fields: [{description: Vino tinto, language: es, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, english_translation: Red wine}]
-  - id: a failed translation leaves the original alone
+      fields: [{original_description: Vino tinto, description_language: es, english_translation: Red wine, receipt_language: es, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, quantity: 1, unit_price: "12.50", currency: USD}]
+  - id: a failed translation leaves the original alone, with no translation key
     receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Vino tinto, language: es}]}
     translations: {Vino tinto: {raises: the provider is down}}
     expected:
-      fields: [{description: Vino tinto, language: es, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true}]
-  - id: a non-itemized receipt says so, and missing merchant details stay null
-    receipt: {<<: *receipt, itemized: false, merchant_name: null, mcc_description: null}
+      fields: [{original_description: Vino tinto, description_language: es, receipt_language: es, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, quantity: 1, unit_price: "12.50", currency: USD}]
+  - id: a translation that contradicts the original is sent beside it, for the model to weigh
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Vino tinto, language: es}]}
+    translations: {Vino tinto: Mineral water}
+    expected:
+      fields: [{original_description: Vino tinto, description_language: es, english_translation: Mineral water, receipt_language: es, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, quantity: 1, unit_price: "12.50", currency: USD}]
+  - id: a Spanish product on an English receipt keeps its own language
+    receipt:
+      <<: *receipt
+      total_amount: "37.50"
+      line_items: [*line, {<<: *line, line_id: R-1-L2, description_raw: Coffee}, {<<: *line, line_id: R-1-L3, description_raw: Mojito sin alcohol, language: es}]
+    translations: {Mojito sin alcohol: Virgin mojito}
+    expected:
+      fields:
+        - {original_description: Lunch, description_language: en, receipt_language: en, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, quantity: 1, unit_price: "12.50", currency: USD}
+        - {original_description: Coffee, description_language: en, receipt_language: en, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, quantity: 1, unit_price: "12.50", currency: USD}
+        - {original_description: Mojito sin alcohol, description_language: es, english_translation: Virgin mojito, receipt_language: en, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, quantity: 1, unit_price: "12.50", currency: USD}
+  - id: a Japanese product name on an English receipt, untranslated, is kept exactly as printed
+    receipt:
+      <<: *receipt
+      total_amount: "25.00"
+      line_items: [*line, {<<: *line, line_id: R-1-L2, description_raw: "  獺祭 純米大吟醸 ", language: ja}, {<<: *line, line_id: R-1-L3, description_raw: Rice, unit_price: "0", amount: "0", amount_usd: "0"}]
     translations: null
     expected:
-      fields: [{description: Lunch, language: en, merchant_name: null, merchant_category: null, itemized_receipt: false}]
+      fields:
+        - {original_description: Lunch, description_language: en, receipt_language: en, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, quantity: 1, unit_price: "12.50", currency: USD}
+        - {original_description: 獺祭 純米大吟醸, description_language: ja, receipt_language: en, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, quantity: 1, unit_price: "12.50", currency: USD}
+        - {original_description: Rice, description_language: en, receipt_language: en, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, quantity: 1, unit_price: "0", currency: USD}
+  - id: with no language on more than half the lines, the receipt language is null
+    receipt: {<<: *receipt, total_amount: "25.00", line_items: [*line, {<<: *line, line_id: R-1-L2, description_raw: Agua, language: es}]}
+    translations: null
+    expected:
+      fields:
+        - {original_description: Lunch, description_language: en, receipt_language: null, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, quantity: 1, unit_price: "12.50", currency: USD}
+        - {original_description: Agua, description_language: es, receipt_language: null, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, quantity: 1, unit_price: "12.50", currency: USD}
+  - id: a vague line gets its quantity, price and merchant as context, and nothing more
+    receipt: {<<: *receipt, merchant_name: The Crown, mcc_description: "Bars, taverns, cocktail lounges", total_amount: "90.00", line_items: [{<<: *line, description_raw: Bottle, quantity: 2, unit_price: "45.00", amount: "90.00", amount_usd: "90.00"}]}
+    translations: null
+    expected:
+      fields: [{original_description: Bottle, description_language: en, receipt_language: en, merchant_name: The Crown, merchant_category: "Bars, taverns, cocktail lounges", itemized_receipt: true, quantity: 2, unit_price: "45.00", currency: USD}]
+  - id: a non-itemized receipt says so, and missing merchant details and currency stay null
+    receipt: {<<: *receipt, itemized: false, merchant_name: null, mcc_description: null, currency: null, fx_rate_to_usd: null}
+    translations: null
+    expected:
+      fields: [{original_description: Lunch, description_language: en, receipt_language: en, merchant_name: null, merchant_category: null, itemized_receipt: false, quantity: 1, unit_price: "12.50", currency: null}]
+
+receipt_languages:
+  - {id: one language, languages: [en], expected: {language: en}}
+  - {id: more than half decides, languages: [en, en, es], expected: {language: en}}
+  - {id: a tie has no primary language, languages: [en, es], expected: {language: null}}
+  - {id: a plurality short of half is not enough, languages: [en, en, es, es, fr], expected: {language: null}}
+  - {id: a non-English receipt, languages: [ja, ja, en], expected: {language: ja}}
 
 scores:
   - id: every line right

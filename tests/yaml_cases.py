@@ -75,7 +75,7 @@ SECTIONS = {
     "hardening": {"directives", "directives_refused", "tampered_refused", "completeness", "ties"},
     "ingestion": {"ingested", "refused", "secrets_refused", "streamed", "stream_refused"},
     "normalization": {"text", "text_refused", "receipts", "receipts_refused", "lines_refused", "provider", "provider_refused"},
-    "classification": {"answers", "answers_refused", "thresholds", "provider", "provider_refused", "line_inputs", "scores"},
+    "classification": {"answers", "answers_refused", "thresholds", "provider", "provider_refused", "line_inputs", "receipt_languages", "scores"},
     "robustness": {"thresholds", "levels", "separation", "confusion", "groups", "attributes", "safety"},
 }
 INPUTS = {
@@ -224,6 +224,7 @@ INPUTS = {
     ("classification", "provider_refused"): {"status", "body"},
     ("classification", "line_inputs"): {"receipt", "translations"},
     ("classification", "scores"): {"lines"},
+    ("classification", "receipt_languages"): {"languages"},
     ("robustness", "thresholds"): {"rows", "threshold"},
     ("robustness", "levels"): {"rows"},
     ("robustness", "separation"): {"rows"},

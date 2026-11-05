@@ -45,8 +45,12 @@ HIGH_CONFIDENCE = Decimal("0.7")
 SPENDING_STOP_USD = 4.95
 
 
+PLACEHOLDER_FIELDS = ("quantity", "unit_price", "currency")
+
+
 def line_receipt(case_id: str, case_input: Mapping) -> Receipt:
-    """A one-line receipt from a case's input alone. The amounts are placeholders the model never reads."""
+    """A one-line receipt from a case's input alone. Its amounts are placeholders a Receipt requires:
+    without_placeholders keeps them from the model, as the cases record no amounts."""
     line = {"line_id": case_id, "description_raw": case_input["description"], "language": case_input["language"], "quantity": 1, "unit_price": "10", "amount": "10"}
     return Receipt.model_validate(
         {
@@ -219,11 +223,23 @@ def score_rows(rows: Sequence[Mapping]) -> dict:
     }
 
 
+def without_placeholders(complete: Complete) -> Complete:
+    """Sends a line without the placeholder amounts. The cache, wrapped inside, keys on what is sent."""
+
+    def send(prompt: str, text: str) -> str:
+        line = {name: value for name, value in json.loads(text).items() if name not in PLACEHOLDER_FIELDS}
+        return complete(prompt, json.dumps(line, ensure_ascii=False))
+
+    return send
+
+
 def classify_cases(cases: Sequence[Mapping], translator: Translator, complete: Complete, vocabulary: Vocabulary) -> list[dict]:
+    """The isolated lines. The whole receipts have real amounts, so run_receipts sends them as they are."""
     rows = []
+    send = without_placeholders(complete)
     for case in cases:
         normalized = normalize_receipt(line_receipt(case["id"], case["input"]), translator)
-        classified = classify_receipt(normalized, complete, vocabulary)[0]
+        classified = classify_receipt(normalized, send, vocabulary)[0]
         line = normalized.lines[0]
         rows.append(scored_row(case, classified, line.translation or line.translation_error))
     return rows

@@ -15,7 +15,7 @@ from yaml_cases import exact, load_cases
 import expense_validator
 from expense_validator.classification import ClassifiedLine, build_classifier, classify_receipt, load_taxonomy, load_vocabulary
 from expense_validator.classification import classifier as classifier_module
-from expense_validator.classification.classifier import CONFIDENCE_LEVELS, ClassificationError, build_prompt, line_input, openrouter_completion, parse_answer, response_schema
+from expense_validator.classification.classifier import CONFIDENCE_LEVELS, ClassificationError, build_prompt, line_input, openrouter_completion, parse_answer, receipt_language, response_schema
 from expense_validator.classification.evaluate import line_prediction, score_lines
 from expense_validator.compiler.llm_extract import cached
 from expense_validator.compiler.validate import read_fields
@@ -33,7 +33,7 @@ FIELDS = read_fields(CONFIG.paths.rule_fields.read_text())
 INGESTED = list(iter_jsonl(ROOT / "data" / "receipts.jsonl", IngestionMode.EVALUATION))
 ONE_RECEIPT = normalize_receipt(INGESTED[0].receipt)
 SOURCE = Path(expense_validator.__file__).parent
-LINE_INPUT_FIELDS = {"description", "english_translation", "language", "merchant_name", "merchant_category", "itemized_receipt"}
+LINE_INPUT_FIELDS = {"original_description", "description_language", "english_translation", "receipt_language", "merchant_name", "merchant_category", "itemized_receipt", "quantity", "unit_price", "currency"}
 GOOD_ANSWER = '{"category": "other", "confidence": 0.7, "recipient_name": null, "recipient_type": null, "venue_type": null, "item_kind": null, "essential_toiletry": null}'
 
 
@@ -115,7 +115,7 @@ def test_the_merchant_is_not_evidence_of_a_recipient():
 
 def test_a_failure_message_quotes_no_line_text():
     with pytest.raises(ClassificationError) as error:
-        parse_answer('{"category": "other", "confidence": 0.5, "recipient_name": "Secret Person", "recipient_type": null, "venue_type": null, "item_kind": null, "essential_toiletry": null}', json.dumps({"description": "Sensitive words"}), VOCABULARY)
+        parse_answer('{"category": "other", "confidence": 0.5, "recipient_name": "Secret Person", "recipient_type": null, "venue_type": null, "item_kind": null, "essential_toiletry": null}', json.dumps({"original_description": "Sensitive words"}), VOCABULARY)
     assert "Secret Person" not in str(error.value) and "Sensitive" not in str(error.value)
 
 
@@ -228,6 +228,29 @@ def test_a_line_input_holds_what_the_model_may_read(case):
     assert exact(found) == exact(case["expected"]["fields"])
 
 
+@pytest.mark.parametrize("case", load_cases("classification", "receipt_languages"))
+def test_the_receipt_language_is_the_language_of_most_lines(case):
+    assert receipt_language(case["languages"]) == case["expected"]["language"]
+
+
+def test_the_lines_own_words_come_first_and_a_translation_follows_them():
+    normalized = _receipt_with("Blumen", TableTranslator({"Blumen": "Flowers"}), "de")
+    assert list(json.loads(line_input(normalized, normalized.lines[0])))[:3] == ["original_description", "description_language", "english_translation"]
+
+
+def test_the_prompt_sets_the_order_of_evidence_and_calls_both_texts_what_they_are():
+    prompt = build_prompt(VOCABULARY)
+    flat = " ".join(prompt.split())
+    assert "after deterministic normalization" in flat and "not necessarily character for character as printed" in flat
+    assert "exactly as printed" not in flat
+    assert "receipt_language is inferred from the languages of the receipt's lines, not recorded on the receipt" in flat
+    assert "do not assume original_description is written in it" in flat
+    order = [prompt.index(name) for name in ("1. original_description", "2. english_translation", "3. Receipt context")]
+    assert order == sorted(order)
+    assert "never choose a category from the merchant or the price alone" in prompt
+    assert "go by the original and lower your confidence" in prompt
+
+
 def test_on_the_real_data_one_request_per_line_holds_no_answers():
     seen = []
 
@@ -241,6 +264,11 @@ def test_on_the_real_data_one_request_per_line_holds_no_answers():
     assert {key for _, text in seen for key in json.loads(text)} <= LINE_INPUT_FIELDS
     notes = [item.ground_truth.notes for item in INGESTED if item.ground_truth.notes]
     assert notes and not any(note in prompt or note in text for note in notes for prompt, text in seen)
+    sent = [json.loads(text) for _, text in seen]
+    assert not [line for line in sent if "submitted_expense_type" in line or "labels" in line or "category" in line]
+    by_text = {line["original_description"]: line for line in sent}
+    assert by_text["Mojito sin alcohol"]["description_language"] == "es" and by_text["Mojito sin alcohol"]["receipt_language"] == "en"
+    assert by_text["Vino tinto Rioja Reserva 750ml"]["receipt_language"] is None
 
 
 def test_the_prompt_lists_every_value_and_never_asks_for_a_judgement():
@@ -334,7 +362,7 @@ def test_settings_build_a_cached_classifier_for_the_classification_model(tmp_pat
 
 
 def _line():
-    return json.dumps({"description": "Item"})
+    return json.dumps({"original_description": "Item"})
 
 
 def test_a_new_prompt_is_not_answered_from_the_cache(tmp_path, monkeypatch):

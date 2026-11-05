@@ -77,19 +77,19 @@
       "line_id": "RCP-004-L2",
       "category": "food_beverage",
       "restricted": false,
-      "confidence": "0.7"
+      "confidence": "0.9"
     },
     {
       "line_id": "RCP-004-L3",
       "category": "food_beverage",
       "restricted": false,
-      "confidence": "0.7"
+      "confidence": "0.9"
     },
     {
       "line_id": "RCP-004-L4",
       "category": "food_beverage",
       "restricted": false,
-      "confidence": "0.7"
+      "confidence": "0.9"
     },
     {
       "line_id": "RCP-005-L1",
@@ -107,7 +107,7 @@
       "line_id": "RCP-005-L3",
       "category": "ground_transport",
       "restricted": false,
-      "confidence": "0.7"
+      "confidence": "0.9"
     },
     {
       "line_id": "RCP-006-L1",
@@ -227,7 +227,7 @@
       "line_id": "RCP-014-L4",
       "category": "alcohol",
       "restricted": true,
-      "confidence": "0.9"
+      "confidence": "0.7"
     },
     {
       "line_id": "RCP-015-L1",
@@ -451,7 +451,7 @@
       "line_id": "RCP-029-L2",
       "category": "food_beverage",
       "restricted": false,
-      "confidence": "0.9"
+      "confidence": "0.7"
     },
     {
       "line_id": "RCP-029-L3",

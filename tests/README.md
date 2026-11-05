@@ -147,6 +147,7 @@ Optional `templates` can hold YAML anchors; anchors are local to a file.
 | classification | provider | status, body | `category` and `restricted` read through the real SDK from this HTTP response, with the network mocked. |
 | classification | provider_refused | status, body | Error regex: this HTTP response fails the line through the real SDK, and is not cached. |
 | classification | line_inputs | receipt, translations | `fields`: for each line, exactly what the model reads. `translations` maps text to the answer, or to `{raises: message}`; null means no translator. |
+| classification | receipt_languages | languages | `language`: the receipt language for lines in these languages, or null. |
 | classification | scores | lines | `category_right`, `restricted_right`, `failures` and `total` over these scored lines. |
 | robustness | thresholds | rows, threshold | What this threshold accepts and sets aside. A row is a short form the runner fills in. |
 | robustness | levels | rows | Right and total at each confidence level. |

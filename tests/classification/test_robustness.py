@@ -13,7 +13,10 @@ from expense_validator.classification.classifier import build_prompt
 from expense_validator.classification.evaluate import ATTRIBUTES, score_lines
 from expense_validator.config import ROOT, load_config
 from expense_validator.ingestion import IngestionMode, iter_jsonl
-from expense_validator.normalization import NoOpTranslator
+from expense_validator.classification.classifier import classify_receipt
+from expense_validator.compiler.llm_extract import cached
+from expense_validator.normalization import NoOpTranslator, normalize_receipt
+from expense_validator.offline_eval.dataset import load_dataset
 
 CONFIG = load_config()
 VOCABULARY = load_vocabulary(CONFIG.paths.taxonomy, CONFIG.paths.rule_fields)
@@ -131,13 +134,44 @@ def test_only_a_cases_input_reaches_the_classifier():
 
     rows = module.classify_cases(CASES, NoOpTranslator(), complete, VOCABULARY)
     assert len(rows) == len(seen) == len(CASES)
-    allowed = {"description", "english_translation", "language", "merchant_name", "merchant_category", "itemized_receipt"}
+    allowed = {"original_description", "description_language", "english_translation", "receipt_language", "merchant_name", "merchant_category", "itemized_receipt"}
     for (_, text), case in zip(seen, CASES):
         sent = json.loads(text)
-        assert set(sent) <= allowed
-        assert sent["description"] == case["input"]["description"]
+        assert set(sent) <= allowed, "a case records no amounts, so none may be sent"
+        assert sent["original_description"] == case["input"]["description"]
         assert case["explanation"] not in text
         assert case["id"] not in text
+
+
+def test_the_frozen_cases_record_no_amounts_to_send():
+    assert not [case["id"] for case in CASES if set(case["input"]) & set(module.PLACEHOLDER_FIELDS)]
+
+
+def test_only_the_placeholders_are_removed_and_the_rest_is_sent_unchanged():
+    seen = []
+    send = module.without_placeholders(lambda prompt, text: seen.append((prompt, text)) or ANSWER)
+    line = {"original_description": "Vino tinto", "description_language": "es", "english_translation": "Red wine", "receipt_language": "es", "merchant_name": "Bar", "quantity": 1, "unit_price": "10", "currency": "USD"}
+    assert send("the prompt", json.dumps(line, ensure_ascii=False)) == ANSWER
+    prompt, text = seen[0]
+    assert prompt == "the prompt"
+    assert json.loads(text) == {name: value for name, value in line.items() if name not in {"quantity", "unit_price", "currency"}}
+
+
+def test_a_line_without_placeholders_has_its_own_cache_entry(tmp_path):
+    sent = []
+    complete = module.without_placeholders(cached(lambda prompt, text: sent.append(text) or ANSWER, "m", tmp_path))
+    case = CASES[0]
+    module.classify_cases([case], NoOpTranslator(), complete, VOCABULARY)
+    module.classify_cases([case], NoOpTranslator(), complete, VOCABULARY)
+    assert len(sent) == 1 and "unit_price" not in sent[0]
+
+
+def test_whole_receipts_still_send_their_real_amounts():
+    dataset = load_dataset(module.RECEIPTS, module.CUSTOMER)
+    seen = []
+    classify_receipt(normalize_receipt(dataset.inputs[0]), lambda prompt, text: seen.append(json.loads(text)) or ANSWER, VOCABULARY)
+    printed = dataset.inputs[0].line_items[0]
+    assert (seen[0]["quantity"], seen[0]["unit_price"], seen[0]["currency"]) == (printed.quantity, str(printed.unit_price), dataset.inputs[0].currency)
 
 
 def test_no_explanation_or_case_is_in_the_prompt():

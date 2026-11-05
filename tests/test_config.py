@@ -15,6 +15,7 @@ llm:
   timeout_seconds: 30
 paths:
   policy_docs: docs
+  taxonomy: taxonomy.md
   llm_cache: cache
   rule_logic: logic.yaml
   ruleset: ruleset.json

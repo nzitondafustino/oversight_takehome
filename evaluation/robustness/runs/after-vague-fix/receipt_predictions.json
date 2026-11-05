@@ -1,0 +1,121 @@
+{
+  "customer_id": "robustness",
+  "source": {
+    "kind": "actual",
+    "name": "after-vague-fix",
+    "description": "Robustness receipts: one request per line",
+    "model": "anthropic/claude-haiku-5.5"
+  },
+  "predictions": [
+    {
+      "line_id": "RBX-001-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RBX-001-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RBX-002-L1",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RBX-002-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RBX-003-L1",
+      "category": "personal_electronics",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RBX-004-L1",
+      "category": "computer_accessory",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RBX-005-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9",
+      "recipient_name": "Deputy Mayor T. Nguyen",
+      "recipient_type": "government_official"
+    },
+    {
+      "line_id": "RBX-005-L2",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RBX-006-L1",
+      "category": "gift",
+      "restricted": true,
+      "confidence": "0.9",
+      "recipient_name": "K. Sato",
+      "recipient_type": "client"
+    },
+    {
+      "line_id": "RBX-007-L1",
+      "category": "health_otc",
+      "restricted": false,
+      "confidence": "0.7"
+    },
+    {
+      "line_id": "RBX-008-L1",
+      "category": "other",
+      "restricted": false,
+      "confidence": "0.9",
+      "item_kind": "prescription_medication"
+    },
+    {
+      "line_id": "RBX-009-L1",
+      "category": "other",
+      "restricted": false,
+      "confidence": "0.7",
+      "venue_type": "sporting_event"
+    },
+    {
+      "line_id": "RBX-010-L1",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RBX-010-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RBX-011-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RBX-011-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RBX-012-L1",
+      "category": "gift",
+      "restricted": true,
+      "confidence": "0.9",
+      "recipient_name": "L. Haddad",
+      "recipient_type": "government_official"
+    }
+  ]
+}

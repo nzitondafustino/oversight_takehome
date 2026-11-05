@@ -1,0 +1,280 @@
+{
+  "model": "anthropic/claude-haiku-5.5",
+  "translation_model": "tencent/hy-mt2-30b-a3b",
+  "translations": {
+    "skipped": 68,
+    "translated": 11
+  },
+  "scores": {
+    "lines": 79,
+    "accuracy": {
+      "numerator": 79,
+      "denominator": 79,
+      "value": 1.0,
+      "wilson_95": [
+        0.953629,
+        1.0
+      ]
+    },
+    "missing_category": {
+      "numerator": 0,
+      "denominator": 79,
+      "value": 0.0,
+      "wilson_95": [
+        0.0,
+        0.046371
+      ]
+    },
+    "missing_confidence": {
+      "numerator": 0,
+      "denominator": 79,
+      "value": 0.0,
+      "wilson_95": [
+        0.0,
+        0.046371
+      ]
+    },
+    "missing_restricted": {
+      "numerator": 0,
+      "denominator": 79,
+      "value": 0.0,
+      "wilson_95": [
+        0.0,
+        0.046371
+      ]
+    },
+    "macro": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "per_category": {
+      "alcohol": {
+        "tp": 7,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "clothing": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "computer_accessory": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "food_beverage": {
+        "tp": 32,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "gift": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "gift_card": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "ground_transport": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "health_otc": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "household_goods": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "jewelry": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "laundry_service": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "lodging": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "office_supplies": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "other": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "personal_care": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "personal_electronics": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "service_fee": {
+        "tp": 11,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "software_subscription": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "tobacco": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "restricted": {
+      "tp": 21,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "restricted_accuracy": {
+      "numerator": 79,
+      "denominator": 79,
+      "value": 1.0,
+      "wilson_95": [
+        0.953629,
+        1.0
+      ]
+    },
+    "failures": {
+      "numerator": 0,
+      "denominator": 79,
+      "value": 0.0,
+      "wilson_95": [
+        0.0,
+        0.046371
+      ]
+    }
+  },
+  "confidence_levels": {
+    "0.1": 1,
+    "0.7": 3,
+    "0.9": 75
+  },
+  "attributes_read": [
+    {
+      "line_id": "RCP-017-L1",
+      "description": "60-minute deep tissue massage",
+      "category": "personal_care",
+      "essential_toiletry": false
+    },
+    {
+      "line_id": "RCP-018-L1",
+      "description": "Sterling silver bracelet - client gift for A. Moreau, Halcyon Partners",
+      "category": "jewelry",
+      "recipient_name": "A. Moreau",
+      "recipient_type": "client"
+    },
+    {
+      "line_id": "RCP-022-L1",
+      "description": "Lunch entree — guest R. Delgado, City Procurement Office",
+      "category": "food_beverage",
+      "recipient_name": "R. Delgado",
+      "recipient_type": "government_official"
+    },
+    {
+      "line_id": "RCP-022-L2",
+      "description": "Gift basket for R. Delgado, City Procurement Office",
+      "category": "gift",
+      "recipient_name": "R. Delgado",
+      "recipient_type": "government_official"
+    },
+    {
+      "line_id": "RCP-028-L1",
+      "description": "Ibuprofen 200mg 24ct",
+      "category": "health_otc",
+      "item_kind": "otc_medication"
+    },
+    {
+      "line_id": "RCP-028-L2",
+      "description": "Throat lozenges",
+      "category": "health_otc",
+      "item_kind": "otc_medication"
+    }
+  ],
+  "failed": [],
+  "wrong": []
+}

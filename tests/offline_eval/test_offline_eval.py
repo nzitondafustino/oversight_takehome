@@ -13,6 +13,8 @@ from expense_validator.compiler.validate import read_fields
 from expense_validator.config import ROOT, load_config
 from expense_validator.engine import evaluation as engine_evaluation
 from expense_validator.engine.inputs import allowed_values
+from expense_validator.engine.models import Receipt
+from expense_validator.ingestion import IngestionError
 from expense_validator.offline_eval import metrics, runner
 from expense_validator.offline_eval.__main__ import main, smoke_predictions
 from expense_validator.offline_eval.dataset import load_dataset
@@ -332,6 +334,28 @@ def test_two_runs_write_the_same_bytes(tmp_path):
     assert names == sorted(path.relative_to(second) for path in second.rglob("*") if path.is_file())
     for name in names:
         assert (first / name).read_bytes() == (second / name).read_bytes(), name
+
+
+def test_a_dataset_is_held_to_the_ingestion_contract(tmp_path):
+    row = json.loads(SMOKE.read_text().splitlines()[0])
+    row["line_items"][0]["category"] = row["line_items"][0]["labels"]["category"]
+    path = tmp_path / "one.jsonl"
+    path.write_text(json.dumps(row) + "\n")
+    with pytest.raises(IngestionError, match=f"{path}:1: .*may not carry classifier fields"):
+        load_dataset(path, "c")
+
+
+def test_a_dataset_keeps_numbers_exact_and_its_answers_out_of_its_inputs(tmp_path):
+    row = json.loads(SMOKE.read_text().splitlines()[0])
+    row.pop("baggage_delay_hours", None)
+    text = json.dumps(row)
+    path = tmp_path / "one.jsonl"
+    path.write_text(text[:-1] + ', "baggage_delay_hours": 48.200000000000000001}\n')
+    dataset = load_dataset(path, "c")
+    assert dataset.inputs[0].baggage_delay_hours == Decimal("48.200000000000000001")
+    assert isinstance(dataset.inputs[0], Receipt)
+    assert all(line.category is None for line in dataset.inputs[0].line_items)
+    assert dataset.answers[row["receipt_id"]].lines[0].category == row["line_items"][0]["labels"]["category"]
 
 
 def test_scores_do_not_depend_on_dataset_order(tmp_path):

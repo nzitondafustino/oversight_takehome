@@ -1,0 +1,2038 @@
+[
+  {
+    "line_id": "RB-001",
+    "description": "Guinness 0.0 draught pint",
+    "translation": null,
+    "gold_category": "food_beverage",
+    "gold_restricted": false,
+    "acceptable": [
+      "food_beverage"
+    ],
+    "category": "food_beverage",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-002",
+    "description": "Seedlip Garden and tonic",
+    "translation": null,
+    "gold_category": "food_beverage",
+    "gold_restricted": false,
+    "acceptable": [
+      "food_beverage"
+    ],
+    "category": "food_beverage",
+    "restricted": false,
+    "confidence": "0.7",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "misleading_name",
+      "merchant_misleading"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-003",
+    "description": "Beer cheese soup",
+    "translation": null,
+    "gold_category": "food_beverage",
+    "gold_restricted": false,
+    "acceptable": [
+      "food_beverage"
+    ],
+    "category": "food_beverage",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-004",
+    "description": "Bourbon barrel-aged maple syrup",
+    "translation": null,
+    "gold_category": "food_beverage",
+    "gold_restricted": false,
+    "acceptable": [
+      "food_beverage"
+    ],
+    "category": "food_beverage",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-005",
+    "description": "Hard seltzer variety 12-pack",
+    "translation": null,
+    "gold_category": "alcohol",
+    "gold_restricted": true,
+    "acceptable": [
+      "alcohol"
+    ],
+    "category": "alcohol",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "merchant_misleading"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-006",
+    "description": "Penne alla vodka",
+    "translation": null,
+    "gold_category": "food_beverage",
+    "gold_restricted": false,
+    "acceptable": [
+      "food_beverage"
+    ],
+    "category": "food_beverage",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-007",
+    "description": "Lager shandy pint",
+    "translation": null,
+    "gold_category": "alcohol",
+    "gold_restricted": true,
+    "acceptable": [
+      "alcohol"
+    ],
+    "category": "alcohol",
+    "restricted": true,
+    "confidence": "0.7",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-008",
+    "description": "Sangría sin alcohol",
+    "translation": "Non-alcoholic sangria",
+    "gold_category": "food_beverage",
+    "gold_restricted": false,
+    "acceptable": [
+      "food_beverage"
+    ],
+    "category": "food_beverage",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "multilingual",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-009",
+    "description": "Bière sans alcool 33cl",
+    "translation": "Non-alcoholic beer 33cl",
+    "gold_category": "food_beverage",
+    "gold_restricted": false,
+    "acceptable": [
+      "food_beverage"
+    ],
+    "category": "food_beverage",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "multilingual",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-010",
+    "description": "Glühwein 0,2l",
+    "translation": "Glühwein 0.2L",
+    "gold_category": "alcohol",
+    "gold_restricted": true,
+    "acceptable": [
+      "alcohol"
+    ],
+    "category": "alcohol",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "multilingual"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-011",
+    "description": "梅酒 グラス",
+    "translation": "Plum wine glass",
+    "gold_category": "alcohol",
+    "gold_restricted": true,
+    "acceptable": [
+      "alcohol"
+    ],
+    "category": "alcohol",
+    "restricted": true,
+    "confidence": "0.5",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "multilingual"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-012",
+    "description": "ノンアルコールビール 350ml",
+    "translation": "Non-alcoholic beer 350ml",
+    "gold_category": "food_beverage",
+    "gold_restricted": false,
+    "acceptable": [
+      "food_beverage"
+    ],
+    "category": "food_beverage",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "multilingual",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-013",
+    "description": "Vinho do Porto 20 anos",
+    "translation": "Port Wine 20 Years",
+    "gold_category": "alcohol",
+    "gold_restricted": true,
+    "acceptable": [
+      "alcohol"
+    ],
+    "category": "alcohol",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "multilingual"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-014",
+    "description": "Logitech MX Master 3S mouse",
+    "translation": null,
+    "gold_category": "computer_accessory",
+    "gold_restricted": false,
+    "acceptable": [
+      "computer_accessory"
+    ],
+    "category": "computer_accessory",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary",
+      "control"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-015",
+    "description": "AirPods Pro 2",
+    "translation": null,
+    "gold_category": "personal_electronics",
+    "gold_restricted": true,
+    "acceptable": [
+      "personal_electronics"
+    ],
+    "category": "personal_electronics",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary",
+      "control"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-016",
+    "description": "Kindle Paperwhite leather cover",
+    "translation": null,
+    "gold_category": "personal_electronics",
+    "gold_restricted": true,
+    "acceptable": [
+      "personal_electronics"
+    ],
+    "category": "personal_electronics",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary",
+      "merchant_misleading"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-017",
+    "description": "65W USB-C charger",
+    "translation": null,
+    "gold_category": "personal_electronics",
+    "gold_restricted": true,
+    "acceptable": [
+      "personal_electronics",
+      "computer_accessory"
+    ],
+    "category": "personal_electronics",
+    "restricted": true,
+    "confidence": "0.7",
+    "error": null,
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "electronics_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-018",
+    "description": "Portable Bluetooth speaker",
+    "translation": null,
+    "gold_category": "personal_electronics",
+    "gold_restricted": true,
+    "acceptable": [
+      "personal_electronics"
+    ],
+    "category": "personal_electronics",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-019",
+    "description": "Apple Pencil 2nd generation",
+    "translation": null,
+    "gold_category": "personal_electronics",
+    "gold_restricted": true,
+    "acceptable": [
+      "personal_electronics"
+    ],
+    "category": "personal_electronics",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-020",
+    "description": "Aluminum laptop stand",
+    "translation": null,
+    "gold_category": "computer_accessory",
+    "gold_restricted": false,
+    "acceptable": [
+      "computer_accessory"
+    ],
+    "category": "computer_accessory",
+    "restricted": false,
+    "confidence": "0.7",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary",
+      "control"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-021",
+    "description": "Cat 6 ethernet cable 3m",
+    "translation": null,
+    "gold_category": "computer_accessory",
+    "gold_restricted": false,
+    "acceptable": [
+      "computer_accessory"
+    ],
+    "category": "computer_accessory",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary",
+      "merchant_misleading"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-022",
+    "description": "Bouquet of roses",
+    "translation": null,
+    "gold_category": "gift",
+    "gold_restricted": true,
+    "acceptable": [
+      "gift"
+    ],
+    "category": "gift",
+    "restricted": true,
+    "confidence": "0.7",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "gift_boundary",
+      "control"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-023",
+    "description": "Starbucks eGift $25",
+    "translation": null,
+    "gold_category": "gift_card",
+    "gold_restricted": true,
+    "acceptable": [
+      "gift_card"
+    ],
+    "category": "gift_card",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "gift_boundary",
+      "merchant_misleading",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-024",
+    "description": "Visa prepaid card $100",
+    "translation": null,
+    "gold_category": "gift_card",
+    "gold_restricted": true,
+    "acceptable": [
+      "gift_card"
+    ],
+    "category": "gift_card",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "gift_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-025",
+    "description": "Company logo tote bags x25",
+    "translation": null,
+    "gold_category": "gift",
+    "gold_restricted": true,
+    "acceptable": [
+      "gift",
+      "clothing",
+      "office_supplies"
+    ],
+    "category": "gift",
+    "restricted": true,
+    "confidence": "0.7",
+    "error": null,
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "gift_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-026",
+    "description": "Box of assorted chocolates",
+    "translation": null,
+    "gold_category": "food_beverage",
+    "gold_restricted": false,
+    "acceptable": [
+      "food_beverage",
+      "gift"
+    ],
+    "category": "food_beverage",
+    "restricted": false,
+    "confidence": "0.7",
+    "error": null,
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "gift_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-027",
+    "description": "Sympathy card",
+    "translation": null,
+    "gold_category": "gift",
+    "gold_restricted": true,
+    "acceptable": [
+      "gift"
+    ],
+    "category": "gift",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "gift_boundary",
+      "merchant_misleading"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-028",
+    "description": "Cetirizine 10mg 30ct",
+    "translation": null,
+    "gold_category": "health_otc",
+    "gold_restricted": false,
+    "acceptable": [
+      "health_otc"
+    ],
+    "category": "health_otc",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "medication_boundary",
+      "control"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": "otc_medication",
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": "otc_medication",
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-029",
+    "description": "Atorvastatin 20mg Rx #4471",
+    "translation": null,
+    "gold_category": "other",
+    "gold_restricted": false,
+    "acceptable": [
+      "other"
+    ],
+    "category": "other",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "medication_boundary",
+      "out_of_taxonomy"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": "prescription_medication",
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": "prescription_medication",
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-030",
+    "description": "Adhesive bandages assorted",
+    "translation": null,
+    "gold_category": "health_otc",
+    "gold_restricted": false,
+    "acceptable": [
+      "health_otc"
+    ],
+    "category": "health_otc",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "medication_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-031",
+    "description": "Multivitamin gummies",
+    "translation": null,
+    "gold_category": "health_otc",
+    "gold_restricted": false,
+    "acceptable": [
+      "health_otc",
+      "food_beverage"
+    ],
+    "category": "health_otc",
+    "restricted": false,
+    "confidence": "0.7",
+    "error": null,
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "medication_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-032",
+    "description": "Prescription sunglasses",
+    "translation": null,
+    "gold_category": "clothing",
+    "gold_restricted": true,
+    "acceptable": [
+      "clothing",
+      "other"
+    ],
+    "category": "other",
+    "restricted": false,
+    "confidence": "0.3",
+    "error": null,
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "medication_boundary",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-033",
+    "description": "Paracetamol 500 mg Tabletten",
+    "translation": "Paracetamol 500 mg Tablets",
+    "gold_category": "health_otc",
+    "gold_restricted": false,
+    "acceptable": [
+      "health_otc"
+    ],
+    "category": "health_otc",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "medication_boundary",
+      "multilingual"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": "otc_medication",
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": "otc_medication",
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-034",
+    "description": "Insulin pen refills",
+    "translation": null,
+    "gold_category": "other",
+    "gold_restricted": false,
+    "acceptable": [
+      "other",
+      "health_otc"
+    ],
+    "category": "other",
+    "restricted": false,
+    "confidence": "0.7",
+    "error": null,
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "medication_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-035",
+    "description": "Suit pressing",
+    "translation": null,
+    "gold_category": "laundry_service",
+    "gold_restricted": false,
+    "acceptable": [
+      "laundry_service"
+    ],
+    "category": "laundry_service",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "service_boundary",
+      "merchant_misleading"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-036",
+    "description": "Fabric softener 1L",
+    "translation": null,
+    "gold_category": "household_goods",
+    "gold_restricted": true,
+    "acceptable": [
+      "household_goods"
+    ],
+    "category": "household_goods",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "service_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-037",
+    "description": "Haircut and beard trim",
+    "translation": null,
+    "gold_category": "personal_care",
+    "gold_restricted": true,
+    "acceptable": [
+      "personal_care"
+    ],
+    "category": "personal_care",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "service_boundary",
+      "merchant_misleading"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": false
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": false
+    }
+  },
+  {
+    "line_id": "RB-038",
+    "description": "Laptop screen repair labor",
+    "translation": null,
+    "gold_category": "other",
+    "gold_restricted": false,
+    "acceptable": [
+      "other",
+      "computer_accessory",
+      "service_fee"
+    ],
+    "category": "other",
+    "restricted": false,
+    "confidence": "0.7",
+    "error": null,
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "service_boundary",
+      "out_of_taxonomy"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-039",
+    "description": "Delivery fee",
+    "translation": null,
+    "gold_category": "service_fee",
+    "gold_restricted": false,
+    "acceptable": [
+      "service_fee"
+    ],
+    "category": "service_fee",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "service_boundary",
+      "control"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-040",
+    "description": "Excess baggage fee",
+    "translation": null,
+    "gold_category": "airfare",
+    "gold_restricted": false,
+    "acceptable": [
+      "airfare"
+    ],
+    "category": "airfare",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "service_boundary",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-041",
+    "description": "Lavandería - 5 camisas",
+    "translation": "Laundry – 5 shirts",
+    "gold_category": "laundry_service",
+    "gold_restricted": false,
+    "acceptable": [
+      "laundry_service"
+    ],
+    "category": "laundry_service",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "service_boundary",
+      "multilingual",
+      "merchant_misleading"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-042",
+    "description": "Taxi zum Flughafen",
+    "translation": "Taxi to the airport",
+    "gold_category": "ground_transport",
+    "gold_restricted": false,
+    "acceptable": [
+      "ground_transport"
+    ],
+    "category": "ground_transport",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "multilingual",
+      "control"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-043",
+    "description": "Caderno A5 pautado",
+    "translation": "A5 lined notebook",
+    "gold_category": "office_supplies",
+    "gold_restricted": false,
+    "acceptable": [
+      "office_supplies"
+    ],
+    "category": "office_supplies",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "multilingual",
+      "control"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-044",
+    "description": "シャンプー 旅行用",
+    "translation": "Shampoo – Travel size",
+    "gold_category": "personal_care",
+    "gold_restricted": true,
+    "acceptable": [
+      "personal_care"
+    ],
+    "category": "personal_care",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "multilingual"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": true
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": true
+    }
+  },
+  {
+    "line_id": "RB-045",
+    "description": "Cravate en soie",
+    "translation": "Silk tie",
+    "gold_category": "clothing",
+    "gold_restricted": true,
+    "acceptable": [
+      "clothing"
+    ],
+    "category": "clothing",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "multilingual"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-046",
+    "description": "Samsung Galaxy S24 128GB",
+    "translation": null,
+    "gold_category": "other",
+    "gold_restricted": false,
+    "acceptable": [
+      "other"
+    ],
+    "category": null,
+    "restricted": null,
+    "confidence": null,
+    "error": "item_kind mobile_phone contradicts category personal_electronics",
+    "ambiguity": "clear",
+    "challenges": [
+      "out_of_taxonomy",
+      "electronics_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": "mobile_phone",
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-047",
+    "description": "Opera tickets x2",
+    "translation": null,
+    "gold_category": "other",
+    "gold_restricted": false,
+    "acceptable": [
+      "other"
+    ],
+    "category": "other",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "out_of_taxonomy"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": "theatre",
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": "theatre",
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-048",
+    "description": "Flu vaccination",
+    "translation": null,
+    "gold_category": "other",
+    "gold_restricted": false,
+    "acceptable": [
+      "other",
+      "health_otc"
+    ],
+    "category": "other",
+    "restricted": false,
+    "confidence": "0.7",
+    "error": null,
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "out_of_taxonomy",
+      "medication_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-049",
+    "description": "Misc",
+    "translation": null,
+    "gold_category": "other",
+    "gold_restricted": false,
+    "acceptable": [
+      "other"
+    ],
+    "category": "other",
+    "restricted": false,
+    "confidence": "0.1",
+    "error": null,
+    "ambiguity": "indeterminate",
+    "challenges": [
+      "incomplete"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-050",
+    "description": "Item 7",
+    "translation": null,
+    "gold_category": "other",
+    "gold_restricted": false,
+    "acceptable": [
+      "other"
+    ],
+    "category": "other",
+    "restricted": false,
+    "confidence": "0.1",
+    "error": null,
+    "ambiguity": "indeterminate",
+    "challenges": [
+      "incomplete",
+      "merchant_misleading"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-051",
+    "description": "Bottle",
+    "translation": null,
+    "gold_category": "other",
+    "gold_restricted": false,
+    "acceptable": [
+      "other",
+      "alcohol",
+      "food_beverage"
+    ],
+    "category": "alcohol",
+    "restricted": true,
+    "confidence": "0.5",
+    "error": null,
+    "ambiguity": "indeterminate",
+    "challenges": [
+      "incomplete",
+      "merchant_misleading"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-052",
+    "description": "Premium package",
+    "translation": null,
+    "gold_category": "other",
+    "gold_restricted": false,
+    "acceptable": [
+      "other",
+      "lodging"
+    ],
+    "category": "other",
+    "restricted": false,
+    "confidence": "0.1",
+    "error": null,
+    "ambiguity": "indeterminate",
+    "challenges": [
+      "incomplete",
+      "merchant_misleading"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-053",
+    "description": "Total due - no details",
+    "translation": null,
+    "gold_category": "other",
+    "gold_restricted": false,
+    "acceptable": [
+      "other"
+    ],
+    "category": "other",
+    "restricted": false,
+    "confidence": "0.1",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "incomplete",
+      "control"
+    ],
+    "exempt": true,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-054",
+    "description": "Dinner - guest Deputy Mayor T. Nguyen",
+    "translation": null,
+    "gold_category": "food_beverage",
+    "gold_restricted": false,
+    "acceptable": [
+      "food_beverage"
+    ],
+    "category": "food_beverage",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "recipient"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": "T. Nguyen",
+      "recipient_type": "government_official",
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": "Deputy Mayor T. Nguyen",
+      "recipient_type": "government_official",
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-055",
+    "description": "Wine for D. Weiss, state-owned PetroNord",
+    "translation": null,
+    "gold_category": "alcohol",
+    "gold_restricted": true,
+    "acceptable": [
+      "alcohol"
+    ],
+    "category": "alcohol",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "recipient"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": "D. Weiss",
+      "recipient_type": "government_official",
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": "D. Weiss",
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-056",
+    "description": "Flowers for S. Ito",
+    "translation": null,
+    "gold_category": "gift",
+    "gold_restricted": true,
+    "acceptable": [
+      "gift"
+    ],
+    "category": "gift",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "recipient",
+      "gift_boundary"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": "S. Ito",
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": "S. Ito",
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-057",
+    "description": "Lunch with M. Lee of City National Bank",
+    "translation": null,
+    "gold_category": "food_beverage",
+    "gold_restricted": false,
+    "acceptable": [
+      "food_beverage"
+    ],
+    "category": "food_beverage",
+    "restricted": false,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "recipient"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": "M. Lee",
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": "M. Lee",
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-058",
+    "description": "Watch award for employee P. Singh",
+    "translation": null,
+    "gold_category": "jewelry",
+    "gold_restricted": true,
+    "acceptable": [
+      "jewelry"
+    ],
+    "category": "jewelry",
+    "restricted": true,
+    "confidence": "0.5",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "recipient",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": "P. Singh",
+      "recipient_type": "employee",
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": "P. Singh",
+      "recipient_type": "employee",
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-059",
+    "description": "Mint nicotine pouches 15ct",
+    "translation": null,
+    "gold_category": "tobacco",
+    "gold_restricted": true,
+    "acceptable": [
+      "tobacco"
+    ],
+    "category": "tobacco",
+    "restricted": true,
+    "confidence": "0.7",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "merchant_misleading",
+      "misleading_name"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  },
+  {
+    "line_id": "RB-060",
+    "description": "Scratch-off lottery ticket",
+    "translation": null,
+    "gold_category": "gambling",
+    "gold_restricted": true,
+    "acceptable": [
+      "gambling"
+    ],
+    "category": "gambling",
+    "restricted": true,
+    "confidence": "0.9",
+    "error": null,
+    "ambiguity": "clear",
+    "challenges": [
+      "merchant_misleading"
+    ],
+    "exempt": false,
+    "gold_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    },
+    "predicted_attributes": {
+      "recipient_name": null,
+      "recipient_type": null,
+      "venue_type": null,
+      "item_kind": null,
+      "essential_toiletry": null
+    }
+  }
+]

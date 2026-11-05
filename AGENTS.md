@@ -12,6 +12,8 @@ Run from this directory.
 .venv/bin/python -m pytest -q design          # the diagram script, not part of the default run
 PYTHONPATH=src .venv/bin/python -m expense_validator.compiler.build_rules  # rewrites rules/ruleset.json
 PYTHONPATH=src .venv/bin/python -m expense_validator.offline_eval           # rewrites evaluation/output: makes no network call
+PYTHONPATH=src .venv/bin/python -m expense_validator.classification.evaluate # rewrites evaluation/classification: sends line text to OpenRouter
+PYTHONPATH=src .venv/bin/python -m expense_validator.classification.robustness --check   # checks the robustness labels: makes no network call
 ```
 
 ## Layout
@@ -21,7 +23,11 @@ PYTHONPATH=src .venv/bin/python -m expense_validator.offline_eval           # re
 | `src/expense_validator/policy/` | `schema.py` and `vocabulary.py` define rules. `evaluate.py` decides conditions on flat facts. |
 | `src/expense_validator/compiler/` | Offline: turns the policy docs and `rules/rule_logic.yaml` into `rules/ruleset.json`. |
 | `src/expense_validator/engine/` | Runtime: `models.py`, `inputs.py`, `facts.py`, `helpers/`, `checks.py`, `replacements.py`, `approvals.py`, `carveouts.py`, `money.py`, `uncertainty.py`, `report.py`, `inevitable.py`, `evaluation.py`. |
+| `src/expense_validator/ingestion/` | Runtime: turns raw records and JSONL into a validated `Receipt`, with answers returned apart in evaluation mode. Imports `engine.models`, and nothing in the engine imports it. `offline_eval` loads its data through it. |
+| `src/expense_validator/normalization/` | Runtime: prepares line descriptions for any classifier. `text.py` cleans text deterministically, `translation.py` holds the optional translators, `receipt.py` has `normalize_receipt`, and `models.py` the results. Predicts nothing. |
+| `src/expense_validator/classification/` | Runtime: `classifier.py` reads each normalized line into one taxonomy category, a coarse confidence and any attributes the line states, with one request. It takes `restricted` from `data/category-taxonomy.md`. Confidence is one of five levels and is the model's own estimate, not a calibrated probability. A null attribute is missing, and the engine decides what that means. A recipient name must be in the line's text, and an attribute must suit the category. A line that fails has an error and nothing else: never `other`, and never a stand-in confidence. `submitted_expense_type` stays out of the request, as DOC-03 compares it with the category. `evaluate.py` and `robustness.py` are the only modules here that read answers, and production code must not import them. |
 | `src/expense_validator/offline_eval/` | Offline: scores classifications through the engine, and changes none of its semantics. Only predictions of kind `actual` are ever classifier performance. |
+| `evaluation/robustness/` | A developer-authored challenge set, not an independent benchmark. A run in `runs/` is written once, and `first-run` is the record of the prompt before any change. See its README. |
 | `evaluation/` | Its inputs, and in `output/` its metrics, per-receipt results and report. |
 | `rules/fields.yaml` | The catalog of fields a rule may read, their allowed values, and the country-to-entity mapping. |
 | `tests/cases/` | YAML test cases. See `tests/README.md`. |
@@ -64,6 +70,9 @@ Keep the engine's responsibilities apart:
 
 - `customer_id` scopes a run, but does not authenticate ownership: receipts carry no owner, so the caller must establish that. Do not claim cross-tenant authorization, or add a tenant field, without trusted ownership information.
 - `evaluate_receipts` admits every receipt, even an existing `Receipt`, and takes nothing already worked out, so no caller can skip a step. `check_run` confirms each run holds together before it is returned, and raises if not. It works out no disposition of its own. A directly built `Receipt` is not necessarily admitted, and `facts.py` and `checks.py` do not check this themselves, so never treat a stage function's output as a final result.
+- `iter_jsonl` and `ingest_record` are the way into the pipeline for raw data. Only `IngestedReceipt.receipt` goes downstream, and `ground_truth` belongs to whoever scores the results. A raw line carrying a field in `CLASSIFIED_FIELDS` is refused in both modes, as the model would accept it. Ingestion validates shape only: `evaluate_receipts` still admits every receipt. A receipt ID or line ID may appear once in a stream, as predictions are keyed by line ID. `entity` is required at ingestion, as `Receipt` requires it, although `admit_receipt` can derive one left out: deriving stays in admission. An `IngestionError` is safe to log, so a validator on the ingestion models must not put a value in its message.
+- `normalize_receipt` takes only a `Receipt`, so pass `IngestedReceipt.receipt`, and refuses one that already has classifier fields. `NormalizedReceipt` holds the receipt unchanged beside its normalized lines: never add normalized or translated text to `Receipt` or `LineItem`.
+- Normalized text uses NFC, never NFKC, and is not spell-corrected. Translation goes through the OpenRouter SDK to `translation.model` when `translation.enabled` is set and a translator from `build_translator` is passed, and sends the line text to the model, nothing else. `normalize_receipt` alone does not translate. The compiler's LLM calls are separate and use `llm.model`. Classifiers use a line's `translation` when its status is `translated`, and otherwise read `description_normalized`. Translation is not scored separately, a project decision: `translated` means it passed the checks in `translation.py`. Printed text stays the record.
 - `employee_country` decides `entity`. A contradicting entity or an unlisted country is refused. `GLOBAL = US` only is a project decision, because no document lists its countries.
 - Attach classifier output with `with_classification` or `with_classifications`, which validate. Never use `model_copy(update=...)` for it.
 - A negative receipt total is unsupported input, not a policy violation. Negative line amounts are allowed.

@@ -1,0 +1,137 @@
+suite: robustness
+
+# A row names only what a case is about. The runner fills in the rest: gold `other`, acceptable only that,
+# right at confidence 0.9, not exempt, no error and no attributes labelled. Use `failed: true` for a failed line.
+templates:
+  right: &right {gold: alcohol, category: alcohol, confidence: "0.9"}
+  wrong_high: &wrong_high {gold: alcohol, category: food_beverage, confidence: "0.9"}
+  right_low: &right_low {gold: alcohol, category: alcohol, confidence: "0.3"}
+  at_threshold_wrong: &at_threshold_wrong {gold: other, category: alcohol, confidence: "0.5"}
+  failed: &failed {gold: alcohol, failed: true}
+
+thresholds:
+  - id: a line at the threshold is accepted, as EXC-03 does
+    rows: [*at_threshold_wrong]
+    threshold: "0.5"
+    expected: {accepted: 1, accepted_wrong: 1, set_aside_right: 0, set_aside_wrong: 0}
+  - id: a line just below the next threshold is set aside
+    rows: [*at_threshold_wrong]
+    threshold: "0.7"
+    expected: {accepted: 0, accepted_wrong: 0, set_aside_right: 0, set_aside_wrong: 1}
+  - id: a right line below the threshold is coverage lost
+    rows: [*right, *right_low]
+    threshold: "0.5"
+    expected: {accepted: 1, accepted_wrong: 0, set_aside_right: 1, set_aside_wrong: 0}
+  - id: a failed line is never accepted and counts as wrong
+    rows: [*right, *failed]
+    threshold: "0.3"
+    expected: {accepted: 1, accepted_wrong: 0, set_aside_right: 0, set_aside_wrong: 1}
+  - id: a non-itemized other is accepted at any confidence, as EXC-03 exempts it
+    rows: [{gold: other, category: other, confidence: "0.1", exempt: true}]
+    threshold: "0.9"
+    expected: {accepted: 1, accepted_wrong: 0, set_aside_right: 0, set_aside_wrong: 0}
+  - id: an acceptable second reading is not wrong
+    rows: [{gold: clothing, acceptable: [other], category: other, confidence: "0.9"}]
+    threshold: "0.5"
+    expected: {accepted: 1, accepted_wrong: 0, set_aside_right: 0, set_aside_wrong: 0}
+
+levels:
+  - id: accuracy is counted at each level
+    rows: [*right, *wrong_high, *right_low]
+    expected: {"0.3": [1, 1], "0.9": [1, 2]}
+  - id: a failed line has its own row and no level
+    rows: [*right, *failed]
+    expected: {"0.9": [1, 1], none: [0, 1]}
+
+separation:
+  - id: no errors means nothing to separate, and no mean is made up
+    rows: [*right, *right_low]
+    expected: {right: 2, wrong: 0, mean_confidence_right: 0.6, mean_confidence_wrong: null}
+  - id: a failed line has no confidence to compare
+    rows: [*right, *failed]
+    expected: {right: 1, wrong: 0, mean_confidence_right: 0.9, mean_confidence_wrong: null}
+  - id: errors at low confidence are a separation
+    rows: [*right, {gold: alcohol, category: other, confidence: "0.1"}]
+    expected: {right: 1, wrong: 1, mean_confidence_right: 0.9, mean_confidence_wrong: 0.1}
+
+confusion:
+  - id: a wrong answer is counted against its gold
+    rows: [*right, *wrong_high]
+    expected: {alcohol: {alcohol: 1, food_beverage: 1}}
+  - id: a failure is counted, not dropped
+    rows: [*right, *failed]
+    expected: {alcohol: {FAILED: 1, alcohol: 1}}
+
+groups:
+  - id: strict and acceptable answers are kept apart, and a failure is wrong on all
+    rows:
+      - {gold: clothing, acceptable: [other], category: other, restricted: false, gold_restricted: true, confidence: "0.5", ambiguity: ambiguous}
+      - {gold: alcohol, failed: true, ambiguity: ambiguous}
+    expected: {ambiguous: {cases: 2, failed: 1, strict_right: 0, acceptable_right: 1, restricted_right: 0}}
+
+attributes:
+  - id: a value on a line labelled null is fabricated
+    rows: [{gold_attributes: {recipient_type: null}, predicted_attributes: {recipient_type: client}}]
+    field: recipient_type
+    expected: {labelled: 1, right: 0, fabricated: 1, missed: 0, wrong_value: 0}
+  - id: null on a labelled value is missed
+    rows: [{gold_attributes: {recipient_type: client}, predicted_attributes: {recipient_type: null}}]
+    field: recipient_type
+    expected: {labelled: 1, right: 0, fabricated: 0, missed: 1, wrong_value: 0}
+  - id: another value is wrong
+    rows: [{gold_attributes: {recipient_type: client}, predicted_attributes: {recipient_type: employee}}]
+    field: recipient_type
+    expected: {labelled: 1, right: 0, fabricated: 0, missed: 0, wrong_value: 1}
+  - id: both null is right
+    rows: [{gold_attributes: {venue_type: null}, predicted_attributes: {venue_type: null}}]
+    field: venue_type
+    expected: {labelled: 1, right: 1, fabricated: 0, missed: 0, wrong_value: 0}
+  - id: false is not null
+    rows: [{gold_attributes: {essential_toiletry: false}, predicted_attributes: {essential_toiletry: null}}]
+    field: essential_toiletry
+    expected: {labelled: 1, right: 0, fabricated: 0, missed: 1, wrong_value: 0}
+  - id: true is not false
+    rows: [{gold_attributes: {essential_toiletry: true}, predicted_attributes: {essential_toiletry: false}}]
+    field: essential_toiletry
+    expected: {labelled: 1, right: 0, fabricated: 0, missed: 0, wrong_value: 1}
+  - id: a name may carry a title
+    rows: [{gold_attributes: {recipient_name: T. Nguyen}, predicted_attributes: {recipient_name: Deputy Mayor T. Nguyen}}]
+    field: recipient_name
+    expected: {labelled: 1, right: 1, fabricated: 0, missed: 0, wrong_value: 0}
+  - id: an unlabelled field is not scored
+    rows: [{gold_attributes: {}, predicted_attributes: {recipient_type: client}}]
+    field: recipient_type
+    expected: {labelled: 0, right: 0, fabricated: 0, missed: 0, wrong_value: 0}
+  - id: a failed line has read nothing, so it is not scored as missed
+    rows: [{failed: true, gold_attributes: {recipient_type: client}}]
+    field: recipient_type
+    expected: {labelled: 0, right: 0, fabricated: 0, missed: 0, wrong_value: 0}
+
+safety:
+  - id: a wrong answer above the threshold is the dangerous one
+    rows: [{id: A, gold: alcohol, category: food_beverage, confidence: "0.9"}]
+    expected: {accepted_wrong_by_exc_03: [A], high_confidence_wrong: [A]}
+  - id: wrong at the threshold is accepted, but is not high confidence
+    rows: [{id: A, gold: other, category: alcohol, confidence: "0.5"}]
+    expected: {accepted_wrong_by_exc_03: [A], high_confidence_wrong: []}
+  - id: wrong below the threshold is set aside
+    rows: [{id: A, gold: other, category: alcohol, confidence: "0.3"}]
+    expected: {accepted_wrong_by_exc_03: [], high_confidence_wrong: []}
+  - id: right below the threshold is coverage lost
+    rows: [{id: A, gold: alcohol, category: alcohol, confidence: "0.3"}]
+    expected: {low_confidence_right: [A]}
+  - id: a failure is reported, and is not an accepted answer
+    rows: [{id: A, gold: alcohol, failed: true}]
+    expected: {failed: [A], accepted_wrong_by_exc_03: []}
+  - id: an indeterminate line accepted is reported even when its answer is acceptable
+    rows: [{id: A, gold: other, acceptable: [alcohol], category: alcohol, confidence: "0.5", ambiguity: indeterminate}]
+    expected: {indeterminate_accepted_by_exc_03: [A], indeterminate_at_high_confidence: [], accepted_wrong_by_exc_03: []}
+  - id: an indeterminate line at high confidence is reported
+    rows: [{id: A, gold: other, category: other, confidence: "0.9", ambiguity: indeterminate}]
+    expected: {indeterminate_at_high_confidence: [A]}
+  - id: an official with no support is reported, including where the type is unlabelled
+    rows: [{id: A, gold_attributes: {}, predicted_attributes: {recipient_type: government_official}}]
+    expected: {official_without_support: [A]}
+  - id: a supported official is not reported
+    rows: [{id: A, gold_attributes: {recipient_type: government_official}, predicted_attributes: {recipient_type: government_official}}]
+    expected: {official_without_support: []}

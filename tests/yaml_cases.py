@@ -73,6 +73,10 @@ SECTIONS = {
     "inevitable": {"cases", "at_the_cap"},
     "offline_eval": {"rates", "prf", "rule_scores", "dispositions", "exact", "proofs", "classification", "buckets", "calibration", "families", "sources_refused"},
     "hardening": {"directives", "directives_refused", "tampered_refused", "completeness", "ties"},
+    "ingestion": {"ingested", "refused", "secrets_refused", "streamed", "stream_refused"},
+    "normalization": {"text", "text_refused", "receipts", "receipts_refused", "lines_refused", "provider", "provider_refused"},
+    "classification": {"answers", "answers_refused", "thresholds", "provider", "provider_refused", "line_inputs", "scores"},
+    "robustness": {"thresholds", "levels", "separation", "confusion", "groups", "attributes", "safety"},
 }
 INPUTS = {
     ("policy_engine", "isolation"): {"evaluations"},
@@ -201,9 +205,35 @@ INPUTS = {
     ("hardening", "tampered_refused"): {"receipts", "tamper"},
     ("hardening", "completeness"): {"patches", "receipts", "complete"},
     ("hardening", "ties"): {"patches", "extra_rules", "receipts", "complete"},
+    ("ingestion", "ingested"): {"mode", "record"},
+    ("ingestion", "refused"): {"mode", "record"},
+    ("ingestion", "secrets_refused"): {"mode", "record"},
+    ("ingestion", "streamed"): {"mode", "lines"},
+    ("ingestion", "stream_refused"): {"mode", "lines"},
+    ("normalization", "text"): {"description"},
+    ("normalization", "text_refused"): {"description"},
+    ("normalization", "receipts"): {"receipt", "translations"},
+    ("normalization", "receipts_refused"): {"receipt"},
+    ("normalization", "lines_refused"): {"changes"},
+    ("normalization", "provider"): {"status", "body"},
+    ("normalization", "provider_refused"): {"status", "body"},
+    ("classification", "answers"): {"answer", "description"},
+    ("classification", "answers_refused"): {"answer", "description"},
+    ("classification", "thresholds"): {"confidence"},
+    ("classification", "provider"): {"status", "body"},
+    ("classification", "provider_refused"): {"status", "body"},
+    ("classification", "line_inputs"): {"receipt", "translations"},
+    ("classification", "scores"): {"lines"},
+    ("robustness", "thresholds"): {"rows", "threshold"},
+    ("robustness", "levels"): {"rows"},
+    ("robustness", "separation"): {"rows"},
+    ("robustness", "confusion"): {"rows"},
+    ("robustness", "groups"): {"rows"},
+    ("robustness", "attributes"): {"rows", "field"},
+    ("robustness", "safety"): {"rows"},
 }
 # Inputs in these suites can be any YAML value: their runners give them to the code under test.
-FREE_INPUT_SUITES = {"policy_engine", "submission_integrity", "agreement", "build_rules", "validate", "semantics", "models", "admission", "facts", "checks", "helpers", "replacements", "approvals", "carveouts", "uncertainty", "report", "evaluation", "hardening", "adversarial", "adversarial_policy", "policy_decisions", "completeness", "inevitable", "offline_eval"}
+FREE_INPUT_SUITES = {"policy_engine", "submission_integrity", "agreement", "build_rules", "validate", "semantics", "models", "admission", "facts", "checks", "helpers", "replacements", "approvals", "carveouts", "uncertainty", "report", "evaluation", "hardening", "adversarial", "adversarial_policy", "policy_decisions", "completeness", "inevitable", "offline_eval", "ingestion", "normalization", "classification", "robustness"}
 
 
 class CaseLoader(yaml.SafeLoader):

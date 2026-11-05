@@ -1,0 +1,167 @@
+suite: classification
+
+templates:
+  line: &line
+    line_id: R-1-L1
+    description_raw: Lunch
+    language: en
+    quantity: 1
+    unit_price: "12.50"
+    amount: "12.50"
+    amount_usd: "12.50"
+  receipt: &receipt
+    receipt_id: R-1
+    employee_id: E-1
+    employee_country: US
+    entity: GLOBAL
+    submitted_expense_type: Office Supplies
+    merchant_name: Corner Bistro
+    mcc: "5812"
+    mcc_description: Eating places
+    itemized: true
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: "12.50"
+    line_items: [*line]
+  answer: &answer {category: alcohol, confidence: 0.9, recipient_name: null, recipient_type: null, venue_type: null, item_kind: null, essential_toiletry: null}
+  right: &right {line_id: L1, gold_category: alcohol, gold_restricted: true, category: alcohol, restricted: true, confidence: null, error: null}
+  wrong_category_right_flag: &wrong_category_right_flag {line_id: L2, gold_category: tobacco, gold_restricted: true, category: alcohol, restricted: true, confidence: null, error: null}
+  wrong_on_both: &wrong_on_both {line_id: L3, gold_category: gift, gold_restricted: true, category: other, restricted: false, confidence: null, error: null}
+  failed: &failed {line_id: L4, gold_category: other, gold_restricted: false, category: null, restricted: null, confidence: null, error: answer is malformed}
+
+# An answer given as a mapping is sent as its JSON, and one given as text is sent exactly as it is.
+answers:
+  - {id: a restricted category takes its flag from the taxonomy, description: Wine, answer: *answer, expected: {category: alcohol, restricted: true, confidence: "0.9"}}
+  - {id: an unrestricted category takes its flag from the taxonomy, description: Salad, answer: {<<: *answer, category: food_beverage}, expected: {category: food_beverage, restricted: false, confidence: "0.9"}}
+  - {id: other is accepted when the model chose it, description: Item 4471, answer: {<<: *answer, category: other, confidence: 0.1}, expected: {category: other, restricted: false, confidence: "0.1"}}
+  - {id: the lowest level stands and is not raised, description: Wine, answer: {<<: *answer, confidence: 0.1}, expected: {confidence: "0.1"}}
+  - {id: a level below the threshold stands, description: Wine, answer: {<<: *answer, confidence: 0.3}, expected: {confidence: "0.3"}}
+  - {id: the level at the threshold stands, description: Wine, answer: {<<: *answer, confidence: 0.5}, expected: {confidence: "0.5"}}
+  - {id: a named recipient and their type, description: "Bracelet - client gift for A. Moreau, Halcyon", answer: {<<: *answer, category: jewelry, recipient_name: A. Moreau, recipient_type: client}, expected: {recipient_name: A. Moreau, recipient_type: client}}
+  - {id: a recipient's name is matched without regard to case, description: Flowers for A. MOREAU, answer: {<<: *answer, category: gift, recipient_name: A. Moreau}, expected: {recipient_name: A. Moreau, recipient_type: null}}
+  - {id: a recipient's type with no name is kept apart from both missing, description: Flowers for a client, answer: {<<: *answer, category: gift, recipient_type: client}, expected: {recipient_name: null, recipient_type: client}}
+  - {id: a venue on an other line, description: Golf green fees, answer: {<<: *answer, category: other, venue_type: golf}, expected: {category: other, venue_type: golf}}
+  - {id: a phone on an other line, description: iPhone 15, answer: {<<: *answer, category: other, item_kind: mobile_phone}, expected: {category: other, item_kind: mobile_phone}}
+  - {id: over-the-counter medication goes with health_otc, description: Ibuprofen, answer: {<<: *answer, category: health_otc, item_kind: otc_medication}, expected: {category: health_otc, item_kind: otc_medication}}
+  - {id: false is a value and is not missing, description: Massage, answer: {<<: *answer, category: personal_care, essential_toiletry: false}, expected: {essential_toiletry: false}}
+  - {id: true is kept, description: Toothpaste, answer: {<<: *answer, category: personal_care, essential_toiletry: true}, expected: {essential_toiletry: true}}
+  - {id: nothing stated leaves every attribute missing, description: Wine, answer: *answer, expected: {recipient_name: null, recipient_type: null, venue_type: null, item_kind: null, essential_toiletry: null}}
+  - {id: spacing around valid JSON does not matter, description: Wine, answer: " {\"category\": \"alcohol\", \"confidence\": 0.7, \"recipient_name\": null, \"recipient_type\": null,\n\"venue_type\": null, \"item_kind\": null, \"essential_toiletry\": null} \n", expected: {confidence: "0.7"}}
+
+answers_refused:
+  # Not an answer at all.
+  - {id: an empty answer, description: Wine, answer: "", expected: "answer is malformed"}
+  - {id: prose, description: Wine, answer: "The category is alcohol.", expected: "answer is malformed"}
+  - {id: JSON cut off, description: Wine, answer: '{"category": "alc', expected: "answer is malformed"}
+  - {id: JSON in a code fence, description: Wine, answer: "```json\n{\"category\": \"alcohol\"}\n```", expected: "answer is malformed"}
+  - {id: a bare string, description: Wine, answer: '"alcohol"', expected: "answer is malformed"}
+  - {id: a list, description: Wine, answer: '["alcohol"]', expected: "answer is malformed"}
+  - {id: JSON null, description: Wine, answer: "null", expected: "answer is malformed"}
+  # Category.
+  - {id: a category that is not in the taxonomy, description: Wine, answer: {<<: *answer, category: wine}, expected: "not in the taxonomy: 'wine'"}
+  - {id: a category in the wrong case, description: Wine, answer: {<<: *answer, category: Alcohol}, expected: "not in the taxonomy: 'Alcohol'"}
+  - {id: an empty category, description: Wine, answer: {<<: *answer, category: ""}, expected: "not in the taxonomy"}
+  - {id: a null category, description: Wine, answer: {<<: *answer, category: null}, expected: "category: string_type"}
+  - {id: a category that is not a string, description: Wine, answer: {<<: *answer, category: [alcohol]}, expected: "category: string_type"}
+  - {id: a restricted flag the model was not asked for, description: Wine, answer: {<<: *answer, restricted: false}, expected: "restricted: extra_forbidden"}
+  # Confidence: no stand-in is ever given for one that is missing or wrong.
+  - {id: no confidence, description: Wine, answer: {category: alcohol, recipient_name: null, recipient_type: null, venue_type: null, item_kind: null, essential_toiletry: null}, expected: "confidence: missing"}
+  - {id: a null confidence, description: Wine, answer: {<<: *answer, confidence: null}, expected: "confidence: float_type"}
+  - {id: a confidence as text, description: Wine, answer: {<<: *answer, confidence: "0.9"}, expected: "confidence: float_type"}
+  - {id: a confidence as a boolean, description: Wine, answer: {<<: *answer, confidence: true}, expected: "confidence: float_type"}
+  - {id: a confidence above 1, description: Wine, answer: {<<: *answer, confidence: 1.2}, expected: "not one of the levels: 1.2"}
+  - {id: a confidence below 0, description: Wine, answer: {<<: *answer, confidence: -0.1}, expected: "not one of the levels"}
+  - {id: a confidence of exactly 1, description: Wine, answer: {<<: *answer, confidence: 1.0}, expected: "not one of the levels"}
+  - {id: a confidence of exactly 0, description: Wine, answer: {<<: *answer, confidence: 0.0}, expected: "not one of the levels"}
+  - {id: a falsely precise confidence, description: Wine, answer: {<<: *answer, confidence: 0.87}, expected: "not one of the levels: 0.87"}
+  # Attributes outside the catalog, or left out.
+  - {id: a secondary key left out, description: Wine, answer: {category: alcohol, confidence: 0.9, recipient_name: null, recipient_type: null, venue_type: null, item_kind: null}, expected: "essential_toiletry: missing"}
+  - {id: a recipient type outside the catalog, description: Wine for a vendor, answer: {<<: *answer, recipient_type: vendor}, expected: "recipient_type is not in the catalog: 'vendor'"}
+  - {id: a venue type outside the catalog, description: Bowling, answer: {<<: *answer, category: other, venue_type: bowling}, expected: "venue_type is not in the catalog"}
+  - {id: an item kind outside the catalog, description: Pager, answer: {<<: *answer, category: other, item_kind: pager}, expected: "item_kind is not in the catalog"}
+  - {id: essential toiletry as text, description: Soap, answer: {<<: *answer, category: personal_care, essential_toiletry: "yes"}, expected: "essential_toiletry: bool_type"}
+  # Attributes that contradict the category.
+  - {id: a venue on a line that is not other, description: Golf, answer: {<<: *answer, category: food_beverage, venue_type: golf}, expected: "venue_type contradicts category food_beverage"}
+  - {id: a phone in personal electronics, description: iPhone, answer: {<<: *answer, category: personal_electronics, item_kind: mobile_phone}, expected: "item_kind mobile_phone contradicts"}
+  - {id: a prescription in health_otc, description: Amoxicillin, answer: {<<: *answer, category: health_otc, item_kind: prescription_medication}, expected: "item_kind prescription_medication contradicts"}
+  - {id: over-the-counter medication in other, description: Ibuprofen, answer: {<<: *answer, category: other, item_kind: otc_medication}, expected: "item_kind otc_medication contradicts"}
+  - {id: a toiletry answer on a line that is not personal care, description: Wine, answer: {<<: *answer, essential_toiletry: false}, expected: "essential_toiletry contradicts category alcohol"}
+  # Attributes the line does not state.
+  - {id: a recipient name the line does not hold, description: Flowers, answer: {<<: *answer, category: gift, recipient_name: A. Moreau}, expected: "recipient_name is not in the line's text"}
+  - {id: a blank recipient name, description: Flowers, answer: {<<: *answer, category: gift, recipient_name: "  "}, expected: "recipient_name is not in the line's text"}
+
+# What the engine's EXC-03 makes of a confidence from the classifier, at the real threshold in the ruleset.
+thresholds:
+  - {id: the top level is used, confidence: "0.9", expected: {state: valid}}
+  - {id: the level at the threshold is used, confidence: "0.5", expected: {state: valid}}
+  - {id: the level below the threshold is set aside, confidence: "0.3", expected: {state: low_confidence}}
+  - {id: the lowest level is set aside, confidence: "0.1", expected: {state: low_confidence}}
+  - {id: no confidence is set aside and is not low, confidence: null, expected: {state: no_confidence}}
+
+provider:
+  - id: a response is read through the real SDK
+    status: 200
+    body: {id: x, object: chat.completion, created: 1, model: m, system_fingerprint: null, choices: [{index: 0, finish_reason: stop, message: {role: assistant, content: '{"category": "alcohol", "confidence": 0.7, "recipient_name": null, "recipient_type": null, "venue_type": null, "item_kind": null, "essential_toiletry": null}'}}]}
+    expected: {category: alcohol, restricted: true, confidence: "0.7"}
+
+provider_refused:
+  - id: null content, with facts that say why it may be empty
+    status: 200
+    body: {id: gen-x, object: chat.completion, created: 1, model: m, system_fingerprint: null, choices: [{index: 0, finish_reason: stop, message: {role: assistant, content: null}}], usage: {prompt_tokens: 40, completion_tokens: 8, total_tokens: 48}}
+    expected: "holds no text: content_type=NoneType finish_reason=stop prompt_tokens=40 completion_tokens=8 model=m generation=gen-x"
+  - id: an answer cut off at the token limit
+    status: 200
+    body: {id: x, object: chat.completion, created: 1, model: m, system_fingerprint: null, choices: [{index: 0, finish_reason: length, message: {role: assistant, content: '{"category": "alc'}}]}
+    expected: "answer is malformed"
+  - id: the output contract from before confidence
+    status: 200
+    body: {id: x, object: chat.completion, created: 1, model: m, system_fingerprint: null, choices: [{index: 0, finish_reason: stop, message: {role: assistant, content: '{"category": "alcohol"}'}}]}
+    expected: "confidence: missing"
+  - id: a category that is not in the taxonomy
+    status: 200
+    body: {id: x, object: chat.completion, created: 1, model: m, system_fingerprint: null, choices: [{index: 0, finish_reason: stop, message: {role: assistant, content: '{"category": "wine", "confidence": 0.9, "recipient_name": null, "recipient_type": null, "venue_type": null, "item_kind": null, "essential_toiletry": null}'}}]}
+    expected: "not in the taxonomy"
+  - id: no choices at all
+    status: 200
+    body: {id: x, object: chat.completion, created: 1, model: m, system_fingerprint: null, choices: []}
+    expected: "classification request failed: IndexError"
+  - {id: a body that is not the expected shape, status: 200, body: {unexpected: true}, expected: "classification request failed"}
+  - {id: a bad key, status: 401, body: {error: {code: 401, message: No auth}}, expected: "classification request failed: UnauthorizedResponseError"}
+  - {id: rate limited, status: 429, body: {error: {code: 429, message: Slow down}}, expected: "classification request failed: TooManyRequestsResponseError"}
+  - {id: a server error, status: 500, body: {error: {code: 500, message: Broken}}, expected: "classification request failed: InternalServerResponseError"}
+
+line_inputs:
+  - id: an English line has no translation, and the expense type stays out
+    receipt: *receipt
+    translations: null
+    expected:
+      fields: [{description: Lunch, language: en, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true}]
+  - id: a translated line carries its translation beside the original
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Vino tinto, language: es}]}
+    translations: {Vino tinto: Red wine}
+    expected:
+      fields: [{description: Vino tinto, language: es, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true, english_translation: Red wine}]
+  - id: a failed translation leaves the original alone
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Vino tinto, language: es}]}
+    translations: {Vino tinto: {raises: the provider is down}}
+    expected:
+      fields: [{description: Vino tinto, language: es, merchant_name: Corner Bistro, merchant_category: Eating places, itemized_receipt: true}]
+  - id: a non-itemized receipt says so, and missing merchant details stay null
+    receipt: {<<: *receipt, itemized: false, merchant_name: null, mcc_description: null}
+    translations: null
+    expected:
+      fields: [{description: Lunch, language: en, merchant_name: null, merchant_category: null, itemized_receipt: false}]
+
+scores:
+  - id: every line right
+    lines: [*right]
+    expected: {category_right: 1, restricted_right: 1, failures: 0, total: 1}
+  - id: the wrong category can still have the right flag
+    lines: [*right, *wrong_category_right_flag]
+    expected: {category_right: 1, restricted_right: 2, failures: 0, total: 2}
+  - id: wrong on both counts against both
+    lines: [*right, *wrong_on_both]
+    expected: {category_right: 1, restricted_right: 1, failures: 0, total: 2}
+  - id: a failed line counts as a failure and as wrong on both, even when the answer is other
+    lines: [*right, *failed]
+    expected: {category_right: 1, restricted_right: 1, failures: 1, total: 2}

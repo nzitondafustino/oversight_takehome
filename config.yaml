@@ -6,8 +6,16 @@ llm:
   temperature: 0
   timeout_seconds: 180
 
+translation:
+  enabled: true  # sends non-English line text to this model, and needs OPENROUTER_API_KEY
+  model: tencent/hy-mt2-30b-a3b  # the OpenRouter model ID: a low-cost, dedicated translation model
+
+classification:
+  model: anthropic/claude-haiku-5.5  # the OpenRouter model ID: sends line text and merchant details to this model
+
 paths:  # relative to the project root
   policy_docs: data/policy-docs
+  taxonomy: data/category-taxonomy.md
   llm_cache: .cache/llm
   rule_logic: rules/rule_logic.yaml
   ruleset: rules/ruleset.json

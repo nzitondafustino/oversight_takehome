@@ -13,7 +13,7 @@ Add cases to an existing file, or create any `.yaml` or `.yml` file anywhere
 under `cases/`. Files are discovered recursively in sorted order. No Python
 changes are needed for new cases in the supported suites.
 
-Every file declares `suite: rules`, `suite: rulesets`, `suite: extraction`, `suite: agreement`, `suite: build_rules`, `suite: validate`, `suite: semantics`, `suite: models`, `suite: admission`, `suite: facts`, `suite: checks`, `suite: helpers`, `suite: replacements`, `suite: approvals`, `suite: carveouts`, `suite: uncertainty`, `suite: report`, `suite: evaluation`, `suite: hardening`, `suite: adversarial`, `suite: adversarial_policy`, `suite: policy_decisions`, `suite: completeness`, `suite: inevitable`, `suite: offline_eval`, or `suite: submission_integrity`.
+Every file declares `suite: rules`, `suite: rulesets`, `suite: extraction`, `suite: agreement`, `suite: build_rules`, `suite: validate`, `suite: semantics`, `suite: models`, `suite: admission`, `suite: facts`, `suite: checks`, `suite: helpers`, `suite: replacements`, `suite: approvals`, `suite: carveouts`, `suite: uncertainty`, `suite: report`, `suite: evaluation`, `suite: hardening`, `suite: adversarial`, `suite: adversarial_policy`, `suite: policy_decisions`, `suite: completeness`, `suite: inevitable`, `suite: offline_eval`, `suite: ingestion`, `suite: normalization`, `suite: classification`, `suite: robustness`, or `suite: submission_integrity`.
 The `policy_engine` suite covers reuse and immutable configuration of the class API.
 Optional `templates` can hold YAML anchors; anchors are local to a file.
 
@@ -129,6 +129,32 @@ Optional `templates` can hold YAML anchors; anchors are local to a file.
 | hardening | tampered_refused | receipts, tamper | Error regex: `check_run` on a real run changed as `tamper` says. |
 | hardening | completeness | patches, receipts, complete | Any of `disposition`, `decided`, `reasons`, `unresolved`, `open` and `audit`, on rules changed by `patches`. |
 | hardening | ties | patches, extra_rules, receipts, complete | The same result whatever order the rules come in, plus any of `replaced_by`, `excused_by` and `notes`. |
+| ingestion | ingested | mode, record | `receipt`: values in its JSON form. `ground_truth`: null, or values in its JSON form. The record must not change. |
+| ingestion | refused | mode, record | Error regex: this record is refused, and the record must not change. |
+| ingestion | secrets_refused | mode, record | Error regex: refused, and the message holds no `SECRET` value given in the record. |
+| ingestion | streamed | mode, lines | `receipts`: for each record in order, values in its JSON form. A line is raw JSONL text, or a mapping to write as JSON. |
+| ingestion | stream_refused | mode, lines | Error regex, which includes `:<line number>:`, as above. |
+| normalization | text | description | `text`: what it normalizes to, exactly, which must also normalize to itself. |
+| normalization | text_refused | description | Error regex: this is not text. |
+| normalization | receipts | receipt, translations | `calls` the translator got, and `lines`: values on each normalized line. `translations` maps text to the answer, or to `{raises: message}`; null means no translator. The receipt must not change. |
+| normalization | receipts_refused | receipt | Error regex: this receipt has already been classified. |
+| normalization | lines_refused | changes | Error regex: a `NormalizedLine` with these changes does not hold together. |
+| normalization | provider | status, body | `translation` read through the real SDK from this HTTP response, with the network mocked. |
+| normalization | provider_refused | status, body | Error regex: this HTTP response is a translation error, through the real SDK. |
+| classification | answers | answer, description | Values on the classified line, for this answer on a line with this text. An answer is sent as written if text, and as JSON if a mapping. |
+| classification | answers_refused | answer, description | Error regex: this answer fails the line, leaving nothing else on it. |
+| classification | thresholds | confidence | `state`: what the engine's EXC-03 makes of this confidence, at the ruleset's threshold. |
+| classification | provider | status, body | `category` and `restricted` read through the real SDK from this HTTP response, with the network mocked. |
+| classification | provider_refused | status, body | Error regex: this HTTP response fails the line through the real SDK, and is not cached. |
+| classification | line_inputs | receipt, translations | `fields`: for each line, exactly what the model reads. `translations` maps text to the answer, or to `{raises: message}`; null means no translator. |
+| classification | scores | lines | `category_right`, `restricted_right`, `failures` and `total` over these scored lines. |
+| robustness | thresholds | rows, threshold | What this threshold accepts and sets aside. A row is a short form the runner fills in. |
+| robustness | levels | rows | Right and total at each confidence level. |
+| robustness | separation | rows | Counts of right and wrong, with mean confidence, or null where there is none. |
+| robustness | confusion | rows | Gold to predicted counts, with failures under `FAILED`. |
+| robustness | groups | rows | Counts for each ambiguity level, strict and acceptable kept apart. |
+| robustness | attributes | rows, field | `labelled`, `right`, `fabricated`, `missed` and `wrong_value` for this field. |
+| robustness | safety | rows | The lines named in each of these lists of the safety report. |
 
 Each case also needs a nonempty `id` and `expected`. IDs must be unique within
 a suite and section across all files. Unknown keys, duplicate YAML keys,

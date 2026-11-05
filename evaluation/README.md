@@ -9,7 +9,9 @@ PYTHONPATH=src .venv/bin/python -m expense_validator.offline_eval --predictions 
 
 It writes `output/report.md`, `output/metrics.json` and `output/receipts/<scenario>.jsonl`. These hold no times or machine paths, so the same inputs give the same bytes.
 
-**No real classifier has been measured yet.** Scenarios A to I are oracle or synthetic.
+Scenarios A to I are oracle or synthetic. `output/` holds no real classifier's results until it is run with `--predictions`.
+
+The real classifier is measured by `expense_validator.classification.evaluate`, which makes network calls and writes `classification/metrics.json` and `classification/predictions.json`. Pass the second to `--predictions` to score it through the engine. Its confidence is the model's own estimate on five coarse levels, not a calibrated probability, and these 32 receipts are not held out, as the prompt was written with this data's taxonomy to hand.
 
 ## Evaluating a classifier
 

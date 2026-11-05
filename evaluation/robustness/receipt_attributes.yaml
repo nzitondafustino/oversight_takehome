@@ -1,0 +1,9 @@
+# What the receipts' lines state beyond their category, read by hand. For scoring and the oracle check only.
+# A line not listed should have none of these.
+attributes:
+  RBX-005-L1: {recipient_name: T. Nguyen, recipient_type: government_official}
+  RBX-006-L1: {recipient_name: K. Sato, recipient_type: client}
+  RBX-007-L1: {item_kind: otc_medication}
+  RBX-008-L1: {item_kind: prescription_medication}
+  RBX-009-L1: {venue_type: sporting_event}
+  RBX-012-L1: {recipient_name: L. Haddad, recipient_type: government_official}

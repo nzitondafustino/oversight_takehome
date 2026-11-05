@@ -1,0 +1,392 @@
+# A developer-authored robustness set. It is not an externally validated or fully independent benchmark:
+# its author also wrote the prompt, and knows the benchmark and the taxonomy.
+#
+# input is all the classifier may read. gold, challenges, ambiguity and explanation are for scoring only.
+#
+# gold.category   the best single answer, in the taxonomy. Strict accuracy reads this.
+# gold.acceptable other defensible categories, on an ambiguous or indeterminate line.
+# gold.<field>    an attribute that should be read. A field not named should be null, unless in unlabelled.
+# gold.unlabelled fields where null and a value are both defensible, so they are not scored.
+# ambiguity       clear, ambiguous (more than one defensible reading), or indeterminate (the line cannot say).
+#                 An indeterminate line has gold `other`: the taxonomy's answer to an item nothing identifies.
+
+cases:
+  # --- Alcohol against non-alcoholic drinks and food ---
+  - id: RB-001
+    input: {description: Guinness 0.0 draught pint, language: en, merchant_name: The Crown, mcc_description: "Bars, taverns, cocktail lounges", itemized: true}
+    gold: {category: food_beverage, restricted: false}
+    challenges: [alcohol_boundary, misleading_name]
+    ambiguity: clear
+    explanation: 0.0 is the brand's alcohol-free beer, and a bar selling it does not change that.
+  - id: RB-002
+    input: {description: Seedlip Garden and tonic, language: en, merchant_name: The Velvet Room, mcc_description: "Bars, taverns, cocktail lounges", itemized: true}
+    gold: {category: food_beverage, restricted: false}
+    challenges: [alcohol_boundary, misleading_name, merchant_misleading]
+    ambiguity: clear
+    explanation: Seedlip is a non-alcoholic spirit, so this is a non-alcoholic mixed drink.
+  - id: RB-003
+    input: {description: Beer cheese soup, language: en, merchant_name: Copper Kettle, mcc_description: Eating places and restaurants, itemized: true}
+    gold: {category: food_beverage, restricted: false}
+    challenges: [alcohol_boundary, misleading_name]
+    ambiguity: clear
+    explanation: Food prepared with alcohol is food and beverage.
+  - id: RB-004
+    input: {description: Bourbon barrel-aged maple syrup, language: en, merchant_name: Fresh Fields, mcc_description: Grocery stores and supermarkets, itemized: true}
+    gold: {category: food_beverage, restricted: false}
+    challenges: [alcohol_boundary, misleading_name]
+    ambiguity: clear
+    explanation: Syrup aged in a barrel is a food, whatever the barrel held.
+  - id: RB-005
+    input: {description: Hard seltzer variety 12-pack, language: en, merchant_name: Fresh Fields, mcc_description: Grocery stores and supermarkets, itemized: true}
+    gold: {category: alcohol, restricted: true}
+    challenges: [alcohol_boundary, merchant_misleading]
+    ambiguity: clear
+    explanation: Hard seltzer is alcoholic, though the word seltzer and a supermarket suggest otherwise.
+  - id: RB-006
+    input: {description: Penne alla vodka, language: en, merchant_name: Trattoria Sole, mcc_description: Eating places and restaurants, itemized: true}
+    gold: {category: food_beverage, restricted: false}
+    challenges: [alcohol_boundary, misleading_name]
+    ambiguity: clear
+    explanation: A pasta dish made with vodka sauce is food.
+  - id: RB-007
+    input: {description: Lager shandy pint, language: en, merchant_name: The Crown, mcc_description: "Bars, taverns, cocktail lounges", itemized: true}
+    gold: {category: alcohol, restricted: true}
+    challenges: [alcohol_boundary]
+    ambiguity: clear
+    explanation: A shandy is beer with lemonade, and still alcoholic.
+  - id: RB-008
+    input: {description: Sangría sin alcohol, language: es, merchant_name: Casa Lola, mcc_description: Eating places and restaurants, itemized: true}
+    gold: {category: food_beverage, restricted: false}
+    challenges: [alcohol_boundary, multilingual, misleading_name]
+    ambiguity: clear
+    explanation: Stated to be without alcohol.
+  - id: RB-009
+    input: {description: Bière sans alcool 33cl, language: fr, merchant_name: Brasserie du Port, mcc_description: Eating places and restaurants, itemized: true}
+    gold: {category: food_beverage, restricted: false}
+    challenges: [alcohol_boundary, multilingual, misleading_name]
+    ambiguity: clear
+    explanation: Stated to be without alcohol.
+  - id: RB-010
+    input: {description: "Glühwein 0,2l", language: de, merchant_name: Weihnachtsmarkt Stand 12, mcc_description: Eating places and restaurants, itemized: true}
+    gold: {category: alcohol, restricted: true}
+    challenges: [alcohol_boundary, multilingual]
+    ambiguity: clear
+    explanation: Mulled wine is alcoholic.
+  - id: RB-011
+    input: {description: 梅酒 グラス, language: ja, merchant_name: 居酒屋 さくら, mcc_description: Eating places and restaurants, itemized: true}
+    gold: {category: alcohol, restricted: true}
+    challenges: [alcohol_boundary, multilingual]
+    ambiguity: clear
+    explanation: Umeshu by the glass is plum liqueur. The word holds no plain English cue.
+  - id: RB-012
+    input: {description: ノンアルコールビール 350ml, language: ja, merchant_name: 居酒屋 さくら, mcc_description: Eating places and restaurants, itemized: true}
+    gold: {category: food_beverage, restricted: false}
+    challenges: [alcohol_boundary, multilingual, misleading_name]
+    ambiguity: clear
+    explanation: Stated to be non-alcoholic beer.
+  - id: RB-013
+    input: {description: Vinho do Porto 20 anos, language: pt, merchant_name: Taberna do Rio, mcc_description: Eating places and restaurants, itemized: true}
+    gold: {category: alcohol, restricted: true}
+    challenges: [alcohol_boundary, multilingual]
+    ambiguity: clear
+    explanation: Twenty-year-old port is a fortified wine.
+
+  # --- Personal electronics against computer accessories ---
+  - id: RB-014
+    input: {description: Logitech MX Master 3S mouse, language: en, merchant_name: TechHub, mcc_description: Electronics stores, itemized: true}
+    gold: {category: computer_accessory, restricted: false}
+    challenges: [electronics_boundary, control]
+    ambiguity: clear
+    explanation: The taxonomy lists mice as computer accessories.
+  - id: RB-015
+    input: {description: AirPods Pro 2, language: en, merchant_name: TechHub, mcc_description: Electronics stores, itemized: true}
+    gold: {category: personal_electronics, restricted: true}
+    challenges: [electronics_boundary, control]
+    ambiguity: clear
+    explanation: Earbuds are personal electronics.
+  - id: RB-016
+    input: {description: Kindle Paperwhite leather cover, language: en, merchant_name: Reader's Corner, mcc_description: Book stores, itemized: true}
+    gold: {category: personal_electronics, restricted: true}
+    challenges: [electronics_boundary, merchant_misleading]
+    ambiguity: clear
+    explanation: An accessory made for an e-reader counts as personal electronics, and leather and a book store do not change it.
+  - id: RB-017
+    input: {description: 65W USB-C charger, language: en, merchant_name: TechHub, mcc_description: Electronics stores, itemized: true}
+    gold: {category: personal_electronics, restricted: true, acceptable: [computer_accessory]}
+    challenges: [electronics_boundary]
+    ambiguity: ambiguous
+    explanation: Chargers made for personal devices are personal electronics, but 65W suggests a laptop power adapter.
+  - id: RB-018
+    input: {description: Portable Bluetooth speaker, language: en, merchant_name: TechHub, mcc_description: Electronics stores, itemized: true}
+    gold: {category: personal_electronics, restricted: true}
+    challenges: [electronics_boundary]
+    ambiguity: clear
+    explanation: TECH-01 names portable speakers, which a computer accessory reading could miss.
+  - id: RB-019
+    input: {description: Apple Pencil 2nd generation, language: en, merchant_name: TechHub, mcc_description: Electronics stores, itemized: true}
+    gold: {category: personal_electronics, restricted: true}
+    challenges: [electronics_boundary, misleading_name]
+    ambiguity: clear
+    explanation: Made for a tablet, and it is not stationery despite the name.
+  - id: RB-020
+    input: {description: Aluminum laptop stand, language: en, merchant_name: TechHub, mcc_description: Electronics stores, itemized: true}
+    gold: {category: computer_accessory, restricted: false}
+    challenges: [electronics_boundary, control]
+    ambiguity: clear
+    explanation: TECH-02 lists laptop stands as peripherals.
+  - id: RB-021
+    input: {description: Cat 6 ethernet cable 3m, language: en, merchant_name: Happy Paws Pet Supply, mcc_description: Pet shops, itemized: true}
+    gold: {category: computer_accessory, restricted: false}
+    challenges: [electronics_boundary, merchant_misleading]
+    ambiguity: clear
+    explanation: The item decides, and the merchant is implausible on purpose.
+
+  # --- Gifts against ordinary products ---
+  - id: RB-022
+    input: {description: Bouquet of roses, language: en, merchant_name: Bloom & Stem, mcc_description: Florists, itemized: true}
+    gold: {category: gift, restricted: true}
+    challenges: [gift_boundary, control]
+    ambiguity: clear
+    explanation: The taxonomy lists flowers as gifts.
+  - id: RB-023
+    input: {description: Starbucks eGift $25, language: en, merchant_name: Starbucks, mcc_description: Eating places and restaurants, itemized: true}
+    gold: {category: gift_card, restricted: true}
+    challenges: [gift_boundary, merchant_misleading, misleading_name]
+    ambiguity: clear
+    explanation: An eGift is a stored-value card, not a coffee or a gift item.
+  - id: RB-024
+    input: {description: Visa prepaid card $100, language: en, merchant_name: QuickMart, mcc_description: Grocery stores and supermarkets, itemized: true}
+    gold: {category: gift_card, restricted: true}
+    challenges: [gift_boundary]
+    ambiguity: clear
+    explanation: The taxonomy lists prepaid cards as gift cards.
+  - id: RB-025
+    input: {description: Company logo tote bags x25, language: en, merchant_name: PromoWorks, mcc_description: Advertising services, itemized: true}
+    gold: {category: gift, restricted: true, acceptable: [clothing, office_supplies]}
+    challenges: [gift_boundary]
+    ambiguity: ambiguous
+    explanation: Branded merchandise is listed as gift, and bags as clothing. Both are defensible.
+  - id: RB-026
+    input: {description: Box of assorted chocolates, language: en, merchant_name: Maison Cacao, mcc_description: Candy stores, itemized: true}
+    gold: {category: food_beverage, restricted: false, acceptable: [gift]}
+    challenges: [gift_boundary]
+    ambiguity: ambiguous
+    explanation: A snack by nature, and often made to be given. Nothing on the line says which.
+  - id: RB-027
+    input: {description: Sympathy card, language: en, merchant_name: Paper & Co, mcc_description: Office and stationery supply, itemized: true}
+    gold: {category: gift, restricted: true}
+    challenges: [gift_boundary, merchant_misleading]
+    ambiguity: clear
+    explanation: Greeting cards are gifts, even from a stationer.
+
+  # --- Over-the-counter against prescription medication ---
+  - id: RB-028
+    input: {description: Cetirizine 10mg 30ct, language: en, merchant_name: Wellway, mcc_description: Drug stores and pharmacies, itemized: true}
+    gold: {category: health_otc, restricted: false, item_kind: otc_medication}
+    challenges: [medication_boundary, control]
+    ambiguity: clear
+    explanation: An antihistamine sold over the counter.
+  - id: RB-029
+    input: {description: "Atorvastatin 20mg Rx #4471", language: en, merchant_name: Wellway, mcc_description: Drug stores and pharmacies, itemized: true}
+    gold: {category: other, restricted: false, item_kind: prescription_medication}
+    challenges: [medication_boundary, out_of_taxonomy]
+    ambiguity: clear
+    explanation: Marked Rx. The taxonomy sends prescription medication to other.
+  - id: RB-030
+    input: {description: Adhesive bandages assorted, language: en, merchant_name: Wellway, mcc_description: Drug stores and pharmacies, itemized: true}
+    gold: {category: health_otc, restricted: false, unlabelled: [item_kind]}
+    challenges: [medication_boundary]
+    ambiguity: clear
+    explanation: First aid is health_otc, and whether a bandage is medication is not settled.
+  - id: RB-031
+    input: {description: Multivitamin gummies, language: en, merchant_name: Wellway, mcc_description: Drug stores and pharmacies, itemized: true}
+    gold: {category: health_otc, restricted: false, acceptable: [food_beverage], unlabelled: [item_kind]}
+    challenges: [medication_boundary]
+    ambiguity: ambiguous
+    explanation: A supplement is neither clearly medication nor clearly a snack.
+  - id: RB-032
+    input: {description: Prescription sunglasses, language: en, merchant_name: Clear Sight Optical, mcc_description: Optical goods, itemized: true}
+    gold: {category: clothing, restricted: true, acceptable: [other]}
+    challenges: [medication_boundary, misleading_name]
+    ambiguity: ambiguous
+    explanation: Eyewear, which may be a fashion accessory or fit nothing. It is plainly not prescription medication.
+  - id: RB-033
+    input: {description: "Paracetamol 500 mg Tabletten", language: de, merchant_name: Stadt-Apotheke, mcc_description: Drug stores and pharmacies, itemized: true}
+    gold: {category: health_otc, restricted: false, item_kind: otc_medication}
+    challenges: [medication_boundary, multilingual]
+    ambiguity: clear
+    explanation: A common painkiller sold without prescription.
+  - id: RB-034
+    input: {description: Insulin pen refills, language: en, merchant_name: Wellway, mcc_description: Drug stores and pharmacies, itemized: true}
+    gold: {category: other, restricted: false, acceptable: [health_otc], unlabelled: [item_kind]}
+    challenges: [medication_boundary]
+    ambiguity: ambiguous
+    explanation: Usually prescribed, though the line does not say and some kinds are sold over the counter.
+
+  # --- Services against physical goods ---
+  - id: RB-035
+    input: {description: Suit pressing, language: en, merchant_name: Grand Plaza Hotel, mcc_description: "Hotels, motels, resorts", itemized: true}
+    gold: {category: laundry_service, restricted: false}
+    challenges: [service_boundary, merchant_misleading]
+    ambiguity: clear
+    explanation: Pressing is listed under laundry service, and it is not lodging or clothing.
+  - id: RB-036
+    input: {description: Fabric softener 1L, language: en, merchant_name: QuickMart, mcc_description: Grocery stores and supermarkets, itemized: true}
+    gold: {category: household_goods, restricted: true}
+    challenges: [service_boundary]
+    ambiguity: clear
+    explanation: A laundry product is a household good, and not a laundry service.
+  - id: RB-037
+    input: {description: Haircut and beard trim, language: en, merchant_name: Grand Plaza Hotel, mcc_description: "Hotels, motels, resorts", itemized: true}
+    gold: {category: personal_care, restricted: true, essential_toiletry: false}
+    challenges: [service_boundary, merchant_misleading]
+    ambiguity: clear
+    explanation: Haircuts are personal care, and a service is not an essential toiletry.
+  - id: RB-038
+    input: {description: Laptop screen repair labor, language: en, merchant_name: FixIt Tech, mcc_description: Electronics repair shops, itemized: true}
+    gold: {category: other, restricted: false, acceptable: [computer_accessory, service_fee]}
+    challenges: [service_boundary, out_of_taxonomy]
+    ambiguity: ambiguous
+    explanation: The taxonomy has no repair category.
+  - id: RB-039
+    input: {description: Delivery fee, language: en, merchant_name: Noodle Express, mcc_description: Eating places and restaurants, itemized: true}
+    gold: {category: service_fee, restricted: false}
+    challenges: [service_boundary, control]
+    ambiguity: clear
+    explanation: Delivery fees are listed under service fee.
+  - id: RB-040
+    input: {description: Excess baggage fee, language: en, merchant_name: Skyline Air, mcc_description: Airlines, itemized: true}
+    gold: {category: airfare, restricted: false}
+    challenges: [service_boundary, misleading_name]
+    ambiguity: clear
+    explanation: The taxonomy puts bag fees under airfare, though the word fee suggests service fee.
+  - id: RB-041
+    input: {description: Lavandería - 5 camisas, language: es, merchant_name: Hotel Mirador, mcc_description: "Hotels, motels, resorts", itemized: true}
+    gold: {category: laundry_service, restricted: false}
+    challenges: [service_boundary, multilingual, merchant_misleading]
+    ambiguity: clear
+    explanation: Washing five shirts, and not buying them.
+
+  # --- Other languages, with no other trap ---
+  - id: RB-042
+    input: {description: Taxi zum Flughafen, language: de, merchant_name: Stadt Taxi, mcc_description: "Taxicabs, limousines, rideshare", itemized: true}
+    gold: {category: ground_transport, restricted: false}
+    challenges: [multilingual, control]
+    ambiguity: clear
+    explanation: A taxi to the airport.
+  - id: RB-043
+    input: {description: Caderno A5 pautado, language: pt, merchant_name: Papelaria Central, mcc_description: Office and stationery supply, itemized: true}
+    gold: {category: office_supplies, restricted: false}
+    challenges: [multilingual, control]
+    ambiguity: clear
+    explanation: A ruled A5 notebook.
+  - id: RB-044
+    input: {description: シャンプー 旅行用, language: ja, merchant_name: ドラッグストア 青葉, mcc_description: Drug stores and pharmacies, itemized: true}
+    gold: {category: personal_care, restricted: true, essential_toiletry: true}
+    challenges: [multilingual]
+    ambiguity: clear
+    explanation: Travel shampoo is a basic toiletry.
+  - id: RB-045
+    input: {description: Cravate en soie, language: fr, merchant_name: Galeries du Centre, mcc_description: Department stores, itemized: true}
+    gold: {category: clothing, restricted: true}
+    challenges: [multilingual]
+    ambiguity: clear
+    explanation: A silk tie is a fashion accessory.
+
+  # --- Items the taxonomy does not hold ---
+  - id: RB-046
+    input: {description: Samsung Galaxy S24 128GB, language: en, merchant_name: TechHub, mcc_description: Electronics stores, itemized: true}
+    gold: {category: other, restricted: false, item_kind: mobile_phone}
+    challenges: [out_of_taxonomy, electronics_boundary]
+    ambiguity: clear
+    explanation: The taxonomy sends mobile phones to other, though personal electronics is tempting.
+  - id: RB-047
+    input: {description: Opera tickets x2, language: en, merchant_name: City Opera House, mcc_description: "Theatrical producers and ticket agencies", itemized: true}
+    gold: {category: other, restricted: false, venue_type: theatre}
+    challenges: [out_of_taxonomy]
+    ambiguity: clear
+    explanation: The taxonomy sends event tickets to other, and opera is theatre.
+  - id: RB-048
+    input: {description: Flu vaccination, language: en, merchant_name: Wellway, mcc_description: Drug stores and pharmacies, itemized: true}
+    gold: {category: other, restricted: false, acceptable: [health_otc], unlabelled: [item_kind]}
+    challenges: [out_of_taxonomy, medication_boundary]
+    ambiguity: ambiguous
+    explanation: A clinical service in a pharmacy, which fits no category well.
+
+  # --- Too little to identify the item ---
+  - id: RB-049
+    input: {description: Misc, language: en, merchant_name: QuickMart, mcc_description: Grocery stores and supermarkets, itemized: true}
+    gold: {category: other, restricted: false}
+    challenges: [incomplete]
+    ambiguity: indeterminate
+    explanation: Says nothing about the item, so a sure answer of any kind has no basis.
+  - id: RB-050
+    input: {description: Item 7, language: en, merchant_name: TechHub, mcc_description: Electronics stores, itemized: true}
+    gold: {category: other, restricted: false}
+    challenges: [incomplete, merchant_misleading]
+    ambiguity: indeterminate
+    explanation: Only the merchant hints at anything, and a merchant does not identify an item.
+  - id: RB-051
+    input: {description: Bottle, language: en, merchant_name: The Crown, mcc_description: "Bars, taverns, cocktail lounges", itemized: true}
+    gold: {category: other, restricted: false, acceptable: [alcohol, food_beverage]}
+    challenges: [incomplete, merchant_misleading]
+    ambiguity: indeterminate
+    explanation: Could be wine or water, and the bar only makes alcohol more likely.
+  - id: RB-052
+    input: {description: Premium package, language: en, merchant_name: Grand Plaza Hotel, mcc_description: "Hotels, motels, resorts", itemized: true}
+    gold: {category: other, restricted: false, acceptable: [lodging]}
+    challenges: [incomplete, merchant_misleading]
+    ambiguity: indeterminate
+    explanation: May be a room upgrade, a spa or a dinner.
+  - id: RB-053
+    input: {description: Total due - no details, language: en, merchant_name: Harbor Grill, mcc_description: Eating places and restaurants, itemized: false}
+    gold: {category: other, restricted: false}
+    challenges: [incomplete, control]
+    ambiguity: clear
+    explanation: A non-itemized charge is other by definition in the taxonomy.
+
+  # --- Recipients and government officials ---
+  - id: RB-054
+    input: {description: Dinner - guest Deputy Mayor T. Nguyen, language: en, merchant_name: Harbor Grill, mcc_description: Eating places and restaurants, itemized: true}
+    gold: {category: food_beverage, restricted: false, recipient_name: T. Nguyen, recipient_type: government_official}
+    challenges: [recipient]
+    ambiguity: clear
+    explanation: A deputy mayor is a public official, and the line says so.
+  - id: RB-055
+    input: {description: "Wine for D. Weiss, state-owned PetroNord", language: en, merchant_name: Cellar Door, mcc_description: Package stores, itemized: true}
+    gold: {category: alcohol, restricted: true, recipient_name: D. Weiss, recipient_type: government_official}
+    challenges: [recipient]
+    ambiguity: clear
+    explanation: GIFT-04 covers state-owned enterprise employees, and the line says state-owned.
+  - id: RB-056
+    input: {description: Flowers for S. Ito, language: en, merchant_name: Bloom & Stem, mcc_description: Florists, itemized: true}
+    gold: {category: gift, restricted: true, recipient_name: S. Ito}
+    challenges: [recipient, gift_boundary]
+    ambiguity: clear
+    explanation: A name with nothing about who they are, so the type must stay unknown.
+  - id: RB-057
+    input: {description: Lunch with M. Lee of City National Bank, language: en, merchant_name: Harbor Grill, mcc_description: Eating places and restaurants, itemized: true}
+    gold: {category: food_beverage, restricted: false, recipient_name: M. Lee, unlabelled: [recipient_type]}
+    challenges: [recipient]
+    ambiguity: clear
+    explanation: City and National name a private bank here, so calling this an official has no support. Client is a fair reading.
+  - id: RB-058
+    input: {description: Watch award for employee P. Singh, language: en, merchant_name: Timeless, mcc_description: "Jewelry, watch, and silverware stores", itemized: true}
+    gold: {category: jewelry, restricted: true, recipient_name: P. Singh, recipient_type: employee}
+    challenges: [recipient, misleading_name]
+    ambiguity: clear
+    explanation: A watch from a jeweler with no electronics stated is jewelry, and the line names an employee.
+
+  # --- High-severity categories that merchants or names can hide ---
+  - id: RB-059
+    input: {description: Mint nicotine pouches 15ct, language: en, merchant_name: Wellway, mcc_description: Drug stores and pharmacies, itemized: true}
+    gold: {category: tobacco, restricted: true}
+    challenges: [merchant_misleading, misleading_name]
+    ambiguity: clear
+    explanation: A nicotine product, though the taxonomy says vaping and cigarettes, and a pharmacy and mint suggest health or food.
+  - id: RB-060
+    input: {description: Scratch-off lottery ticket, language: en, merchant_name: QuickMart, mcc_description: Grocery stores and supermarkets, itemized: true}
+    gold: {category: gambling, restricted: true}
+    challenges: [merchant_misleading]
+    ambiguity: clear
+    explanation: Lottery is gambling, wherever it was bought, and it is not an event ticket.

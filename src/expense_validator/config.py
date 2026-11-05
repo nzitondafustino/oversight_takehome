@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 from dotenv import dotenv_values
-from pydantic import BaseModel, ConfigDict, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, StrictBool
 
 ROOT = Path(__file__).parents[2]
 
@@ -26,15 +26,27 @@ class LlmConfig(_Strict):
 
 class PathsConfig(_Strict):
     policy_docs: Path
+    taxonomy: Path
     llm_cache: Path
     rule_logic: Path
     ruleset: Path
     rule_fields: Path
 
 
+class TranslationConfig(_Strict):
+    enabled: StrictBool = False
+    model: str | None = None
+
+
+class ClassificationConfig(_Strict):
+    model: str | None = None
+
+
 class Config(_Strict):
     llm: LlmConfig
     paths: PathsConfig
+    translation: TranslationConfig = TranslationConfig()
+    classification: ClassificationConfig = ClassificationConfig()
     openrouter_api_key: SecretStr | None = None
 
 

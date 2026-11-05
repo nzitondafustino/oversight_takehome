@@ -1,0 +1,290 @@
+suite: normalization
+
+templates:
+  line: &line
+    line_id: R-1-L1
+    description_raw: Lunch
+    language: en
+    quantity: 1
+    unit_price: "12.50"
+    amount: "12.50"
+    amount_usd: "12.50"
+  receipt: &receipt
+    receipt_id: R-1
+    employee_id: E-1
+    employee_country: US
+    entity: GLOBAL
+    submitted_expense_type: Meals - Individual
+    itemized: true
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: "12.50"
+    line_items: [*line]
+
+text:
+  # Six languages, kept as printed.
+  - {id: English keeps its case and details, description: "Beer-battered Cod & Chips (2x) #A-17", expected: {text: "Beer-battered Cod & Chips (2x) #A-17"}}
+  - {id: French keeps its accents, description: "Café crème à 3,50 € — Château d'Yquem", expected: {text: "Café crème à 3,50 € — Château d'Yquem"}}
+  - {id: Spanish keeps its accents and punctuation, description: "¡Jamón ibérico! Año 2024, señor", expected: {text: "¡Jamón ibérico! Año 2024, señor"}}
+  - {id: German keeps its capitals and sharp s, description: "Weißwein 0,2l Größe XL Müller", expected: {text: "Weißwein 0,2l Größe XL Müller"}}
+  - {id: Portuguese keeps its accents, description: "Limpeza a seco - 2 camisas, ação não", expected: {text: "Limpeza a seco - 2 camisas, ação não"}}
+  - {id: Japanese keeps its script, description: "iPad Air 11インチ 128GB タブレットケース 日本酒", expected: {text: "iPad Air 11インチ 128GB タブレットケース 日本酒"}}
+  - {id: text printed with no accents is not corrected, description: "Cafe expresso Knoedel", expected: {text: "Cafe expresso Knoedel"}}
+  # Unicode forms.
+  - {id: a decomposed accent is composed, description: "Café crème", expected: {text: "Café crème"}}
+  - {id: decomposed Japanese is composed, description: "ガラス", expected: {text: "ガラス"}}
+  - {id: an Angstrom sign takes its canonical form, description: "5 Å", expected: {text: "5 Å"}}
+  - {id: full-width text is not folded, description: "ＡＢＣ１２３", expected: {text: "ＡＢＣ１２３"}}
+  - {id: half-width katakana is not folded, description: "ｶﾞﾗｽ", expected: {text: "ｶﾞﾗｽ"}}
+  - {id: ligatures and fractions are not folded, description: "ﬁne ½ cup ™", expected: {text: "ﬁne ½ cup ™"}}
+  # Whitespace.
+  - {id: outer whitespace goes, description: "  Lunch\t", expected: {text: "Lunch"}}
+  - {id: a run of spaces becomes one, description: "Red   wine", expected: {text: "Red wine"}}
+  - {id: a line break keeps the words apart, description: "Red\r\nwine\nglass", expected: {text: "Red wine glass"}}
+  - {id: a tab keeps the words apart, description: "Red\twine", expected: {text: "Red wine"}}
+  - {id: a no-break space keeps the words apart, description: "50 cl", expected: {text: "50 cl"}}
+  - {id: an ideographic space keeps the words apart, description: "日本酒　一本", expected: {text: "日本酒 一本"}}
+  - {id: Unicode line separators keep the words apart, description: "Red wine glass\u0085cup", expected: {text: "Red wine glass cup"}}
+  - {id: a thin space keeps the words apart, description: "1 000 ml", expected: {text: "1 000 ml"}}
+  # Invisible characters.
+  - {id: a NUL is removed, description: "Lun\0ch", expected: {text: "Lunch"}}
+  - {id: other control characters are removed, description: "\x01Lunch\x7f\x9b", expected: {text: "Lunch"}}
+  - {id: a soft hyphen is removed, description: "Cock­tail", expected: {text: "Cocktail"}}
+  - {id: a zero-width space is removed as it shows no gap, description: "Ciga​rettes", expected: {text: "Cigarettes"}}
+  - {id: a byte order mark is removed, description: "﻿Lunch", expected: {text: "Lunch"}}
+  - {id: bidirectional overrides are removed, description: "‮Lunch‬", expected: {text: "Lunch"}}
+  - {id: hidden tag characters are removed, description: "Lunch\U000E0041\U000E0042", expected: {text: "Lunch"}}
+  - {id: a joiner inside a word stays, description: "👨‍🍳 می‌خواهم", expected: {text: "👨‍🍳 می‌خواهم"}}
+  - {id: a variation selector stays, description: "☕️", expected: {text: "☕️"}}
+  - {id: removing a character can compose what it separated, description: "e​́", expected: {text: "é"}}
+  - {id: a removed word leaves no double space, description: "a ​ b", expected: {text: "a b"}}
+  # Nothing left.
+  - {id: empty text stays empty, description: "", expected: {text: ""}}
+  - {id: only whitespace is empty, description: " \t\n 　", expected: {text: ""}}
+  - {id: only controls are empty, description: "\0\x01​﻿", expected: {text: ""}}
+  - {id: only joiners are empty, description: "‍ ‌", expected: {text: ""}}
+
+text_refused:
+  - {id: null is not text, description: null, expected: "needs text, got NoneType"}
+  - {id: a number is not text, description: 12, expected: "needs text, got int"}
+  - {id: bytes are not text, description: !!binary "Q2Fmw6k=", expected: "needs text, got bytes"}
+
+receipts:
+  - id: with no translator every line is not_requested
+    translations: null
+    receipt:
+      <<: *receipt
+      line_items:
+        - {<<: *line, description_raw: "  Lunch "}
+        - {<<: *line, line_id: R-1-L2, description_raw: "Vino  tinto", language: es}
+        - {<<: *line, line_id: R-1-L3, description_raw: "   ", language: fr}
+    expected:
+      calls: []
+      lines:
+        - {receipt_id: R-1, line_id: R-1-L1, description_raw: "  Lunch ", description_normalized: Lunch, language: en, translation: null, translation_status: not_requested, translation_error: null}
+        - {line_id: R-1-L2, description_normalized: Vino tinto, language: es, translation: null, translation_status: not_requested}
+        - {line_id: R-1-L3, description_normalized: "", language: fr, translation: null, translation_status: not_requested}
+  - id: each language other than English is translated from its normalized text
+    translations:
+      "Salade niçoise": Nicoise salad
+      "Vino tinto Rioja Reserva 750ml": Rioja Reserva red wine 750ml
+      "Weisswein 0,2l": White wine 0.2 l
+      "Limpeza a seco - 2 camisas": Dry cleaning - 2 shirts
+      "iPad Air 11インチ 128GB": iPad Air 11-inch 128GB
+    receipt:
+      <<: *receipt
+      line_items:
+        - {<<: *line, description_raw: "Salade niçoise", language: fr}
+        - {<<: *line, line_id: L2, description_raw: "Vino tinto  Rioja Reserva 750ml", language: es}
+        - {<<: *line, line_id: L3, description_raw: "Weisswein 0,2l", language: de}
+        - {<<: *line, line_id: L4, description_raw: "Limpeza a seco - 2 camisas", language: pt}
+        - {<<: *line, line_id: L5, description_raw: "iPad Air 11インチ 128GB", language: ja}
+    expected:
+      calls:
+        - ["Salade niçoise", fr]
+        - ["Vino tinto Rioja Reserva 750ml", es]
+        - ["Weisswein 0,2l", de]
+        - ["Limpeza a seco - 2 camisas", pt]
+        - ["iPad Air 11インチ 128GB", ja]
+      lines:
+        - {description_raw: "Salade niçoise", description_normalized: "Salade niçoise", translation: Nicoise salad, translation_status: translated, translation_error: null}
+        - {description_raw: "Vino tinto  Rioja Reserva 750ml", translation: Rioja Reserva red wine 750ml, translation_status: translated}
+        - {translation: White wine 0.2 l, translation_status: translated}
+        - {translation: Dry cleaning - 2 shirts, translation_status: translated}
+        - {translation: iPad Air 11-inch 128GB, translation_status: translated}
+  - id: English and empty text are skipped without calling the translator
+    translations: {}
+    receipt:
+      <<: *receipt
+      line_items:
+        - {<<: *line, language: en}
+        - {<<: *line, line_id: L2, language: EN-gb}
+        - {<<: *line, line_id: L3, language: en_US}
+        - {<<: *line, line_id: L4, description_raw: "​ ", language: fr}
+    expected:
+      calls: []
+      lines:
+        - {translation: null, translation_status: skipped}
+        - {translation: null, translation_status: skipped}
+        - {translation: null, translation_status: skipped}
+        - {description_normalized: "", translation: null, translation_status: skipped}
+  - id: a language that only starts like English is not English
+    translations: {Lunch: Lunch}
+    receipt: {<<: *receipt, line_items: [{<<: *line, language: enm}]}
+    expected:
+      calls: [[Lunch, enm]]
+      lines: [{translation: Lunch, translation_status: translated}]
+  - id: a language not in the data is still handed over as it is
+    translations: {Lunch: Lunch}
+    receipt: {<<: *receipt, line_items: [{<<: *line, language: und}]}
+    expected:
+      calls: [[Lunch, und]]
+      lines: [{translation: Lunch, translation_status: translated}]
+  - id: a failure is recorded on its line and the next line still translates
+    translations:
+      "Vino tinto": {raises: the provider is down}
+      "Agua": Water
+    receipt:
+      <<: *receipt
+      line_items:
+        - {<<: *line, description_raw: Vino tinto, language: es}
+        - {<<: *line, line_id: L2, description_raw: Agua, language: es}
+    expected:
+      calls: [[Vino tinto, es], [Agua, es]]
+      lines:
+        - {description_normalized: Vino tinto, translation: null, translation_status: failed, translation_error: the provider is down}
+        - {translation: Water, translation_status: translated, translation_error: null}
+  - id: a translation error with no message still says it failed
+    translations: {Agua: {raises: ""}}
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Agua, language: es}]}
+    expected:
+      calls: [[Agua, es]]
+      lines: [{translation: null, translation_status: failed, translation_error: translation failed}]
+  - id: a translation is normalized like any other text
+    translations: {Agua: "  Still water​ "}
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Agua, language: es}]}
+    expected:
+      calls: [[Agua, es]]
+      lines: [{translation: Still water, translation_status: translated}]
+  - id: blank output is a failure and not a translation
+    translations: {Agua: " ​ "}
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Agua, language: es}]}
+    expected:
+      calls: [[Agua, es]]
+      lines: [{translation: null, translation_status: failed, translation_error: translator returned blank text}]
+  - id: output that is not text is a failure
+    translations: {Agua: null}
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Agua, language: es}]}
+    expected:
+      calls: [[Agua, es]]
+      lines: [{translation: null, translation_status: failed, translation_error: "translator returned NoneType, not text"}]
+  - id: an added explanation on a second line is a failure
+    translations: {Agua: "Water\nThis is probably bottled water."}
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Agua, language: es}]}
+    expected:
+      calls: [[Agua, es]]
+      lines: [{translation: null, translation_status: failed, translation_error: translator returned several lines for one line of text}]
+  - id: a changed quantity is a failure
+    translations: {"Vino 750ml": "Wine 75 cl"}
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Vino 750ml, language: es}]}
+    expected:
+      calls: [[Vino 750ml, es]]
+      lines: [{translation: null, translation_status: failed, translation_error: translation does not keep the numbers in the text}]
+  - id: a dropped number is a failure
+    translations: {"2 camisas": "shirts"}
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: 2 camisas, language: pt}]}
+    expected:
+      calls: [[2 camisas, pt]]
+      lines: [{translation: null, translation_status: failed, translation_error: translation does not keep the numbers in the text}]
+  - id: an invented number is a failure
+    translations: {"Vino": "Wine 750ml"}
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: Vino, language: es}]}
+    expected:
+      calls: [[Vino, es]]
+      lines: [{translation: null, translation_status: failed, translation_error: translation does not keep the numbers in the text}]
+  - id: full-width digits count as the same number
+    translations: {"１１インチ": "11-inch"}
+    receipt: {<<: *receipt, line_items: [{<<: *line, description_raw: １１インチ, language: ja}]}
+    expected:
+      calls: [[１１インチ, ja]]
+      lines: [{translation: 11-inch, translation_status: translated}]
+  - id: a non-itemized receipt with no lines gets none
+    translations: {}
+    receipt: {<<: *receipt, itemized: false, line_items: []}
+    expected: {calls: [], lines: []}
+  - id: a non-itemized receipt with one charge keeps one
+    translations: null
+    receipt: {<<: *receipt, itemized: false, line_items: [{<<: *line, description_raw: Total charge}]}
+    expected:
+      calls: []
+      lines: [{line_id: R-1-L1, description_normalized: Total charge}]
+
+receipts_refused:
+  - id: a category on a line is refused
+    receipt: {<<: *receipt, line_items: [{<<: *line, category: food_beverage}]}
+    expected: "before classification, but found: \\['R-1-L1.category'\\]"
+  - id: a false restricted flag is refused as a value
+    receipt: {<<: *receipt, line_items: [{<<: *line, restricted: false}]}
+    expected: "before classification, but found: \\['R-1-L1.restricted'\\]"
+  - id: a confidence on a line is refused
+    receipt: {<<: *receipt, line_items: [{<<: *line, confidence: "0.9"}]}
+    expected: "before classification, but found: \\['R-1-L1.confidence'\\]"
+
+lines_refused:
+  - {id: a normalized text that is not the raw text normalized, changes: {description_normalized: Wine}, expected: "not the normalized"}
+  - {id: a translation with the wrong status, changes: {translation: Wine}, expected: "a translation goes with"}
+  - {id: the status translated with no translation, changes: {translation_status: translated}, expected: "a translation goes with"}
+  - {id: the status failed with no error, changes: {translation_status: failed}, expected: "an error goes with"}
+  - {id: an error with the wrong status, changes: {translation_error: x}, expected: "an error goes with"}
+  - {id: an unknown status, changes: {translation_status: maybe}, expected: "translation_status"}
+  - {id: a predicted category, changes: {category: alcohol}, expected: "Extra inputs"}
+
+provider:
+  - id: the translation is read as plain text
+    status: 200
+    body: {id: x, object: chat.completion, created: 1, model: m, system_fingerprint: null, choices: [{index: 0, finish_reason: stop, message: {role: assistant, content: Red wine}}]}
+    expected: {translation: Red wine}
+  - id: a live response, with the fields the SDK does not model, is read
+    status: 200
+    body: {id: gen-x, object: chat.completion, created: 1, model: tencent/hy-mt2-30b-a3b, provider: Tencent, system_fingerprint: null, service_tier: null, choices: [{index: 0, logprobs: null, finish_reason: stop, native_finish_reason: stop, message: {role: assistant, content: Non-alcoholic mojito, refusal: null, reasoning: null}}], usage: {prompt_tokens: 38, completion_tokens: 9, total_tokens: 47}}
+    expected: {translation: Non-alcoholic mojito}
+  - id: an empty string is read as given, for the checks to fail
+    status: 200
+    body: {id: x, object: chat.completion, created: 1, model: m, system_fingerprint: null, choices: [{index: 0, finish_reason: stop, message: {role: assistant, content: ""}}]}
+    expected: {translation: ""}
+
+provider_refused:
+  - id: no choices at all
+    status: 200
+    body: {id: x, object: chat.completion, created: 1, model: m, system_fingerprint: null, choices: []}
+    expected: "translation request failed: IndexError"
+  - id: a null message
+    status: 200
+    body: {id: x, object: chat.completion, created: 1, model: m, system_fingerprint: null, choices: [{index: 0, finish_reason: stop, message: {role: assistant, content: null}}]}
+    expected: "holds no text: content_type=NoneType finish_reason=stop prompt_tokens=None completion_tokens=None"
+  - id: a live response with null text, a stop and tokens billed, as Tencent returned for Weisswein 0,2l
+    status: 200
+    body: {id: gen-x, object: chat.completion, created: 1, model: tencent/hy-mt2-30b-a3b, provider: Tencent, system_fingerprint: null, service_tier: null, choices: [{index: 0, logprobs: null, finish_reason: stop, native_finish_reason: stop, message: {role: assistant, content: null, refusal: null, reasoning: null}}], usage: {prompt_tokens: 42, completion_tokens: 8, total_tokens: 50}}
+    expected: "holds no text: content_type=NoneType finish_reason=stop prompt_tokens=42 completion_tokens=8 model=tencent/hy-mt2-30b-a3b generation=gen-x"
+  - id: no content key at all
+    status: 200
+    body: {id: x, object: chat.completion, created: 1, model: m, system_fingerprint: null, choices: [{index: 0, finish_reason: stop, message: {role: assistant}}]}
+    expected: "holds no text: content_type=Unset"
+  - id: content that is a list of parts and not text
+    status: 200
+    body: {id: x, object: chat.completion, created: 1, model: m, system_fingerprint: null, choices: [{index: 0, finish_reason: stop, message: {role: assistant, content: []}}]}
+    expected: "holds no text: content_type=list"
+  - id: a response that is not the expected shape
+    status: 200
+    body: {unexpected: true}
+    expected: "translation request failed"
+  - id: a body that is not JSON
+    status: 200
+    body: "not json"
+    expected: "translation request failed"
+  - {id: a bad key, status: 401, body: {error: {code: 401, message: No auth}}, expected: "translation request failed: UnauthorizedResponseError"}
+  - {id: no credit, status: 402, body: {error: {code: 402, message: No credit}}, expected: "translation request failed: PaymentRequiredResponseError"}
+  - {id: an unknown model, status: 404, body: {error: {code: 404, message: No model}}, expected: "translation request failed: NotFoundResponseError"}
+  - {id: rate limited, status: 429, body: {error: {code: 429, message: Slow down}}, expected: "translation request failed: TooManyRequestsResponseError"}
+  - {id: a server error, status: 500, body: {error: {code: 500, message: Broken}}, expected: "translation request failed: InternalServerResponseError"}
+  - {id: an overloaded provider, status: 503, body: {error: {code: 503, message: Busy}}, expected: "translation request failed: ServiceUnavailableResponseError"}

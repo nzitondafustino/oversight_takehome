@@ -1,0 +1,338 @@
+suite: ingestion
+
+templates:
+  line: &line
+    line_id: R-1-L1
+    description_raw: Lunch
+    language: en
+    quantity: 1
+    unit_price: "12.50"
+    amount: "12.50"
+    amount_usd: "12.50"
+  labelled_line: &labelled_line
+    <<: *line
+    labels: {category: food_beverage, restricted: false}
+  second_labelled_line: &second_labelled_line
+    <<: *line
+    line_id: R-1-L2
+    description_raw: House red
+    labels: {category: alcohol, restricted: true}
+  receipt: &receipt
+    receipt_id: R-1
+    employee_id: E-1
+    employee_country: US
+    entity: GLOBAL
+    submitted_expense_type: Meals - Individual
+    itemized: true
+    line_items: [*line]
+  labels: &labels
+    expected_exceptions:
+      - rule_id: ALC-01
+        policy_doc: non-reimbursable-items.md
+        severity: high
+        line_ids: [R-1-L2]
+        reason: SECRET-EXCEPTION-REASON
+    review_signals:
+      - rule_id: MCC-02
+        policy_doc: merchant-category-risk.md
+        reason: SECRET-SIGNAL-REASON
+    disposition: flag
+  labelled: &labelled
+    <<: *receipt
+    line_items: [*labelled_line, *second_labelled_line]
+    labels: *labels
+    notes: SECRET-NOTE
+
+ingested:
+  - id: production accepts a receipt with no answers
+    mode: production
+    record: *receipt
+    expected:
+      receipt: {receipt_id: R-1, line_items.0.line_id: R-1-L1, line_items.0.amount: "12.50", line_items.0.category: null}
+      ground_truth: null
+  - id: evaluation separates the receipt from every answer
+    mode: evaluation
+    record: *labelled
+    expected:
+      receipt: {receipt_id: R-1, line_items.1.line_id: R-1-L2, line_items.1.category: null, line_items.1.restricted: null}
+      ground_truth:
+        receipt_id: R-1
+        disposition: flag
+        expected_exceptions.0.rule_id: ALC-01
+        expected_exceptions.0.policy_doc: non-reimbursable-items.md
+        expected_exceptions.0.severity: high
+        expected_exceptions.0.line_ids: [R-1-L2]
+        expected_exceptions.0.reason: SECRET-EXCEPTION-REASON
+        review_signals.0.rule_id: MCC-02
+        review_signals.0.policy_doc: merchant-category-risk.md
+        review_signals.0.reason: SECRET-SIGNAL-REASON
+        line_labels.R-1-L1: {category: food_beverage, restricted: false}
+        line_labels.R-1-L2: {category: alcohol, restricted: true}
+        notes: SECRET-NOTE
+  - id: evaluation takes a receipt with no notes as having none
+    mode: evaluation
+    record:
+      <<: *receipt
+      line_items: [*labelled_line]
+      labels: {expected_exceptions: [], review_signals: [], disposition: pass}
+    expected:
+      receipt: {receipt_id: R-1}
+      ground_truth: {notes: null, disposition: pass}
+  - id: a receipt with no lines has no line labels
+    mode: evaluation
+    record:
+      <<: *receipt
+      itemized: false
+      line_items: []
+      labels: {expected_exceptions: [], review_signals: [], disposition: pass}
+    expected:
+      receipt: {line_items: []}
+      ground_truth: {line_labels: {}}
+
+refused:
+  - id: production refuses receipt labels
+    mode: production
+    record: {<<: *receipt, labels: {disposition: pass}}
+    expected: "R-1: evaluation-only fields are not allowed in production: \\['labels'\\]"
+  - id: production refuses notes
+    mode: production
+    record: {<<: *receipt, notes: a note}
+    expected: "evaluation-only fields are not allowed in production: \\['notes'\\]"
+  - id: production refuses line labels and names the line
+    mode: production
+    record: {<<: *receipt, line_items: [*labelled_line]}
+    expected: "evaluation-only fields are not allowed in production: \\['R-1-L1.labels'\\]"
+  - id: production refuses an answer field that is empty
+    mode: production
+    record: {<<: *receipt, labels: {}}
+    expected: "not allowed in production: \\['labels'\\]"
+  - id: production refuses an answer field that is null
+    mode: production
+    record: {<<: *receipt, notes: null}
+    expected: "not allowed in production: \\['notes'\\]"
+  - id: production refuses labels hoisted onto a line
+    mode: production
+    record: {<<: *receipt, line_items: [{<<: *line, category: food_beverage}]}
+    expected: "may not carry classifier fields: \\['R-1-L1.category'\\]"
+  - id: evaluation refuses labels hoisted onto a line
+    mode: evaluation
+    record: {<<: *labelled, line_items: [{<<: *labelled_line, restricted: false}, *second_labelled_line]}
+    expected: "may not carry classifier fields: \\['R-1-L1.restricted'\\]"
+  - id: a submitted confidence is refused
+    mode: production
+    record: {<<: *receipt, line_items: [{<<: *line, confidence: "1"}]}
+    expected: "may not carry classifier fields: \\['R-1-L1.confidence'\\]"
+  - id: notes on a line are not a known evaluation field
+    mode: evaluation
+    record: {<<: *labelled, line_items: [{<<: *labelled_line, notes: a note}, *second_labelled_line]}
+    expected: "line_items.0.notes: Extra inputs are not permitted"
+  - id: an unknown receipt field is refused
+    mode: production
+    record: {<<: *receipt, metadata: {labels: hidden}}
+    expected: "invalid receipt: metadata: Extra inputs are not permitted"
+  - id: evaluation refuses a receipt with no labels
+    mode: evaluation
+    record: {<<: *receipt, line_items: [*labelled_line]}
+    expected: "R-1: evaluation requires receipt-level labels"
+  - id: evaluation refuses a line with no labels
+    mode: evaluation
+    record: {<<: *labelled, line_items: [*line]}
+    expected: "evaluation requires labels on every line, missing on: \\['R-1-L1'\\]"
+  - id: evaluation refuses an unknown disposition
+    mode: evaluation
+    record: {<<: *labelled, labels: {<<: *labels, disposition: maybe}}
+    expected: "invalid ground truth: disposition: "
+  - id: evaluation refuses an unknown severity
+    mode: evaluation
+    record:
+      <<: *labelled
+      labels:
+        <<: *labels
+        expected_exceptions: [{rule_id: ALC-01, policy_doc: d.md, severity: dire, line_ids: [], reason: r}]
+    expected: "invalid ground truth: expected_exceptions.0.severity: "
+  - id: evaluation refuses an exception citing a line not on the receipt
+    mode: evaluation
+    record:
+      <<: *labelled
+      labels:
+        <<: *labels
+        expected_exceptions: [{rule_id: ALC-01, policy_doc: d.md, severity: high, line_ids: [R-1-L9], reason: r}]
+    expected: "expected_exceptions.0.line_ids.0 is not a line on this receipt"
+  - id: an unknown field inside labels is refused rather than dropped
+    mode: evaluation
+    record: {<<: *labelled, labels: {<<: *labels, confidence: high}}
+    expected: "invalid ground truth: confidence: Extra inputs"
+  - id: notes inside labels are refused rather than overwritten
+    mode: evaluation
+    record: {<<: *labelled, labels: {<<: *labels, notes: another}}
+    expected: "labels may not hold \\['notes'\\]"
+  - id: line labels with an unknown field are refused
+    mode: evaluation
+    record: {<<: *labelled, line_items: [{<<: *line, labels: {category: other, restricted: false, why: x}}]}
+    expected: "invalid ground truth: line_labels.R-1-L1.why: Extra inputs"
+  - id: a restricted flag must be a real boolean
+    mode: evaluation
+    record: {<<: *labelled, line_items: [{<<: *line, labels: {category: other, restricted: 0}}]}
+    expected: "invalid ground truth: line_labels.R-1-L1.restricted: "
+  - id: a missing required field is named
+    mode: production
+    record: {receipt_id: R-1, employee_country: US, entity: GLOBAL, submitted_expense_type: x, itemized: true, line_items: []}
+    expected: "R-1: invalid receipt: employee_id: Field required"
+  - id: a missing entity is refused, though admission could derive it
+    mode: production
+    record: {receipt_id: R-1, employee_id: E-1, employee_country: US, submitted_expense_type: x, itemized: true, line_items: []}
+    expected: "invalid receipt: entity: Field required"
+  - id: a null entity is refused, though admission could derive it
+    mode: production
+    record: {<<: *receipt, entity: null}
+    expected: "invalid receipt: entity: "
+  - id: a missing line_items is named
+    mode: production
+    record: {receipt_id: R-1, employee_id: E-1, employee_country: US, entity: GLOBAL, submitted_expense_type: x, itemized: true}
+    expected: "invalid receipt: line_items: Field required"
+  - id: a bad value on a line is located
+    mode: production
+    record: {<<: *receipt, line_items: [{<<: *line, quantity: 0}]}
+    expected: "invalid receipt: line_items.0.quantity: "
+  - id: a bare date is refused as the model refuses it
+    mode: production
+    record: {<<: *receipt, transaction_datetime: "2026-04-14"}
+    expected: "transaction_datetime: .*needs a time"
+  - id: repeated line ids are refused before their labels could collapse
+    mode: evaluation
+    record: {<<: *labelled, line_items: [*labelled_line, *labelled_line]}
+    expected: "duplicate line ids: \\['R-1-L1'\\]"
+  - id: line_items that are not a list are refused
+    mode: production
+    record: {<<: *receipt, line_items: {line_id: R-1-L1}}
+    expected: "R-1: line_items must be a list of JSON objects"
+  - id: a line that is not an object is refused
+    mode: evaluation
+    record: {<<: *labelled, line_items: [text]}
+    expected: "line_items must be a list of JSON objects"
+  - id: an unknown mode is refused rather than treated as either
+    mode: staging
+    record: *receipt
+    expected: "'staging' is not a valid IngestionMode"
+
+streamed:
+  - id: blank lines are not records
+    mode: production
+    lines: ["", {<<: *receipt, receipt_id: R-1}, "   ", {<<: *receipt, receipt_id: R-2, line_items: [{<<: *line, line_id: R-2-L1}]}, ""]
+    expected:
+      receipts: [{receipt_id: R-1}, {receipt_id: R-2}]
+  - id: numbers keep the digits written, beyond what a float can hold
+    mode: production
+    lines:
+      - '{"receipt_id":"R-1","employee_id":"E-1","employee_country":"US","entity":"GLOBAL","submitted_expense_type":"x","itemized":true,"fx_rate_to_usd":0.12345678901234567891,"total_amount":48.20,"line_items":[{"line_id":"L1","description_raw":"x","language":"en","quantity":3,"unit_price":1E+1,"amount":30}]}'
+    expected:
+      receipts:
+        - fx_rate_to_usd: "0.12345678901234567891"
+          total_amount: "48.20"
+          line_items.0.unit_price: "1E+1"
+          line_items.0.amount: "30"
+          line_items.0.quantity: 3
+
+secrets_refused:
+  - id: a citation of an unknown line is located, not quoted
+    mode: evaluation
+    record:
+      <<: *labelled
+      labels:
+        <<: *labels
+        expected_exceptions: [{rule_id: ALC-01, policy_doc: d.md, severity: high, line_ids: [R-1-L1, SECRET-VALUE], reason: r}]
+    expected: "expected_exceptions.0.line_ids.1 is not a line on this receipt"
+  - id: a bad disposition is not quoted
+    mode: evaluation
+    record: {<<: *labelled, labels: {<<: *labels, disposition: SECRET-VALUE}}
+    expected: "invalid ground truth: disposition: "
+  - id: a bad severity is not quoted
+    mode: evaluation
+    record:
+      <<: *labelled
+      labels:
+        <<: *labels
+        expected_exceptions: [{rule_id: ALC-01, policy_doc: d.md, severity: SECRET-VALUE, line_ids: [], reason: r}]
+    expected: "expected_exceptions.0.severity: "
+  - id: a bad rule id is not quoted
+    mode: evaluation
+    record:
+      <<: *labelled
+      labels:
+        <<: *labels
+        review_signals: [{rule_id: SECRET-VALUE, policy_doc: d.md, reason: r}]
+    expected: "review_signals.0.rule_id: "
+  - id: a bad restricted flag is not quoted
+    mode: evaluation
+    record: {<<: *labelled, line_items: [{<<: *line, labels: {category: other, restricted: SECRET-VALUE}}]}
+    expected: "line_labels.R-1-L1.restricted: "
+  - id: notes of the wrong type are not quoted
+    mode: evaluation
+    record: {<<: *labelled, notes: [SECRET-VALUE]}
+    expected: "invalid ground truth: notes: "
+  - id: the value of an unknown label is not quoted
+    mode: evaluation
+    record: {<<: *labelled, labels: {<<: *labels, why: SECRET-VALUE}}
+    expected: "invalid ground truth: why: Extra inputs"
+  - id: answers in production are named, not quoted
+    mode: production
+    record: {<<: *receipt, labels: {disposition: SECRET-VALUE}, notes: SECRET-VALUE}
+    expected: "not allowed in production: \\['labels', 'notes'\\]"
+
+stream_refused:
+  - id: a line id repeated from another receipt names both places
+    mode: production
+    lines: [*receipt, "", {<<: *receipt, receipt_id: R-2}]
+    expected: ":3: R-2: line_id repeats from an earlier record: \\['R-1-L1 \\(first on line 1\\)'\\]"
+  - id: a line id repeated from another receipt is refused in evaluation too
+    mode: evaluation
+    lines: [*labelled, {<<: *labelled, receipt_id: R-2}]
+    expected: ":2: R-2: line_id repeats from an earlier record"
+  - id: broken JSON names its line
+    mode: production
+    lines: [*receipt, "{not json"]
+    expected: ":2: malformed JSON"
+  - id: a truncated record names its line
+    mode: evaluation
+    lines: [*labelled, "", '{"receipt_id":"R-2",']
+    expected: ":3: malformed JSON"
+  - id: invalid UTF-8 names its line
+    mode: production
+    lines: [*receipt, !!binary "/w=="]
+    expected: ":2: malformed JSON: .*codec can't decode"
+  - id: a JSON value that is not an object names its line
+    mode: production
+    lines: ["[1, 2]"]
+    expected: ":1: expected a JSON object, got list"
+  - id: JSON null is not a record
+    mode: production
+    lines: ["null"]
+    expected: ":1: expected a JSON object, got NoneType"
+  - id: NaN is refused
+    mode: production
+    lines: ['{"receipt_id":"R-1","total_amount":NaN}']
+    expected: ":1: malformed JSON: NaN is not a JSON number"
+  - id: Infinity is refused
+    mode: production
+    lines: ['{"receipt_id":"R-1","total_amount":-Infinity}']
+    expected: ":1: malformed JSON: -Infinity is not a JSON number"
+  - id: a number too large to hold is refused
+    mode: production
+    lines: ['{"receipt_id":"R-1","total_amount":1e9999999999999999999}']
+    expected: ":1: malformed JSON"
+  - id: a repeated key is refused rather than one value dropped
+    mode: production
+    lines: ['{"receipt_id":"R-1","total_amount":1.0,"total_amount":2.0}']
+    expected: ":1: malformed JSON: repeated keys: \\['total_amount'\\]"
+  - id: a validation failure carries its line and receipt
+    mode: production
+    lines: [*receipt, {<<: *receipt, receipt_id: R-2, line_items: [{<<: *line, quantity: 0}]}]
+    expected: ":2: R-2: invalid receipt: line_items.0.quantity"
+  - id: an answer in production carries its line and receipt
+    mode: production
+    lines: [*receipt, {<<: *receipt, receipt_id: R-2, notes: x}]
+    expected: ":2: R-2: evaluation-only fields"
+  - id: a repeated receipt id is refused rather than its answers overwritten
+    mode: evaluation
+    lines: ["", *labelled, *labelled]
+    expected: ":3: R-1: receipt_id repeats, first on line 2"

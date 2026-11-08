@@ -26,8 +26,8 @@ def plain(section):
     return load_cases("adversarial_policy", section)
 
 
-def run_of(receipts, complete=True, customer="northwind"):
-    return evaluate_receipts(customer, receipts, RULESET, FIELDS, complete=complete)
+def run_of(receipts, complete=True):
+    return evaluate_receipts(receipts, RULESET, FIELDS, complete=complete)
 
 
 def status_of(result, rule_id):
@@ -259,12 +259,10 @@ def test_conflicting_duplicates_are_refused(case):
 
 @pytest.mark.parametrize("case", plain("separate_runs"))
 def test_separate_runs_do_not_touch_each_other(case):
-    customers = list(case["runs"])
-    for order in (customers, customers[::-1]):
-        for customer in order:
-            run = run_of(case["runs"][customer], customer=customer)
-            assert_expected(run, case["expected"][customer])
-            assert {result.customer_id for result in run.results} == {customer}
+    names = list(case["runs"])
+    for order in (names, names[::-1]):
+        for name in order:
+            assert_expected(run_of(case["runs"][name]), case["expected"][name])
 
 
 # Part 4
@@ -289,7 +287,7 @@ def test_a_status_only_moves_one_way_along_a_ladder(case):
 
 def bounds_at(case, amount):
     receipts = with_amount(case["receipts"], case["vary"], amount)
-    context = build_context("northwind", receipts, FIELDS, complete=True)
+    context = build_context(receipts, FIELDS, complete=True)
     receipt = next(item for item in context.receipts if item.receipt_id == case["vary"]["receipt_id"])
     return _Job(RULES["MEAL-01"], receipt, context, RULESET, FIELDS).spend_bounds(receipt)
 
@@ -328,7 +326,7 @@ def test_a_known_ineligible_discount_reduces_nothing(case):
         result = run_of(receipts).result_for(receipt_id)
         assert status_of(result, case["rule"]) == case["expected"]["status"]
     if case["rule"] == "MEAL-01":
-        context = build_context("northwind", with_discount, FIELDS, complete=True)
+        context = build_context(with_discount, FIELDS, complete=True)
         job = _Job(RULES["MEAL-01"], context.receipts[0], context, RULESET, FIELDS)
         assert job.spend_bounds(context.receipts[0]) == (Decimal("80"), Decimal("80"))
 

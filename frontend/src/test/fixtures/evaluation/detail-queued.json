@@ -1,0 +1,161 @@
+{
+ "evaluation_id": "eval_6aef704a71782376b05ced5c",
+ "label": "queued",
+ "status": "queued",
+ "dataset": {
+  "dataset_id": "dataset_6aef704a71782376b05ced59",
+  "name": "golden",
+  "version": 1,
+  "canonical_sha256": "beabbf8403e7a26636cef01d4d06377a42df99db7af45b46bf400faafb1594de",
+  "original_sha256": "a277d73b45a8296389099abdb94b152aa89e99d71d141db47fdd7402f6489dff",
+  "receipts": 32,
+  "context_complete": true
+ },
+ "ruleset": {
+  "ruleset_id": "rs_6aef704971782376b05ced58",
+  "name": "policies",
+  "version": 1,
+  "status": "published",
+  "publication_mode": "production",
+  "artifact_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+  "ruleset_version": "v1"
+ },
+ "preview": false,
+ "execution_mode": "replay",
+ "configuration": {
+  "classification_backend": "openrouter",
+  "model_label": "anthropic/claude-haiku-5.5",
+  "models": [
+   "anthropic/claude-haiku-5.5",
+   "tencent/hy-mt2-30b-a3b"
+  ],
+  "snapshot": {
+   "jev_thresholds": {
+    "recipient_type": 0.5,
+    "venue_type": 0.5,
+    "item_kind": 0.5,
+    "essential_toiletry": 0.5
+   },
+   "classification_backend": "openrouter",
+   "langgraph": {
+    "backends": [
+     {
+      "name": "primary",
+      "backend": "jev",
+      "model": "typesafe/jev-1.14"
+     },
+     {
+      "name": "fallback",
+      "backend": "openrouter",
+      "model": "anthropic/claude-haiku-5.5"
+     }
+    ],
+    "routing": {
+     "min_confidence": 0.9,
+     "fallback_on_error": true,
+     "fallback_on_low_confidence": true
+    },
+    "reflection": {
+     "enabled": false,
+     "reviewer": {
+      "backend": "openrouter",
+      "model": "anthropic/claude-haiku-5.5"
+     },
+     "max_retries": 2,
+     "max_total_calls_per_line": 6
+    }
+   },
+   "classification_model": "anthropic/claude-haiku-5.5",
+   "translation_enabled": true,
+   "translation_model": "tencent/hy-mt2-30b-a3b",
+   "temperature": 0.0,
+   "timeout_seconds": 180
+  },
+  "fingerprint": {
+   "prompt_sha256": "80e4fc42008b4538d57d11e2d6fe85c640c05b54e1c1560e146bafcc70ee228d",
+   "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+   "taxonomy_sha256": "67c47b6545330193eccf63e55ae32f8fa66bb2ebc8862ea3d1a4190a194db188",
+   "fields_sha256": "8c0331daf2b771bae7d47d5cea5762424152043980e3119c1fbb65c2c50b43c4",
+   "core_version": "0.1.0"
+  },
+  "setup": {
+   "orchestrator": "direct",
+   "backend": "openrouter",
+   "model": "anthropic/claude-haiku-5.5",
+   "provider": "openrouter",
+   "protocol": "chat_completions",
+   "adapter": "chat_completions",
+   "nodes": null
+  }
+ },
+ "progress": {
+  "total_receipts": 32,
+  "processed_receipts": 0,
+  "failed_receipts": 0,
+  "percent": 0.0
+ },
+ "created_at": "2026-11-07T18:39:06.456000Z",
+ "started_at": null,
+ "completed_at": null,
+ "summary": null,
+ "spend_summary": {
+  "new_spend_usd": "0",
+  "cost_completeness": "complete",
+  "live_calls": 0
+ },
+ "stop_reason": null,
+ "error": null,
+ "classification": {
+  "backend": "openrouter",
+  "model": null,
+  "translation_model": null,
+  "langgraph": null,
+  "replay_set": "openrouter"
+ },
+ "replay": {
+  "set": "openrouter",
+  "sha256": "f6dac44fac73f3a45d5d0148d7cb2aed59dc10072187668b392c775c821d6ac3"
+ },
+ "live": null,
+ "budget": null,
+ "attempts": 0,
+ "updated_at": "2026-11-07T18:39:06.456000Z",
+ "cancel_requested_at": null,
+ "lease": null,
+ "result_context": null,
+ "context_complete": null,
+ "note": null,
+ "error_summary": null,
+ "metrics_schema_version": null,
+ "spend": {
+  "calls": {
+   "total": 0,
+   "live": 0,
+   "cached": 0,
+   "replayed": 0,
+   "failed": 0
+  },
+  "tokens": {
+   "input": null,
+   "output": null
+  },
+  "actual_cost_usd": "0",
+  "estimated_cost_usd": "0",
+  "unpriced_usage": {
+   "calls": 0,
+   "input_tokens": null,
+   "output_tokens": null
+  },
+  "new_spend_usd": "0",
+  "cost_completeness": "complete",
+  "historical": {
+   "cost_usd": null,
+   "calls_with_cost": 0,
+   "calls_without_cost": 0
+  },
+  "by_model": {},
+  "by_backend": {},
+  "by_purpose": {},
+  "pricing_versions": []
+ }
+}

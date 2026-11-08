@@ -1,0 +1,882 @@
+{
+ "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+ "items": [
+  {
+   "comparison_id": "cmp-5fc490544f639fadea28db449ee4ca5e",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-01",
+   "field": "title",
+   "status": "agreed",
+   "regex_value": "Receipt disposition",
+   "llm_value": "Receipt disposition",
+   "agreed_value": "Receipt disposition",
+   "evidence": "A receipt's disposition is determined by the most severe\nexception raised against it:\n\n- any **critical**, **high**, or **medium** exception \u2192 **flag**\n- only **low** exceptions, or only review signals, and no exception above low \u2192 **review**\n- no exceptions and no review signals \u2192 **pass**\n\nDisposition is computed, not judged. The same set of exceptions must always produce the same\ndisposition.",
+   "location": {
+    "section": "Disposition",
+    "line": 14
+   },
+   "clause_hash": "29a18eeb3951f8d2075c9b66e92849a16fc5e48b09d3c5c067dfb84a8af94ecb",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-78d75b2bcc391cf67fda932e84d84338",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-01",
+   "field": "section",
+   "status": "agreed",
+   "regex_value": "Disposition",
+   "llm_value": "Disposition",
+   "agreed_value": "Disposition",
+   "evidence": "A receipt's disposition is determined by the most severe\nexception raised against it:\n\n- any **critical**, **high**, or **medium** exception \u2192 **flag**\n- only **low** exceptions, or only review signals, and no exception above low \u2192 **review**\n- no exceptions and no review signals \u2192 **pass**\n\nDisposition is computed, not judged. The same set of exceptions must always produce the same\ndisposition.",
+   "location": {
+    "section": "Disposition",
+    "line": 14
+   },
+   "clause_hash": "29a18eeb3951f8d2075c9b66e92849a16fc5e48b09d3c5c067dfb84a8af94ecb",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-71f772bc5ec5e4b9d7a6fe0725a52cdb",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-01",
+   "field": "severities",
+   "status": "agreed",
+   "regex_value": [
+    "critical",
+    "high",
+    "low",
+    "medium"
+   ],
+   "llm_value": [
+    "critical",
+    "high",
+    "low",
+    "medium"
+   ],
+   "agreed_value": [
+    "critical",
+    "high",
+    "low",
+    "medium"
+   ],
+   "evidence": "A receipt's disposition is determined by the most severe\nexception raised against it:\n\n- any **critical**, **high**, or **medium** exception \u2192 **flag**\n- only **low** exceptions, or only review signals, and no exception above low \u2192 **review**\n- no exceptions and no review signals \u2192 **pass**\n\nDisposition is computed, not judged. The same set of exceptions must always produce the same\ndisposition.",
+   "location": {
+    "section": "Disposition",
+    "line": 14
+   },
+   "clause_hash": "29a18eeb3951f8d2075c9b66e92849a16fc5e48b09d3c5c067dfb84a8af94ecb",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-cf9e8ff7f7e2bbf4087da5f40a04b00f",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-01",
+   "field": "review_signal",
+   "status": "agreed",
+   "regex_value": false,
+   "llm_value": false,
+   "agreed_value": false,
+   "evidence": "A receipt's disposition is determined by the most severe\nexception raised against it:\n\n- any **critical**, **high**, or **medium** exception \u2192 **flag**\n- only **low** exceptions, or only review signals, and no exception above low \u2192 **review**\n- no exceptions and no review signals \u2192 **pass**\n\nDisposition is computed, not judged. The same set of exceptions must always produce the same\ndisposition.",
+   "location": {
+    "section": "Disposition",
+    "line": 14
+   },
+   "clause_hash": "29a18eeb3951f8d2075c9b66e92849a16fc5e48b09d3c5c067dfb84a8af94ecb",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-f3a1be597de8a42a81d09a7134cdcd16",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-01",
+   "field": "thresholds",
+   "status": "agreed",
+   "regex_value": [],
+   "llm_value": [],
+   "agreed_value": [],
+   "evidence": "A receipt's disposition is determined by the most severe\nexception raised against it:\n\n- any **critical**, **high**, or **medium** exception \u2192 **flag**\n- only **low** exceptions, or only review signals, and no exception above low \u2192 **review**\n- no exceptions and no review signals \u2192 **pass**\n\nDisposition is computed, not judged. The same set of exceptions must always produce the same\ndisposition.",
+   "location": {
+    "section": "Disposition",
+    "line": 14
+   },
+   "clause_hash": "29a18eeb3951f8d2075c9b66e92849a16fc5e48b09d3c5c067dfb84a8af94ecb",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-25a30c0325b8eddb6eeb592738e8f263",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-01",
+   "field": "references",
+   "status": "agreed",
+   "regex_value": [],
+   "llm_value": [],
+   "agreed_value": [],
+   "evidence": "A receipt's disposition is determined by the most severe\nexception raised against it:\n\n- any **critical**, **high**, or **medium** exception \u2192 **flag**\n- only **low** exceptions, or only review signals, and no exception above low \u2192 **review**\n- no exceptions and no review signals \u2192 **pass**\n\nDisposition is computed, not judged. The same set of exceptions must always produce the same\ndisposition.",
+   "location": {
+    "section": "Disposition",
+    "line": 14
+   },
+   "clause_hash": "29a18eeb3951f8d2075c9b66e92849a16fc5e48b09d3c5c067dfb84a8af94ecb",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-d0c8e06af67f43c4f21d1adb710bccf0",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-01",
+   "field": "quote",
+   "status": "agreed",
+   "regex_value": null,
+   "llm_value": "Disposition is computed, not judged.",
+   "agreed_value": "Disposition is computed, not judged.",
+   "evidence": "A receipt's disposition is determined by the most severe\nexception raised against it:\n\n- any **critical**, **high**, or **medium** exception \u2192 **flag**\n- only **low** exceptions, or only review signals, and no exception above low \u2192 **review**\n- no exceptions and no review signals \u2192 **pass**\n\nDisposition is computed, not judged. The same set of exceptions must always produce the same\ndisposition.",
+   "location": {
+    "section": "Disposition",
+    "line": 14
+   },
+   "clause_hash": "29a18eeb3951f8d2075c9b66e92849a16fc5e48b09d3c5c067dfb84a8af94ecb",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-72da691f476be896cb8d74762b463f29",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-02",
+   "field": "title",
+   "status": "agreed",
+   "regex_value": "Approval references",
+   "llm_value": "Approval references",
+   "agreed_value": "Approval references",
+   "evidence": "Every approval or exception reference \u2014 a pre-approval, a VP or\nmanager approval, or a baggage-delay reference \u2014 is recorded in one field on the expense\n(`pre_approval_ref` in the data). Where a rule requires such a reference, a recorded one satisfies\nthat rule and no exception is raised \u2014 provided it is the kind the rule asks for: a pre-approval\nfor TECH-02, a VP approval for ENT-01, a manager approval for TECH-04, a baggage-delay reference for\nthe PERS-01 and PERS-02 carve-outs. A reference does not waive any other rule.",
+   "location": {
+    "section": "Disposition",
+    "line": 24
+   },
+   "clause_hash": "fc500827a970939bc7fb07c4b67b198a9e5b449cd57c20f0e379106d50a3f614",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-65461ceea5b30ce9c259ccd387c7835d",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-02",
+   "field": "section",
+   "status": "agreed",
+   "regex_value": "Disposition",
+   "llm_value": "Disposition",
+   "agreed_value": "Disposition",
+   "evidence": "Every approval or exception reference \u2014 a pre-approval, a VP or\nmanager approval, or a baggage-delay reference \u2014 is recorded in one field on the expense\n(`pre_approval_ref` in the data). Where a rule requires such a reference, a recorded one satisfies\nthat rule and no exception is raised \u2014 provided it is the kind the rule asks for: a pre-approval\nfor TECH-02, a VP approval for ENT-01, a manager approval for TECH-04, a baggage-delay reference for\nthe PERS-01 and PERS-02 carve-outs. A reference does not waive any other rule.",
+   "location": {
+    "section": "Disposition",
+    "line": 24
+   },
+   "clause_hash": "fc500827a970939bc7fb07c4b67b198a9e5b449cd57c20f0e379106d50a3f614",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-1aa23b8f90ad2b1ff1afe43cc8094429",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-02",
+   "field": "severities",
+   "status": "agreed",
+   "regex_value": [],
+   "llm_value": [],
+   "agreed_value": [],
+   "evidence": "Every approval or exception reference \u2014 a pre-approval, a VP or\nmanager approval, or a baggage-delay reference \u2014 is recorded in one field on the expense\n(`pre_approval_ref` in the data). Where a rule requires such a reference, a recorded one satisfies\nthat rule and no exception is raised \u2014 provided it is the kind the rule asks for: a pre-approval\nfor TECH-02, a VP approval for ENT-01, a manager approval for TECH-04, a baggage-delay reference for\nthe PERS-01 and PERS-02 carve-outs. A reference does not waive any other rule.",
+   "location": {
+    "section": "Disposition",
+    "line": 24
+   },
+   "clause_hash": "fc500827a970939bc7fb07c4b67b198a9e5b449cd57c20f0e379106d50a3f614",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-bf1843c6fe95625673700a230e5dfda0",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-02",
+   "field": "review_signal",
+   "status": "agreed",
+   "regex_value": false,
+   "llm_value": false,
+   "agreed_value": false,
+   "evidence": "Every approval or exception reference \u2014 a pre-approval, a VP or\nmanager approval, or a baggage-delay reference \u2014 is recorded in one field on the expense\n(`pre_approval_ref` in the data). Where a rule requires such a reference, a recorded one satisfies\nthat rule and no exception is raised \u2014 provided it is the kind the rule asks for: a pre-approval\nfor TECH-02, a VP approval for ENT-01, a manager approval for TECH-04, a baggage-delay reference for\nthe PERS-01 and PERS-02 carve-outs. A reference does not waive any other rule.",
+   "location": {
+    "section": "Disposition",
+    "line": 24
+   },
+   "clause_hash": "fc500827a970939bc7fb07c4b67b198a9e5b449cd57c20f0e379106d50a3f614",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-863ef20da5bbf5ed30d4c7046548b16f",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-02",
+   "field": "thresholds",
+   "status": "agreed",
+   "regex_value": [],
+   "llm_value": [],
+   "agreed_value": [],
+   "evidence": "Every approval or exception reference \u2014 a pre-approval, a VP or\nmanager approval, or a baggage-delay reference \u2014 is recorded in one field on the expense\n(`pre_approval_ref` in the data). Where a rule requires such a reference, a recorded one satisfies\nthat rule and no exception is raised \u2014 provided it is the kind the rule asks for: a pre-approval\nfor TECH-02, a VP approval for ENT-01, a manager approval for TECH-04, a baggage-delay reference for\nthe PERS-01 and PERS-02 carve-outs. A reference does not waive any other rule.",
+   "location": {
+    "section": "Disposition",
+    "line": 24
+   },
+   "clause_hash": "fc500827a970939bc7fb07c4b67b198a9e5b449cd57c20f0e379106d50a3f614",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-a0df7403b35c91c5a35ea80069c382b0",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-02",
+   "field": "references",
+   "status": "agreed",
+   "regex_value": [
+    "ENT-01",
+    "PERS-01",
+    "PERS-02",
+    "TECH-02",
+    "TECH-04"
+   ],
+   "llm_value": [
+    "ENT-01",
+    "PERS-01",
+    "PERS-02",
+    "TECH-02",
+    "TECH-04"
+   ],
+   "agreed_value": [
+    "ENT-01",
+    "PERS-01",
+    "PERS-02",
+    "TECH-02",
+    "TECH-04"
+   ],
+   "evidence": "Every approval or exception reference \u2014 a pre-approval, a VP or\nmanager approval, or a baggage-delay reference \u2014 is recorded in one field on the expense\n(`pre_approval_ref` in the data). Where a rule requires such a reference, a recorded one satisfies\nthat rule and no exception is raised \u2014 provided it is the kind the rule asks for: a pre-approval\nfor TECH-02, a VP approval for ENT-01, a manager approval for TECH-04, a baggage-delay reference for\nthe PERS-01 and PERS-02 carve-outs. A reference does not waive any other rule.",
+   "location": {
+    "section": "Disposition",
+    "line": 24
+   },
+   "clause_hash": "fc500827a970939bc7fb07c4b67b198a9e5b449cd57c20f0e379106d50a3f614",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-a29bb95ef41fe1057f6d000c862abe65",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-02",
+   "field": "quote",
+   "status": "agreed",
+   "regex_value": null,
+   "llm_value": "A reference does not waive any other rule.",
+   "agreed_value": "A reference does not waive any other rule.",
+   "evidence": "Every approval or exception reference \u2014 a pre-approval, a VP or\nmanager approval, or a baggage-delay reference \u2014 is recorded in one field on the expense\n(`pre_approval_ref` in the data). Where a rule requires such a reference, a recorded one satisfies\nthat rule and no exception is raised \u2014 provided it is the kind the rule asks for: a pre-approval\nfor TECH-02, a VP approval for ENT-01, a manager approval for TECH-04, a baggage-delay reference for\nthe PERS-01 and PERS-02 carve-outs. A reference does not waive any other rule.",
+   "location": {
+    "section": "Disposition",
+    "line": 24
+   },
+   "clause_hash": "fc500827a970939bc7fb07c4b67b198a9e5b449cd57c20f0e379106d50a3f614",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-f41219466330731aaeda2b5e8822865e",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-03",
+   "field": "title",
+   "status": "agreed",
+   "regex_value": "Uncertainty",
+   "llm_value": "Uncertainty",
+   "agreed_value": "Uncertainty",
+   "evidence": "Where the category of an item cannot be determined with sufficient\nconfidence, raise a **review signal** with rule ID `EXC-03` rather than an exception, and leave that\nitem out of every other rule's calculation for the receipt. A non-itemized charge is not an\nuncertain category: it is `other` by definition, and raises no EXC-03 signal. An unnecessary exception costs a\nreviewer's time and erodes trust in the system; a missed review costs far less than a false\naccusation against an employee.",
+   "location": {
+    "section": "Disposition",
+    "line": 31
+   },
+   "clause_hash": "2bcffc0601bb2de0501dad3d28329d97f6fbe659370641eae09b329436c939a5",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-dee3d2a877fae3df8d24c9e31073ab5e",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-03",
+   "field": "section",
+   "status": "agreed",
+   "regex_value": "Disposition",
+   "llm_value": "Disposition",
+   "agreed_value": "Disposition",
+   "evidence": "Where the category of an item cannot be determined with sufficient\nconfidence, raise a **review signal** with rule ID `EXC-03` rather than an exception, and leave that\nitem out of every other rule's calculation for the receipt. A non-itemized charge is not an\nuncertain category: it is `other` by definition, and raises no EXC-03 signal. An unnecessary exception costs a\nreviewer's time and erodes trust in the system; a missed review costs far less than a false\naccusation against an employee.",
+   "location": {
+    "section": "Disposition",
+    "line": 31
+   },
+   "clause_hash": "2bcffc0601bb2de0501dad3d28329d97f6fbe659370641eae09b329436c939a5",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-80d0bf5144705a122f621e11fc9950e4",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-03",
+   "field": "severities",
+   "status": "agreed",
+   "regex_value": [],
+   "llm_value": [],
+   "agreed_value": [],
+   "evidence": "Where the category of an item cannot be determined with sufficient\nconfidence, raise a **review signal** with rule ID `EXC-03` rather than an exception, and leave that\nitem out of every other rule's calculation for the receipt. A non-itemized charge is not an\nuncertain category: it is `other` by definition, and raises no EXC-03 signal. An unnecessary exception costs a\nreviewer's time and erodes trust in the system; a missed review costs far less than a false\naccusation against an employee.",
+   "location": {
+    "section": "Disposition",
+    "line": 31
+   },
+   "clause_hash": "2bcffc0601bb2de0501dad3d28329d97f6fbe659370641eae09b329436c939a5",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-97db29f2b55d99fd532af16ac60f0633",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-03",
+   "field": "review_signal",
+   "status": "agreed",
+   "regex_value": true,
+   "llm_value": true,
+   "agreed_value": true,
+   "evidence": "Where the category of an item cannot be determined with sufficient\nconfidence, raise a **review signal** with rule ID `EXC-03` rather than an exception, and leave that\nitem out of every other rule's calculation for the receipt. A non-itemized charge is not an\nuncertain category: it is `other` by definition, and raises no EXC-03 signal. An unnecessary exception costs a\nreviewer's time and erodes trust in the system; a missed review costs far less than a false\naccusation against an employee.",
+   "location": {
+    "section": "Disposition",
+    "line": 31
+   },
+   "clause_hash": "2bcffc0601bb2de0501dad3d28329d97f6fbe659370641eae09b329436c939a5",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-5ea222631502e342ea02c25f328bead0",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-03",
+   "field": "thresholds",
+   "status": "agreed",
+   "regex_value": [],
+   "llm_value": [],
+   "agreed_value": [],
+   "evidence": "Where the category of an item cannot be determined with sufficient\nconfidence, raise a **review signal** with rule ID `EXC-03` rather than an exception, and leave that\nitem out of every other rule's calculation for the receipt. A non-itemized charge is not an\nuncertain category: it is `other` by definition, and raises no EXC-03 signal. An unnecessary exception costs a\nreviewer's time and erodes trust in the system; a missed review costs far less than a false\naccusation against an employee.",
+   "location": {
+    "section": "Disposition",
+    "line": 31
+   },
+   "clause_hash": "2bcffc0601bb2de0501dad3d28329d97f6fbe659370641eae09b329436c939a5",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-0e291697598a0ee47996da6447c4a36f",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-03",
+   "field": "references",
+   "status": "agreed",
+   "regex_value": [],
+   "llm_value": [],
+   "agreed_value": [],
+   "evidence": "Where the category of an item cannot be determined with sufficient\nconfidence, raise a **review signal** with rule ID `EXC-03` rather than an exception, and leave that\nitem out of every other rule's calculation for the receipt. A non-itemized charge is not an\nuncertain category: it is `other` by definition, and raises no EXC-03 signal. An unnecessary exception costs a\nreviewer's time and erodes trust in the system; a missed review costs far less than a false\naccusation against an employee.",
+   "location": {
+    "section": "Disposition",
+    "line": 31
+   },
+   "clause_hash": "2bcffc0601bb2de0501dad3d28329d97f6fbe659370641eae09b329436c939a5",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-c1e7db15a0f03a72fe6aadbdac9357f2",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-03",
+   "field": "quote",
+   "status": "agreed",
+   "regex_value": null,
+   "llm_value": "Where the category of an item cannot be determined with sufficient confidence",
+   "agreed_value": "Where the category of an item cannot be determined with sufficient confidence",
+   "evidence": "Where the category of an item cannot be determined with sufficient\nconfidence, raise a **review signal** with rule ID `EXC-03` rather than an exception, and leave that\nitem out of every other rule's calculation for the receipt. A non-itemized charge is not an\nuncertain category: it is `other` by definition, and raises no EXC-03 signal. An unnecessary exception costs a\nreviewer's time and erodes trust in the system; a missed review costs far less than a false\naccusation against an employee.",
+   "location": {
+    "section": "Disposition",
+    "line": 31
+   },
+   "clause_hash": "2bcffc0601bb2de0501dad3d28329d97f6fbe659370641eae09b329436c939a5",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-9ba5492f76decafb33eb99fb1f0b552a",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-04",
+   "field": "title",
+   "status": "agreed",
+   "regex_value": "Evidence",
+   "llm_value": "Evidence",
+   "agreed_value": "Evidence",
+   "evidence": "Every exception must cite the rule identifier, the policy document it\ncomes from, and the line items it concerns. An exception that cannot name its evidence must not be\nraised.\n\n- Rules about specific items cite every item that breaks them, in one exception \u2014 the items\n  themselves, never a gratuity or service fee charged alongside them.\n- Rules about the receipt as a whole \u2014 MCC-01, MEAL-01, MEAL-02, DOC-01, DOC-02, DOC-03, DOC-04,\n  REG-02, REG-03, REG-04 and TIME-03 \u2014 cite no line items.\n- Each rule appears at most once per receipt.",
+   "location": {
+    "section": "Disposition",
+    "line": 38
+   },
+   "clause_hash": "f1ffa0e666949ef95d68fe73ebaab402254b965c56d8a12ecc73fd25cae3f613",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-f869a28e6bbfc42c5c5aaa54790cff51",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-04",
+   "field": "section",
+   "status": "agreed",
+   "regex_value": "Disposition",
+   "llm_value": "Disposition",
+   "agreed_value": "Disposition",
+   "evidence": "Every exception must cite the rule identifier, the policy document it\ncomes from, and the line items it concerns. An exception that cannot name its evidence must not be\nraised.\n\n- Rules about specific items cite every item that breaks them, in one exception \u2014 the items\n  themselves, never a gratuity or service fee charged alongside them.\n- Rules about the receipt as a whole \u2014 MCC-01, MEAL-01, MEAL-02, DOC-01, DOC-02, DOC-03, DOC-04,\n  REG-02, REG-03, REG-04 and TIME-03 \u2014 cite no line items.\n- Each rule appears at most once per receipt.",
+   "location": {
+    "section": "Disposition",
+    "line": 38
+   },
+   "clause_hash": "f1ffa0e666949ef95d68fe73ebaab402254b965c56d8a12ecc73fd25cae3f613",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-f232cb609f2b4110ecd49cd3aba21502",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-04",
+   "field": "severities",
+   "status": "agreed",
+   "regex_value": [],
+   "llm_value": [],
+   "agreed_value": [],
+   "evidence": "Every exception must cite the rule identifier, the policy document it\ncomes from, and the line items it concerns. An exception that cannot name its evidence must not be\nraised.\n\n- Rules about specific items cite every item that breaks them, in one exception \u2014 the items\n  themselves, never a gratuity or service fee charged alongside them.\n- Rules about the receipt as a whole \u2014 MCC-01, MEAL-01, MEAL-02, DOC-01, DOC-02, DOC-03, DOC-04,\n  REG-02, REG-03, REG-04 and TIME-03 \u2014 cite no line items.\n- Each rule appears at most once per receipt.",
+   "location": {
+    "section": "Disposition",
+    "line": 38
+   },
+   "clause_hash": "f1ffa0e666949ef95d68fe73ebaab402254b965c56d8a12ecc73fd25cae3f613",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-80b40b8bc564c7461711ad7bba508584",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-04",
+   "field": "review_signal",
+   "status": "agreed",
+   "regex_value": false,
+   "llm_value": false,
+   "agreed_value": false,
+   "evidence": "Every exception must cite the rule identifier, the policy document it\ncomes from, and the line items it concerns. An exception that cannot name its evidence must not be\nraised.\n\n- Rules about specific items cite every item that breaks them, in one exception \u2014 the items\n  themselves, never a gratuity or service fee charged alongside them.\n- Rules about the receipt as a whole \u2014 MCC-01, MEAL-01, MEAL-02, DOC-01, DOC-02, DOC-03, DOC-04,\n  REG-02, REG-03, REG-04 and TIME-03 \u2014 cite no line items.\n- Each rule appears at most once per receipt.",
+   "location": {
+    "section": "Disposition",
+    "line": 38
+   },
+   "clause_hash": "f1ffa0e666949ef95d68fe73ebaab402254b965c56d8a12ecc73fd25cae3f613",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-61c4904137d900cb3e92ef15527943ba",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-04",
+   "field": "thresholds",
+   "status": "agreed",
+   "regex_value": [],
+   "llm_value": [],
+   "agreed_value": [],
+   "evidence": "Every exception must cite the rule identifier, the policy document it\ncomes from, and the line items it concerns. An exception that cannot name its evidence must not be\nraised.\n\n- Rules about specific items cite every item that breaks them, in one exception \u2014 the items\n  themselves, never a gratuity or service fee charged alongside them.\n- Rules about the receipt as a whole \u2014 MCC-01, MEAL-01, MEAL-02, DOC-01, DOC-02, DOC-03, DOC-04,\n  REG-02, REG-03, REG-04 and TIME-03 \u2014 cite no line items.\n- Each rule appears at most once per receipt.",
+   "location": {
+    "section": "Disposition",
+    "line": 38
+   },
+   "clause_hash": "f1ffa0e666949ef95d68fe73ebaab402254b965c56d8a12ecc73fd25cae3f613",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-76cff62044464d4e85e81917613bcd64",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-04",
+   "field": "references",
+   "status": "agreed",
+   "regex_value": [
+    "DOC-01",
+    "DOC-02",
+    "DOC-03",
+    "DOC-04",
+    "MCC-01",
+    "MEAL-01",
+    "MEAL-02",
+    "REG-02",
+    "REG-03",
+    "REG-04",
+    "TIME-03"
+   ],
+   "llm_value": [
+    "DOC-01",
+    "DOC-02",
+    "DOC-03",
+    "DOC-04",
+    "MCC-01",
+    "MEAL-01",
+    "MEAL-02",
+    "REG-02",
+    "REG-03",
+    "REG-04",
+    "TIME-03"
+   ],
+   "agreed_value": [
+    "DOC-01",
+    "DOC-02",
+    "DOC-03",
+    "DOC-04",
+    "MCC-01",
+    "MEAL-01",
+    "MEAL-02",
+    "REG-02",
+    "REG-03",
+    "REG-04",
+    "TIME-03"
+   ],
+   "evidence": "Every exception must cite the rule identifier, the policy document it\ncomes from, and the line items it concerns. An exception that cannot name its evidence must not be\nraised.\n\n- Rules about specific items cite every item that breaks them, in one exception \u2014 the items\n  themselves, never a gratuity or service fee charged alongside them.\n- Rules about the receipt as a whole \u2014 MCC-01, MEAL-01, MEAL-02, DOC-01, DOC-02, DOC-03, DOC-04,\n  REG-02, REG-03, REG-04 and TIME-03 \u2014 cite no line items.\n- Each rule appears at most once per receipt.",
+   "location": {
+    "section": "Disposition",
+    "line": 38
+   },
+   "clause_hash": "f1ffa0e666949ef95d68fe73ebaab402254b965c56d8a12ecc73fd25cae3f613",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-43d2328473580537810f006be57327ea",
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "policy_doc": "approval-and-exception-handling.md",
+   "rule_id": "EXC-04",
+   "field": "quote",
+   "status": "agreed",
+   "regex_value": null,
+   "llm_value": "An exception that cannot name its evidence must not be raised.",
+   "agreed_value": "An exception that cannot name its evidence must not be raised.",
+   "evidence": "Every exception must cite the rule identifier, the policy document it\ncomes from, and the line items it concerns. An exception that cannot name its evidence must not be\nraised.\n\n- Rules about specific items cite every item that breaks them, in one exception \u2014 the items\n  themselves, never a gratuity or service fee charged alongside them.\n- Rules about the receipt as a whole \u2014 MCC-01, MEAL-01, MEAL-02, DOC-01, DOC-02, DOC-03, DOC-04,\n  REG-02, REG-03, REG-04 and TIME-03 \u2014 cite no line items.\n- Each rule appears at most once per receipt.",
+   "location": {
+    "section": "Disposition",
+    "line": 38
+   },
+   "clause_hash": "f1ffa0e666949ef95d68fe73ebaab402254b965c56d8a12ecc73fd25cae3f613",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-f1b8cdeb64274d4a68a0a233a27e40bc",
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "policy_doc": "gifts-and-awards-policy.md",
+   "rule_id": "GIFT-01",
+   "field": "title",
+   "status": "agreed",
+   "regex_value": "Client gift cap",
+   "llm_value": "Client gift cap",
+   "agreed_value": "Client gift cap",
+   "evidence": "Gifts to clients and prospects are capped at **$50 per recipient\nper occasion**. An occasion is one receipt; lines on it that name the same recipient are added together for the cap,\nand the $10 test applies to each line. Spend\nabove the cap is a **medium** exception. Any gift of $10 or more must also name its recipient, in the line description or elsewhere on the expense; an unnamed gift at that value is a **medium** exception.\nCards and small tokens under $10 need no named recipient. Gift cards and other cash equivalents\nfall under GIFT-02 alone and are not also tested here. Unnamed gifts are each tested on their own,\nand when both parts of GIFT-01 apply, one exception cites every line involved.",
+   "location": {
+    "section": null,
+    "line": 9
+   },
+   "clause_hash": "8fc8b52a5ff49429c2858171990c4cab4a4725b2be86c65876edb6b55fa6c249",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-05e9c5688be2e9fecbe81dea03cec7d3",
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "policy_doc": "gifts-and-awards-policy.md",
+   "rule_id": "GIFT-01",
+   "field": "section",
+   "status": "agreed",
+   "regex_value": null,
+   "llm_value": null,
+   "agreed_value": null,
+   "evidence": "Gifts to clients and prospects are capped at **$50 per recipient\nper occasion**. An occasion is one receipt; lines on it that name the same recipient are added together for the cap,\nand the $10 test applies to each line. Spend\nabove the cap is a **medium** exception. Any gift of $10 or more must also name its recipient, in the line description or elsewhere on the expense; an unnamed gift at that value is a **medium** exception.\nCards and small tokens under $10 need no named recipient. Gift cards and other cash equivalents\nfall under GIFT-02 alone and are not also tested here. Unnamed gifts are each tested on their own,\nand when both parts of GIFT-01 apply, one exception cites every line involved.",
+   "location": {
+    "section": null,
+    "line": 9
+   },
+   "clause_hash": "8fc8b52a5ff49429c2858171990c4cab4a4725b2be86c65876edb6b55fa6c249",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-d95daba91033f6efcff99e7809ac5b47",
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "policy_doc": "gifts-and-awards-policy.md",
+   "rule_id": "GIFT-01",
+   "field": "severities",
+   "status": "agreed",
+   "regex_value": [
+    "medium"
+   ],
+   "llm_value": [
+    "medium"
+   ],
+   "agreed_value": [
+    "medium"
+   ],
+   "evidence": "Gifts to clients and prospects are capped at **$50 per recipient\nper occasion**. An occasion is one receipt; lines on it that name the same recipient are added together for the cap,\nand the $10 test applies to each line. Spend\nabove the cap is a **medium** exception. Any gift of $10 or more must also name its recipient, in the line description or elsewhere on the expense; an unnamed gift at that value is a **medium** exception.\nCards and small tokens under $10 need no named recipient. Gift cards and other cash equivalents\nfall under GIFT-02 alone and are not also tested here. Unnamed gifts are each tested on their own,\nand when both parts of GIFT-01 apply, one exception cites every line involved.",
+   "location": {
+    "section": null,
+    "line": 9
+   },
+   "clause_hash": "8fc8b52a5ff49429c2858171990c4cab4a4725b2be86c65876edb6b55fa6c249",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-ed2acb79244cef824b24ffae0356031e",
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "policy_doc": "gifts-and-awards-policy.md",
+   "rule_id": "GIFT-01",
+   "field": "review_signal",
+   "status": "agreed",
+   "regex_value": false,
+   "llm_value": false,
+   "agreed_value": false,
+   "evidence": "Gifts to clients and prospects are capped at **$50 per recipient\nper occasion**. An occasion is one receipt; lines on it that name the same recipient are added together for the cap,\nand the $10 test applies to each line. Spend\nabove the cap is a **medium** exception. Any gift of $10 or more must also name its recipient, in the line description or elsewhere on the expense; an unnamed gift at that value is a **medium** exception.\nCards and small tokens under $10 need no named recipient. Gift cards and other cash equivalents\nfall under GIFT-02 alone and are not also tested here. Unnamed gifts are each tested on their own,\nand when both parts of GIFT-01 apply, one exception cites every line involved.",
+   "location": {
+    "section": null,
+    "line": 9
+   },
+   "clause_hash": "8fc8b52a5ff49429c2858171990c4cab4a4725b2be86c65876edb6b55fa6c249",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-f63bb0a0f41f768cfd7f14a0dad8e14d",
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "policy_doc": "gifts-and-awards-policy.md",
+   "rule_id": "GIFT-01",
+   "field": "thresholds",
+   "status": "agreed",
+   "regex_value": [
+    {
+     "unit": "usd",
+     "value": "10"
+    },
+    {
+     "unit": "usd",
+     "value": "50"
+    }
+   ],
+   "llm_value": [
+    {
+     "unit": "usd",
+     "value": "10"
+    },
+    {
+     "unit": "usd",
+     "value": "50"
+    }
+   ],
+   "agreed_value": [
+    {
+     "unit": "usd",
+     "value": "10"
+    },
+    {
+     "unit": "usd",
+     "value": "50"
+    }
+   ],
+   "evidence": "Gifts to clients and prospects are capped at **$50 per recipient\nper occasion**. An occasion is one receipt; lines on it that name the same recipient are added together for the cap,\nand the $10 test applies to each line. Spend\nabove the cap is a **medium** exception. Any gift of $10 or more must also name its recipient, in the line description or elsewhere on the expense; an unnamed gift at that value is a **medium** exception.\nCards and small tokens under $10 need no named recipient. Gift cards and other cash equivalents\nfall under GIFT-02 alone and are not also tested here. Unnamed gifts are each tested on their own,\nand when both parts of GIFT-01 apply, one exception cites every line involved.",
+   "location": {
+    "section": null,
+    "line": 9
+   },
+   "clause_hash": "8fc8b52a5ff49429c2858171990c4cab4a4725b2be86c65876edb6b55fa6c249",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-488baad3ba44b7f2b39d77d6ada68320",
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "policy_doc": "gifts-and-awards-policy.md",
+   "rule_id": "GIFT-01",
+   "field": "references",
+   "status": "agreed",
+   "regex_value": [
+    "GIFT-02"
+   ],
+   "llm_value": [
+    "GIFT-02"
+   ],
+   "agreed_value": [
+    "GIFT-02"
+   ],
+   "evidence": "Gifts to clients and prospects are capped at **$50 per recipient\nper occasion**. An occasion is one receipt; lines on it that name the same recipient are added together for the cap,\nand the $10 test applies to each line. Spend\nabove the cap is a **medium** exception. Any gift of $10 or more must also name its recipient, in the line description or elsewhere on the expense; an unnamed gift at that value is a **medium** exception.\nCards and small tokens under $10 need no named recipient. Gift cards and other cash equivalents\nfall under GIFT-02 alone and are not also tested here. Unnamed gifts are each tested on their own,\nand when both parts of GIFT-01 apply, one exception cites every line involved.",
+   "location": {
+    "section": null,
+    "line": 9
+   },
+   "clause_hash": "8fc8b52a5ff49429c2858171990c4cab4a4725b2be86c65876edb6b55fa6c249",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-20f0fa0e04ac2cfed3ca37ef496f9359",
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "policy_doc": "gifts-and-awards-policy.md",
+   "rule_id": "GIFT-01",
+   "field": "quote",
+   "status": "agreed",
+   "regex_value": null,
+   "llm_value": "capped at $50 per recipient per occasion",
+   "agreed_value": "capped at $50 per recipient per occasion",
+   "evidence": "Gifts to clients and prospects are capped at **$50 per recipient\nper occasion**. An occasion is one receipt; lines on it that name the same recipient are added together for the cap,\nand the $10 test applies to each line. Spend\nabove the cap is a **medium** exception. Any gift of $10 or more must also name its recipient, in the line description or elsewhere on the expense; an unnamed gift at that value is a **medium** exception.\nCards and small tokens under $10 need no named recipient. Gift cards and other cash equivalents\nfall under GIFT-02 alone and are not also tested here. Unnamed gifts are each tested on their own,\nand when both parts of GIFT-01 apply, one exception cites every line involved.",
+   "location": {
+    "section": null,
+    "line": 9
+   },
+   "clause_hash": "8fc8b52a5ff49429c2858171990c4cab4a4725b2be86c65876edb6b55fa6c249",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-68bc483c01d23aa320cadb12a18acd29",
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "policy_doc": "gifts-and-awards-policy.md",
+   "rule_id": "GIFT-02",
+   "field": "title",
+   "status": "agreed",
+   "regex_value": "Gift cards and cash equivalents",
+   "llm_value": "Gift cards and cash equivalents",
+   "agreed_value": "Gift cards and cash equivalents",
+   "evidence": "Gift cards, prepaid cards, vouchers, and any\nother cash equivalent are **never** reimbursable, at any amount and for any recipient. This is a\n**high** exception.",
+   "location": {
+    "section": null,
+    "line": 17
+   },
+   "clause_hash": "a28a2c0f9fe0ac37e5d9c52e536af83177a7f7b72b008876ecbd4b6c497f778f",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-1dc6561c3e7955e0385ee41ca06914df",
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "policy_doc": "gifts-and-awards-policy.md",
+   "rule_id": "GIFT-02",
+   "field": "section",
+   "status": "agreed",
+   "regex_value": null,
+   "llm_value": null,
+   "agreed_value": null,
+   "evidence": "Gift cards, prepaid cards, vouchers, and any\nother cash equivalent are **never** reimbursable, at any amount and for any recipient. This is a\n**high** exception.",
+   "location": {
+    "section": null,
+    "line": 17
+   },
+   "clause_hash": "a28a2c0f9fe0ac37e5d9c52e536af83177a7f7b72b008876ecbd4b6c497f778f",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-732afce7b5e75380a4f3741b0eb8371b",
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "policy_doc": "gifts-and-awards-policy.md",
+   "rule_id": "GIFT-02",
+   "field": "severities",
+   "status": "agreed",
+   "regex_value": [
+    "high"
+   ],
+   "llm_value": [
+    "high"
+   ],
+   "agreed_value": [
+    "high"
+   ],
+   "evidence": "Gift cards, prepaid cards, vouchers, and any\nother cash equivalent are **never** reimbursable, at any amount and for any recipient. This is a\n**high** exception.",
+   "location": {
+    "section": null,
+    "line": 17
+   },
+   "clause_hash": "a28a2c0f9fe0ac37e5d9c52e536af83177a7f7b72b008876ecbd4b6c497f778f",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-57bcb9fa2c4b14ffb8dfc6652504e1b3",
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "policy_doc": "gifts-and-awards-policy.md",
+   "rule_id": "GIFT-02",
+   "field": "review_signal",
+   "status": "agreed",
+   "regex_value": false,
+   "llm_value": false,
+   "agreed_value": false,
+   "evidence": "Gift cards, prepaid cards, vouchers, and any\nother cash equivalent are **never** reimbursable, at any amount and for any recipient. This is a\n**high** exception.",
+   "location": {
+    "section": null,
+    "line": 17
+   },
+   "clause_hash": "a28a2c0f9fe0ac37e5d9c52e536af83177a7f7b72b008876ecbd4b6c497f778f",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  },
+  {
+   "comparison_id": "cmp-967d9504456c11a57f58c5fc2fa05a3c",
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "policy_doc": "gifts-and-awards-policy.md",
+   "rule_id": "GIFT-02",
+   "field": "thresholds",
+   "status": "agreed",
+   "regex_value": [],
+   "llm_value": [],
+   "agreed_value": [],
+   "evidence": "Gift cards, prepaid cards, vouchers, and any\nother cash equivalent are **never** reimbursable, at any amount and for any recipient. This is a\n**high** exception.",
+   "location": {
+    "section": null,
+    "line": 17
+   },
+   "clause_hash": "a28a2c0f9fe0ac37e5d9c52e536af83177a7f7b72b008876ecbd4b6c497f778f",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": false
+  }
+ ],
+ "total": 287,
+ "limit": 40,
+ "offset": 0
+}

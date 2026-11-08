@@ -1,43 +1,9 @@
-"""Whether a receipt's amounts agree with each other. Only structured values are compared.
+"""Check whether a receipt's amounts agree with each other.
 
-data/README.md says which values come from which:
-
-    printed     quantity, unit_price, amount, total_amount, currency, fx_rate_to_usd
-    derived     amount = quantity x unit_price, and a USD value = its printed amount x fx_rate_to_usd
-
-Each comparison ends in a state. These are about the input, and say nothing of policy:
-
-    reconciled      the values were compared, and agree
-    contradictory   they were compared, and disagree, which admission refuses and never repairs
-    unverified      they could not be compared, as what would show it is missing
-    not_applicable  there is nothing to compare
-
-An unverified USD value is not evidence. The view of a receipt that rules read has it blanked, so a rule
-that needs it stays open, and no rate is ever assumed. USD needs no rate on record, as its rate can only be 1.
-
-data/README.md does not say a receipt's lines add up to its total, so `itemization_complete` says it:
-
-    true    the lines are said to be all of it, so a total they do not reach is a contradiction
-    false   they are said not to be, so what they leave out is not known
-    absent  not stated, so if they do add up that is reconciled, and if not it is unverified
-
-This is submitted metadata, a claim by whoever sent the receipt, and not evidence that it is complete. It
-can only ever add scrutiny: it can get a receipt refused or left undecided, and never makes one decided that
-would not be without it. Reconciled means the amounts given agree, and not that nothing was left off: lines
-and a total that both leave out the same item agree. Nothing here checks them against the receipt itself.
-
-Unverified lines leave a receipt undecided: spend no line shows has not been through any rule.
-A non-itemized receipt has no item breakdown to reconcile, which is not a fault.
-
-The precision and limits are the versioned input_contract in rules/fields.yaml. The tolerances are what
-rounding can honestly explain, with h half a currency's smallest unit:
-
-    amount     |amount - quantity x unit_price| <= h + quantity x min(h, half the unit price's last digit)
-               The amount is rounded by at most h, and each unit by at most what its price was printed to.
-    line sum   |total - sum of lines| <= h x (number of lines + 1): each line and the total, rounded.
-    USD value  |usd - printed x rate| <= usd_tolerance: rounding to a cent, as the rate is the one used.
-
-Arithmetic is exact: a large enough value could otherwise round a difference away in the default context.
+Each comparison is reconciled, contradictory (admission refuses), unverified or not_applicable. An
+unverified USD value is blanked in the view rules read, and no rate is assumed. itemization_complete is a
+submitted claim that can only add scrutiny. Tolerances follow rules/fields.yaml's input_contract, and
+arithmetic is exact.
 """
 
 from collections.abc import Mapping
@@ -59,7 +25,7 @@ class _Strict(BaseModel):
 
 
 class MonetaryContract(_Strict):
-    """rules/fields.yaml's input_contract. It must be there: a default would hide what is assumed."""
+    """The input_contract in rules/fields.yaml. Required, as a default would hide assumptions."""
 
     version: StrictInt = Field(ge=1)
     minor_units: dict[str, StrictInt]
@@ -75,7 +41,7 @@ class MonetaryContract(_Strict):
 
 
 class MonetaryReconciliation(_Strict):
-    """Where a receipt's amounts stand. A contradiction here only ever comes before a refusal."""
+    """Where a receipt's amounts stand."""
 
     contract_version: int
     fx_rate: ReconciliationState
@@ -99,10 +65,7 @@ def monetary_contract(fields: Mapping[str, dict]) -> MonetaryContract:
 
 
 def _rate(receipt: Receipt) -> Decimal | None:
-    """The rate to compare USD values with, if one is known. USD is 1, with or without one on record.
-
-    A rate with no currency says nothing: what it converts from is not known, so it verifies nothing.
-    """
+    """Return the USD rate to compare with. USD is 1; a rate without a currency verifies nothing."""
     if receipt.currency == USD:
         return Decimal(1)
     return None if receipt.currency is None else receipt.fx_rate_to_usd
@@ -126,7 +89,6 @@ def _out_of_limits(receipt: Receipt, contract: MonetaryContract) -> list[str]:
 
 
 def _unit_price_rounding(unit_price: Decimal, half: Decimal) -> Decimal:
-    """How far a printed unit price can be from the true one. A coarser print than the currency says nothing more."""
     printed = Decimal(1).scaleb(unit_price.as_tuple().exponent) / 2
     return min(half, printed)
 
@@ -204,7 +166,7 @@ def _line_sum(receipt: Receipt, half: Decimal, problems: list[str]) -> tuple[Rec
 
 
 def reconcile(receipt: Receipt, fields: Mapping[str, dict]) -> MonetaryReconciliation:
-    """Compares what can be compared, exactly. Its problems are the contradictions, in a fixed order."""
+    """Compare every comparable amount exactly. Problems are the contradictions, in a fixed order."""
     contract = monetary_contract(fields)
     problems: list[str] = []
     unsupported = _out_of_limits(receipt, contract)
@@ -246,7 +208,7 @@ def reconcile(receipt: Receipt, fields: Mapping[str, dict]) -> MonetaryReconcili
 
 
 def without_unverified_usd(receipt: Receipt, reconciliation: MonetaryReconciliation) -> Receipt:
-    """The receipt as rules should read it, with any USD value nothing supports blanked. Nothing is invented."""
+    """Return the receipt as rules read it, with unsupported USD values blanked."""
     if reconciliation.line_conversion != "unverified" and reconciliation.total_conversion != "unverified":
         return receipt
     data = receipt.model_dump()

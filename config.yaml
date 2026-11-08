@@ -11,7 +11,21 @@ translation:
   model: tencent/hy-mt2-30b-a3b  # the OpenRouter model ID: a low-cost, dedicated translation model
 
 classification:
+  backend: chat_completions  # the execution adapter: chat_completions for an LLM, or decisions for a decision model such as typesafe/jev-1.14 (earlier names openrouter and jev still work)
   model: anthropic/claude-haiku-5.5  # the OpenRouter model ID: sends line text and merchant details to this model
+  langgraph:  # read only with backend: langgraph, which needs the optional langgraph package (pip install '.[langgraph]')
+    backends:  # in order: a line goes on to the next backend only as routing says
+      - {name: primary, backend: decisions, model: typesafe/jev-1.14}
+      - {name: fallback, backend: chat_completions, model: anthropic/claude-haiku-5.5}
+    routing:
+      min_confidence: 0.9  # a line below this is low confidence
+      fallback_on_error: true
+      fallback_on_low_confidence: true
+    reflection:  # classify, reflect, then accept, revise or fall back: off unless enabled here or by langgraph_config
+      enabled: false
+      reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}  # a name in REVIEWERS: it judges the classification only
+      max_retries: 2  # feedback-guided revisions per line: one classification and at most two revisions
+      max_total_calls_per_line: 6  # every classification, revision and review of a line, failed or replayed
 
 paths:  # relative to the project root
   policy_docs: data/policy-docs

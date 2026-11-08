@@ -1,0 +1,171 @@
+{
+ "comparability": {
+  "directly_comparable": true,
+  "issues": [],
+  "note": "a side-by-side view of runs, not a controlled head-to-head benchmark"
+ },
+ "evaluations": [
+  {
+   "evaluation_id": "eval_6aef704a71782376b05ced5a",
+   "label": "openrouter replay",
+   "dataset": {
+    "dataset_id": "dataset_6aef704a71782376b05ced59",
+    "name": "golden",
+    "version": 1,
+    "canonical_sha256": "beabbf8403e7a26636cef01d4d06377a42df99db7af45b46bf400faafb1594de"
+   },
+   "ruleset": {
+    "ruleset_id": "rs_6aef704971782376b05ced58",
+    "name": "policies",
+    "version": 1,
+    "artifact_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39"
+   },
+   "execution_mode": "replay",
+   "backend": "openrouter",
+   "model_label": "anthropic/claude-haiku-5.5",
+   "models": [
+    "anthropic/claude-haiku-5.5",
+    "tencent/hy-mt2-30b-a3b"
+   ],
+   "langgraph": null,
+   "result_context": "dataset",
+   "category_accuracy": {
+    "numerator": 79,
+    "denominator": 79,
+    "value": 1.0,
+    "wilson_95": [
+     0.953629,
+     1.0
+    ]
+   },
+   "macro_f1": 1.0,
+   "disposition_accuracy": {
+    "numerator": 32,
+    "denominator": 32,
+    "value": 1.0,
+    "wilson_95": [
+     0.892821,
+     1.0
+    ]
+   },
+   "uncertainty_rate": {
+    "numerator": 1,
+    "denominator": 32,
+    "value": 0.03125,
+    "wilson_95": [
+     0.005538,
+     0.157443
+    ]
+   },
+   "total_latency_ms": 67,
+   "mean_latency_per_receipt_ms": 2,
+   "provider_calls": {
+    "total": 90,
+    "live": 0,
+    "cached": 0,
+    "replayed": 90,
+    "failed": 0
+   },
+   "new_spend_usd": "0",
+   "cost_completeness": "complete",
+   "historical_cost_usd": {
+    "cost_usd": null,
+    "calls_with_cost": 0,
+    "calls_without_cost": 90
+   },
+   "cost_per_receipt_usd": null,
+   "cost_per_correct_prediction_usd": null,
+   "setup": {
+    "orchestrator": "direct",
+    "backend": "openrouter",
+    "model": "anthropic/claude-haiku-5.5",
+    "provider": "openrouter",
+    "protocol": "chat_completions",
+    "adapter": "chat_completions",
+    "nodes": null
+   },
+   "classification_identity": "chat_completions:anthropic/claude-haiku-5.5"
+  },
+  {
+   "evaluation_id": "eval_6aef704a71782376b05ced5b",
+   "label": "jev replay",
+   "dataset": {
+    "dataset_id": "dataset_6aef704a71782376b05ced59",
+    "name": "golden",
+    "version": 1,
+    "canonical_sha256": "beabbf8403e7a26636cef01d4d06377a42df99db7af45b46bf400faafb1594de"
+   },
+   "ruleset": {
+    "ruleset_id": "rs_6aef704971782376b05ced58",
+    "name": "policies",
+    "version": 1,
+    "artifact_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39"
+   },
+   "execution_mode": "replay",
+   "backend": "jev",
+   "model_label": "typesafe/jev-1.14",
+   "models": [
+    "tencent/hy-mt2-30b-a3b",
+    "typesafe/jev-1.14"
+   ],
+   "langgraph": null,
+   "result_context": "dataset",
+   "category_accuracy": {
+    "numerator": 78,
+    "denominator": 79,
+    "value": 0.987342,
+    "wilson_95": [
+     0.931724,
+     0.997762
+    ]
+   },
+   "macro_f1": 0.997494,
+   "disposition_accuracy": {
+    "numerator": 32,
+    "denominator": 32,
+    "value": 1.0,
+    "wilson_95": [
+     0.892821,
+     1.0
+    ]
+   },
+   "uncertainty_rate": {
+    "numerator": 2,
+    "denominator": 32,
+    "value": 0.0625,
+    "wilson_95": [
+     0.017311,
+     0.201471
+    ]
+   },
+   "total_latency_ms": 68,
+   "mean_latency_per_receipt_ms": 2,
+   "provider_calls": {
+    "total": 90,
+    "live": 0,
+    "cached": 0,
+    "replayed": 90,
+    "failed": 0
+   },
+   "new_spend_usd": "0",
+   "cost_completeness": "complete",
+   "historical_cost_usd": {
+    "cost_usd": "0.005225094",
+    "calls_with_cost": 78,
+    "calls_without_cost": 12
+   },
+   "cost_per_receipt_usd": null,
+   "cost_per_correct_prediction_usd": null,
+   "setup": {
+    "orchestrator": "direct",
+    "backend": "jev",
+    "model": "typesafe/jev-1.14",
+    "provider": "openrouter",
+    "protocol": "decisions",
+    "adapter": "decisions",
+    "nodes": null
+   },
+   "classification_identity": "decisions:typesafe/jev-1.14"
+  }
+ ]
+}

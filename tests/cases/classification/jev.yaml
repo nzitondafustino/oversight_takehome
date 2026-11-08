@@ -1,0 +1,152 @@
+suite: classification
+
+# Jev's Decisions answers for the first line of RCP-001. The runner builds a valid response: each question
+# in `answers` chooses its option with that probability, the rest spread evenly over the other options, and
+# every other question chooses not_stated (category: other) with probability 1.
+jev_answers:
+  - id: a clear category keeps its probability as the line's confidence
+    answers: {category: [food_beverage, 0.9]}
+    expected: {category: food_beverage, restricted: false, confidence: "0.9", recipient_name: null, recipient_type: null, venue_type: null, item_kind: null, essential_toiletry: null, error: null}
+  - id: the restricted flag comes from the taxonomy
+    answers: {category: [alcohol, 0.85]}
+    expected: {category: alcohol, restricted: true, confidence: "0.85", error: null}
+  - id: a low probability is kept as it is, for EXC-03 to judge
+    answers: {category: [other, 0.3]}
+    expected: {category: other, confidence: "0.3", error: null}
+  - id: an exact probability is kept to its full precision
+    answers: {category: [food_beverage, 0.873216]}
+    expected: {confidence: "0.873216", error: null}
+  - id: a stated attribute with most of the probability is read
+    answers: {category: [gift, 0.8], recipient_type: [client, 0.8]}
+    expected: {category: gift, recipient_type: client, recipient_name: null, error: null}
+  - id: an attribute without a majority is left missing
+    answers: {category: [gift, 0.8], recipient_type: [client, 0.45]}
+    expected: {recipient_type: null, error: null}
+  - id: an attribute at exactly half is left missing
+    answers: {category: [gift, 0.8], recipient_type: [client, 0.5]}
+    expected: {recipient_type: null, error: null}
+  - id: an over-the-counter medicine
+    answers: {category: [health_otc, 0.9], item_kind: [otc_medication, 0.9]}
+    expected: {category: health_otc, item_kind: otc_medication, error: null}
+  - id: an essential toiletry
+    answers: {category: [personal_care, 0.9], essential_toiletry: [essential, 0.95]}
+    expected: {category: personal_care, essential_toiletry: true, error: null}
+  - id: personal care that is not a basic toiletry
+    answers: {category: [personal_care, 0.9], essential_toiletry: [not_essential, 0.9]}
+    expected: {essential_toiletry: false, error: null}
+  - id: a venue with category other
+    answers: {category: [other, 0.9], venue_type: [golf, 0.9]}
+    expected: {category: other, venue_type: golf, error: null}
+
+jev_answers_refused:
+  - id: a category that was not offered
+    answers: {category: [beer, 0.9]}
+    edit: {}
+    expected: "category chose an option that was not offered: 'beer'"
+  - id: probabilities that leave out an option
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {answers.category.probabilities: {food_beverage: 0.9, other: 0.1}}}
+    expected: "category does not give a probability from 0 to 1 for exactly the options offered"
+  - id: probabilities that do not sum to 1
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {answers.category.probabilities.other: 0.5}}
+    expected: "category has probabilities that do not sum to 1"
+  - id: a probability above 1
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {answers.category.probabilities.food_beverage: 1.5}}
+    expected: "exactly the options offered"
+  - id: a choice that is not the most probable option
+    answers: {category: [food_beverage, 0.6]}
+    edit: {set: {answers.category.choice: other}}
+    expected: "category chose other, which is not the most probable option"
+  - id: a confidence outside 0 to 1
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {answers.category.confidence: 1.2}}
+    expected: "category has no confidence from 0 to 1"
+  - id: a boolean where a number belongs
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {answers.category.confidence: true}}
+    expected: "category has no confidence from 0 to 1"
+  - id: a yes-or-no answer to a choice question
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {answers.category: {type: noul, noul: 0.9}}}
+    expected: "category is not a choice answer"
+  - id: a question with no answer
+    answers: {category: [food_beverage, 0.9]}
+    edit: {drop: [item_kind]}
+    expected: "no answer for \\['item_kind'\\]"
+  - id: no model
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {model: null}}
+    expected: model does not match
+  - id: text that is not JSON
+    answers: {}
+    edit: {raw: "<html>502 Bad Gateway</html>"}
+    expected: "jev response is not JSON"
+  - id: an item kind that contradicts the category
+    answers: {category: [food_beverage, 0.9], item_kind: [mobile_phone, 0.9]}
+    edit: {}
+    expected: "item_kind mobile_phone contradicts category food_beverage"
+  - id: a venue that contradicts the category
+    answers: {category: [food_beverage, 0.9], venue_type: [golf, 0.9]}
+    edit: {}
+    expected: "venue_type contradicts category food_beverage"
+  - id: a toiletry answer that contradicts the category
+    answers: {category: [food_beverage, 0.9], essential_toiletry: [essential, 0.9]}
+    edit: {}
+    expected: "essential_toiletry contradicts category food_beverage"
+  - id: list choice is malformed rather than crashing
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {answers.category.choice: []}}
+    expected: chose an option
+  - id: empty response model is malformed
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {model: ''}}
+    expected: model does not match
+  - id: a direct TypeSafe model ID
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {model: jev-1.14.0}}
+    expected: model does not match
+  - id: another Jev release
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {model: typesafe/jev-1.13-20260917}}
+    expected: model does not match
+  - id: an unreviewed snapshot of the requested model
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {model: typesafe/jev-1.14-20261201}}
+    expected: model does not match
+  - id: a chat completion is never read as a decision
+    answers: {}
+    edit: {raw: '{"choices": [{"message": {"content": "jewelry"}}]}'}
+    expected: jev response has no answers
+  - id: a refusal is a failure, not an invented category
+    answers: {category: [food_beverage, 0.9]}
+    edit: {set: {answers.category: {type: refusal}}}
+    expected: category is not a choice answer
+
+# Response envelopes that are read: details.model and details.usage are what the line keeps.
+jev_responses:
+  - id: the reviewed dated snapshot
+    edit: {}
+    expected: {model: typesafe/jev-1.14-20261014, usage: {input_tokens: 812, output_tokens: 9, cost: 0.0000341}}
+  - id: an undated answer from the requested model
+    edit: {set: {model: typesafe/jev-1.14}}
+    expected: {model: typesafe/jev-1.14}
+  - id: a reported cost is optional
+    edit: {set: {usage: {input_tokens: 812, output_tokens: 9}}}
+    expected: {usage: {input_tokens: 812, output_tokens: 9}}
+  - id: an answer that names no upstream provider
+    edit: {drop_top: [provider, id]}
+    expected: {model: typesafe/jev-1.14-20261014}
+
+# What reaches the OpenRouter SDK from the network for every request. Each failure fails every line, makes
+# exactly one request (Jev never retries), and never falls back to the LLM classifier.
+jev_provider_failures:
+  - {id: an invalid key, failure: {status: 401, body: {error: {code: 401, message: Invalid API key}}}, expected: {error: 'jev request failed: HTTP 401'}}
+  - {id: an unknown model, failure: {status: 400, body: {error: {code: 400, message: unknown model}}}, expected: {error: 'jev request failed: HTTP 400'}}
+  - {id: a rate limit, failure: {status: 429, body: {error: {code: 429, message: slow down}}}, expected: {error: 'jev request failed: HTTP 429'}}
+  - {id: an unavailable provider, failure: {status: 503, body: {error: {code: 503, message: no provider}}}, expected: {error: 'jev request failed: HTTP 503'}}
+  - {id: a gateway page, failure: {status: 200, html: <html>bad gateway</html>}, expected: {error: 'jev request failed: HTTP 200: OpenRouterDefaultError'}}
+  - {id: a response the SDK cannot read, failure: {status: 200, body: {model: typesafe/jev-1.14}}, expected: {error: 'jev request failed: HTTP 200: ResponseValidationError'}}
+  - {id: a timeout, failure: {exception: ReadTimeout}, expected: {error: 'jev request failed: ReadTimeout'}}
+  - {id: a refused connection, failure: {exception: ConnectError}, expected: {error: 'jev request failed: ConnectError'}}

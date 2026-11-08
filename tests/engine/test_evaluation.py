@@ -16,8 +16,8 @@ from expense_validator.engine.models import Receipt
 from expense_validator.policy.schema import RuleSet
 
 
-def evaluate(receipts, complete=True, customer="northwind", ruleset=RULESET):
-    return evaluate_receipts(customer, receipts, ruleset, FIELDS, complete=complete)
+def evaluate(receipts, complete=True, ruleset=RULESET):
+    return evaluate_receipts(receipts, ruleset, FIELDS, complete=complete)
 
 
 def summary(result):
@@ -46,7 +46,7 @@ def test_the_public_entry_point_gives_this_the_same_way_every_time(case):
 @pytest.mark.parametrize("case", load_cases("evaluation", "refused"))
 def test_an_invalid_run_raises_and_gives_no_outcome(case):
     with pytest.raises(ValueError, match=case["expected"]):
-        evaluate_receipts(case["customer_id"], case["receipts"], RULESET, FIELDS, complete=True)
+        evaluate_receipts(case["receipts"], RULESET, FIELDS, complete=True)
 
 
 def case_named(name):
@@ -61,17 +61,19 @@ TWO = "one receipt's exception does not flag another"
 
 
 def test_the_entry_point_takes_no_worked_out_results():
-    assert list(inspect.signature(evaluate_receipts).parameters) == ["customer_id", "receipts", "ruleset", "fields", "complete"]
+    assert list(inspect.signature(evaluate_receipts).parameters) == ["receipts", "ruleset", "fields", "complete"]
 
 
-def test_whether_receipts_may_be_missing_must_be_stated():
+def test_receipts_are_a_complete_context_unless_said_otherwise():
+    receipts = case_named("every check resolved and nothing found is a pass")["receipts"]
+    assert evaluate_receipts(receipts, RULESET, FIELDS) == evaluate(receipts, complete=True)
     with pytest.raises(TypeError, match="complete"):
-        evaluate_receipts("northwind", [], RULESET, FIELDS)
+        evaluate_receipts(receipts, RULESET, FIELDS, complete=1)
 
 
 def test_a_low_confidence_line_gives_a_finding_only_by_going_around_the_entry_point():
     case = case_named(LOW)
-    context = build_context("northwind", case["receipts"], FIELDS, complete=True)
+    context = build_context(case["receipts"], FIELDS, complete=True)
     around = run_checks(context.receipts[0], RULESET, FIELDS, context)
     assert "PERS-03" in {finding.rule_id for finding in around.findings}
     result = evaluate(case["receipts"]).result_for("R1")
@@ -117,13 +119,14 @@ def test_a_retired_disposition_directive_is_an_error_not_a_pass():
         evaluate([], ruleset=RuleSet.model_construct(rules=retired, ruleset_version="v1"))
 
 
-def test_an_undecided_receipt_with_nothing_else_to_say_is_still_a_review_and_not_a_pass():
+def test_an_undecided_receipt_with_nothing_against_it_is_a_provisional_pass_that_says_so():
     report = evaluate(case_named("every check resolved and nothing found is a pass")["receipts"]).results[0].report
     directive = next(rule for rule in RULESET.rules if rule.rule_id == "EXC-01")
     undecided = report.model_copy(update={"decided": False})
     disposition, reasons = decide_disposition(undecided, directive)
-    assert disposition == "review"
-    assert [(item.code, item.basis, item.rule_ids) for item in reasons] == [("incomplete_evidence", "project_decision", ())]
+    # EXC-01: no exception and no review signal is a pass. Not decided, its reasons keep that evidence was incomplete.
+    assert disposition == "pass"
+    assert [(item.code, item.basis, item.rule_ids) for item in reasons] == [("nothing_found", "EXC-01", ()), ("incomplete_evidence", "project_decision", ())]
 
 
 # --- A run ---
@@ -138,8 +141,8 @@ def test_results_are_in_receipt_order_whatever_order_receipts_come_in():
     assert [item.receipt_id for item in forward.results] == ["R1", "R2"]
 
 
-def test_customers_are_kept_apart_by_their_runs():
-    """A split across two customers is no split, as each is evaluated on its own."""
+def test_receipts_in_separate_runs_are_kept_apart():
+    """A split across two runs is no split, as each is evaluated on its own."""
     case = case_named("every check resolved and nothing found is a pass")
     base = case["receipts"][0]
     line = {**base["line_items"][0], "amount_usd": "40.00"}
@@ -147,10 +150,8 @@ def test_customers_are_kept_apart_by_their_runs():
     second = {**base, "receipt_id": "R2", "line_items": [line]}
     together = evaluate([first, second])
     assert together.result_for("R1").disposition == "flag"
-    assert evaluate([first], customer="northwind").results[0].disposition == "pass"
-    apart = evaluate([second], customer="acme")
-    assert apart.results[0].disposition == "pass"
-    assert (apart.customer_id, apart.results[0].customer_id, apart.results[0].report.customer_id) == ("acme", "acme", "acme")
+    assert evaluate([first]).results[0].disposition == "pass"
+    assert evaluate([second]).results[0].disposition == "pass"
 
 
 def test_a_run_and_its_results_cannot_be_changed_and_round_trip():
@@ -227,6 +228,26 @@ def test_every_real_disposition_matches_the_answers():
 def test_only_one_real_receipt_is_undecided_and_it_is_flagged_anyway():
     undecided = [(item.receipt_id, item.disposition) for item in RUN.results if not item.decided]
     assert undecided == [("RCP-013", "flag")]
+
+
+PARTIAL = evaluate([classified(row) for row in ROWS], complete=False)
+
+
+def test_every_real_disposition_matches_the_answers_with_receipts_possibly_missing():
+    # RCP-020 and RCP-021 are a split whatever receipts are missing; the clean receipts are passes.
+    wrong = [(row["receipt_id"], row["labels"]["disposition"], PARTIAL.result_for(row["receipt_id"]).disposition) for row in ROWS if PARTIAL.result_for(row["receipt_id"]).disposition != row["labels"]["disposition"]]
+    assert wrong == []
+
+
+def test_a_real_pass_with_receipts_possibly_missing_is_provisional_and_says_what_is_open():
+    for item in PARTIAL.results:
+        if item.disposition != "pass":
+            continue
+        assert not (item.active_exceptions or item.review_signals or item.unresolved) and item.uncertainty is None
+        assert item.decided == (not item.open_questions), item.receipt_id
+        if not item.decided:
+            assert [reason.code for reason in item.reasons] == ["nothing_found", "incomplete_evidence"], item.receipt_id
+            assert item.reasons[1].rule_ids == tuple(question.rule_id for question in item.open_questions)
 
 
 def test_no_real_review_rests_only_on_incomplete_evidence():

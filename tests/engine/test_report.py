@@ -23,8 +23,8 @@ def run(view, context, ruleset):
     return resolve_carveouts(view, resolve_approvals(view, replacements, ruleset), ruleset, FIELDS, context)
 
 
-def report_for(case, ruleset, customer="northwind"):
-    context = build_context(customer, case["receipts"], FIELDS, complete=case["complete"])
+def report_for(case, ruleset):
+    context = build_context(case["receipts"], FIELDS, complete=case["complete"])
     assessed = assess_context(context, ruleset, FIELDS)
     view = assessed.assessment_for(case["receipt_id"]).evaluation_receipt
     return build_report(assessed, case["receipt_id"], run(view, assessed.evaluation, ruleset), ruleset, FIELDS)
@@ -120,11 +120,11 @@ def test_a_group_keeps_every_source_whole_with_its_own_severity_and_rule_metadat
     assert [finding.severity for finding in group.sources] == ["low", "medium", "low"]
     assert group.severity == "medium"
     assert all(isinstance(finding, Finding) and finding.evidence for finding in group.sources)
-    assert (group.customer_id, group.receipt_id, group.rule_id, group.kind) == ("northwind", "R1", "HEALTH-01", "exception")
+    assert (group.receipt_id, group.rule_id, group.kind) == ("R1", "HEALTH-01", "exception")
     assert group.policy_doc == group.sources[0].policy_doc == "non-reimbursable-items.md"
     assert group.provenance == group.sources[0].provenance
     assert group.title == "Over-the-counter medication"
-    assert group.group_id == "northwind/R1/HEALTH-01/active"
+    assert group.group_id == "R1/HEALTH-01/active"
 
 
 def test_a_resolved_source_keeps_its_status_and_the_group_says_why():
@@ -160,16 +160,16 @@ def test_a_report_round_trips_through_json_and_cannot_be_changed():
 def test_a_whole_receipt_exception_cites_no_line_though_its_finding_names_one():
     case = real_case("a whole-receipt exception cites no line")
     report = report_for(case, RULESET)
-    view = assess_context(build_context("northwind", case["receipts"], FIELDS, complete=True), RULESET, FIELDS).assessment_for("R1").evaluation_receipt
+    view = assess_context(build_context(case["receipts"], FIELDS, complete=True), RULESET, FIELDS).assessment_for("R1").evaluation_receipt
     named = report.exceptions[0].sources[0].model_copy(update={"line_ids": ("L1",)})
-    group = group_entries("northwind", view, [ReportEntry(named, "active")], (), RULESET)[0]
+    group = group_entries(view, [ReportEntry(named, "active")], (), RULESET)[0]
     assert group.line_ids == ()
     assert group.sources[0].line_ids == ("L1",)
 
 
 def test_a_helper_not_run_is_an_open_question_and_not_a_violation():
     case = real_case("no signal means no uncertainty group")
-    assessed = assess_context(build_context("northwind", case["receipts"], FIELDS, complete=True), RULESET, FIELDS)
+    assessed = assess_context(build_context(case["receipts"], FIELDS, complete=True), RULESET, FIELDS)
     view = assessed.assessment_for("R1").evaluation_receipt
     replacements = resolve_replacements(view, run_checks(view, RULESET, FIELDS), RULESET, FIELDS)
     result = resolve_carveouts(view, resolve_approvals(view, replacements, RULESET), RULESET, FIELDS, assessed.evaluation)
@@ -205,45 +205,42 @@ def test_a_group_needs_one_note_entry_per_source():
 def test_the_order_entries_come_in_changes_nothing(name):
     case = real_case(name)
     report = report_for(case, RULESET)
-    view = assess_context(build_context("northwind", case["receipts"], FIELDS, complete=True), RULESET, FIELDS).assessment_for("R1").evaluation_receipt
+    view = assess_context(build_context(case["receipts"], FIELDS, complete=True), RULESET, FIELDS).assessment_for("R1").evaluation_receipt
     entries, signals = list(entries_of(report)), list(signals_of(report))
     for seed in range(5):
         random.Random(seed).shuffle(entries)
         random.Random(seed).shuffle(signals)
-        assert group_entries("northwind", view, entries, signals, RULESET) == report.groups
+        assert group_entries(view, entries, signals, RULESET) == report.groups
 
 
 @pytest.mark.parametrize("case", load_cases("report", "real"))
 def test_grouping_what_a_report_holds_gives_the_same_groups(case):
     report = report_for(case, RULESET)
-    assessed = assess_context(build_context("northwind", case["receipts"], FIELDS, complete=case["complete"]), RULESET, FIELDS)
+    assessed = assess_context(build_context(case["receipts"], FIELDS, complete=case["complete"]), RULESET, FIELDS)
     view = assessed.assessment_for(case["receipt_id"]).evaluation_receipt
-    assert group_entries("northwind", view, entries_of(report), signals_of(report), RULESET) == report.groups
+    assert group_entries(view, entries_of(report), signals_of(report), RULESET) == report.groups
 
 
 # --- Staying apart ---
 
 
-def test_customers_with_the_same_receipt_do_not_share_a_group():
+def test_a_group_id_names_its_receipt_rule_and_resolution():
     case = real_case("every line a rule caught, in one exception")
-    first, second = report_for(case, RULESET, "northwind"), report_for(case, RULESET, "acme")
-    assert first.exceptions[0].group_id == "northwind/R1/ALC-01/active"
-    assert second.exceptions[0].group_id == "acme/R1/ALC-01/active"
-    assert second.customer_id == second.exceptions[0].customer_id == "acme"
+    assert report_for(case, RULESET).exceptions[0].group_id == "R1/ALC-01/active"
 
 
 def test_a_finding_for_another_receipt_cannot_join_a_group():
     case = real_case("every line a rule caught, in one exception")
     report = report_for(case, RULESET)
-    view = assess_context(build_context("northwind", case["receipts"], FIELDS, complete=True), RULESET, FIELDS).assessment_for("R1").evaluation_receipt
+    view = assess_context(build_context(case["receipts"], FIELDS, complete=True), RULESET, FIELDS).assessment_for("R1").evaluation_receipt
     foreign = report.exceptions[0].sources[0].model_copy(update={"receipt_id": "R2"})
     with pytest.raises(ValueError, match="R1: has findings for another receipt"):
-        group_entries("northwind", view, [ReportEntry(foreign, "active")], (), RULESET)
+        group_entries(view, [ReportEntry(foreign, "active")], (), RULESET)
 
 
 def test_a_result_for_another_receipt_or_a_receipt_not_assessed_is_refused():
     case = real_case("a breach on one receipt is reported only on its own")
-    assessed = assess_context(build_context("northwind", case["receipts"], FIELDS, complete=True), RULESET, FIELDS)
+    assessed = assess_context(build_context(case["receipts"], FIELDS, complete=True), RULESET, FIELDS)
     view = assessed.assessment_for("R1").evaluation_receipt
     result = run(view, assessed.evaluation, RULESET)
     with pytest.raises(ValueError, match="R2: has findings for another receipt"):
@@ -255,7 +252,7 @@ def test_a_result_for_another_receipt_or_a_receipt_not_assessed_is_refused():
 def test_a_run_that_skipped_the_uncertainty_view_is_refused():
     """Run on the admitted receipt, a low-confidence tobacco line gives PERS-03, and complete says True."""
     case = {"receipts": [{**real_case("a signal and a confirmed exception stay apart")["receipts"][0], "line_items": [{**real_case("every line a rule caught, in one exception")["receipts"][0]["line_items"][0], "category": "tobacco", "confidence": "0.1"}]}]}
-    context = build_context("northwind", case["receipts"], FIELDS, complete=True)
+    context = build_context(case["receipts"], FIELDS, complete=True)
     assessed = assess_context(context, RULESET, FIELDS)
     around = run(context.receipts[0], context, RULESET)
     assert [finding.rule_id for finding in around.active][-1] == "PERS-03"
@@ -265,7 +262,7 @@ def test_a_run_that_skipped_the_uncertainty_view_is_refused():
 
 def test_decided_cannot_be_true_while_a_signal_stands_though_the_later_steps_are_complete():
     case = real_case("a signal and a confirmed exception stay apart")
-    assessed = assess_context(build_context("northwind", case["receipts"], FIELDS, complete=True), RULESET, FIELDS)
+    assessed = assess_context(build_context(case["receipts"], FIELDS, complete=True), RULESET, FIELDS)
     view = assessed.assessment_for("R1").evaluation_receipt
     result = run(view, assessed.evaluation, RULESET)
     assert result.complete is True

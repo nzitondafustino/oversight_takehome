@@ -1,0 +1,1674 @@
+{
+ "ruleset_id": "rs_6aef74c612548bd292ef54ca",
+ "name": "policies",
+ "version": 1,
+ "status": "draft",
+ "ruleset_version": "v1",
+ "schema_version": "1",
+ "artifact_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+ "rule_count": 42,
+ "active_rule_count": 41,
+ "source": {
+  "kind": "policy_compiler",
+  "description": null,
+  "reference": null
+ },
+ "based_on_version": null,
+ "compilation": {
+  "recording_set": "live",
+  "recorded_with": null,
+  "extraction_id": "ext_6aef74c512548bd292ef54c7",
+  "prepared_review": {
+   "review_id": "rev_6aef74c612548bd292ef54c9",
+   "policy": "exceptions_only",
+   "review_sha256": "3d80d11d1b0725c5fc7e357c081153a2074c87d8e3a9744fc479df37004c0bcd"
+  },
+  "reading_kind": "model",
+  "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+  "output_sha256": "f6af5ff7c4ead5ec187f5811956741498cb4d8862bc81f8b0150a921c21fddf0",
+  "ready_for_approval": false,
+  "blockers": [
+   "unresolved: merchant-category-risk.md MCC-03 thresholds is unconfirmed",
+   "unresolved: regional-addendum.md REG-01 thresholds is unconfirmed",
+   "unresolved: technology-and-equipment-policy.md TECH-01 quote is disagree",
+   "unresolved: transaction-pattern-rules.md TIME-03 thresholds is disagree"
+  ],
+  "comparisons_needing_review": 4,
+  "documents": [
+   {
+    "document_id": "doc_6aef74c512548bd292ef54be",
+    "filename": "approval-and-exception-handling.md",
+    "sha256": "94de7aed26ad781ce50f80560bb0e54c81b0df6598e2ea1b676bc044ec2d858c",
+    "revision": 1
+   },
+   {
+    "document_id": "doc_6aef74c512548bd292ef54bf",
+    "filename": "gifts-and-awards-policy.md",
+    "sha256": "cf97894bcae77330a374d43fea16703cc3ccd0ac30b9b40a1b8fc1668b9657f9",
+    "revision": 1
+   },
+   {
+    "document_id": "doc_6aef74c512548bd292ef54c0",
+    "filename": "meals-and-entertainment-policy.md",
+    "sha256": "8f6713be91c1ae6d8848e66e36aae4fac4a742bafbc2a4547d25ce4ae68fffc1",
+    "revision": 1
+   },
+   {
+    "document_id": "doc_6aef74c512548bd292ef54c1",
+    "filename": "merchant-category-risk.md",
+    "sha256": "3d30b0928fe8e548f07e7e0f6ed37c49c541a115b95f8f9dd7086c45618b7a14",
+    "revision": 1
+   },
+   {
+    "document_id": "doc_6aef74c512548bd292ef54c2",
+    "filename": "non-reimbursable-items.md",
+    "sha256": "57bc63c1b27ad4e9a3129b97f0162250542ea857f98e33f44002bfbaed7e735b",
+    "revision": 1
+   },
+   {
+    "document_id": "doc_6aef74c512548bd292ef54c3",
+    "filename": "receipt-documentation-requirements.md",
+    "sha256": "2db168ba4b1a6a7006ed9f71b4f710fa0bbf311e9236f85315b4f79432f597bb",
+    "revision": 1
+   },
+   {
+    "document_id": "doc_6aef74c512548bd292ef54c4",
+    "filename": "regional-addendum.md",
+    "sha256": "6a5c61b3f7e366be98d9fe0ec143c3d161fa42e40894819c2b580972a6d541aa",
+    "revision": 1
+   },
+   {
+    "document_id": "doc_6aef74c512548bd292ef54c5",
+    "filename": "technology-and-equipment-policy.md",
+    "sha256": "9d09346fa6b4008d6d561cb7d9d55595d71d56a8fa1d2ce6f953b6454721003d",
+    "revision": 1
+   },
+   {
+    "document_id": "doc_6aef74c512548bd292ef54c6",
+    "filename": "transaction-pattern-rules.md",
+    "sha256": "1e6613b0fe7c719098e5798bc6a652ca067d6023557b9f31749d70e616b6ad84",
+    "revision": 1
+   }
+  ]
+ },
+ "review": null,
+ "approval_reference": null,
+ "approval_mode": null,
+ "publication_mode": null,
+ "created_at": "2026-11-07T18:58:14.225000Z",
+ "submitted_at": null,
+ "approved_at": null,
+ "published_at": null,
+ "artifact": {
+  "schema_version": "1",
+  "ruleset_version": "v1",
+  "rules": [
+   {
+    "rule_id": "ALC-01",
+    "policy_doc": "meals-and-entertainment-policy.md",
+    "title": "Alcohol requires a documented entertainment context",
+    "source_quote": "records an attendee count of two or more",
+    "status": "active",
+    "params": {
+     "on_premises": {
+      "type": "set",
+      "values": [
+       "5812",
+       "5813",
+       "7011"
+      ]
+     },
+     "min_attendees": {
+      "type": "number",
+      "value": "2",
+      "unit": "count",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "2e933d0fea6c74f0f6034d55c0a20de4263e0f22e8de8e9777ab8de538acebfd",
+     "fingerprint": "2ad36debbfb4a15eb6e32f44f2f9effb6cfe45130da183b4e849399e05b68adb"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "high",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "in",
+       "field": "receipt.mcc",
+       "values": {
+        "param": "on_premises"
+       }
+      },
+      {
+       "op": "not",
+       "condition": {
+        "op": "all",
+        "conditions": [
+         {
+          "op": "eq",
+          "field": "receipt.submitted_expense_type",
+          "value": "Client Entertainment"
+         },
+         {
+          "op": "gte",
+          "field": "receipt.attendee_count",
+          "value": {
+           "param": "min_attendees"
+          }
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.category",
+       "value": "alcohol"
+      },
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "ALC-02",
+    "policy_doc": "meals-and-entertainment-policy.md",
+    "title": "Alcohol per-attendee cap",
+    "source_quote": "**$30 per attendee**",
+    "status": "active",
+    "params": {
+     "cap_usd": {
+      "type": "number",
+      "value": "30",
+      "unit": "usd",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "15b7d5ef5be57836eb5fa59c4d780f037dfe0ebddb41a50a626239ce3c3981fb",
+     "fingerprint": "758756d12b491203527490890d0381868573660941a75cc141322ac3d6cd4f08"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "medium",
+    "severity_cases": [],
+    "helper": "alcohol_per_attendee",
+    "replaces": []
+   },
+   {
+    "rule_id": "ALC-03",
+    "policy_doc": "meals-and-entertainment-policy.md",
+    "title": "Retail alcohol",
+    "source_quote": "is **never** reimbursable, regardless of business context",
+    "status": "active",
+    "params": {
+     "on_premises": {
+      "type": "set",
+      "values": [
+       "5812",
+       "5813",
+       "7011"
+      ]
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "32fb12e3dcfaaf53b6e3b77fc8c95ee868403d6b467a2729d58a3a91bda4357f",
+     "fingerprint": "e606007761472ddbddb940327c21ef70b8d04389ae843da97258d1409694bd7f"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "high",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "not",
+       "condition": {
+        "op": "missing",
+        "field": "receipt.mcc"
+       }
+      },
+      {
+       "op": "not",
+       "condition": {
+        "op": "in",
+        "field": "receipt.mcc",
+        "values": {
+         "param": "on_premises"
+        }
+       }
+      }
+     ]
+    },
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.category",
+       "value": "alcohol"
+      },
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "DOC-01",
+    "policy_doc": "receipt-documentation-requirements.md",
+    "title": "Itemization threshold",
+    "source_quote": "must be itemized",
+    "status": "active",
+    "params": {
+     "total_usd": {
+      "type": "number",
+      "value": "75",
+      "unit": "usd",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "a8cfcc1303af304128e1777657145f9c35959635c98662b2c54d83794ec31660",
+     "fingerprint": "33e32a08fac4cd5a3c759618af13d9034117fac47f4bdca3b028c4aafb62da48"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "receipt",
+    "severity": "medium",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "gt",
+       "field": "receipt.total_amount_usd",
+       "value": {
+        "param": "total_usd"
+       }
+      },
+      {
+       "op": "eq",
+       "field": "receipt.itemized",
+       "value": false
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "DOC-02",
+    "policy_doc": "receipt-documentation-requirements.md",
+    "title": "Legibility",
+    "source_quote": "A receipt missing any of these is a **medium** exception.",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "3f1273842030d326e45dbd68df091334c6473ed4e286f165dc647b70e2032862",
+     "fingerprint": "bef5f9bd6a2e9f5e026a3df57be88cf28d4f6ff2721ed6e0af332601982cf964"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "receipt",
+    "severity": "medium",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "any",
+     "conditions": [
+      {
+       "op": "missing",
+       "field": "receipt.merchant_name"
+      },
+      {
+       "op": "missing",
+       "field": "receipt.transaction_date"
+      },
+      {
+       "op": "missing",
+       "field": "receipt.total_amount"
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "DOC-03",
+    "policy_doc": "receipt-documentation-requirements.md",
+    "title": "Expense type must match the contents",
+    "source_quote": "A misclassification is a **medium** exception",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "2a6e9d77c7f2636cffd7a0d84f86f7f3fa4fd3170f0e914560b2adfb238cd8ca",
+     "fingerprint": "0c9105e052668135353be717d1a13a7e4035a9c7cf71e785d059b91cc067f34e"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "receipt",
+    "severity": "medium",
+    "severity_cases": [],
+    "helper": "expense_type_mismatch",
+    "replaces": []
+   },
+   {
+    "rule_id": "DOC-04",
+    "policy_doc": "receipt-documentation-requirements.md",
+    "title": "Foreign currency",
+    "source_quote": "a receipt missing either is a **medium** exception",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "b9ef98d2fe5d42dde30f8db5f963e7733080d8ae815c2d5b65842f3a525d559e",
+     "fingerprint": "2d1da0f38382f8fcfcdc96f67c49eb997ddeb800e48b4bc395a11d918c68f136"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "receipt",
+    "severity": "medium",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "any",
+     "conditions": [
+      {
+       "op": "missing",
+       "field": "receipt.currency"
+      },
+      {
+       "op": "all",
+       "conditions": [
+        {
+         "op": "ne",
+         "field": "receipt.currency",
+         "value": "USD"
+        },
+        {
+         "op": "missing",
+         "field": "receipt.fx_rate_to_usd"
+        }
+       ]
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "ENT-01",
+    "policy_doc": "meals-and-entertainment-policy.md",
+    "title": "Entertainment venues",
+    "source_quote": "requires prior VP approval",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "8e66264bcf69ad08e0f0167c75c5116714cc408890b8d502ebc8de45c95d71a8",
+     "fingerprint": "2a25d69ed3b2afe840d35453d0404343501c3e51b734a4902c789ba382568a06"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "medium",
+    "severity_cases": [],
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "in",
+       "field": "item.venue_type",
+       "values": [
+        "golf",
+        "sporting_event",
+        "theatre",
+        "concert",
+        "other_venue"
+       ]
+      },
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      }
+     ]
+    },
+    "waived_by_ref": "vp_approval",
+    "replaces": []
+   },
+   {
+    "rule_id": "ENT-02",
+    "policy_doc": "meals-and-entertainment-policy.md",
+    "title": "Gambling",
+    "source_quote": "is prohibited and is a **high** exception",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "fba2542c186e48e31cf8929ebaecd09516cff8dedad828b0697ca299855fbd86",
+     "fingerprint": "5e45ea1d39d8cf66b62a547873a6ff02d0825bd795e22baa18ad190a89982229"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "high",
+    "severity_cases": [],
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.category",
+       "value": "gambling"
+      },
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "EXC-01",
+    "policy_doc": "approval-and-exception-handling.md",
+    "title": "Receipt disposition",
+    "source_quote": "Disposition is computed, not judged.",
+    "status": "active",
+    "params": {
+     "flag_severities": {
+      "type": "set",
+      "values": [
+       "critical",
+       "high",
+       "medium"
+      ]
+     },
+     "review_severities": {
+      "type": "set",
+      "values": [
+       "low"
+      ]
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "29a18eeb3951f8d2075c9b66e92849a16fc5e48b09d3c5c067dfb84a8af94ecb",
+     "fingerprint": "7caa0c18dba1fd5d64e50550e241d89bdffce1ee0d3eec84a9b4ff52f52863b1"
+    },
+    "kind": "process",
+    "directive": "disposition"
+   },
+   {
+    "rule_id": "EXC-02",
+    "policy_doc": "approval-and-exception-handling.md",
+    "title": "Approval references",
+    "source_quote": "A reference does not waive any other rule.",
+    "status": "active",
+    "params": {
+     "pre_approval_rules": {
+      "type": "set",
+      "values": [
+       "TECH-02"
+      ]
+     },
+     "vp_approval_rules": {
+      "type": "set",
+      "values": [
+       "ENT-01"
+      ]
+     },
+     "manager_approval_rules": {
+      "type": "set",
+      "values": [
+       "TECH-04"
+      ]
+     },
+     "baggage_delay_rules": {
+      "type": "set",
+      "values": [
+       "PERS.BAGGAGE"
+      ]
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "fc500827a970939bc7fb07c4b67b198a9e5b449cd57c20f0e379106d50a3f614",
+     "fingerprint": "3b6bd39a44858fbe80baaf0d62a4a4ea40c9f0021b2829985916c6050184a875"
+    },
+    "kind": "process",
+    "directive": "reference_kinds"
+   },
+   {
+    "rule_id": "EXC-03",
+    "policy_doc": "approval-and-exception-handling.md",
+    "title": "Uncertainty",
+    "source_quote": "raise a **review signal** with rule ID `EXC-03`",
+    "status": "active",
+    "params": {
+     "min_confidence": {
+      "type": "number",
+      "value": "0.5",
+      "unit": "ratio",
+      "source": "project_decision"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "2bcffc0601bb2de0501dad3d28329d97f6fbe659370641eae09b329436c939a5",
+     "fingerprint": "31f6ea32b3c63444d61886e90f2cf379205e65189d350961199eb82c1265952f"
+    },
+    "kind": "process",
+    "directive": "uncertainty"
+   },
+   {
+    "rule_id": "EXC-04",
+    "policy_doc": "approval-and-exception-handling.md",
+    "title": "Evidence",
+    "source_quote": "cite no line items",
+    "status": "active",
+    "params": {
+     "whole_receipt_rules": {
+      "type": "set",
+      "values": [
+       "MCC-01",
+       "MEAL-01",
+       "MEAL-02",
+       "DOC-01",
+       "DOC-02",
+       "DOC-03",
+       "DOC-04",
+       "REG-02",
+       "REG-03",
+       "REG-04",
+       "TIME-03"
+      ]
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "f1ffa0e666949ef95d68fe73ebaab402254b965c56d8a12ecc73fd25cae3f613",
+     "fingerprint": "7c5af1fddce2127a7250e15815ebe21f7b17345756b7cddf6ef6caa45ca20b0e"
+    },
+    "kind": "process",
+    "directive": "evidence"
+   },
+   {
+    "rule_id": "GIFT-01",
+    "policy_doc": "gifts-and-awards-policy.md",
+    "title": "Client gift cap",
+    "source_quote": "capped at **$50 per recipient per occasion**",
+    "status": "active",
+    "params": {
+     "cap_usd": {
+      "type": "number",
+      "value": "50",
+      "unit": "usd",
+      "source": "policy"
+     },
+     "named_recipient_from_usd": {
+      "type": "number",
+      "value": "10",
+      "unit": "usd",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "8fc8b52a5ff49429c2858171990c4cab4a4725b2be86c65876edb6b55fa6c249",
+     "fingerprint": "4a6328b2d5acbfbc7116d603280ae7236f454602be76f19bb8940db8c5a188de"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "medium",
+    "severity_cases": [],
+    "helper": "gift_cap",
+    "replaces": []
+   },
+   {
+    "rule_id": "GIFT-02",
+    "policy_doc": "gifts-and-awards-policy.md",
+    "title": "Gift cards and cash equivalents",
+    "source_quote": "other cash equivalent are **never** reimbursable",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "a28a2c0f9fe0ac37e5d9c52e536af83177a7f7b72b008876ecbd4b6c497f778f",
+     "fingerprint": "655c2e1ae07b1b2fc6c7d788571d76c113b254bf2b6c3cf9f7df89f267706678"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "high",
+    "severity_cases": [],
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.category",
+       "value": "gift_card"
+      },
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "GIFT-03",
+    "policy_doc": "gifts-and-awards-policy.md",
+    "title": "Employee gifts and awards",
+    "source_quote": "must be processed through HR",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "4cc30dd6e9b59f8eddab475510b1db3b5248bcd4671c6dafcee27bf6cdc6a58d",
+     "fingerprint": "5c7ac9130a73aade6975ab0ea890578c30d2d8376b399800f081b22506507fdd"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "medium",
+    "severity_cases": [],
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      },
+      {
+       "op": "eq",
+       "field": "item.recipient_type",
+       "value": "employee"
+      },
+      {
+       "op": "not",
+       "condition": {
+        "op": "in",
+        "field": "item.category",
+        "values": [
+         "food_beverage",
+         "alcohol",
+         "service_fee",
+         "gift_card"
+        ]
+       }
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "GIFT-04",
+    "policy_doc": "gifts-and-awards-policy.md",
+    "title": "Government officials",
+    "source_quote": "replaces GIFT-01 for those lines",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "8aa67788fea6a4c1abe687ddeb42d14289b53ba98a2924d0525641474d294273",
+     "fingerprint": "bf962d5824029435be1611d6c1fb5887f8b8afb3578ab284306c65129f56559a"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "critical",
+    "severity_cases": [],
+    "helper": "government_official",
+    "replaces": [
+     {
+      "rule_id": "GIFT-01",
+      "level": "line"
+     }
+    ]
+   },
+   {
+    "rule_id": "HEALTH-01",
+    "policy_doc": "non-reimbursable-items.md",
+    "title": "Over-the-counter medication",
+    "source_quote": "up to **$25** in total",
+    "status": "active",
+    "params": {
+     "trip_cap_usd": {
+      "type": "number",
+      "value": "25",
+      "unit": "usd",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "be2edc760aa521b43e482aa7fa04f5024f5f4859658b38d4348a3994bd38d5a2",
+     "fingerprint": "00bf9509e373a3ae24802c01501f8fe8b57115925854adb1151a2c4305e151ba"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "low",
+    "severity_cases": [
+     {
+      "when": {
+       "op": "eq",
+       "field": "item.item_kind",
+       "value": "prescription_medication"
+      },
+      "severity": "medium"
+     }
+    ],
+    "helper": "otc_trip_cap",
+    "replaces": []
+   },
+   {
+    "rule_id": "HOUSE-01",
+    "policy_doc": "non-reimbursable-items.md",
+    "title": "Household goods",
+    "source_quote": "office stock of this kind is bought centrally",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "cea4df98ed118ccb15465fb0f7cf3fd103ceee3db227092754a99044698b2b1d",
+     "fingerprint": "eaa7f12615f30498e5efed94a8063d774b109237946bdf3b6aa1806d320cdde9"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "medium",
+    "severity_cases": [],
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.category",
+       "value": "household_goods"
+      },
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "LAUNDRY-01",
+    "policy_doc": "non-reimbursable-items.md",
+    "title": "Laundry and dry cleaning",
+    "source_quote": "Reimbursable only on trips of **four or more nights**",
+    "status": "active",
+    "params": {
+     "min_nights": {
+      "type": "number",
+      "value": "4",
+      "unit": "nights",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "9ecdc0d6a28d4f081bf0d3e7a8b02834832f6d076462d7ea49d51c64e2925570",
+     "fingerprint": "c4ce630b459657690e6e0016c06c91b4dd706b802e679ad361865db0308cafd7"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "low",
+    "severity_cases": [],
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      },
+      {
+       "op": "eq",
+       "field": "item.category",
+       "value": "laundry_service"
+      },
+      {
+       "op": "not",
+       "condition": {
+        "op": "gte",
+        "field": "receipt.trip_nights",
+        "value": {
+         "param": "min_nights"
+        }
+       }
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "MCC-01",
+    "policy_doc": "merchant-category-risk.md",
+    "title": "High-risk merchant category",
+    "source_quote": "raises a **high** exception on its own",
+    "status": "active",
+    "params": {
+     "high_risk": {
+      "type": "set",
+      "values": [
+       "5921",
+       "5993",
+       "7995",
+       "7297",
+       "5944"
+      ]
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "8ff886fe51aae5babfaccda4e7c93b9a13a5b1f4cae3472f18b326fd7cbd2a3b",
+     "fingerprint": "0c33c5122dcd1d318503ec059b606d6da137b2999b020eae2224596087935a29"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "receipt",
+    "severity": "high",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "in",
+     "field": "receipt.mcc",
+     "values": {
+      "param": "high_risk"
+     }
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "MCC-02",
+    "policy_doc": "merchant-category-risk.md",
+    "title": "Medium-risk merchant category",
+    "source_quote": "A medium-risk MCC raises a **review signal** only.",
+    "status": "active",
+    "params": {
+     "medium_risk": {
+      "type": "set",
+      "values": [
+       "5813",
+       "5912",
+       "5311",
+       "5411",
+       "5732"
+      ]
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "de75bce2ea2322ead7b1a818c0342291d5414c47ba6ad36f93fc407ca1a4b04e",
+     "fingerprint": "17bfbd2c4ef4fe4de879966a98351c51196ce5e87e3a9d56c09103976a813ef5"
+    },
+    "kind": "check",
+    "outcome": "review_signal",
+    "scope": "receipt",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "in",
+     "field": "receipt.mcc",
+     "values": {
+      "param": "medium_risk"
+     }
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "MCC-03",
+    "policy_doc": "merchant-category-risk.md",
+    "title": "Bars and taverns",
+    "source_quote": "it is never treated as retail under ALC-03",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "0739a5f5cf2b2e4bc238ed934f12f22cc14541647366c0106b14b7dc833b7c05",
+     "fingerprint": "39d5007a623699b7ebf35753f73f0778a5a6fd2cbbd36de012c68517e84d8b0c"
+    },
+    "kind": "process",
+    "directive": "guidance"
+   },
+   {
+    "rule_id": "MEAL-01",
+    "policy_doc": "meals-and-entertainment-policy.md",
+    "title": "Daily meal cap",
+    "source_quote": "Spend above the cap is a **medium** exception",
+    "status": "active",
+    "params": {
+     "domestic_usd": {
+      "type": "number",
+      "value": "75",
+      "unit": "usd",
+      "source": "policy"
+     },
+     "international_usd": {
+      "type": "number",
+      "value": "100",
+      "unit": "usd",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "4924a1807cb5b171643c6ad6864186461eca41793cab2cebe588afe82972dcdc",
+     "fingerprint": "938c3bf80b51c3a2462dcf57ed0f900c71d44f908ac673ce3a7b89ba77a36c11"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "receipt",
+    "severity": "medium",
+    "severity_cases": [],
+    "helper": "meal_cap",
+    "replaces": []
+   },
+   {
+    "rule_id": "MEAL-02",
+    "policy_doc": "meals-and-entertainment-policy.md",
+    "title": "Attendee documentation",
+    "source_quote": "A missing attendee count is a **low** exception.",
+    "status": "active",
+    "params": {
+     "total_usd": {
+      "type": "number",
+      "value": "150",
+      "unit": "usd",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "27739fe6b94070416aa1a91aec9a063b6acbf4b23d53d8a483bbfd4b496bb3bf",
+     "fingerprint": "98b4af82829ef5a5719fb9f44e7c8790750084ae7bc676c5bbfff444c2865b29"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "receipt",
+    "severity": "low",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "receipt.is_meal_receipt",
+       "value": true
+      },
+      {
+       "op": "gt",
+       "field": "receipt.total_amount_usd",
+       "value": {
+        "param": "total_usd"
+       }
+      },
+      {
+       "op": "missing",
+       "field": "receipt.attendee_count"
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "PERS-01",
+    "policy_doc": "non-reimbursable-items.md",
+    "title": "Personal care and grooming",
+    "source_quote": "massage are not reimbursable",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "2c756c5a6b080a538fc1f2815d92108c0fd56ce81c0691c30a3fe04c96ad96fd",
+     "fingerprint": "370892e5a550c4ed86fb2a48cf20b45254a55eb5e54e317913e1135e39cc8d23"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "medium",
+    "severity_cases": [],
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.category",
+       "value": "personal_care"
+      },
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "PERS-02",
+    "policy_doc": "non-reimbursable-items.md",
+    "title": "Clothing and footwear",
+    "source_quote": "ties and bags are not reimbursable",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "fd9871e94f6762ec0ef76712dfb8da1e982bf7be9aa84bfeaef0252bf9bebebf",
+     "fingerprint": "43c2b3a5cd5503ec51f595b4e5cf0e451da3dc1b8d45937e0d40a5359b2da51f"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "medium",
+    "severity_cases": [],
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.category",
+       "value": "clothing"
+      },
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "PERS-03",
+    "policy_doc": "non-reimbursable-items.md",
+    "title": "Tobacco and vaping",
+    "source_quote": "e-liquids are not reimbursable",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "8f2aaf68b17b81540d0aebe41ae2e3f3aba85fc2c61d007192f33b18a6e0421f",
+     "fingerprint": "fb33651ad856419963e25fd246cd3d47c7c425bae4a81c18d78fd02e4709d69b"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "high",
+    "severity_cases": [],
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.category",
+       "value": "tobacco"
+      },
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "PERS.BAGGAGE",
+    "policy_doc": "non-reimbursable-items.md",
+    "title": "Baggage-delay exception",
+    "source_quote": "essential toiletries are reimbursable up to **$150**",
+    "status": "active",
+    "params": {
+     "allowance_usd": {
+      "type": "number",
+      "value": "150",
+      "unit": "usd",
+      "source": "policy"
+     },
+     "min_delay_hours": {
+      "type": "number",
+      "value": "24",
+      "unit": "hour",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "2c756c5a6b080a538fc1f2815d92108c0fd56ce81c0691c30a3fe04c96ad96fd",
+     "fingerprint": "e2aa265a12c3fc0f4fab29b02e32ad6cc27efdfecef61375155bda6b56435b8b"
+    },
+    "kind": "carve_out",
+    "modifies": [
+     "PERS-01",
+     "PERS-02"
+    ],
+    "requires_ref": "baggage_delay",
+    "helper": "baggage_allowance"
+   },
+   {
+    "rule_id": "REG-01",
+    "policy_doc": "regional-addendum.md",
+    "title": "Alcohol",
+    "source_quote": "report REG-01 instead of those three",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "425afa0c4599424b49a25e305bf0ed5629984670633aef1e050219ccf2935019",
+     "fingerprint": "b95d8ca7d77433c5c9f677acf75e7b2170f77e4b9a4c28ea9a455dccfaa3a556"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "high",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "eq",
+     "field": "receipt.entity",
+     "value": "APAC"
+    },
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.category",
+       "value": "alcohol"
+      },
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      }
+     ]
+    },
+    "replaces": [
+     {
+      "rule_id": "ALC-01",
+      "level": "receipt"
+     },
+     {
+      "rule_id": "ALC-02",
+      "level": "receipt"
+     },
+     {
+      "rule_id": "ALC-03",
+      "level": "receipt"
+     }
+    ]
+   },
+   {
+    "rule_id": "REG-02",
+    "policy_doc": "regional-addendum.md",
+    "title": "Meal cap",
+    "source_quote": "The APAC daily meal cap is **$60 per person**",
+    "status": "active",
+    "params": {
+     "cap_usd": {
+      "type": "number",
+      "value": "60",
+      "unit": "usd",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "9fe674d94c2c241ff4687d5baa232112d041e8493383b790d1b9d7bd8458f403",
+     "fingerprint": "549080e44b80211176cae3e146a88b4be01756385aae625e742a86e3c1f2641c"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "receipt",
+    "severity": "medium",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "eq",
+     "field": "receipt.entity",
+     "value": "APAC"
+    },
+    "helper": "meal_cap",
+    "replaces": [
+     {
+      "rule_id": "MEAL-01",
+      "level": "receipt"
+     }
+    ]
+   },
+   {
+    "rule_id": "REG-03",
+    "policy_doc": "regional-addendum.md",
+    "title": "Meal cap",
+    "source_quote": "The EMEA daily meal cap is **EUR 70 per person**",
+    "status": "active",
+    "params": {
+     "cap_eur": {
+      "type": "number",
+      "value": "70",
+      "unit": "eur",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "85a7cc3b11346c6a66bce4582f4df9f2c4a3a60d1b8cabf978563ac582a70174",
+     "fingerprint": "4a99cd898aa6131557b7821daf9d5f8eebdbbc5a4a436124c6094bd6c89c987b"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "receipt",
+    "severity": "medium",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "eq",
+     "field": "receipt.entity",
+     "value": "EMEA"
+    },
+    "helper": "meal_cap",
+    "replaces": [
+     {
+      "rule_id": "MEAL-01",
+      "level": "receipt"
+     }
+    ]
+   },
+   {
+    "rule_id": "REG-04",
+    "policy_doc": "regional-addendum.md",
+    "title": "VAT documentation",
+    "source_quote": "A missing VAT number is a **low** exception.",
+    "status": "active",
+    "params": {
+     "above_eur": {
+      "type": "number",
+      "value": "50",
+      "unit": "eur",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "cd56c7d7473cb756acc963d27e517485fb473b64e90aa0c3cb3fb2d54fef3491",
+     "fingerprint": "fb8b1b953dd96a7bbd6fa4d69ca44eb0f0feed6e70dfacd1021664a408fd54f3"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "receipt",
+    "severity": "low",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "eq",
+     "field": "receipt.entity",
+     "value": "EMEA"
+    },
+    "helper": "vat_threshold",
+    "replaces": []
+   },
+   {
+    "rule_id": "REG-05",
+    "policy_doc": "regional-addendum.md",
+    "title": "Conversion rate",
+    "source_quote": "raises nothing on its own",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "c17319e70823935144219d7185070098279b3ecf83619d7bb04109301cc0e9ae",
+     "fingerprint": "f9808dd247c34a638b00364e15ca771deb1392ef82875c28bbdc5a5897aabf80"
+    },
+    "kind": "process",
+    "directive": "fx_rate"
+   },
+   {
+    "rule_id": "TECH-01",
+    "policy_doc": "technology-and-equipment-policy.md",
+    "title": "Personal electronics are not reimbursable",
+    "source_quote": "is a **high** exception, regardless of stated business purpose",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "a2eb18ae224c2d0750af1419a9dcd971284c2b6d21806804d3812a74477bc25c",
+     "fingerprint": "87ffae9bfd6d171afb396ebe2e2402a36599b3dd78dc7e056e6707148dcb41e1"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "high",
+    "severity_cases": [],
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.category",
+       "value": "personal_electronics"
+      },
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "TECH-02",
+    "policy_doc": "technology-and-equipment-policy.md",
+    "title": "Peripherals under $200",
+    "source_quote": "reimbursable up to **$200 per item**",
+    "status": "active",
+    "params": {
+     "cap_usd": {
+      "type": "number",
+      "value": "200",
+      "unit": "usd",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "2e610562b99cd9a1f22e549ae0ed64b14058180245fc93a73c987d4e59574a98",
+     "fingerprint": "7c34ed1abd109d56d728f6d73be16d52013808d648c2b523fd40dad8475fe46d"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "medium",
+    "severity_cases": [],
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      },
+      {
+       "op": "eq",
+       "field": "item.category",
+       "value": "computer_accessory"
+      },
+      {
+       "op": "gt",
+       "field": "item.unit_price_usd",
+       "value": {
+        "param": "cap_usd"
+       }
+      }
+     ]
+    },
+    "waived_by_ref": "pre_approval",
+    "replaces": []
+   },
+   {
+    "rule_id": "TECH-03",
+    "policy_doc": "technology-and-equipment-policy.md",
+    "title": "Mobile handsets",
+    "source_quote": "never reimbursable on an expense report",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "87259cadbddd83eb66878f28899669201568e12ffc33bad2b60cb5be63c1af2e",
+     "fingerprint": "e6cd03aa5c48136ca8fcfcab4961deba719964e9f6218c3ff7f25220ac6a8c98"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "high",
+    "severity_cases": [],
+    "select": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "eq",
+       "field": "item.item_kind",
+       "value": "mobile_phone"
+      },
+      {
+       "op": "eq",
+       "field": "item.is_purchase",
+       "value": true
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "TECH-04",
+    "policy_doc": "technology-and-equipment-policy.md",
+    "title": "Software subscriptions",
+    "source_quote": "requires a manager approval reference",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "351c08a62946aaba01f56c74645f5692257ccbf2a6dde049d209f6b62a7443d4",
+     "fingerprint": "01c750afebf7771cc7dc853732c6c03398387e364a6b4234e6a04283a9a95f0b"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "item",
+    "severity": "low",
+    "severity_cases": [],
+    "select": {
+     "op": "eq",
+     "field": "item.category",
+     "value": "software_subscription"
+    },
+    "waived_by_ref": "manager_approval",
+    "replaces": []
+   },
+   {
+    "rule_id": "TIME-01",
+    "policy_doc": "transaction-pattern-rules.md",
+    "title": "Overnight transactions",
+    "source_quote": "raises a **review signal**",
+    "status": "active",
+    "params": {
+     "from_hour": {
+      "type": "number",
+      "value": "0",
+      "unit": "hour",
+      "source": "policy"
+     },
+     "before_hour": {
+      "type": "number",
+      "value": "5",
+      "unit": "hour",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "20d6a8797ec020c68bef4ac055a4b37c3fa87c24b52fdb80f66c99c5c910e671",
+     "fingerprint": "f04e99f5e694808dd01e930aa967164e92eae0caf4a0d6d236a8322070e27bbb"
+    },
+    "kind": "check",
+    "outcome": "review_signal",
+    "scope": "receipt",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "gte",
+       "field": "receipt.local_hour",
+       "value": {
+        "param": "from_hour"
+       }
+      },
+      {
+       "op": "lt",
+       "field": "receipt.local_hour",
+       "value": {
+        "param": "before_hour"
+       }
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "TIME-02",
+    "policy_doc": "transaction-pattern-rules.md",
+    "title": "No associated trip",
+    "source_quote": "with no associated trip record raises a **review signal**",
+    "status": "active",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "3bfba9695f7b6bac45e5b199fadfc8ba3f9d69370d8ea2a0369647d49fe066fd",
+     "fingerprint": "f99e1b7dd8bcfede5e5d53bfd9d7b4dba0c28cb121c65dfed53d695b4f1f5d80"
+    },
+    "kind": "check",
+    "outcome": "review_signal",
+    "scope": "receipt",
+    "severity_cases": [],
+    "applies_when": {
+     "op": "all",
+     "conditions": [
+      {
+       "op": "in",
+       "field": "receipt.submitted_expense_type",
+       "values": [
+        "Meals - Individual",
+        "Lodging",
+        "Travel - Other"
+       ]
+      },
+      {
+       "op": "missing",
+       "field": "receipt.trip_id"
+      }
+     ]
+    },
+    "replaces": []
+   },
+   {
+    "rule_id": "TIME-03",
+    "policy_doc": "transaction-pattern-rules.md",
+    "title": "Split transactions",
+    "source_quote": "report the split, not a separate breach of that threshold",
+    "status": "active",
+    "params": {
+     "min_receipts": {
+      "type": "number",
+      "value": "2",
+      "unit": "count",
+      "source": "policy"
+     },
+     "itemization_usd": {
+      "type": "number",
+      "value": "75",
+      "unit": "usd",
+      "source": "policy"
+     },
+     "gift_cap_usd": {
+      "type": "number",
+      "value": "50",
+      "unit": "usd",
+      "source": "policy"
+     }
+    },
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "48f515200a54ee0c5163fb6f99943aa9d4c92fe8003e39be5e3ceae89a12e472",
+     "fingerprint": "87c95877d56090676c7b3ab768c647f41f36e4a7448625689b61a09695a399a5"
+    },
+    "kind": "check",
+    "outcome": "exception",
+    "scope": "receipt",
+    "severity": "high",
+    "severity_cases": [],
+    "helper": "split_transactions",
+    "replaces": [
+     {
+      "rule_id": "DOC-01",
+      "level": "finding"
+     },
+     {
+      "rule_id": "MEAL-01",
+      "level": "finding"
+     },
+     {
+      "rule_id": "REG-02",
+      "level": "finding"
+     },
+     {
+      "rule_id": "REG-03",
+      "level": "finding"
+     },
+     {
+      "rule_id": "GIFT-01",
+      "level": "finding"
+     }
+    ]
+   },
+   {
+    "rule_id": "TIME-04",
+    "policy_doc": "transaction-pattern-rules.md",
+    "title": "Weekend spend on a weekday trip",
+    "source_quote": "It applies only when the trip record includes those dates",
+    "status": "not_evaluable",
+    "params": {},
+    "provenance": {
+     "translator": "developer",
+     "clause_hash": "053fc7bddc23d444f9c936cdb6a46782c99dfa359a7e2ffda011cc81b22f1e76",
+     "fingerprint": "2e9d6cbfd41c560b449b466e513c5995eeb80ab5e24c2f3808970cf9e80c9f62"
+    },
+    "kind": "check",
+    "outcome": "review_signal",
+    "scope": "receipt",
+    "severity_cases": [],
+    "replaces": []
+   }
+  ]
+ },
+ "transitions": [
+  {
+   "from_status": null,
+   "to_status": "draft",
+   "at": "2026-11-07T18:58:14.225000Z",
+   "actor": null,
+   "content_hash": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+   "approval_reference": null,
+   "reason": null
+  }
+ ]
+}

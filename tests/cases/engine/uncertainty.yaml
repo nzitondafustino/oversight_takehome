@@ -51,7 +51,8 @@ templates:
     clause_hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     fingerprint: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
   # Every real category-reading item rule open on an unusable line of an ordinary US meal.
-  every_rule_open: &every_rule_open [ALC-01, DOC-03, ENT-02, GIFT-02, GIFT-03, HEALTH-01, HOUSE-01, LAUNDRY-01, MEAL-01, MEAL-02, PERS-01, PERS-02, PERS-03, TECH-01, TECH-02, TECH-04]
+  # GIFT-03, LAUNDRY-01, MEAL-02 and TECH-02 are settled by known facts whatever the category is.
+  every_rule_open: &every_rule_open [ALC-01, DOC-03, ENT-02, GIFT-02, HEALTH-01, HOUSE-01, MEAL-01, PERS-01, PERS-02, PERS-03, TECH-01, TECH-04]
 
 assessed:
   # Category
@@ -86,7 +87,10 @@ assessed:
   - {id: an uncertain line on Client Gifts is still a recipient question, receipt_id: R1, complete: true, receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift, confidence: "0.1"}]}], expected: {category: [{line_id: L1, state: low_confidence, confidence: "0.1"}], secondary: [{line_id: L1, field: recipient_type, state: missing}]}}
   - {id: a low confidence gift elsewhere is not read as a gift, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, confidence: "0.1"}]}], expected: {category: [{line_id: L1, state: low_confidence, confidence: "0.1"}], secondary: []}}
   - {id: a named line GIFT-01 cannot place, receipt_id: R1, complete: true, receipts: [{<<: *travel, line_items: [{<<: *line, category: office_supplies, recipient_name: A. Moreau}]}], expected: {secondary: [{line_id: L1, field: recipient_type, state: missing}]}}
-  - {id: a named meal guest is no recipient question, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, recipient_name: A. Moreau}]}], expected: {secondary: []}}
+  # GIFT-04 covers meals provided to an official, so a named guest's type decides it. It stays no gift for GIFT-01.
+  - {id: a named meal guest with no type is a recipient question, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, recipient_name: A. Moreau}]}], expected: {secondary: [{line_id: L1, field: recipient_type, state: missing}]}}
+  - {id: a named meal guest of a known type is settled, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, recipient_name: A. Moreau, recipient_type: client}]}], expected: {secondary: []}}
+  - {id: a named gratuity is no recipient question, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: service_fee, recipient_name: A. Moreau}]}], expected: {secondary: []}}
   - {id: a recipient type outside the catalog on any line, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, recipient_type: vip}]}], expected: {secondary: [{line_id: L1, field: recipient_type, state: unknown}]}}
 
   # Venue type

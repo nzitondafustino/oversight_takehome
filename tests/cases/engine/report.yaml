@@ -2,7 +2,7 @@ suite: report
 
 # build_report, after every other step, on the real ruleset unless a case gives its own `rules`.
 #
-# real:     `receipt_id`, in a context of `receipts` that is `complete`, for customer `northwind`.
+# real:     `receipt_id`, in a context of `receipts` that is `complete`.
 # made_up:  the same, with `rules`.
 # refused:  build_report cannot go ahead. expected is an error regex.
 #
@@ -247,21 +247,24 @@ real:
     complete: true
     receipts: [{<<: *meal, vp_approval_ref: VP-1, line_items: [{<<: *line, category: service_fee, venue_type: golf}]}]
     expected: {exceptions: [], uncitable: [], waived: [{rule_id: ENT-01, severity: medium, line_ids: []}]}
+  # $90 is above the itemization threshold but within the $100 international cap, so a receipt not
+  # seen could still split the meal cap with this one.
   - id: an exception one receipt proves stands beside an open TIME-03
     receipt_id: R1
     complete: false
-    receipts: [{<<: *meal, itemized: false, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, category: other}]}]
+    receipts: [{<<: *meal, itemized: false, total_amount: "90.00", total_amount_usd: "90.00", line_items: [{<<: *line, category: other, unit_price: "90.00", amount: "90.00", amount_usd: "90.00"}]}]
     expected:
-      exceptions: [{rule_id: DOC-01, severity: medium, line_ids: []}, {rule_id: MEAL-02, severity: low, line_ids: []}]
+      exceptions: [{rule_id: DOC-01, severity: medium, line_ids: []}]
       unresolved: []
       open_includes: [{rule_id: MEAL-01, whole_receipt: true, line_ids: [], entries: 1}, {rule_id: TIME-03, whole_receipt: true, line_ids: [], entries: 1}]
       decided: false
+  # The unknown $40 line could be meal spend, taking R2 to $80 and out of a split, or not, leaving $40 in one.
   - id: a possible replacement leaves the exception unresolved
     receipt_id: R1
     complete: true
     receipts:
       - {<<: *meal, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
-      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *line, line_id: L2, category: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *line, line_id: L2, category: null, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
     expected:
       unresolved:
         - {rule_id: MEAL-01, severity: medium, line_ids: []}

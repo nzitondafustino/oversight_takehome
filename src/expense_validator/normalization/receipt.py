@@ -1,4 +1,4 @@
-"""Normalizes every line of a receipt from ingestion, for any classifier to read."""
+"""Normalize every line of an ingested receipt."""
 
 from expense_validator.engine.models import CLASSIFIED_FIELDS, LineItem, Receipt
 from expense_validator.normalization.models import NormalizedLine, NormalizedReceipt
@@ -7,10 +7,11 @@ from expense_validator.normalization.translation import NoOpTranslator, Translat
 
 
 def normalize_receipt(receipt: Receipt, translator: Translator = NoOpTranslator()) -> NormalizedReceipt:
-    """One normalized line per line on the receipt, which stays as it was. Translation is off by default.
+    """Normalize, and optionally translate, every line of a receipt.
 
-    Takes a Receipt only, so ground truth has no way in: pass IngestedReceipt.receipt. Classifier
-    output is refused, as this step comes first and a value there may not be a classifier's.
+    Raises:
+        TypeError: If not given a Receipt.
+        ValueError: If the receipt already carries classifier output.
     """
     if not isinstance(receipt, Receipt):
         raise TypeError(f"normalize_receipt needs a Receipt from ingestion, got {type(receipt).__name__}")

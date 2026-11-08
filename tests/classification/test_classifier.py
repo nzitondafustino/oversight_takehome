@@ -14,17 +14,21 @@ from yaml_cases import exact, load_cases
 
 import expense_validator
 from expense_validator.classification import ClassifiedLine, build_classifier, classify_receipt, load_taxonomy, load_vocabulary
-from expense_validator.classification import classifier as classifier_module
-from expense_validator.classification.classifier import CONFIDENCE_LEVELS, ClassificationError, build_prompt, line_input, openrouter_completion, parse_answer, receipt_language, response_schema
-from expense_validator.classification.evaluate import line_prediction, score_lines
+from expense_validator.classification.backends import llm as classifier_module
+from expense_validator.classification.core.common import UNIDENTIFIED_RECIPIENT, line_input, receipt_language
+from expense_validator.classification.backends.llm import CONFIDENCE_LEVELS, build_prompt, openrouter_completion, parse_answer, response_schema
+from expense_validator.classification.core.recipients import names_a_recipient
+from expense_validator.exceptions import ClassificationError
+from expense_validator.evaluation.classification import line_prediction, score_lines
 from expense_validator.compiler.llm_extract import cached
 from expense_validator.compiler.validate import read_fields
 from expense_validator.config import ROOT, load_config
 from expense_validator.engine.inputs import allowed_values, classification_state
-from expense_validator.engine.models import Receipt
+from expense_validator.engine.evaluation import evaluate_receipts
+from expense_validator.engine.models import CLASSIFIED_FIELDS, Receipt
 from expense_validator.ingestion import IngestionMode, iter_jsonl
 from expense_validator.normalization import NoOpTranslator, TranslationError, normalize_receipt
-from expense_validator.offline_eval.predictions import PredictionSet, Source, apply_predictions, load_predictions
+from expense_validator.evaluation.predictions import PredictionSet, Source, apply_predictions, load_predictions
 from expense_validator.policy.schema import RuleSet
 
 CONFIG = load_config()
@@ -126,6 +130,54 @@ def test_one_failed_line_does_not_stop_the_others():
     assert [result.line_id for result in results] == [line.line_id for line in ONE_RECEIPT.lines]
 
 
+# --- Recipients a line names ---
+
+
+@pytest.mark.parametrize("case", load_cases("classification", "recipient_cues"))
+def test_recipient_evidence_is_read_from_the_lines_words(case):
+    assert names_a_recipient(case["text"]) is case["expected"]["named"]
+
+
+def test_recipient_evidence_in_the_translation_counts():
+    assert names_a_recipient("Blumen", "Flowers for J. Kim") and not names_a_recipient("Blumen", None)
+
+
+@pytest.mark.parametrize("case", load_cases("classification", "recipient_answers"))
+def test_an_unread_recipient_is_marked_and_the_rest_of_the_answer_kept(case):
+    line = classify_receipt(_receipt_with(case["description"]), lambda prompt, text: _answer_text(case), VOCABULARY)[0]
+    assert line.error is None
+    found = {**line._asdict(), "confidence": str(line.confidence)}
+    assert exact({name: found[name] for name in case["expected"]}) == exact(case["expected"])
+
+
+def test_the_unread_marker_is_outside_the_catalog_so_the_engine_reads_it_as_unknown():
+    assert UNIDENTIFIED_RECIPIENT not in VOCABULARY.recipient_types
+    line = INGESTED[0].receipt.line_items[0].with_classification({"category": "food_beverage", "recipient_type": UNIDENTIFIED_RECIPIENT})
+    assert classification_state(line, "recipient_type", FIELDS, Decimal("0.5")) == "unknown"
+
+
+@pytest.mark.parametrize("case", load_cases("classification", "policy_paths"))
+def test_a_named_recipient_never_passes_silently_and_never_makes_a_flag_by_itself(case):
+    receipt = Receipt.model_validate(case["receipt"])
+    answers = {line_id: json.dumps(answer) for line_id, answer in case["answers"].items()}
+    normalized = normalize_receipt(receipt)
+    texts = {line_input(normalized, line): line.line_id for line in normalized.lines}
+    classified = classify_receipt(normalized, lambda prompt, text: answers[texts[text]], VOCABULARY)
+    outputs = {line.line_id: {name: value for name, value in line._asdict().items() if name in CLASSIFIED_FIELDS and value is not None} for line in classified}
+    ruleset = RuleSet.from_json(CONFIG.paths.ruleset.read_text())
+    result = evaluate_receipts([receipt.with_classifications(outputs)], ruleset, FIELDS, complete=True).results[0]
+    found = {
+        "disposition": result.disposition,
+        "decided": result.decided,
+        "exceptions": sorted(group.rule_id for group in result.active_exceptions),
+        "open": sorted({question.rule_id for question in result.report.open_questions}),
+        "uncertainty": sorted([item.line_id, item.field, item.state] for item in (result.uncertainty.uncertainty if result.uncertainty else ())),
+        "cited": {group.rule_id: sorted(group.line_ids) for group in result.active_exceptions},
+    }
+    assert exact({name: found[name] for name in case["expected"]}) == exact(case["expected"])
+    assert "GIFT-04" not in found["exceptions"] or any(answer.get("recipient_type") == "government_official" for answer in case["answers"].values())
+
+
 # --- Confidence, and what the engine makes of it ---
 
 
@@ -159,7 +211,7 @@ def test_a_classified_line_survives_the_prediction_file_and_reaches_the_engine(t
     classified = ClassifiedLine(line_id, "jewelry", True, Decimal("0.7"), "A. Moreau", "client", essential_toiletry=False)
     source = Source(kind="actual", name="n", description="d", model="m")
     path = tmp_path / "predictions.json"
-    path.write_text(PredictionSet(customer_id="c", source=source, predictions=(line_prediction(classified),)).model_dump_json(exclude_none=True))
+    path.write_text(PredictionSet(source=source, predictions=(line_prediction(classified),)).model_dump_json(exclude_none=True))
     loaded = load_predictions(path)
     line = apply_predictions([INGESTED[0].receipt], loaded)[0].line_items[0]
     assert (line.category, line.restricted, line.confidence) == ("jewelry", True, Decimal("0.7"))
@@ -172,7 +224,7 @@ def test_a_failed_line_reaches_the_engine_unclassified_and_with_no_confidence():
     failed = classify_receipt(ONE_RECEIPT, lambda prompt, text: "not json", VOCABULARY)
     predictions = tuple(line_prediction(line) for line in failed if line.error is None)
     source = Source(kind="actual", name="n", description="d", model="m")
-    line = apply_predictions([receipt], PredictionSet(customer_id="c", source=source, predictions=predictions))[0].line_items[0]
+    line = apply_predictions([receipt], PredictionSet(source=source, predictions=predictions))[0].line_items[0]
     assert (line.category, line.restricted, line.confidence) == (None, None, None)
 
 
@@ -249,6 +301,29 @@ def test_the_prompt_sets_the_order_of_evidence_and_calls_both_texts_what_they_ar
     assert order == sorted(order)
     assert "never choose a category from the merchant or the price alone" in prompt
     assert "go by the original and lower your confidence" in prompt
+
+
+def test_the_prompt_keeps_an_items_category_apart_from_its_purpose():
+    flat = " ".join(build_prompt(VOCABULARY).split())
+    assert "An item purchased as a gift or award retains the category of what the item physically is." in flat
+    assert "a non-electronic watch or bracelet is `jewelry` even when purchased for an employee or client" in flat
+    assert "such as gift baskets, flowers or greeting cards" in flat
+
+
+def test_the_prompt_lets_only_venue_type_use_the_merchant_and_only_after_the_line_shows_an_event():
+    flat = " ".join(build_prompt(VOCABULARY).split())
+    assert "never guess, and do not work these out from the receipt context, except venue_type as described below" in flat
+    assert "come from those words alone" not in flat, "the stricter wording that cost recipients and medication kinds must not return"
+    assert "The line's own words must show an event or venue" in flat
+    assert "merchant_name and merchant_category may then decide which kind it is" in flat
+    assert "With no event or venue in the line's words, or when its kind cannot be told, use null, whatever the merchant" in flat
+
+
+def test_a_venue_with_no_event_in_the_line_is_still_accepted_as_written():
+    """The contract checks a venue against its category, and leaves its evidence to the prompt: this says so."""
+    answer = GOOD_ANSWER.replace('"venue_type": null', '"venue_type": "sporting_event"')
+    line = classify_receipt(_receipt_with("Sandwich"), lambda prompt, text: answer, VOCABULARY)[0]
+    assert (line.category, line.venue_type, line.error) == ("other", "sporting_event", None)
 
 
 def test_on_the_real_data_one_request_per_line_holds_no_answers():
@@ -407,13 +482,101 @@ def _imports(path):
     return found
 
 
-def test_the_production_classifier_cannot_reach_answers_or_the_engine():
-    for name in _imports(SOURCE / "classification" / "classifier.py"):
-        assert not name.startswith(("expense_validator.offline_eval", "expense_validator.ingestion", "expense_validator.engine")), name
+CLASSIFICATION = SOURCE / "classification"
+CORE = ("core/__init__.py", "core/models.py", "core/common.py", "core/recipients.py")
+BACKENDS = ("backends/__init__.py", "backends/llm.py", "backends/jev.py", "backends/registry.py")
+LAUNCHERS = ("evaluate.py", "robustness.py")  # kept only as the commands they were
+
+
+def test_the_production_classifiers_cannot_reach_answers_or_the_engine():
+    for module in ("__init__.py", "orchestrator.py", *CORE, *BACKENDS):
+        for name in _imports(CLASSIFICATION / module):
+            assert not name.startswith(("expense_validator.evaluation", "expense_validator.offline_eval", "expense_validator.ingestion", "expense_validator.engine")), (module, name)
+
+
+def test_backends_are_independent_and_the_shared_core_knows_none():
+    for module in CORE:
+        assert not [name for name in _imports(CLASSIFICATION / module) if name.startswith("expense_validator.classification.backends")], module
+    # A backend builds on the core alone: never on another backend, nor on the registry.
+    for module in ("backends/llm.py", "backends/jev.py"):
+        classification = {name for name in _imports(CLASSIFICATION / module) if name.startswith("expense_validator.classification")}
+        assert classification <= {"expense_validator.classification.core.common", "expense_validator.classification.core.models"}, (module, classification)
+    # The subpackages import nothing, so that importing one backend never loads another.
+    assert not _imports(CLASSIFICATION / "backends" / "__init__.py") and not _imports(CLASSIFICATION / "core" / "__init__.py")
+    # The orchestrator knows no backend: it runs whichever the validator hands it, through the shared core.
+    orchestrator = {name for name in _imports(CLASSIFICATION / "orchestrator.py") if name.startswith("expense_validator.classification")}
+    assert orchestrator == {"expense_validator.classification.core.common", "expense_validator.classification.core.models"}
+    # The validator reaches a backend only through the registry, the shared core and the orchestrator.
+    validator = {name for name in _imports(SOURCE / "validator.py") if name.startswith("expense_validator.classification")}
+    assert validator == {"expense_validator.classification.backends.registry", "expense_validator.classification.core.common", "expense_validator.classification.core.models", "expense_validator.classification.orchestrator"}
+
+
+def test_every_registered_backend_has_the_same_interface():
+    from expense_validator.classification.backends.registry import BACKENDS
+    from expense_validator.classification.core.models import Backend
+
+    assert list(BACKENDS) == ["chat_completions", "decisions"]  # adapters, named for their protocol: never a provider or model
+    assert all(isinstance(backend, Backend) and all(callable(f) for f in backend if not isinstance(f, str)) for backend in BACKENDS.values())
+    assert {name: backend.cache_folder for name, backend in BACKENDS.items()} == {"chat_completions": "", "decisions": "jev"}  # the folders recordings were made in
+
+
+def test_no_model_comparison_lives_in_the_application():
+    for path in CLASSIFICATION.rglob("*.py"):
+        assert not {"comparison", "contract"} & {name.rsplit(".", 1)[-1] for name in _imports(path)}, path
+        assert path.stem not in {"comparison", "contract"}, path
 
 
 def test_no_other_package_imports_classification_and_its_package_leaves_out_evaluation():
     for package in ("engine", "policy", "compiler", "ingestion", "normalization", "offline_eval"):
         for path in (SOURCE / package).rglob("*.py"):
             assert not [name for name in _imports(path) if name.startswith("expense_validator.classification")], path
-    assert "expense_validator.classification.evaluate" not in _imports(SOURCE / "classification" / "__init__.py")
+    for path in CLASSIFICATION.rglob("*.py"):
+        if str(path.relative_to(CLASSIFICATION)) not in LAUNCHERS:
+            assert not [name for name in _imports(path) if name.startswith("expense_validator.evaluation")], path
+
+
+def test_the_evaluation_launchers_only_run_their_command():
+    for module in LAUNCHERS:
+        tree = ast.parse((CLASSIFICATION / module).read_text())
+        body = [node for node in tree.body if not (isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant))]
+        assert len(body) == 1 and isinstance(body[0], ast.If) and ast.unparse(body[0].test) == "__name__ == '__main__'", module
+
+
+def test_a_new_backend_needs_only_its_module_and_registration(monkeypatch, tmp_path):
+    """Verify a registered backend reuses validator caching, replay, and evaluation."""
+    import json
+    from expense_validator import ExpenseValidator
+    from expense_validator.classification.backends import registry
+    from expense_validator.classification.core import common, models
+    from expense_validator.models import ValidatorSettings
+    from expense_validator.run_receipts import load_receipts
+
+    def classify_receipt(normalized, complete, settings, vocabulary):
+        lines = []
+        for line in normalized.lines:
+            answer = json.loads(complete("stand-in instructions", common.line_input(normalized, line)))
+            result = models.ClassifiedLine(line.line_id, category=answer["category"], restricted=vocabulary.categories[answer["category"]].restricted, confidence=Decimal("0.7"))
+            lines.append(common.finalize(result, line, vocabulary))
+        return tuple(lines)
+
+    def connect(client, settings, vocabulary):
+        return lambda prompt, text: json.dumps({"category": "food_beverage"})  # a real backend would call its model here
+
+    stand_in = models.Backend(check_model=lambda model: None, prompt=lambda vocabulary: "stand-in instructions", cache_key=lambda model, vocabulary: model,
+                              cache_folder="stand-in", connect=connect, classify_receipt=classify_receipt)
+    monkeypatch.setitem(registry.BACKENDS, "stand-in", stand_in)
+    receipts = load_receipts()[:2]
+    settings = ValidatorSettings.from_config(ROOT / "config.yaml", mode="live", cache_dir=tmp_path, classification_backend="stand-in", classification_model="stand-in-model")
+    live = ExpenseValidator(settings.model_copy(update={"translation_enabled": False, "openrouter_api_key": SecretStr("sk-or-placeholder")})).validate_batch(receipts, context_complete=False)
+    assert all(line.category == "food_beverage" and line.confidence == 0.7 for result in live.results for line in result.line_items)
+    assert list((tmp_path / "stand-in").iterdir()) and live.results[0].provenance.classification_backend == "stand-in"
+    replay = ExpenseValidator(settings.model_copy(update={"mode": "replay", "translation_enabled": False})).validate_batch(receipts, context_complete=False)
+    assert [r.to_record()["exceptions"] for r in replay.results] == [r.to_record()["exceptions"] for r in live.results]
+
+
+@pytest.mark.parametrize("case", load_cases("classification", "adapters"))
+def test_the_model_decides_which_adapter_runs_it(case):
+    from expense_validator.classification.backends.registry import ADAPTERS, BACKENDS, backends_for
+
+    assert backends_for(case["model"]) == case["expected"]["backends"]
+    assert set(ADAPTERS) == set(BACKENDS) and {adapter.provider for adapter in ADAPTERS.values()} == {"openrouter"}

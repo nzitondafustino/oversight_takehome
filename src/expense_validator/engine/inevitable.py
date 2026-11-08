@@ -1,18 +1,7 @@
-"""Whether a violation is certain though the exact rule is not, because a recipient type is unresolved.
+"""Prove a violation is certain when only a recipient type is unresolved.
 
-A gift with no recipient type may be for a client, an employee or an official, and each is a different
-rule. If every reading gives a flag on this receipt, a violation is certain, whichever rule it proves to
-be. This project decision is narrow on purpose:
-
-    It reads only recipient types, the only classified field whose values each lead to a known rule.
-    The readings are the field catalog's values. None is assumed to be the true one.
-    A line whose category is uncertain is not read: what it is, is not known, so nothing can be proved.
-    Each reading runs the real rules, so replacements, bounds and severities are the rules' own.
-    Only a flag counts. A reading that is compliant, or that cannot be evaluated, ends the claim.
-    Lines of the employee's other receipts are read too, as TIME-03 adds up across them.
-    Too many lines to read means no claim, not a guess.
-
-This adds no finding. The rules stay unresolved or open as they were, and the proof is reported beside them.
+Every catalog value of the unresolved recipient types is tried through the real rules. Only if every
+reading flags the receipt is the proof reported. It adds no finding, and too many lines means no claim.
 """
 
 import itertools
@@ -41,7 +30,7 @@ class ReadLine(_Strict):
 
 
 class Reading(_Strict):
-    """One way the unresolved lines could be, and the rules that flag this receipt if they are."""
+    """One assignment of the unresolved lines, and the rules that flag the receipt under it."""
 
     lines: tuple[ReadLine, ...]
     rule_ids: tuple[str, ...]
@@ -84,7 +73,7 @@ def _as_read(context: ReceiptContext, reading: Mapping[tuple[str, str], str], fi
             line_id: {RECIPIENT_TYPE: value} for (receipt_id, line_id), value in reading.items() if receipt_id == receipt.receipt_id
         }
         receipts.append(receipt.with_classifications(outputs))
-    return build_context(context.customer_id, receipts, fields, complete=context.complete)
+    return build_context(receipts, fields, complete=context.complete)
 
 
 def prove_violation(
@@ -94,10 +83,7 @@ def prove_violation(
     fields: Mapping[str, dict],
     flagging_rules: Callable[[ReceiptContext, str], tuple[str, ...]],
 ) -> InevitableViolation | None:
-    """The proof that every reading flags this receipt, or None if that is not shown.
-
-    flagging_rules gives the rules that flag a receipt in a context, and nothing if it does not flag.
-    """
+    """Return the proof that every reading flags this receipt, or None."""
     employee_id = assessed.assessment_for(receipt_id).receipt.employee_id
     lines = _unresolved_lines(assessed, employee_id)
     if not any(owner == receipt_id for owner, _ in lines) or len(lines) > MAX_LINES_READ:

@@ -1,20 +1,7 @@
-"""Runs the active check rules, and reports what they could not decide.
+"""Run the active check rules and report what they could not decide.
 
-An item rule gives one finding per line it catches, and a receipt rule one finding for the
-receipt, in the order of the ruleset. Findings are candidates, all raised. What takes one out
-of play comes later: replacements, references, carve-outs and uncertainty. So an APAC receipt
-gets ALC-01 here as well as REG-01.
-
-A result is complete only when every active check rule was decided. Two things stop that:
-
-    pending_helpers  a rule needs a helper, and no ReceiptContext was given to run it with
-    undetermined     a rule depends on something not known, such as a category that is missing
-                     or outside the catalog
-
-An undetermined rule gives no finding, as that could be false: a `not` on a missing category
-is true. It is not reported as passed either, as a quiet rule does not establish compliance. A USD
-threshold compared with a USD value that is not available is the same: the comparison would read as
-false. It does not stay open where another condition already settles the rule.
+Findings are candidates; replacements, references, carve-outs and uncertainty apply later. A result is
+complete only when no rule is pending or undetermined.
 """
 
 from collections.abc import Mapping
@@ -31,7 +18,7 @@ from expense_validator.engine.helpers import (
 )
 from expense_validator.engine.inputs import allowed_values
 from expense_validator.engine.models import Finding, LineItem, Receipt
-from expense_validator.policy.evaluate import evaluate, evaluate_with_unknowns, matches
+from expense_validator.policy.evaluate import evaluate_known, evaluate_with_unknowns, matches
 from expense_validator.policy.schema import AllOf, CheckRule, RuleSet
 from expense_validator.policy.validation import field_errors
 
@@ -56,9 +43,10 @@ class CheckResult:
 def run_checks(
     receipt: Receipt, ruleset: RuleSet, fields: Mapping[str, dict], context: ReceiptContext | None = None
 ) -> CheckResult:
-    """The receipt must already be admitted, and in the context if one is given.
+    """Run every active check rule on an admitted receipt.
 
-    A rule that cannot be run as written is an error. Without a context, helper rules stay pending.
+    Raises:
+        ValueError: If a rule cannot be run as written.
     """
     rules = [rule for rule in ruleset.rules if isinstance(rule, CheckRule) and rule.status == "active"]
     for rule in rules:
@@ -82,7 +70,7 @@ def run_checks(
 
 
 def _refuse_invalid_rule(rule: CheckRule, fields: Mapping[str, dict]) -> None:
-    """Such a rule would stay quiet on every receipt, as a comparison of unlike values is false."""
+    """Refuse a rule that would silently never match."""
     problems = field_errors(rule, fields)
     if rule.scope == "receipt":
         problems += [f"a receipt rule cannot read {name}" for name in fields_read_by(rule) if name.startswith("item.")]
@@ -116,10 +104,21 @@ def _turns_on_missing_usd(rule: CheckRule, facts: Mapping[str, object], fields: 
 
 
 def _is_undetermined(rule: CheckRule, facts: Mapping[str, object], fields: Mapping[str, dict]) -> bool:
+    """Return whether the rule's outcome depends on a category, or a meal status, that is not known.
+
+    Known facts that rule the rule out settle it, whatever the unknown field holds.
+    """
     read = fields_read_by(rule)
+    unknown = set()
     if "receipt.is_meal_receipt" in read and facts["receipt.is_meal_receipt"] is None:
-        return True
-    if "item.category" not in read or facts["item.category"] in allowed_values(fields, "item.category"):
+        unknown.add("receipt.is_meal_receipt")
+    if "item.category" in read and facts["item.category"] not in allowed_values(fields, "item.category"):
+        unknown.add("item.category")
+    if not unknown:
         return False
-    # A rule that does not apply to this receipt does not apply whatever the category is.
-    return rule.applies_when is None or evaluate(rule.applies_when, facts, rule.params)
+    catches = AllOf(op="all", conditions=tuple(condition for condition in (rule.applies_when, rule.select) if condition is not None))
+    caught = evaluate_known(catches, facts, rule.params, unknown)
+    if caught is not True:
+        return caught is None
+    # Caught whatever the unknown field holds, but its severity may still turn on it.
+    return any(evaluate_known(case.when, facts, rule.params, unknown) is None for case in rule.severity_cases)

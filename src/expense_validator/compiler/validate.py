@@ -1,14 +1,8 @@
-"""The Validate step: checks that rules make sense, which the schema alone cannot tell.
-
-The schema says a rule is well formed. This says it reads real fields, uses its helper
-properly, does not conflict with another rule, and is faithful to its clause.
-
-An error stops the build. A warning is for a developer to look at. Retired rules are
-not checked, because they no longer do anything.
-"""
+"""Validate that rules read real fields, use helpers correctly, do not conflict and match their clauses."""
 
 import json
 from dataclasses import dataclass
+from decimal import Decimal
 from itertools import combinations
 from typing import Literal
 
@@ -78,7 +72,6 @@ def _check_helper(rule: Rule) -> list[Issue]:
 
 
 def _resolved(node, params) -> object:
-    """A condition as plain data, with each param swapped for its value, so names do not matter."""
     if isinstance(node, dict):
         if set(node) == {"param"}:
             param = params[node["param"]]
@@ -104,7 +97,6 @@ def _conjuncts(condition: Condition | None, rule: CheckRule) -> set[str]:
 
 
 def _exclude_each_other(first: CheckRule, second: CheckRule) -> bool:
-    """True when one rule's gate is the plain opposite of a part of the other's."""
     a, b = _conjuncts(first.applies_when, first), _conjuncts(second.applies_when, second)
     negate = lambda part: json.dumps({"condition": json.loads(part), "op": "not"}, sort_keys=True)
     return any(negate(part) in b for part in a) or any(negate(part) in a for part in b)
@@ -200,6 +192,17 @@ def _policy_numbers(rule: Rule) -> list[tuple[str, NumberParam]]:
         for name, param in rule.params.items()
         if isinstance(param, NumberParam) and param.source == "policy"
     ]
+
+
+def faithful_issues(ruleset: RuleSet, clauses: dict[str, Clause]) -> list[Issue]:
+    """Return how the rules differ from these clauses' limits, severities and review signals: the faithful check."""
+    return _check_faithful([rule for rule in ruleset.rules if rule.status != "retired"], clauses)
+
+
+def held_thresholds(ruleset: RuleSet, rule_id: str) -> set[tuple[Decimal, str]]:
+    """Return the policy-sourced limits that the rules implementing this clause hold. Project parameters are not policy."""
+    rules = [rule for rule in ruleset.rules if rule.status != "retired" and rule_id in _source_ids(rule)]
+    return {(param.value, param.unit) for rule in rules for _, param in _policy_numbers(rule)}
 
 
 def _check_faithful(rules: list[Rule], clauses: dict[str, Clause]) -> list[Issue]:

@@ -1,24 +1,7 @@
-"""What the engine reads and what it reports: a receipt, its line items, and the result.
+"""Receipt, line item and finding models.
 
-Field names match data/README.md and rules/fields.yaml. Only the facts those mark as
-derived are absent here, such as receipt.local_hour: they are worked out from these fields.
-
-A value a rule tests for absence is optional, because a receipt missing it has to reach
-that rule rather than be refused here: a missing merchant name is a DOC-02 exception, not
-bad input. None is missing, while False and 0 are values, so bools and counts are strict
-and neither can stand in for the other.
-
-Categories, entities and other receipt data are plain text, as in the rule schema: the
-taxonomy is open-ended and the values belong to rules/fields.yaml. The correct answers in
-the data (labels, notes) are not fields, so a row still carrying them is refused.
-
-A false condition does not establish compliance, and missing information is not a
-violation either: an item with no category matches no category rule, which says nothing
-about whether it is within policy. So a missing category and a missing confidence are kept
-as separate None values, for the engine to account for before it returns a clean pass.
-
-These models hold results and check their shape. They decide nothing: which findings are
-raised and what disposition follows are the engine's work.
+None means missing, while False and 0 are values. A missing category and a missing confidence stay
+separate, for the engine to account for before a clean pass. These models decide nothing.
 """
 
 from collections.abc import Mapping
@@ -57,13 +40,13 @@ CLASSIFIED_FIELDS = frozenset(
 
 
 class _Strict(BaseModel):
-    """Refuses unknown keys, checks defaults too, and cannot be changed once built."""
+    """Refuse unknown keys, validate defaults, and forbid changes after construction."""
 
     model_config = ConfigDict(extra="forbid", frozen=True, validate_default=True)
 
 
 def _needs_a_time(value: object) -> object:
-    """A bare date would parse as midnight, and midnight is a real hour to TIME-01."""
+    """Refuse a bare date, which would parse as midnight and mislead TIME-01."""
     bare_text = isinstance(value, (str, bytes)) and len(value) <= len("2026-04-14")
     bare_date = isinstance(value, date) and not isinstance(value, datetime)
     if bare_text or bare_date:
@@ -72,12 +55,11 @@ def _needs_a_time(value: object) -> object:
 
 
 def _number_as_text(value: object) -> object:
-    """Keeps a number exact and its type stable, as JSON would bring a Decimal back as text."""
     return str(value) if isinstance(value, (int, Decimal)) and not isinstance(value, bool) else value
 
 
 class LineItem(_Strict):
-    """One item as printed, plus what classifying its text adds."""
+    """One printed line item and its classifier output."""
 
     line_id: Text
     description_raw: str
@@ -100,10 +82,7 @@ class LineItem(_Strict):
     essential_toiletry: StrictBool | None = None
 
     def with_classification(self, output: Mapping[str, object]) -> "LineItem":
-        """A new line with this classifier output on it, validated like any other input.
-
-        model_copy(update=...) would skip validation, so it must not be used for this.
-        """
+        """Return a validated copy with classifier output. Never use model_copy for this."""
         refused = sorted(set(output) - CLASSIFIED_FIELDS)
         if refused:
             raise ValueError(f"{self.line_id}: a classifier may not set {refused}")
@@ -111,7 +90,7 @@ class LineItem(_Strict):
 
 
 class Receipt(_Strict):
-    """One expense as submitted. Times are local to the merchant, with no time zone."""
+    """One submitted expense. Times are local to the merchant, without a time zone."""
 
     receipt_id: Text
     employee_id: Text
@@ -153,11 +132,7 @@ class Receipt(_Strict):
         return self
 
     def with_classifications(self, outputs: Mapping[str, Mapping[str, object]]) -> "Receipt":
-        """A new receipt with classifier output on its lines, by line ID.
-
-        A line with no output keeps what it has, so an unclassified line stays visibly
-        unclassified. Output for a line not on this receipt is refused, not dropped.
-        """
+        """Return a validated copy with classifier output by line ID. Unknown lines are refused."""
         unknown = sorted(set(outputs) - {item.line_id for item in self.line_items})
         if unknown:
             raise ValueError(f"{self.receipt_id}: classifier output for unknown lines: {unknown}")
@@ -166,29 +141,21 @@ class Receipt(_Strict):
 
 
 class Evidence(_Strict):
-    """One fact a finding rests on, such as receipt.attendee_count having no value.
-
-    A value of None says the fact was missing. Numbers are stored as their exact text.
-    """
+    """One fact a finding rests on. None means the fact was missing."""
 
     fact: Text
     value: Annotated[StrictStr | StrictBool | None, BeforeValidator(_number_as_text)]
 
 
 class ReplacementTarget(_Strict):
-    """What a finding established it replaces: a rule, on these lines, or the whole receipt if none."""
+    """A rule a finding replaces, on these lines or the whole receipt."""
 
     rule_id: RuleId
     line_ids: tuple[Text, ...] = ()
 
 
 class Finding(_Strict):
-    """What one rule found on one receipt.
-
-    An item finding targets exactly one line. A receipt finding may name any lines relevant
-    to it, or none. These are targets, not citations: which lines a reported exception cites
-    is decided by EXC-04, which also wants one exception per rule on a receipt.
-    """
+    """What one rule found on one receipt. EXC-04 decides which lines an exception cites."""
 
     rule_id: RuleId
     outcome: Outcome
@@ -222,11 +189,9 @@ class Finding(_Strict):
 
 
 class EvaluationResult(_Strict):
-    """The answer for one receipt. The disposition is not checked against the findings, as
-    that mapping is EXC-01 in the customer's ruleset."""
+    """The result for one receipt."""
 
     receipt_id: Text
-    customer_id: Text
     ruleset_version: Text
     disposition: Disposition
     findings: tuple[Finding, ...] = ()

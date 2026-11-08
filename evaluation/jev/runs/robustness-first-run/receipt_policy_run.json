@@ -1,0 +1,1895 @@
+{
+  "source": {
+    "kind": "actual",
+    "name": "jev-robustness-first-run",
+    "description": "Jev decision model, one Decisions request per line; snapshot typesafe/jev-1.14-20261014",
+    "model": "typesafe/jev-1.14",
+    "seed": null
+  },
+  "measured_classifier_performance": true,
+  "customer_id": "robustness",
+  "complete": true,
+  "predictions_sha256": "7c6e31ec50b25070bff2bd597db2428fc577ce3798d4f44cfd957cf0bff77b12",
+  "warnings": [],
+  "rules": {
+    "rules": {
+      "ALC-01": {
+        "tp": 1,
+        "fp": 1,
+        "fn": 0,
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.666667,
+        "evidence_exact": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "severity_exact": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "fn_by_kind": {
+          "unresolved": 0,
+          "open": 0,
+          "in_proof": 0,
+          "silent": 0
+        }
+      },
+      "ENT-01": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 1,
+        "precision": null,
+        "recall": 0.0,
+        "f1": 0.0,
+        "evidence_exact": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "severity_exact": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "fn_by_kind": {
+          "unresolved": 0,
+          "open": 0,
+          "in_proof": 0,
+          "silent": 1
+        }
+      },
+      "EXC-03": {
+        "tp": 0,
+        "fp": 1,
+        "fn": 0,
+        "precision": 0.0,
+        "recall": null,
+        "f1": 0.0,
+        "evidence_exact": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "severity_exact": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "fn_by_kind": {
+          "unresolved": 0,
+          "open": 0,
+          "in_proof": 0,
+          "silent": 0
+        }
+      },
+      "GIFT-04": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "evidence_exact": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "severity_exact": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "fn_by_kind": {
+          "unresolved": 0,
+          "open": 0,
+          "in_proof": 0,
+          "silent": 0
+        }
+      },
+      "HEALTH-01": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "evidence_exact": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "severity_exact": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "fn_by_kind": {
+          "unresolved": 0,
+          "open": 0,
+          "in_proof": 0,
+          "silent": 0
+        }
+      },
+      "MCC-02": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "evidence_exact": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "severity_exact": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "fn_by_kind": {
+          "unresolved": 0,
+          "open": 0,
+          "in_proof": 0,
+          "silent": 0
+        }
+      },
+      "REG-01": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "evidence_exact": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "severity_exact": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "fn_by_kind": {
+          "unresolved": 0,
+          "open": 0,
+          "in_proof": 0,
+          "silent": 0
+        }
+      },
+      "TECH-01": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "evidence_exact": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "severity_exact": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "fn_by_kind": {
+          "unresolved": 0,
+          "open": 0,
+          "in_proof": 0,
+          "silent": 0
+        }
+      }
+    },
+    "strict": {
+      "tp": 9,
+      "fp": 2,
+      "fn": 1,
+      "precision": 0.818182,
+      "recall": 0.9,
+      "f1": 0.857143
+    },
+    "diagnostic": {
+      "tp": 9,
+      "fp": 1,
+      "fn": 1,
+      "precision": 0.9,
+      "recall": 0.9,
+      "f1": 0.9
+    },
+    "evidence_exact": {
+      "numerator": 6,
+      "denominator": 6,
+      "value": 1.0,
+      "wilson_95": [
+        0.609666,
+        1.0
+      ]
+    },
+    "fn_by_kind": {
+      "unresolved": 0,
+      "open": 0,
+      "in_proof": 0,
+      "silent": 1
+    }
+  },
+  "exact_match": {
+    "rules": {
+      "numerator": 10,
+      "denominator": 12,
+      "value": 0.833333,
+      "wilson_95": [
+        0.551969,
+        0.953035
+      ]
+    },
+    "rules_and_lines": {
+      "numerator": 10,
+      "denominator": 12,
+      "value": 0.833333,
+      "wilson_95": [
+        0.551969,
+        0.953035
+      ]
+    }
+  },
+  "disposition": {
+    "matrix_gold_by_predicted": {
+      "flag": {
+        "flag": 6,
+        "review": 1,
+        "pass": 0
+      },
+      "review": {
+        "flag": 0,
+        "review": 1,
+        "pass": 0
+      },
+      "pass": {
+        "flag": 1,
+        "review": 0,
+        "pass": 3
+      }
+    },
+    "accuracy": {
+      "numerator": 10,
+      "denominator": 12,
+      "value": 0.833333,
+      "wilson_95": [
+        0.551969,
+        0.953035
+      ]
+    },
+    "false_pass": {
+      "numerator": 0,
+      "denominator": 8,
+      "value": 0.0,
+      "wilson_95": [
+        0.0,
+        0.324408
+      ]
+    },
+    "missed_flag_passed": {
+      "numerator": 0,
+      "denominator": 7,
+      "value": 0.0,
+      "wilson_95": [
+        0.0,
+        0.35433
+      ]
+    },
+    "missed_flag_any": {
+      "numerator": 1,
+      "denominator": 7,
+      "value": 0.142857,
+      "wilson_95": [
+        0.02568,
+        0.513128
+      ]
+    },
+    "false_flag": {
+      "numerator": 1,
+      "denominator": 5,
+      "value": 0.2,
+      "wilson_95": [
+        0.036224,
+        0.624465
+      ]
+    },
+    "review": {
+      "numerator": 2,
+      "denominator": 12,
+      "value": 0.166667,
+      "wilson_95": [
+        0.046965,
+        0.448031
+      ]
+    },
+    "abstention": {
+      "numerator": 1,
+      "denominator": 12,
+      "value": 0.083333,
+      "wilson_95": [
+        0.014865,
+        0.35388
+      ]
+    },
+    "decided": {
+      "numerator": 11,
+      "denominator": 12,
+      "value": 0.916667,
+      "wilson_95": [
+        0.64612,
+        0.985135
+      ]
+    },
+    "flagged_undecided": {
+      "numerator": 0,
+      "denominator": 7,
+      "value": 0.0,
+      "wilson_95": [
+        0.0,
+        0.35433
+      ]
+    }
+  },
+  "proofs": {
+    "receipts": {
+      "numerator": 0,
+      "denominator": 12,
+      "value": 0.0,
+      "wilson_95": [
+        0.0,
+        0.242494
+      ]
+    },
+    "readings_total": 0,
+    "flag_without_active_exception": 0,
+    "correct_flag": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null,
+      "wilson_95": null
+    },
+    "false_flag": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null,
+      "wilson_95": null
+    },
+    "gold_rule_in_proof": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null,
+      "wilson_95": null
+    },
+    "disposition_accuracy_gain": 0,
+    "possible_critical": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null,
+      "wilson_95": null
+    },
+    "possible_critical_receipts": [],
+    "actually_critical": 0,
+    "receipt_ids": []
+  },
+  "classification": {
+    "lines": 17,
+    "accuracy": {
+      "numerator": 15,
+      "denominator": 17,
+      "value": 0.882353,
+      "wilson_95": [
+        0.656636,
+        0.96712
+      ]
+    },
+    "missing_category": {
+      "numerator": 1,
+      "denominator": 17,
+      "value": 0.058824,
+      "wilson_95": [
+        0.01046,
+        0.26982
+      ]
+    },
+    "missing_confidence": {
+      "numerator": 1,
+      "denominator": 17,
+      "value": 0.058824,
+      "wilson_95": [
+        0.01046,
+        0.26982
+      ]
+    },
+    "missing_restricted": {
+      "numerator": 1,
+      "denominator": 17,
+      "value": 0.058824,
+      "wilson_95": [
+        0.01046,
+        0.26982
+      ]
+    },
+    "macro": {
+      "precision": 0.958333,
+      "recall": 0.919643,
+      "f1": 0.923718
+    },
+    "per_category": {
+      "alcohol": {
+        "tp": 2,
+        "fp": 1,
+        "fn": 0,
+        "precision": 0.666667,
+        "recall": 1.0,
+        "f1": 0.8
+      },
+      "computer_accessory": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "food_beverage": {
+        "tp": 6,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.857143,
+        "f1": 0.923077
+      },
+      "gift": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "health_otc": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "other": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.666667
+      },
+      "personal_electronics": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "service_fee": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "restricted": {
+      "tp": 5,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.833333,
+      "recall": 1.0,
+      "f1": 0.909091
+    }
+  },
+  "calibration": {
+    "status": "evaluated",
+    "field": "category",
+    "points": 16,
+    "ece": 0.095,
+    "brier": 0.069075,
+    "bins": [
+      {
+        "low": 0.6,
+        "high": 0.7,
+        "points": 1,
+        "mean_confidence": 0.64,
+        "accuracy": 1.0
+      },
+      {
+        "low": 0.7,
+        "high": 0.8,
+        "points": 1,
+        "mean_confidence": 0.7,
+        "accuracy": 1.0
+      },
+      {
+        "low": 0.9,
+        "high": 1.0,
+        "points": 14,
+        "mean_confidence": 0.99,
+        "accuracy": 0.928571
+      }
+    ]
+  },
+  "secondary_field_accuracy": {
+    "status": "not_evaluated",
+    "reason": "the answers hold no recipient_type, venue_type, item_kind or essential_toiletry"
+  },
+  "breakdowns": {
+    "line_confidence": {
+      "0.5_to_0.7": {
+        "lines": 1,
+        "category_correct": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        }
+      },
+      "0.7_to_0.9": {
+        "lines": 1,
+        "category_correct": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        }
+      },
+      "0.9_to_1": {
+        "lines": 14,
+        "category_correct": {
+          "numerator": 13,
+          "denominator": 14,
+          "value": 0.928571,
+          "wilson_95": [
+            0.685313,
+            0.987278
+          ]
+        }
+      },
+      "missing": {
+        "lines": 1,
+        "category_correct": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        }
+      }
+    },
+    "receipt_lowest_confidence": {
+      "0.5_to_0.7": {
+        "receipts": 1,
+        "accuracy": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "abstention": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "decided": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "rules": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "0.7_to_0.9": {
+        "receipts": 1,
+        "accuracy": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "abstention": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "decided": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "rules": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "0.9_to_1": {
+        "receipts": 9,
+        "accuracy": {
+          "numerator": 8,
+          "denominator": 9,
+          "value": 0.888889,
+          "wilson_95": [
+            0.565,
+            0.980109
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 6,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.390334
+          ]
+        },
+        "false_flag": {
+          "numerator": 1,
+          "denominator": 4,
+          "value": 0.25,
+          "wilson_95": [
+            0.045587,
+            0.699358
+          ]
+        },
+        "abstention": {
+          "numerator": 0,
+          "denominator": 9,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.299145
+          ]
+        },
+        "decided": {
+          "numerator": 9,
+          "denominator": 9,
+          "value": 1.0,
+          "wilson_95": [
+            0.700855,
+            1.0
+          ]
+        },
+        "rules": {
+          "tp": 7,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.875,
+          "recall": 1.0,
+          "f1": 0.933333
+        }
+      },
+      "missing": {
+        "receipts": 1,
+        "accuracy": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "abstention": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "decided": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "rules": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      }
+    },
+    "missing_field": {
+      "category:missing": {
+        "lines": 1,
+        "receipts": 1,
+        "accuracy": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "abstention": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "decided": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "rules": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      }
+    },
+    "expense_type": {
+      "Client Entertainment": {
+        "receipts": 2,
+        "accuracy": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5,
+          "wilson_95": [
+            0.094531,
+            0.905469
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 2,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.65762
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "abstention": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5,
+          "wilson_95": [
+            0.094531,
+            0.905469
+          ]
+        },
+        "decided": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5,
+          "wilson_95": [
+            0.094531,
+            0.905469
+          ]
+        },
+        "rules": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.5,
+          "recall": 0.5,
+          "f1": 0.5
+        }
+      },
+      "Client Gifts": {
+        "receipts": 2,
+        "accuracy": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "abstention": {
+          "numerator": 0,
+          "denominator": 2,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.65762
+          ]
+        },
+        "decided": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "rules": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "Computer Equipment": {
+        "receipts": 1,
+        "accuracy": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "abstention": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "decided": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "rules": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "Meals - Individual": {
+        "receipts": 3,
+        "accuracy": {
+          "numerator": 3,
+          "denominator": 3,
+          "value": 1.0,
+          "wilson_95": [
+            0.438503,
+            1.0
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 2,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.65762
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "abstention": {
+          "numerator": 0,
+          "denominator": 3,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.561497
+          ]
+        },
+        "decided": {
+          "numerator": 3,
+          "denominator": 3,
+          "value": 1.0,
+          "wilson_95": [
+            0.438503,
+            1.0
+          ]
+        },
+        "rules": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "Meals - Team": {
+        "receipts": 1,
+        "accuracy": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "false_flag": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "abstention": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "decided": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "rules": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0
+        }
+      },
+      "Office Supplies": {
+        "receipts": 1,
+        "accuracy": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "wilson_95": null
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "abstention": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "decided": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "rules": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "Travel - Other": {
+        "receipts": 2,
+        "accuracy": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 2,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.65762
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "abstention": {
+          "numerator": 0,
+          "denominator": 2,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.65762
+          ]
+        },
+        "decided": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "rules": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      }
+    },
+    "rule_family": {
+      "ALC": {
+        "tp": 1,
+        "fp": 1,
+        "fn": 0,
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.666667
+      },
+      "ENT": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 1,
+        "precision": null,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "EXC": {
+        "tp": 0,
+        "fp": 1,
+        "fn": 0,
+        "precision": 0.0,
+        "recall": null,
+        "f1": 0.0
+      },
+      "GIFT": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "HEALTH": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "MCC": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "REG": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "TECH": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    }
+  },
+  "receipts": [
+    {
+      "receipt_id": "RBX-001",
+      "expense_type": "Meals - Team",
+      "disposition": "flag",
+      "gold_disposition": "pass",
+      "decided": true,
+      "reason_codes": [
+        "exception_flags"
+      ],
+      "exceptions": {
+        "ALC-01": {
+          "line_ids": [
+            "RBX-001-L1"
+          ],
+          "severity": "high",
+          "policy_doc": "meals-and-entertainment-policy.md"
+        }
+      },
+      "gold_exceptions": {},
+      "signals": [],
+      "gold_signals": [],
+      "monetary": {
+        "contract_version": 1,
+        "fx_rate": "reconciled",
+        "line_arithmetic": "reconciled",
+        "line_conversion": "reconciled",
+        "total_conversion": "reconciled",
+        "line_sum": "reconciled",
+        "line_sum_discrepancy": null,
+        "unsupported": []
+      },
+      "uncertain": false,
+      "uncertainty": [],
+      "unresolved": [],
+      "open": [],
+      "audit": [],
+      "proof": null
+    },
+    {
+      "receipt_id": "RBX-002",
+      "expense_type": "Meals - Individual",
+      "disposition": "flag",
+      "gold_disposition": "flag",
+      "decided": true,
+      "reason_codes": [
+        "exception_flags"
+      ],
+      "exceptions": {
+        "ALC-01": {
+          "line_ids": [
+            "RBX-002-L1"
+          ],
+          "severity": "high",
+          "policy_doc": "meals-and-entertainment-policy.md"
+        }
+      },
+      "gold_exceptions": {
+        "ALC-01": {
+          "line_ids": [
+            "RBX-002-L1"
+          ],
+          "severity": "high"
+        }
+      },
+      "signals": [],
+      "gold_signals": [],
+      "monetary": {
+        "contract_version": 1,
+        "fx_rate": "reconciled",
+        "line_arithmetic": "reconciled",
+        "line_conversion": "reconciled",
+        "total_conversion": "reconciled",
+        "line_sum": "reconciled",
+        "line_sum_discrepancy": null,
+        "unsupported": []
+      },
+      "uncertain": false,
+      "uncertainty": [],
+      "unresolved": [],
+      "open": [],
+      "audit": [],
+      "proof": null
+    },
+    {
+      "receipt_id": "RBX-003",
+      "expense_type": "Computer Equipment",
+      "disposition": "flag",
+      "gold_disposition": "flag",
+      "decided": true,
+      "reason_codes": [
+        "exception_flags",
+        "review_signal"
+      ],
+      "exceptions": {
+        "TECH-01": {
+          "line_ids": [
+            "RBX-003-L1"
+          ],
+          "severity": "high",
+          "policy_doc": "technology-and-equipment-policy.md"
+        }
+      },
+      "gold_exceptions": {
+        "TECH-01": {
+          "line_ids": [
+            "RBX-003-L1"
+          ],
+          "severity": "high"
+        }
+      },
+      "signals": [
+        "MCC-02"
+      ],
+      "gold_signals": [
+        "MCC-02"
+      ],
+      "monetary": {
+        "contract_version": 1,
+        "fx_rate": "reconciled",
+        "line_arithmetic": "reconciled",
+        "line_conversion": "reconciled",
+        "total_conversion": "reconciled",
+        "line_sum": "reconciled",
+        "line_sum_discrepancy": null,
+        "unsupported": []
+      },
+      "uncertain": false,
+      "uncertainty": [],
+      "unresolved": [],
+      "open": [],
+      "audit": [],
+      "proof": null
+    },
+    {
+      "receipt_id": "RBX-004",
+      "expense_type": "Office Supplies",
+      "disposition": "pass",
+      "gold_disposition": "pass",
+      "decided": true,
+      "reason_codes": [
+        "nothing_found"
+      ],
+      "exceptions": {},
+      "gold_exceptions": {},
+      "signals": [],
+      "gold_signals": [],
+      "monetary": {
+        "contract_version": 1,
+        "fx_rate": "reconciled",
+        "line_arithmetic": "reconciled",
+        "line_conversion": "reconciled",
+        "total_conversion": "reconciled",
+        "line_sum": "reconciled",
+        "line_sum_discrepancy": null,
+        "unsupported": []
+      },
+      "uncertain": false,
+      "uncertainty": [],
+      "unresolved": [],
+      "open": [],
+      "audit": [],
+      "proof": null
+    },
+    {
+      "receipt_id": "RBX-005",
+      "expense_type": "Client Entertainment",
+      "disposition": "flag",
+      "gold_disposition": "flag",
+      "decided": true,
+      "reason_codes": [
+        "exception_flags"
+      ],
+      "exceptions": {
+        "GIFT-04": {
+          "line_ids": [
+            "RBX-005-L1"
+          ],
+          "severity": "critical",
+          "policy_doc": "gifts-and-awards-policy.md"
+        }
+      },
+      "gold_exceptions": {
+        "GIFT-04": {
+          "line_ids": [
+            "RBX-005-L1"
+          ],
+          "severity": "critical"
+        }
+      },
+      "signals": [],
+      "gold_signals": [],
+      "monetary": {
+        "contract_version": 1,
+        "fx_rate": "reconciled",
+        "line_arithmetic": "reconciled",
+        "line_conversion": "reconciled",
+        "total_conversion": "reconciled",
+        "line_sum": "reconciled",
+        "line_sum_discrepancy": null,
+        "unsupported": []
+      },
+      "uncertain": false,
+      "uncertainty": [],
+      "unresolved": [],
+      "open": [],
+      "audit": [],
+      "proof": null
+    },
+    {
+      "receipt_id": "RBX-006",
+      "expense_type": "Client Gifts",
+      "disposition": "pass",
+      "gold_disposition": "pass",
+      "decided": true,
+      "reason_codes": [
+        "nothing_found"
+      ],
+      "exceptions": {},
+      "gold_exceptions": {},
+      "signals": [],
+      "gold_signals": [],
+      "monetary": {
+        "contract_version": 1,
+        "fx_rate": "reconciled",
+        "line_arithmetic": "reconciled",
+        "line_conversion": "reconciled",
+        "total_conversion": "reconciled",
+        "line_sum": "reconciled",
+        "line_sum_discrepancy": null,
+        "unsupported": []
+      },
+      "uncertain": false,
+      "uncertainty": [],
+      "unresolved": [],
+      "open": [],
+      "audit": [],
+      "proof": null
+    },
+    {
+      "receipt_id": "RBX-007",
+      "expense_type": "Travel - Other",
+      "disposition": "review",
+      "gold_disposition": "review",
+      "decided": true,
+      "reason_codes": [
+        "review_signal"
+      ],
+      "exceptions": {},
+      "gold_exceptions": {},
+      "signals": [
+        "MCC-02"
+      ],
+      "gold_signals": [
+        "MCC-02"
+      ],
+      "monetary": {
+        "contract_version": 1,
+        "fx_rate": "reconciled",
+        "line_arithmetic": "reconciled",
+        "line_conversion": "reconciled",
+        "total_conversion": "reconciled",
+        "line_sum": "reconciled",
+        "line_sum_discrepancy": null,
+        "unsupported": []
+      },
+      "uncertain": false,
+      "uncertainty": [],
+      "unresolved": [],
+      "open": [],
+      "audit": [],
+      "proof": null
+    },
+    {
+      "receipt_id": "RBX-008",
+      "expense_type": "Travel - Other",
+      "disposition": "flag",
+      "gold_disposition": "flag",
+      "decided": true,
+      "reason_codes": [
+        "exception_flags",
+        "review_signal"
+      ],
+      "exceptions": {
+        "HEALTH-01": {
+          "line_ids": [
+            "RBX-008-L1"
+          ],
+          "severity": "medium",
+          "policy_doc": "non-reimbursable-items.md"
+        }
+      },
+      "gold_exceptions": {
+        "HEALTH-01": {
+          "line_ids": [
+            "RBX-008-L1"
+          ],
+          "severity": "medium"
+        }
+      },
+      "signals": [
+        "MCC-02"
+      ],
+      "gold_signals": [
+        "MCC-02"
+      ],
+      "monetary": {
+        "contract_version": 1,
+        "fx_rate": "reconciled",
+        "line_arithmetic": "reconciled",
+        "line_conversion": "reconciled",
+        "total_conversion": "reconciled",
+        "line_sum": "reconciled",
+        "line_sum_discrepancy": null,
+        "unsupported": []
+      },
+      "uncertain": false,
+      "uncertainty": [],
+      "unresolved": [],
+      "open": [],
+      "audit": [],
+      "proof": null
+    },
+    {
+      "receipt_id": "RBX-009",
+      "expense_type": "Client Entertainment",
+      "disposition": "review",
+      "gold_disposition": "flag",
+      "decided": false,
+      "reason_codes": [
+        "incomplete_evidence",
+        "uncertainty"
+      ],
+      "exceptions": {},
+      "gold_exceptions": {
+        "ENT-01": {
+          "line_ids": [
+            "RBX-009-L1"
+          ],
+          "severity": "medium"
+        }
+      },
+      "signals": [],
+      "gold_signals": [],
+      "monetary": {
+        "contract_version": 1,
+        "fx_rate": "reconciled",
+        "line_arithmetic": "reconciled",
+        "line_conversion": "reconciled",
+        "total_conversion": "reconciled",
+        "line_sum": "reconciled",
+        "line_sum_discrepancy": null,
+        "unsupported": []
+      },
+      "uncertain": true,
+      "uncertainty": [
+        {
+          "line_id": "RBX-009-L1",
+          "field": "category",
+          "state": "missing",
+          "reason": "category_uncertain"
+        }
+      ],
+      "unresolved": [],
+      "open": [
+        "ALC-03",
+        "DOC-03",
+        "ENT-02",
+        "GIFT-02",
+        "GIFT-03",
+        "HEALTH-01",
+        "HOUSE-01",
+        "LAUNDRY-01",
+        "MEAL-01",
+        "MEAL-02",
+        "PERS-01",
+        "PERS-02",
+        "PERS-03",
+        "TECH-01",
+        "TECH-02",
+        "TECH-04"
+      ],
+      "audit": [],
+      "proof": null
+    },
+    {
+      "receipt_id": "RBX-010",
+      "expense_type": "Meals - Individual",
+      "disposition": "flag",
+      "gold_disposition": "flag",
+      "decided": true,
+      "reason_codes": [
+        "exception_flags"
+      ],
+      "exceptions": {
+        "REG-01": {
+          "line_ids": [
+            "RBX-010-L1"
+          ],
+          "severity": "high",
+          "policy_doc": "regional-addendum.md"
+        }
+      },
+      "gold_exceptions": {
+        "REG-01": {
+          "line_ids": [
+            "RBX-010-L1"
+          ],
+          "severity": "high"
+        }
+      },
+      "signals": [],
+      "gold_signals": [],
+      "monetary": {
+        "contract_version": 1,
+        "fx_rate": "reconciled",
+        "line_arithmetic": "reconciled",
+        "line_conversion": "reconciled",
+        "total_conversion": "reconciled",
+        "line_sum": "reconciled",
+        "line_sum_discrepancy": null,
+        "unsupported": []
+      },
+      "uncertain": false,
+      "uncertainty": [],
+      "unresolved": [],
+      "open": [],
+      "audit": [
+        {
+          "rule_id": "ALC-01",
+          "resolution": "replaced",
+          "line_ids": [
+            "RBX-010-L1"
+          ]
+        }
+      ],
+      "proof": null
+    },
+    {
+      "receipt_id": "RBX-011",
+      "expense_type": "Meals - Individual",
+      "disposition": "pass",
+      "gold_disposition": "pass",
+      "decided": true,
+      "reason_codes": [
+        "nothing_found"
+      ],
+      "exceptions": {},
+      "gold_exceptions": {},
+      "signals": [],
+      "gold_signals": [],
+      "monetary": {
+        "contract_version": 1,
+        "fx_rate": "reconciled",
+        "line_arithmetic": "reconciled",
+        "line_conversion": "reconciled",
+        "total_conversion": "reconciled",
+        "line_sum": "reconciled",
+        "line_sum_discrepancy": null,
+        "unsupported": []
+      },
+      "uncertain": false,
+      "uncertainty": [],
+      "unresolved": [],
+      "open": [],
+      "audit": [],
+      "proof": null
+    },
+    {
+      "receipt_id": "RBX-012",
+      "expense_type": "Client Gifts",
+      "disposition": "flag",
+      "gold_disposition": "flag",
+      "decided": true,
+      "reason_codes": [
+        "exception_flags"
+      ],
+      "exceptions": {
+        "GIFT-04": {
+          "line_ids": [
+            "RBX-012-L1"
+          ],
+          "severity": "critical",
+          "policy_doc": "gifts-and-awards-policy.md"
+        }
+      },
+      "gold_exceptions": {
+        "GIFT-04": {
+          "line_ids": [
+            "RBX-012-L1"
+          ],
+          "severity": "critical"
+        }
+      },
+      "signals": [],
+      "gold_signals": [],
+      "monetary": {
+        "contract_version": 1,
+        "fx_rate": "reconciled",
+        "line_arithmetic": "reconciled",
+        "line_conversion": "reconciled",
+        "total_conversion": "reconciled",
+        "line_sum": "reconciled",
+        "line_sum_discrepancy": null,
+        "unsupported": []
+      },
+      "uncertain": false,
+      "uncertainty": [],
+      "unresolved": [],
+      "open": [],
+      "audit": [
+        {
+          "rule_id": "GIFT-01",
+          "resolution": "replaced",
+          "line_ids": [
+            "RBX-012-L1"
+          ]
+        }
+      ],
+      "proof": null
+    }
+  ]
+}

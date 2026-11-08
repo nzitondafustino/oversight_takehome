@@ -1,0 +1,8 @@
+{
+  "policy_doc": "approval-and-exception-handling.md",
+  "document_sha256": "94de7aed26ad781ce50f80560bb0e54c81b0df6598e2ea1b676bc044ec2d858c",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "model",
+  "origin": "{\"provider\": \"openrouter\", \"url\": \"https://openrouter.ai/api/v1/chat/completions\", \"model\": \"anthropic/claude-haiku-5.5\", \"temperature\": 0.0, \"recorded_at\": \"2026-11-06T06:13:57+00:00\"}",
+  "response": "{\"rules\": [{\"rule_id\":\"EXC-01\",\"title\":\"Receipt disposition\",\"section\":\"Disposition\",\"severities\":[\"critical\",\"high\",\"medium\",\"low\"],\"review_signal\":false,\"thresholds\":[],\"references\":[],\"quote\":\"Disposition is computed, not judged.\"},{\"rule_id\":\"EXC-02\",\"title\":\"Approval references\",\"section\":\"Disposition\",\"severities\":[],\"review_signal\":false,\"thresholds\":[],\"references\":[\"TECH-02\",\"ENT-01\",\"TECH-04\",\"PERS-01\",\"PERS-02\"],\"quote\":\"A reference does not waive any other rule.\"},{\"rule_id\":\"EXC-03\",\"title\":\"Uncertainty\",\"section\":\"Disposition\",\"severities\":[],\"review_signal\":true,\"thresholds\":[],\"references\":[],\"quote\":\"Where the category of an item cannot be determined with sufficient confidence\"},{\"rule_id\":\"EXC-04\",\"title\":\"Evidence\",\"section\":\"Disposition\",\"severities\":[],\"review_signal\":false,\"thresholds\":[],\"references\":[\"MCC-01\",\"MEAL-01\",\"MEAL-02\",\"DOC-01\",\"DOC-02\",\"DOC-03\",\"DOC-04\",\"REG-02\",\"REG-03\",\"REG-04\",\"TIME-03\"],\"quote\":\"An exception that cannot name its evidence must not be raised.\"}]}"
+}

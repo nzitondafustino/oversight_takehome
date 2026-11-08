@@ -1,8 +1,4 @@
-"""Reusable policy configuration; each evaluation uses the existing functional pipeline.
-
-Only configuration belongs to an engine. Customer contexts, receipts and results stay local
-to evaluate_receipts, so reusing an engine cannot carry them into a later evaluation.
-"""
+"""A reusable, immutable ruleset and catalog snapshot that evaluates each run in a fresh context."""
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
@@ -16,7 +12,7 @@ from expense_validator.policy.schema import RuleSet
 
 
 def _freeze(value: object) -> object:
-    """Snapshot catalog containers; reject values outside its scalar/list/mapping format."""
+    """Snapshot catalog containers, refusing unsupported value types."""
     if isinstance(value, Mapping):
         if any(type(key) is not str for key in value):
             raise ValueError("field catalog mapping keys must be strings")
@@ -30,15 +26,7 @@ def _freeze(value: object) -> object:
 
 @dataclass(frozen=True, slots=True, eq=False)
 class PolicyEngine:
-    """An immutable ruleset/catalog snapshot, safe to reuse for separate customer runs.
-
-    Construct a new engine to use new policy configuration. As with evaluate_receipts,
-    customer_id scopes a run; the caller must establish ownership of its receipts.
-
-    Construction validates runtime compatibility from these inputs alone. Source-policy
-    agreement remains the compiler's job. The catalog accepts mappings, sequences and
-    immutable scalars; unsupported objects are rejected rather than retained by reference.
-    """
+    """An immutable ruleset and catalog snapshot, safe to reuse across calls."""
 
     ruleset: RuleSet
     fields: Mapping[str, Mapping[str, object]]
@@ -56,10 +44,9 @@ class PolicyEngine:
 
     def evaluate(
         self,
-        customer_id: str,
         receipts: Iterable[Receipt | Mapping[str, object]],
         *,
-        complete: bool,
+        complete: bool = True,
     ) -> evaluation.EvaluationRun:
-        """Evaluate one customer's receipts in a fresh context, without retaining the run."""
-        return evaluation.evaluate_receipts(customer_id, receipts, self.ruleset, self.fields, complete=complete)
+        """Evaluate receipts together in a fresh context."""
+        return evaluation.evaluate_receipts(receipts, self.ruleset, self.fields, complete=complete)

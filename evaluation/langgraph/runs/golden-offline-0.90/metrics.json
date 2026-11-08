@@ -1,0 +1,603 @@
+{
+  "threshold": 0.9,
+  "golden": {
+    "direct-jev": {
+      "model": "typesafe/jev-1.14",
+      "category_accuracy": {
+        "denominator": 79,
+        "numerator": 78,
+        "value": 0.987342,
+        "wilson_95": [
+          0.931724,
+          0.997762
+        ]
+      },
+      "macro_f1": 0.997494,
+      "rejected_lines": [
+        "RCP-017-L2"
+      ],
+      "routing": {
+        "lines": 79,
+        "answered_by": {},
+        "fallback": {
+          "numerator": 0,
+          "denominator": 79,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.046371
+          ]
+        },
+        "results": {},
+        "extra_backend_calls": 0,
+        "routed_for": {}
+      },
+      "routed_lines": {},
+      "dispositions_right": {
+        "denominator": 32,
+        "numerator": 32,
+        "value": 1.0,
+        "wilson_95": [
+          0.892821,
+          1.0
+        ]
+      },
+      "false_flag": {
+        "denominator": 14,
+        "numerator": 0,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.215311
+        ]
+      },
+      "false_pass": {
+        "denominator": 23,
+        "numerator": 0,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.143117
+        ]
+      },
+      "decided": {
+        "denominator": 32,
+        "numerator": 30,
+        "value": 0.9375,
+        "wilson_95": [
+          0.798529,
+          0.982689
+        ]
+      },
+      "silent_misses": 0,
+      "unresolved_findings": 0,
+      "open_questions": 15,
+      "rules_strict": {
+        "tp": 36,
+        "fp": 2,
+        "fn": 1,
+        "precision": 0.947368,
+        "recall": 0.972973,
+        "f1": 0.96
+      },
+      "rules_excluding_exc_03": {
+        "tp": 36,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.972973,
+        "f1": 0.986301
+      },
+      "rules_with_errors": {
+        "DOC-03": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 1
+        },
+        "EXC-03": {
+          "tp": 0,
+          "fp": 2,
+          "fn": 0
+        }
+      }
+    },
+    "direct-llm": {
+      "model": "anthropic/claude-haiku-5.5",
+      "category_accuracy": {
+        "denominator": 79,
+        "numerator": 79,
+        "value": 1.0,
+        "wilson_95": [
+          0.953629,
+          1.0
+        ]
+      },
+      "macro_f1": 1.0,
+      "rejected_lines": [],
+      "routing": {
+        "lines": 79,
+        "answered_by": {},
+        "fallback": {
+          "numerator": 0,
+          "denominator": 79,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.046371
+          ]
+        },
+        "results": {},
+        "extra_backend_calls": 0,
+        "routed_for": {}
+      },
+      "routed_lines": {},
+      "dispositions_right": {
+        "denominator": 32,
+        "numerator": 32,
+        "value": 1.0,
+        "wilson_95": [
+          0.892821,
+          1.0
+        ]
+      },
+      "false_flag": {
+        "denominator": 14,
+        "numerator": 0,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.215311
+        ]
+      },
+      "false_pass": {
+        "denominator": 23,
+        "numerator": 0,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.143117
+        ]
+      },
+      "decided": {
+        "denominator": 32,
+        "numerator": 31,
+        "value": 0.96875,
+        "wilson_95": [
+          0.842557,
+          0.994462
+        ]
+      },
+      "silent_misses": 0,
+      "unresolved_findings": 0,
+      "open_questions": 1,
+      "rules_strict": {
+        "tp": 37,
+        "fp": 1,
+        "fn": 0,
+        "precision": 0.973684,
+        "recall": 1.0,
+        "f1": 0.986667
+      },
+      "rules_excluding_exc_03": {
+        "tp": 37,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "rules_with_errors": {
+        "EXC-03": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0
+        }
+      }
+    },
+    "langgraph-jev-first": {
+      "model": "primary=jev:typesafe/jev-1.14, fallback=openrouter:anthropic/claude-haiku-5.5",
+      "category_accuracy": {
+        "denominator": 79,
+        "numerator": 79,
+        "value": 1.0,
+        "wilson_95": [
+          0.953629,
+          1.0
+        ]
+      },
+      "macro_f1": 1.0,
+      "rejected_lines": [],
+      "routing": {
+        "lines": 79,
+        "answered_by": {
+          "fallback": 2,
+          "primary": 77
+        },
+        "fallback": {
+          "numerator": 2,
+          "denominator": 79,
+          "value": 0.025316,
+          "wilson_95": [
+            0.00697,
+            0.087686
+          ]
+        },
+        "results": {
+          "accepted": 78,
+          "exhausted": 1
+        },
+        "extra_backend_calls": 2,
+        "routed_for": {
+          "error": 1,
+          "low_confidence": 1
+        }
+      },
+      "routed_lines": {
+        "RCP-005-L3": [
+          [
+            "primary",
+            "low_confidence",
+            0.81
+          ],
+          [
+            "fallback",
+            "low_confidence",
+            0.7
+          ]
+        ],
+        "RCP-017-L2": [
+          [
+            "primary",
+            "error",
+            null
+          ],
+          [
+            "fallback",
+            "accepted",
+            0.9
+          ]
+        ]
+      },
+      "dispositions_right": {
+        "denominator": 32,
+        "numerator": 32,
+        "value": 1.0,
+        "wilson_95": [
+          0.892821,
+          1.0
+        ]
+      },
+      "false_flag": {
+        "denominator": 14,
+        "numerator": 0,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.215311
+        ]
+      },
+      "false_pass": {
+        "denominator": 23,
+        "numerator": 0,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.143117
+        ]
+      },
+      "decided": {
+        "denominator": 32,
+        "numerator": 31,
+        "value": 0.96875,
+        "wilson_95": [
+          0.842557,
+          0.994462
+        ]
+      },
+      "silent_misses": 0,
+      "unresolved_findings": 0,
+      "open_questions": 1,
+      "rules_strict": {
+        "tp": 37,
+        "fp": 1,
+        "fn": 0,
+        "precision": 0.973684,
+        "recall": 1.0,
+        "f1": 0.986667
+      },
+      "rules_excluding_exc_03": {
+        "tp": 37,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "rules_with_errors": {
+        "EXC-03": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0
+        }
+      }
+    },
+    "langgraph-llm-first": {
+      "model": "primary=openrouter:anthropic/claude-haiku-5.5, fallback=jev:typesafe/jev-1.14",
+      "category_accuracy": {
+        "denominator": 79,
+        "numerator": 79,
+        "value": 1.0,
+        "wilson_95": [
+          0.953629,
+          1.0
+        ]
+      },
+      "macro_f1": 1.0,
+      "rejected_lines": [],
+      "routing": {
+        "lines": 79,
+        "answered_by": {
+          "fallback": 3,
+          "primary": 76
+        },
+        "fallback": {
+          "numerator": 3,
+          "denominator": 79,
+          "value": 0.037975,
+          "wilson_95": [
+            0.012998,
+            0.105801
+          ]
+        },
+        "results": {
+          "accepted": 78,
+          "exhausted": 1
+        },
+        "extra_backend_calls": 3,
+        "routed_for": {
+          "low_confidence": 3
+        }
+      },
+      "routed_lines": {
+        "RCP-004-L2": [
+          [
+            "primary",
+            "low_confidence",
+            0.7
+          ],
+          [
+            "fallback",
+            "accepted",
+            0.9
+          ]
+        ],
+        "RCP-005-L3": [
+          [
+            "primary",
+            "low_confidence",
+            0.7
+          ],
+          [
+            "fallback",
+            "low_confidence",
+            0.81
+          ]
+        ],
+        "RCP-023-L1": [
+          [
+            "primary",
+            "low_confidence",
+            0.1
+          ],
+          [
+            "fallback",
+            "accepted",
+            0.92
+          ]
+        ]
+      },
+      "dispositions_right": {
+        "denominator": 32,
+        "numerator": 32,
+        "value": 1.0,
+        "wilson_95": [
+          0.892821,
+          1.0
+        ]
+      },
+      "false_flag": {
+        "denominator": 14,
+        "numerator": 0,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.215311
+        ]
+      },
+      "false_pass": {
+        "denominator": 23,
+        "numerator": 0,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.143117
+        ]
+      },
+      "decided": {
+        "denominator": 32,
+        "numerator": 31,
+        "value": 0.96875,
+        "wilson_95": [
+          0.842557,
+          0.994462
+        ]
+      },
+      "silent_misses": 0,
+      "unresolved_findings": 0,
+      "open_questions": 1,
+      "rules_strict": {
+        "tp": 37,
+        "fp": 1,
+        "fn": 0,
+        "precision": 0.973684,
+        "recall": 1.0,
+        "f1": 0.986667
+      },
+      "rules_excluding_exc_03": {
+        "tp": 37,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "rules_with_errors": {
+        "EXC-03": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0
+        }
+      }
+    }
+  },
+  "robustness_coverage": {
+    "isolated_lines": {
+      "lines": 60,
+      "jev_recorded": 60,
+      "llm_recorded_at_current_keys": 0,
+      "jev_first_lines_needing_llm": 17,
+      "llm_first_lines_needing_llm": 60,
+      "needing": [
+        {
+          "line_id": "RB-002",
+          "jev": "low_confidence",
+          "jev_confidence": 0.83,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-009",
+          "jev": "low_confidence",
+          "jev_confidence": 0.68,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-011",
+          "jev": "low_confidence",
+          "jev_confidence": 0.5,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-012",
+          "jev": "low_confidence",
+          "jev_confidence": 0.61,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-017",
+          "jev": "low_confidence",
+          "jev_confidence": 0.75,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-018",
+          "jev": "low_confidence",
+          "jev_confidence": 0.74,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-019",
+          "jev": "low_confidence",
+          "jev_confidence": 0.52,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-025",
+          "jev": "low_confidence",
+          "jev_confidence": 0.57,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-029",
+          "jev": "low_confidence",
+          "jev_confidence": 0.72,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-032",
+          "jev": "low_confidence",
+          "jev_confidence": 0.66,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-034",
+          "jev": "low_confidence",
+          "jev_confidence": 0.72,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-038",
+          "jev": "low_confidence",
+          "jev_confidence": 0.75,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-046",
+          "jev": "error",
+          "jev_confidence": null,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-047",
+          "jev": "error",
+          "jev_confidence": null,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-048",
+          "jev": "low_confidence",
+          "jev_confidence": 0.63,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-051",
+          "jev": "low_confidence",
+          "jev_confidence": 0.51,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RB-052",
+          "jev": "low_confidence",
+          "jev_confidence": 0.61,
+          "llm": "missing_recording"
+        }
+      ]
+    },
+    "receipts": {
+      "lines": 17,
+      "jev_recorded": 17,
+      "llm_recorded_at_current_keys": 0,
+      "jev_first_lines_needing_llm": 3,
+      "llm_first_lines_needing_llm": 17,
+      "needing": [
+        {
+          "line_id": "RBX-008-L1",
+          "jev": "low_confidence",
+          "jev_confidence": 0.7,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RBX-009-L1",
+          "jev": "error",
+          "jev_confidence": null,
+          "llm": "missing_recording"
+        },
+        {
+          "line_id": "RBX-011-L1",
+          "jev": "low_confidence",
+          "jev_confidence": 0.64,
+          "llm": "missing_recording"
+        }
+      ]
+    }
+  }
+}

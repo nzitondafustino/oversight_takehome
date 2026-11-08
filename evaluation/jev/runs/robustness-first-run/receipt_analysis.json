@@ -1,0 +1,1022 @@
+[
+  {
+    "id": "RBX-001-L1",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "alcohol",
+    "final_category": "alcohol",
+    "selected_p": 0.94,
+    "jev_confidence": 0.94,
+    "top3": [
+      [
+        "alcohol",
+        0.94
+      ],
+      [
+        "food_beverage",
+        0.06
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": false,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-001-L2",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "food_beverage",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-002-L1",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "alcohol",
+    "acceptable": [
+      "alcohol"
+    ],
+    "jev_category": "alcohol",
+    "final_category": "alcohol",
+    "selected_p": 0.99,
+    "jev_confidence": 0.99,
+    "top3": [
+      [
+        "alcohol",
+        0.99
+      ],
+      [
+        "food_beverage",
+        0.01
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-002-L2",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "food_beverage",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-003-L1",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "personal_electronics",
+    "acceptable": [
+      "personal_electronics"
+    ],
+    "jev_category": "personal_electronics",
+    "final_category": "personal_electronics",
+    "selected_p": 0.97,
+    "jev_confidence": 0.97,
+    "top3": [
+      [
+        "personal_electronics",
+        0.97
+      ],
+      [
+        "computer_accessory",
+        0.02
+      ],
+      [
+        "other",
+        0.01
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.99,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-004-L1",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "computer_accessory",
+    "acceptable": [
+      "computer_accessory"
+    ],
+    "jev_category": "computer_accessory",
+    "final_category": "computer_accessory",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "computer_accessory",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-005-L1",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 0.99,
+    "jev_confidence": 0.99,
+    "top3": [
+      [
+        "food_beverage",
+        0.99
+      ],
+      [
+        "other",
+        0.01
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "government_official",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-005-L2",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "service_fee",
+    "acceptable": [
+      "service_fee"
+    ],
+    "jev_category": "service_fee",
+    "final_category": "service_fee",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "service_fee",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.99,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-006-L1",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "gift",
+    "acceptable": [
+      "gift"
+    ],
+    "jev_category": "gift",
+    "final_category": "gift",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "gift",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "client",
+        "p": 0.98,
+        "jev_confidence": 0.97,
+        "not_stated_p": 0.02,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-007-L1",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "health_otc",
+    "acceptable": [
+      "health_otc"
+    ],
+    "jev_category": "health_otc",
+    "final_category": "health_otc",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "health_otc",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "otc_medication",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.01,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.98,
+        "not_stated_p": 0.99,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-008-L1",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "other",
+    "acceptable": [
+      "other"
+    ],
+    "jev_category": "other",
+    "final_category": "other",
+    "selected_p": 0.7,
+    "jev_confidence": 0.68,
+    "top3": [
+      [
+        "other",
+        0.7
+      ],
+      [
+        "health_otc",
+        0.3
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "prescription_medication",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 0.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-009-L1",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "other",
+    "acceptable": [
+      "other"
+    ],
+    "jev_category": "airfare",
+    "final_category": null,
+    "selected_p": 0.92,
+    "jev_confidence": 0.92,
+    "top3": [
+      [
+        "airfare",
+        0.92
+      ],
+      [
+        "other",
+        0.07
+      ],
+      [
+        "gift_card",
+        0.01
+      ]
+    ],
+    "category_right": false,
+    "error": "venue_type contradicts category airfare",
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "sporting_event",
+        "p": 0.96,
+        "jev_confidence": 0.95,
+        "not_stated_p": 0.03,
+        "class": "contradictory"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-010-L1",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "alcohol",
+    "acceptable": [
+      "alcohol"
+    ],
+    "jev_category": "alcohol",
+    "final_category": "alcohol",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "alcohol",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "clothing",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-010-L2",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "food_beverage",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-011-L1",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 0.64,
+    "jev_confidence": 0.62,
+    "top3": [
+      [
+        "food_beverage",
+        0.64
+      ],
+      [
+        "alcohol",
+        0.36
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-011-L2",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "food_beverage",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RBX-012-L1",
+    "description": "",
+    "ambiguity": "receipt",
+    "challenges": [],
+    "gold_category": "gift",
+    "acceptable": [
+      "gift"
+    ],
+    "jev_category": "gift",
+    "final_category": "gift",
+    "selected_p": 0.97,
+    "jev_confidence": 0.97,
+    "top3": [
+      [
+        "gift",
+        0.97
+      ],
+      [
+        "food_beverage",
+        0.03
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "government_official",
+        "p": 0.92,
+        "jev_confidence": 0.89,
+        "not_stated_p": 0.02,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  }
+]

@@ -1,20 +1,7 @@
-"""Decides what each carve-out does to the active findings it modifies, after approvals.
+"""Decide whether each carve-out excuses, rejects or leaves undetermined the findings it modifies.
 
-A finding from a rule a carve-out modifies gets one of three decisions, each with its evidence:
-
-    confirmed     every condition is known to hold, so the finding is excused
-    rejected      a condition is known to fail, so the finding stays active
-    undetermined  no condition is known to fail, but one is not known, so it stays active and the
-                  result is not complete
-
-Any other finding is left as it is. Replaced and waived findings stay as they were.
-
-The baggage-delay exception needs its reference, a stated delay of more than the rule's hours, as
-the policy says "more than 24 hours", a line that counts toward the allowance, and a total within
-the allowance. The param is called min_delay_hours, but exactly that many hours does not qualify.
-The delay is never worked out from a reference, a date or a description. Going over the allowance
-excuses nothing, as the policy says the exception then "cites every line involved": no part of a
-line or a total is reimbursed.
+The baggage-delay carve-out needs a reference, a stated delay above the rule's hours, and a total within
+the allowance across the employee's receipts sharing that reference. A missing duration is undetermined.
 """
 
 from collections.abc import Mapping
@@ -36,7 +23,7 @@ from expense_validator.policy.schema import CarveOutRule, RuleSet
 
 @dataclass(frozen=True)
 class CarveOutDecision:
-    """finding is marked waived if confirmed, and otherwise is the active finding as it was."""
+    """A carve-out's decision on one finding, with its evidence."""
 
     finding: Finding
     rule_id: str
@@ -80,7 +67,7 @@ class CarveOutResult:
 def resolve_carveouts(
     receipt: Receipt, approvals: ApprovalResult, ruleset: RuleSet, fields: Mapping[str, dict], context: ReceiptContext
 ) -> CarveOutResult:
-    """approvals must be for this receipt, from a run on this ruleset, with this context."""
+    """Apply carve-outs to the active findings after approvals."""
     if any(finding.receipt_id != receipt.receipt_id for finding in approvals.active):
         raise ValueError(f"{receipt.receipt_id}: has findings for another receipt")
     carveouts = sorted(

@@ -10,7 +10,7 @@ from expense_validator.engine.evaluation import evaluate_receipts
 
 
 def evaluate(receipts, complete):
-    return evaluate_receipts("northwind", receipts, RULESET, FIELDS, complete=complete)
+    return evaluate_receipts(receipts, RULESET, FIELDS, complete=complete)
 
 
 def summary(result):
@@ -53,7 +53,6 @@ def test_every_group_holds_only_its_own_receipt_and_lines(case):
     receipts = {item["receipt_id"]: item for item in case["receipts"]}
     for result in evaluate(case["receipts"], case["complete"]).results:
         own = {line["line_id"] for line in receipts[result.receipt_id]["line_items"]}
-        assert result.customer_id == "northwind"
         for group in result.report.groups:
             assert group.receipt_id == result.receipt_id
             assert set(group.line_ids) <= own

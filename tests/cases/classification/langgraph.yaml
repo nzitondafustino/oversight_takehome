@@ -1,0 +1,464 @@
+suite: classification
+
+# Each override is applied to config.yaml's classification.langgraph, whose backends are
+# [primary, decisions, typesafe/jev-1.14] then [fallback, chat_completions, anthropic/claude-haiku-5.5], with routing
+# min_confidence 0.9 and both fallbacks on. expected is the whole effective configuration.
+langgraph_overrides:
+  - id: no override keeps the configuration
+    override: null
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
+  - id: an empty override keeps the configuration
+    override: {}
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
+  - id: only the threshold changes, and the backends and other routing stay
+    override: {routing: {min_confidence: 0.8}}
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.8, fallback_on_error: true, fallback_on_low_confidence: true}
+  - id: one fallback flag changes alone
+    override: {routing: {fallback_on_low_confidence: false}}
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: false}
+  - id: both fallback flags change and the threshold stays
+    override: {routing: {fallback_on_error: false, fallback_on_low_confidence: false}}
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.9, fallback_on_error: false, fallback_on_low_confidence: false}
+  - id: a backends list replaces the whole list, and routing stays
+    override: {backends: [{name: only, backend: chat_completions, model: anthropic/claude-haiku-5.5}]}
+    expected:
+      backends: [[only, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
+  - id: the order is reversed
+    override: {backends: [{name: primary, backend: chat_completions, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: decisions, model: typesafe/jev-1.14}]}
+    expected:
+      backends: [[primary, chat_completions, anthropic/claude-haiku-5.5], [fallback, decisions, typesafe/jev-1.14]]
+      routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
+  - id: a model changes, given with the whole list
+    override: {backends: [{name: primary, backend: decisions, model: typesafe/jev-1.14}, {name: fallback, backend: chat_completions, model: openai/gpt-5.5-mini}]}
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, openai/gpt-5.5-mini]]
+      routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
+  - id: a full override replaces everything
+    override:
+      backends: [{name: a, backend: chat_completions, model: anthropic/claude-haiku-5.5}, {name: b, backend: decisions, model: typesafe/jev-1.14}]
+      routing: {min_confidence: 0.85, fallback_on_error: true, fallback_on_low_confidence: false}
+    expected:
+      backends: [[a, chat_completions, anthropic/claude-haiku-5.5], [b, decisions, typesafe/jev-1.14]]
+      routing: {min_confidence: 0.85, fallback_on_error: true, fallback_on_low_confidence: false}
+  - id: three backends keep their order
+    override: {backends: [{name: c, backend: decisions, model: typesafe/jev-1.14}, {name: a, backend: chat_completions, model: anthropic/claude-haiku-5.5}, {name: b, backend: chat_completions, model: openai/gpt-5.5-mini}]}
+    expected:
+      backends: [[c, decisions, typesafe/jev-1.14], [a, chat_completions, anthropic/claude-haiku-5.5], [b, chat_completions, openai/gpt-5.5-mini]]
+      routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
+  - id: thresholds at both ends are allowed
+    override: {routing: {min_confidence: 0}}
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.0, fallback_on_error: true, fallback_on_low_confidence: true}
+
+  # Reflection: config.yaml's is off, with reviewer chat_completions anthropic/claude-haiku-5.5, 2 retries and 6 calls.
+  - id: enabling reflection keeps its configured reviewer and budgets
+    override: {reflection: {enabled: true}}
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
+      reflection: {enabled: true, reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}, max_retries: 2, max_total_calls_per_line: 6}
+  - id: one reflection field changes alone
+    override: {reflection: {max_retries: 0}}
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
+      reflection: {enabled: false, reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}, max_retries: 0, max_total_calls_per_line: 6}
+  - id: a reviewer is replaced whole, and the budgets stay
+    override: {reflection: {enabled: true, reviewer: {backend: chat_completions, model: openai/gpt-5.5-mini}, max_total_calls_per_line: 4}}
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
+      reflection: {enabled: true, reviewer: {backend: chat_completions, model: openai/gpt-5.5-mini}, max_retries: 2, max_total_calls_per_line: 4}
+  - id: a routing override leaves reflection as configured
+    override: {routing: {min_confidence: 0.8}}
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.8, fallback_on_error: true, fallback_on_low_confidence: true}
+      reflection: {enabled: false, reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}, max_retries: 2, max_total_calls_per_line: 6}
+
+# Each override goes to validate_batch with classification_backend langgraph, and must be refused. expected is a pattern.
+  # The adapters' earlier names, openrouter and jev, still name the same adapters, and read as their own names.
+  - id: earlier adapter names in an order are read as the adapters
+    override: {backends: [{name: primary, backend: jev, model: typesafe/jev-1.14}, {name: fallback, backend: openrouter, model: anthropic/claude-haiku-5.5}]}
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
+  - id: an earlier adapter name for the reviewer is read as the adapter
+    override: {reflection: {enabled: true, reviewer: {backend: openrouter, model: anthropic/claude-haiku-5.5}}}
+    expected:
+      backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
+      routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
+      reflection: {enabled: true, reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}, max_retries: 2, max_total_calls_per_line: 6}
+
+langgraph_overrides_refused:
+  - {id: an unknown top-level field, override: {retries: 3}, expected: "unknown fields: \\['retries'\\]"}
+  - {id: an unknown routing field, override: {routing: {max_attempts: 2}}, expected: "routing.max_attempts: Extra inputs are not permitted"}
+  - {id: an unknown backend field, override: {backends: [{name: a, backend: decisions, model: typesafe/jev-1.14, temperature: 0}]}, expected: "temperature: Extra inputs are not permitted"}
+  - {id: a threshold above 1, override: {routing: {min_confidence: 1.5}}, expected: "min_confidence: Input should be less than or equal to 1"}
+  - {id: a negative threshold, override: {routing: {min_confidence: -0.1}}, expected: "min_confidence: Input should be greater than or equal to 0"}
+  - {id: a threshold given as text, override: {routing: {min_confidence: '0.8'}}, expected: "min_confidence: Input should be a valid number"}
+  - {id: a threshold given as a flag, override: {routing: {min_confidence: true}}, expected: "min_confidence: Input should be a valid number"}
+  - {id: a null threshold, override: {routing: {min_confidence: null}}, expected: "min_confidence: Input should be a valid number"}
+  - {id: a fallback flag given as text, override: {routing: {fallback_on_error: 'yes'}}, expected: "fallback_on_error: Input should be a valid boolean"}
+  - {id: routing that is not a mapping, override: {routing: 0.8}, expected: "routing must be a mapping"}
+  - {id: an override that is not a mapping, override: [primary], expected: "langgraph_config must be a mapping"}
+  - {id: two backends with one alias, override: {backends: [{name: a, backend: decisions, model: typesafe/jev-1.14}, {name: a, backend: chat_completions, model: anthropic/claude-haiku-5.5}]}, expected: "backend names given more than once: \\['a'\\]"}
+  - {id: an alias with a space, override: {backends: [{name: my primary, backend: decisions, model: typesafe/jev-1.14}]}, expected: "name: String should match pattern"}
+  - {id: langgraph as its own backend, override: {backends: [{name: a, backend: langgraph, model: x}]}, expected: "langgraph cannot be one of its own backends"}
+  - {id: a backend that is not registered, override: {backends: [{name: a, backend: bert, model: x}]}, expected: "langgraph backend a: backend must be chat_completions or decisions, not 'bert'"}
+  - {id: an LLM model for jev, override: {backends: [{name: a, backend: decisions, model: anthropic/claude-haiku-5.5}]}, expected: "langgraph backend a: the decisions adapter needs a Jev classification_model"}
+  - {id: a Jev model for the LLM, override: {backends: [{name: a, backend: chat_completions, model: typesafe/jev-1.14}]}, expected: "langgraph backend a: .*never answers chat completions"}
+  - {id: a blank model, override: {backends: [{name: a, backend: decisions, model: ' '}]}, expected: "model: String should match pattern"}
+  - {id: a backend with no model, override: {backends: [{name: a, backend: decisions}]}, expected: "model: Field required"}
+  - {id: an empty backends list, override: {backends: []}, expected: "needs at least one backend"}
+
+  - {id: an unknown reflection field, override: {reflection: {temperature: 0}}, expected: "reflection.temperature: Extra inputs are not permitted"}
+  - {id: an unknown reviewer field, override: {reflection: {enabled: true, reviewer: {backend: chat_completions, model: m, tools: []}}}, expected: "reflection.reviewer.tools: Extra inputs are not permitted"}
+  - {id: negative retries, override: {reflection: {max_retries: -1}}, expected: "reflection.max_retries: Input should be greater than or equal to 0"}
+  - {id: too many retries, override: {reflection: {max_retries: 11}}, expected: "reflection.max_retries: Input should be less than or equal to 10"}
+  - {id: retries given as text, override: {reflection: {max_retries: '2'}}, expected: "reflection.max_retries: Input should be a valid integer"}
+  - {id: retries given as a flag, override: {reflection: {max_retries: true}}, expected: "reflection.max_retries: Input should be a valid integer"}
+  - {id: fractional retries, override: {reflection: {max_retries: 1.5}}, expected: "reflection.max_retries: Input should be a valid integer"}
+  - {id: a budget of no calls, override: {reflection: {max_total_calls_per_line: 0}}, expected: "reflection.max_total_calls_per_line: Input should be greater than or equal to 1"}
+  - {id: a budget above the cap, override: {reflection: {max_total_calls_per_line: 51}}, expected: "reflection.max_total_calls_per_line: Input should be less than or equal to 50"}
+  - {id: enabled given as text, override: {reflection: {enabled: 'yes'}}, expected: "reflection.enabled: Input should be a valid boolean"}
+  - {id: reflection that is not a mapping, override: {reflection: true}, expected: "reflection must be a mapping"}
+  - {id: reflection enabled with no reviewer, override: {reflection: {enabled: true, reviewer: null}}, expected: "reflection is enabled, so it needs a reviewer"}
+  - {id: langgraph as its own reviewer, override: {reflection: {enabled: true, reviewer: {backend: langgraph, model: x}}}, expected: "langgraph cannot be its own reviewer"}
+  - {id: a backend that cannot review, override: {reflection: {enabled: true, reviewer: {backend: decisions, model: typesafe/jev-1.14}}}, expected: "the reviewer must be a backend that can review, chat_completions, not 'decisions'"}
+  - {id: a reviewer that is not registered, override: {reflection: {enabled: true, reviewer: {backend: bert, model: x}}}, expected: "the reviewer must be a backend that can review, chat_completions, not 'bert'"}
+  - {id: a reviewer model its backend refuses, override: {reflection: {enabled: true, reviewer: {backend: chat_completions, model: typesafe/jev-1.14}}}, expected: "langgraph reflection reviewer: .*never answers chat completions"}
+  - {id: a reviewer with a blank model, override: {reflection: {enabled: true, reviewer: {backend: chat_completions, model: ' '}}}, expected: "reflection.reviewer.model: String should match pattern"}
+# One receipt, RCP-002: L1 Prix fixe dinner, L2 Chianti Classico bottle, L3 Gratuity. Each backend is a
+# stand-in, registered only for the test, that answers by its model: [category, confidence] for a line, or
+# error, the default. order is [alias, backend, model]; routing is applied to config.yaml's. expected gives
+# each line's answering alias (null for an error), its category, and every model call, by model.
+langgraph_routes:
+  - id: one backend answers everything
+    order: [[only, alpha, alpha-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    expected: {answered_by: {L1: only, L2: only, L3: only}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3}}
+  - id: a confident primary never calls the fallback
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}, beta-1: {L1: [other, 0.99], L2: [other, 0.99], L3: [other, 0.99]}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: primary}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3}}
+  - id: only the failed line goes to the fallback
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L3: [service_fee, 0.95]}, beta-1: {L1: [other, 0.99], L2: [alcohol, 0.97], L3: [other, 0.99]}}
+    expected: {answered_by: {L1: primary, L2: fallback, L3: primary}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3, beta-1: 1}}
+  - id: only the low-confidence line goes to the fallback
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.5]}, beta-1: {L3: [service_fee, 0.92]}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: fallback}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3, beta-1: 1}}
+  - id: a line at the threshold is not low confidence
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.9], L2: [alcohol, 0.9], L3: [service_fee, 0.9]}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: primary}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3}}
+  - id: a lower threshold keeps the low-confidence line
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {min_confidence: 0.4}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.5]}, beta-1: {L3: [service_fee, 0.92]}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: primary}, category: {L1: food_beverage, L2: alcohol, L3: other}, calls: {alpha-1: 3}}
+  - id: with low-confidence fallback off, a low line stays
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {fallback_on_low_confidence: false}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.5]}, beta-1: {L3: [service_fee, 0.92]}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: primary}, category: {L1: food_beverage, L2: alcohol, L3: other}, calls: {alpha-1: 3}}
+  - id: with error fallback off, a failed line stays failed
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {fallback_on_error: false}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L3: [service_fee, 0.95]}, beta-1: {L2: [alcohol, 0.97]}}
+    expected: {answered_by: {L1: primary, L2: null, L3: primary}, category: {L1: food_beverage, L2: null, L3: service_fee}, calls: {alpha-1: 3}}
+  - id: reversing the order reverses who answers
+    order: [[primary, beta, beta-1], [fallback, alpha, alpha-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L3: [service_fee, 0.95]}, beta-1: {L1: [food_beverage, 0.97], L2: [alcohol, 0.97], L3: [service_fee, 0.5]}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: fallback}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {beta-1: 3, alpha-1: 1}}
+  - id: three backends, each asked only about what is still open
+    order: [[first, alpha, alpha-1], [second, beta, beta-1], [third, gamma, gamma-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L3: [service_fee, 0.5]}, beta-1: {L2: [alcohol, 0.6], L3: [service_fee, 0.97]}, gamma-1: {L2: [alcohol, 0.99]}}
+    expected: {answered_by: {L1: first, L2: third, L3: second}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3, beta-1: 2, gamma-1: 1}}
+  - id: a later error never replaces an earlier answer
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.5]}, beta-1: {}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: primary}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3, beta-1: 1}}
+  - id: the last answer is kept when every backend is low
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.5]}, beta-1: {L3: [service_fee, 0.6]}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: fallback}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3, beta-1: 1}}
+  - id: a line every backend fails keeps the last error
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L3: [service_fee, 0.95]}, beta-1: {}}
+    expected: {answered_by: {L1: primary, L2: null, L3: primary}, category: {L1: food_beverage, L2: null, L3: service_fee}, calls: {alpha-1: 3, beta-1: 1}}
+  - id: one backend with two models is two backends, each with its own answers
+    order: [[small, alpha, alpha-1], [large, alpha, alpha-2]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.3]}, alpha-2: {L3: [service_fee, 0.99]}}
+    expected: {answered_by: {L1: small, L2: small, L3: large}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3, alpha-2: 1}}
+  # Result selection: the configured order decides, never a comparison of confidences across backends. Optional
+  # expected keys: outcomes, each line's attempt outcomes in order; result, how its chain ended. abstain is an
+  # answer with no category and no confidence, which finalize keeps and which is not a usable answer.
+  - id: a fallback's answer is used though its confidence is lower than the primary's
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.85]}, beta-1: {L3: [service_fee, 0.6]}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: fallback}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3, beta-1: 1}, outcomes: {L1: [accepted], L2: [accepted], L3: [low_confidence, low_confidence]}, result: {L1: accepted, L2: accepted, L3: exhausted}}
+  - id: an accepted fallback answer ends the chain
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1], [last, gamma, gamma-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95]}, beta-1: {L3: [service_fee, 0.92]}, gamma-1: {L3: [other, 0.99]}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: fallback}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3, beta-1: 1}, outcomes: {L3: [error, accepted]}, result: {L3: accepted}}
+  - id: an abstention is not a usable answer, and goes on like a failure
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: abstain}, beta-1: {L3: [service_fee, 0.95]}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: fallback}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3, beta-1: 1}, outcomes: {L3: [no_category, accepted]}, result: {L3: accepted}}
+  - id: an abstention goes on even with low-confidence fallback off
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {fallback_on_low_confidence: false}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: abstain}, beta-1: {L3: [service_fee, 0.95]}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: fallback}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, calls: {alpha-1: 3, beta-1: 1}, result: {L3: accepted}}
+  - id: a fallback that abstains never replaces a usable answer
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.5]}, beta-1: {L3: abstain}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: primary}, category: {L1: food_beverage, L2: alcohol, L3: other}, calls: {alpha-1: 3, beta-1: 1}, outcomes: {L3: [low_confidence, no_category]}, result: {L3: exhausted}}
+  - id: an abstention is kept over a later failure, as no backend failed it
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: abstain}, beta-1: {}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: primary}, category: {L1: food_beverage, L2: alcohol, L3: null}, calls: {alpha-1: 3, beta-1: 1}, outcomes: {L3: [no_category, error]}, result: {L3: exhausted}}
+  - id: with error fallback off, a failed line is labelled a failure, not accepted
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {fallback_on_error: false}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L3: [service_fee, 0.95]}, beta-1: {L2: [alcohol, 0.97]}}
+    expected: {answered_by: {L1: primary, L2: null, L3: primary}, category: {L1: food_beverage, L2: null, L3: service_fee}, calls: {alpha-1: 3}, outcomes: {L2: [error]}, result: {L1: accepted, L2: routing_off, L3: accepted}}
+  - id: with low-confidence fallback off, a low line is kept by the routing, not accepted
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    routing: {fallback_on_low_confidence: false}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.5]}}
+    expected: {answered_by: {L1: primary, L2: primary, L3: primary}, category: {L1: food_beverage, L2: alcohol, L3: other}, calls: {alpha-1: 3}, outcomes: {L3: [low_confidence]}, result: {L3: routing_off}}
+  - id: the only backend's low answer is kept, with the chain exhausted
+    order: [[only, alpha, alpha-1]]
+    routing: {}
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.5]}}
+    expected: {answered_by: {L1: only, L2: only, L3: only}, category: {L1: food_beverage, L2: alcohol, L3: other}, calls: {alpha-1: 3}, outcomes: {L3: [low_confidence]}, result: {L3: exhausted}}
+
+# Reflection, on RCP-002 (L1 Prix fixe dinner, L2 Chianti Classico bottle, L3 Gratuity). Classifiers answer as in
+# langgraph_routes. critic is a stand-in reviewer, registered only for the test: reviews maps "L<n>:<category>"
+# to [verdict, suggested_category, feedback], malformed (not JSON) or error (a failed call); a proposal it has no
+# entry for is accepted. revisers names the backends that can take feedback; revisions maps
+# "<model>:L<n>:<previous category>" to [category, confidence] or abstain, and fails otherwise. reflection is
+# applied to config.yaml's, with critic-1 as reviewer. expected: each line's answering alias (null when failed),
+# category, result, revisions and verdicts, and every call by model: classifications by model, revisions as
+# <model>+revise, reviews as critic-1.
+langgraph_reflection:
+  - id: reflection off changes nothing and calls no reviewer
+    order: [[primary, alpha, alpha-1]]
+    reflection: {enabled: false}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [alcohol, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    reviews: {"L1:alcohol": [revise, food_beverage, the line names a meal]}
+    revisions: {}
+    expected: {answered_by: {L1: primary, L2: primary, L3: primary}, category: {L1: alcohol, L2: alcohol, L3: service_fee}, result: {L1: accepted, L2: accepted, L3: accepted}, calls: {alpha-1: 3}}
+  - id: an accepted classification ends after one review
+    order: [[primary, alpha, alpha-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    reviews: {}
+    revisions: {}
+    expected: {answered_by: {L1: primary, L2: primary, L3: primary}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, result: {L1: accepted, L2: accepted, L3: accepted}, revisions: {L1: 0}, verdicts: {L1: [accept], L2: [accept], L3: [accept]}, calls: {alpha-1: 3, critic-1: 3}}
+  - id: a rejected classification is revised by its own backend with the feedback, then accepted
+    order: [[primary, alpha, alpha-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [alcohol, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    reviews: {"L1:alcohol": [revise, food_beverage, "the line names a meal, not an alcoholic drink"]}
+    revisions: {"alpha-1:L1:alcohol": [food_beverage, 0.95]}
+    expected: {answered_by: {L1: primary}, category: {L1: food_beverage, L2: alcohol}, result: {L1: accepted}, revisions: {L1: 1}, verdicts: {L1: [revise, accept]}, calls: {alpha-1: 3, alpha-1+revise: 1, critic-1: 4}}
+  - id: a backend that cannot take feedback is never asked again; the first that can revises
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    reflection: {}
+    revisers: [beta]
+    answers: {alpha-1: {L1: [alcohol, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    reviews: {"L1:alcohol": [revise, food_beverage, "the line names a meal, not an alcoholic drink"]}
+    revisions: {"beta-1:L1:alcohol": [food_beverage, 0.95]}
+    expected: {answered_by: {L1: fallback, L2: primary}, category: {L1: food_beverage, L2: alcohol}, result: {L1: accepted}, revisions: {L1: 1}, verdicts: {L1: [revise, accept]}, calls: {alpha-1: 3, beta-1+revise: 1, critic-1: 4}}
+  - id: two revisions, then acceptance
+    order: [[primary, alpha, alpha-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [revise, null, "a gratuity is a charge, not an item"], "L3:gift": [revise, service_fee, a tip is not a gift]}
+    revisions: {"alpha-1:L3:other": [gift, 0.9], "alpha-1:L3:gift": [service_fee, 0.95]}
+    expected: {answered_by: {L3: primary}, category: {L3: service_fee}, result: {L3: accepted}, revisions: {L3: 2}, verdicts: {L3: [revise, revise, accept]}, calls: {alpha-1: 3, alpha-1+revise: 2, critic-1: 5}}
+  - id: the retry limit ends revising and keeps the latest valid classification
+    order: [[primary, alpha, alpha-1]]
+    reflection: {max_retries: 1}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [revise, null, "a gratuity is a charge, not an item"], "L3:gift": [revise, service_fee, a tip is not a gift]}
+    revisions: {"alpha-1:L3:other": [gift, 0.9], "alpha-1:L3:gift": [service_fee, 0.95]}
+    expected: {answered_by: {L3: primary}, category: {L3: gift}, result: {L3: retries_exhausted}, revisions: {L3: 1}, verdicts: {L3: [revise, revise]}, calls: {alpha-1: 3, alpha-1+revise: 1, critic-1: 4}}
+  - id: with no retries, a rejection revises nothing
+    order: [[primary, alpha, alpha-1]]
+    reflection: {max_retries: 0}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [revise, service_fee, "a gratuity is a charge, not an item"]}
+    revisions: {"alpha-1:L3:other": [service_fee, 0.95]}
+    expected: {answered_by: {L3: primary}, category: {L3: other}, result: {L3: retries_exhausted}, revisions: {L3: 0}, verdicts: {L3: [revise]}, calls: {alpha-1: 3, critic-1: 3}}
+  - id: an uncertain reviewer revises nothing, tries the next backend, and leaves the review unresolved when it fails
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [uncertain, null, null]}
+    revisions: {}
+    expected: {answered_by: {L3: primary}, category: {L3: other}, result: {L3: exhausted}, revisions: {L3: 0}, verdicts: {L3: [uncertain]}, unresolved: {L1: false, L3: true}, calls: {alpha-1: 3, beta-1: 1, critic-1: 3}}
+  - id: a malformed review is a reviewer failure, and the classification stands
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": malformed}
+    revisions: {}
+    expected: {answered_by: {L3: primary}, category: {L3: other}, result: {L3: reviewer_failed}, verdicts: {L3: [null]}, calls: {alpha-1: 3, critic-1: 3}}
+  - id: a failed review call is a reviewer failure, never a classification failure
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": error}
+    revisions: {}
+    expected: {answered_by: {L3: primary}, category: {L3: other}, result: {L3: reviewer_failed}, calls: {alpha-1: 3, critic-1: 3}}
+  - id: a revise verdict with no feedback is refused as malformed
+    order: [[primary, alpha, alpha-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [revise, service_fee, null]}
+    revisions: {"alpha-1:L3:other": [service_fee, 0.95]}
+    expected: {answered_by: {L3: primary}, category: {L3: other}, result: {L3: reviewer_failed}, revisions: {L3: 0}, calls: {alpha-1: 3, critic-1: 3}}
+  - id: a suggested category outside the taxonomy is refused
+    order: [[primary, alpha, alpha-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [revise, tipping, a gratuity is a charge]}
+    revisions: {"alpha-1:L3:other": [service_fee, 0.95]}
+    expected: {answered_by: {L3: primary}, category: {L3: other}, result: {L3: reviewer_failed}, revisions: {L3: 0}, calls: {alpha-1: 3, critic-1: 3}}
+  - id: the call budget stops a line before its next call, and keeps the latest valid classification
+    order: [[primary, alpha, alpha-1]]
+    reflection: {max_total_calls_per_line: 3}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [revise, null, "a gratuity is a charge, not an item"]}
+    revisions: {"alpha-1:L3:other": [gift, 0.9]}
+    expected: {answered_by: {L3: primary}, category: {L3: gift}, result: {L1: accepted, L3: call_budget}, revisions: {L3: 1}, verdicts: {L3: [revise]}, calls: {alpha-1: 3, alpha-1+revise: 1, critic-1: 3}}
+  - id: a budget of one call is the classification alone
+    order: [[primary, alpha, alpha-1]]
+    reflection: {max_total_calls_per_line: 1}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {}
+    revisions: {}
+    expected: {answered_by: {L1: primary, L2: primary, L3: primary}, category: {L3: other}, result: {L1: call_budget, L2: call_budget, L3: call_budget}, verdicts: {L1: []}, calls: {alpha-1: 3}}
+  - id: the same objection twice about the same classification stops the loop
+    order: [[primary, alpha, alpha-1]]
+    reflection: {max_retries: 5, max_total_calls_per_line: 20}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [revise, null, "a gratuity is a charge, not an item"], "L3:gift": [revise, null, a tip is not a gift]}
+    revisions: {"alpha-1:L3:other": [gift, 0.9], "alpha-1:L3:gift": [other, 0.95]}
+    # The third proposal is the first again: its verdict stands with no call, which makes the objection a repeat.
+    expected: {answered_by: {L3: primary}, category: {L3: other}, result: {L3: repeated_objection}, revisions: {L3: 2}, verdicts: {L3: [revise, revise, revise]}, unresolved: {L3: true}, calls: {alpha-1: 3, alpha-1+revise: 2, critic-1: 4}}
+  - id: a revision that says the same again is not repeated
+    order: [[primary, alpha, alpha-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [revise, service_fee, "a gratuity is a charge, not an item"]}
+    revisions: {"alpha-1:L3:other": [other, 0.9]}
+    expected: {answered_by: {L3: primary}, category: {L3: other}, result: {L3: revision_unchanged}, revisions: {L3: 1}, verdicts: {L3: [revise]}, calls: {alpha-1: 3, alpha-1+revise: 1, critic-1: 3}}
+  - id: a failed revision keeps the classification it was asked to revise
+    order: [[primary, alpha, alpha-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [revise, service_fee, "a gratuity is a charge, not an item"]}
+    revisions: {}
+    expected: {answered_by: {L3: primary}, category: {L3: other}, result: {L3: revision_failed}, revisions: {L3: 1}, calls: {alpha-1: 3, alpha-1+revise: 1, critic-1: 3}}
+  - id: an abstaining revision is no answer, and the classification stays
+    order: [[primary, alpha, alpha-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [revise, service_fee, "a gratuity is a charge, not an item"]}
+    revisions: {"alpha-1:L3:other": abstain}
+    expected: {answered_by: {L3: primary}, category: {L3: other}, result: {L3: revision_failed}, revisions: {L3: 1}, calls: {alpha-1: 3, alpha-1+revise: 1, critic-1: 3}}
+  - id: with no backend able to revise, a rejection falls back to the next backend in order
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    reflection: {}
+    revisers: []
+    answers: {alpha-1: {L1: [alcohol, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}, beta-1: {L1: [food_beverage, 0.97]}}
+    reviews: {"L1:alcohol": [revise, food_beverage, "the line names a meal, not an alcoholic drink"]}
+    revisions: {}
+    expected: {answered_by: {L1: fallback, L2: primary}, category: {L1: food_beverage, L2: alcohol}, result: {L1: accepted}, revisions: {L1: 0}, verdicts: {L1: [revise, accept]}, calls: {alpha-1: 3, beta-1: 1, critic-1: 4}}
+  - id: a rejection with no backend left ends with the kept classification
+    order: [[only, alpha, alpha-1]]
+    reflection: {}
+    revisers: []
+    answers: {alpha-1: {L1: [alcohol, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    reviews: {"L1:alcohol": [revise, food_beverage, "the line names a meal, not an alcoholic drink"]}
+    revisions: {}
+    expected: {answered_by: {L1: only}, category: {L1: alcohol}, result: {L1: no_reviser}, verdicts: {L1: [revise]}, calls: {alpha-1: 3, critic-1: 3}}
+  - id: a revision below the threshold goes on to the next backend, as routing says
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [alcohol, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}, beta-1: {L1: [food_beverage, 0.97]}}
+    reviews: {"L1:alcohol": [revise, food_beverage, "the line names a meal, not an alcoholic drink"]}
+    revisions: {"alpha-1:L1:alcohol": [food_beverage, 0.5]}
+    expected: {answered_by: {L1: fallback}, category: {L1: food_beverage}, result: {L1: accepted}, revisions: {L1: 1}, verdicts: {L1: [revise, accept]}, calls: {alpha-1: 3, alpha-1+revise: 1, beta-1: 1, critic-1: 4}}
+  - id: failures and low confidence go on by routing, and are never reviewed
+    order: [[primary, alpha, alpha-1], [fallback, beta, beta-1]]
+    reflection: {}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L3: [other, 0.5]}, beta-1: {L2: [alcohol, 0.97], L3: [service_fee, 0.95]}}
+    reviews: {}
+    revisions: {}
+    expected: {answered_by: {L1: primary, L2: fallback, L3: fallback}, category: {L1: food_beverage, L2: alcohol, L3: service_fee}, result: {L1: accepted, L2: accepted, L3: accepted}, verdicts: {L1: [accept], L2: [accept], L3: [accept]}, calls: {alpha-1: 3, beta-1: 2, critic-1: 3}}
+  - id: three backends, rejections, a revision and fallbacks, by order alone
+    order: [[first, alpha, alpha-1], [second, beta, beta-1], [third, gamma, gamma-1]]
+    reflection: {max_retries: 1}
+    revisers: [gamma]
+    answers: {alpha-1: {L1: [alcohol, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}, beta-1: {L1: [alcohol, 0.96]}, gamma-1: {}}
+    reviews: {"L1:alcohol": [revise, food_beverage, "the line names a meal, not an alcoholic drink"], "L1:gift": [revise, food_beverage, a dinner is not a gift]}
+    revisions: {"gamma-1:L1:alcohol": [gift, 0.95]}
+    # L1: alpha's alcohol, rejected (call 2); gamma revises to gift (3), rejected with the retry spent (4); beta answers
+    # alcohol (5), which replaces gift by order, and whose verdict, already given, stands with no call: a repeated
+    # objection. gamma then fails L1 (6), and no backend is left. The review stays unresolved.
+    expected: {answered_by: {L1: second, L2: first}, category: {L1: alcohol}, result: {L1: exhausted}, revisions: {L1: 1}, verdicts: {L1: [revise, revise, revise]}, unresolved: {L1: true}, calls: {alpha-1: 3, gamma-1+revise: 1, beta-1: 1, gamma-1: 1, critic-1: 4}}

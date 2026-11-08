@@ -1,0 +1,6791 @@
+{
+  "RCP-001-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6822e-05,
+      "input_tokens": 1591,
+      "output_tokens": 425
+    }
+  },
+  "RCP-001-L2": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6696e-05,
+      "input_tokens": 1588,
+      "output_tokens": 425
+    }
+  },
+  "RCP-001-L3": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6696e-05,
+      "input_tokens": 1588,
+      "output_tokens": 425
+    }
+  },
+  "RCP-001-L4": {
+    "answers": {
+      "category": {
+        "choice": "service_fee",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 1.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.93,
+        "probabilities": {
+          "client": 0.01,
+          "employee": 0.04,
+          "government_official": 0.0,
+          "not_stated": 0.95
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6864e-05,
+      "input_tokens": 1592,
+      "output_tokens": 423
+    }
+  },
+  "RCP-002-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 0.99,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 0.99,
+          "other_venue": 0.01,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6696e-05,
+      "input_tokens": 1588,
+      "output_tokens": 425
+    }
+  },
+  "RCP-002-L2": {
+    "answers": {
+      "category": {
+        "choice": "alcohol",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 1.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6822e-05,
+      "input_tokens": 1591,
+      "output_tokens": 424
+    }
+  },
+  "RCP-002-L3": {
+    "answers": {
+      "category": {
+        "choice": "service_fee",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 1.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.77,
+        "probabilities": {
+          "client": 0.02,
+          "employee": 0.15,
+          "government_official": 0.0,
+          "not_stated": 0.83
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6696e-05,
+      "input_tokens": 1588,
+      "output_tokens": 423
+    }
+  },
+  "RCP-003-L1": {
+    "answers": {
+      "category": {
+        "choice": "computer_accessory",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 1.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6948e-05,
+      "input_tokens": 1594,
+      "output_tokens": 425
+    }
+  },
+  "RCP-003-L2": {
+    "answers": {
+      "category": {
+        "choice": "office_supplies",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 1.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6948e-05,
+      "input_tokens": 1594,
+      "output_tokens": 425
+    }
+  },
+  "RCP-003-L3": {
+    "answers": {
+      "category": {
+        "choice": "office_supplies",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 1.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7074e-05,
+      "input_tokens": 1597,
+      "output_tokens": 425
+    }
+  },
+  "RCP-004-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6864e-05,
+      "input_tokens": 1592,
+      "output_tokens": 425
+    }
+  },
+  "RCP-004-L2": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 0.9,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.09,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.9,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.01,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.97,
+        "probabilities": {
+          "client": 0.01,
+          "employee": 0.01,
+          "government_official": 0.0,
+          "not_stated": 0.98
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 0.98,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.01,
+          "not_stated": 0.98,
+          "other_venue": 0.01,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6738e-05,
+      "input_tokens": 1589,
+      "output_tokens": 425
+    }
+  },
+  "RCP-004-L3": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 0.96,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.04,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.96,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7452e-05,
+      "input_tokens": 1606,
+      "output_tokens": 425
+    }
+  },
+  "RCP-004-L4": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6738e-05,
+      "input_tokens": 1589,
+      "output_tokens": 425
+    }
+  },
+  "RCP-005-L1": {
+    "answers": {
+      "category": {
+        "choice": "lodging",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 1.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 0.99,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 0.99,
+          "other_venue": 0.01,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.699e-05,
+      "input_tokens": 1595,
+      "output_tokens": 423
+    }
+  },
+  "RCP-005-L2": {
+    "answers": {
+      "category": {
+        "choice": "lodging",
+        "confidence": 0.99,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.99,
+          "office_supplies": 0.0,
+          "other": 0.01,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.87,
+        "probabilities": {
+          "client": 0.01,
+          "employee": 0.0,
+          "government_official": 0.09,
+          "not_stated": 0.9
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6906e-05,
+      "input_tokens": 1593,
+      "output_tokens": 423
+    }
+  },
+  "RCP-005-L3": {
+    "answers": {
+      "category": {
+        "choice": "ground_transport",
+        "confidence": 0.8,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.81,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.16,
+          "office_supplies": 0.0,
+          "other": 0.01,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.02,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 0.99,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 0.99,
+          "other_venue": 0.01,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6948e-05,
+      "input_tokens": 1594,
+      "output_tokens": 423
+    }
+  },
+  "RCP-006-L1": {
+    "answers": {
+      "category": {
+        "choice": "computer_accessory",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 1.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7032e-05,
+      "input_tokens": 1596,
+      "output_tokens": 425
+    }
+  },
+  "RCP-007-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6738e-05,
+      "input_tokens": 1589,
+      "output_tokens": 425
+    }
+  },
+  "RCP-007-L2": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.678e-05,
+      "input_tokens": 1590,
+      "output_tokens": 425
+    }
+  },
+  "RCP-007-L3": {
+    "answers": {
+      "category": {
+        "choice": "service_fee",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 1.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.97,
+        "probabilities": {
+          "client": 0.01,
+          "employee": 0.01,
+          "government_official": 0.0,
+          "not_stated": 0.98
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6654e-05,
+      "input_tokens": 1587,
+      "output_tokens": 423
+    }
+  },
+  "RCP-008-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7284e-05,
+      "input_tokens": 1602,
+      "output_tokens": 425
+    }
+  },
+  "RCP-008-L2": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7494e-05,
+      "input_tokens": 1607,
+      "output_tokens": 425
+    }
+  },
+  "RCP-008-L3": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 0.99,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 0.99,
+          "other_venue": 0.01,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7158e-05,
+      "input_tokens": 1599,
+      "output_tokens": 425
+    }
+  },
+  "RCP-009-L1": {
+    "answers": {
+      "category": {
+        "choice": "laundry_service",
+        "confidence": 0.99,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.01,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.99,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 0.98,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.01,
+          "not_stated": 0.99
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.99,
+        "probabilities": {
+          "client": 0.01,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 0.99
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7116e-05,
+      "input_tokens": 1598,
+      "output_tokens": 425
+    }
+  },
+  "RCP-010-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6738e-05,
+      "input_tokens": 1589,
+      "output_tokens": 425
+    }
+  },
+  "RCP-010-L2": {
+    "answers": {
+      "category": {
+        "choice": "alcohol",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 1.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.678e-05,
+      "input_tokens": 1590,
+      "output_tokens": 424
+    }
+  },
+  "RCP-010-L3": {
+    "answers": {
+      "category": {
+        "choice": "service_fee",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 1.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.81,
+        "probabilities": {
+          "client": 0.01,
+          "employee": 0.13,
+          "government_official": 0.0,
+          "not_stated": 0.86
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6654e-05,
+      "input_tokens": 1587,
+      "output_tokens": 423
+    }
+  },
+  "RCP-011-L1": {
+    "answers": {
+      "category": {
+        "choice": "alcohol",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 1.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7998e-05,
+      "input_tokens": 1619,
+      "output_tokens": 424
+    }
+  },
+  "RCP-011-L2": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.699e-05,
+      "input_tokens": 1595,
+      "output_tokens": 425
+    }
+  },
+  "RCP-012-L1": {
+    "answers": {
+      "category": {
+        "choice": "personal_electronics",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 1.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.699e-05,
+      "input_tokens": 1595,
+      "output_tokens": 426
+    }
+  },
+  "RCP-013-L1": {
+    "answers": {
+      "category": {
+        "choice": "gift_card",
+        "confidence": 0.99,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.01,
+          "gift_card": 0.99,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6906e-05,
+      "input_tokens": 1593,
+      "output_tokens": 423
+    }
+  },
+  "RCP-013-L2": {
+    "answers": {
+      "category": {
+        "choice": "gift",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 1.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6696e-05,
+      "input_tokens": 1588,
+      "output_tokens": 422
+    }
+  },
+  "RCP-014-L1": {
+    "answers": {
+      "category": {
+        "choice": "household_goods",
+        "confidence": 0.99,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.99,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.01,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.72e-05,
+      "input_tokens": 1600,
+      "output_tokens": 425
+    }
+  },
+  "RCP-014-L2": {
+    "answers": {
+      "category": {
+        "choice": "household_goods",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 1.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7116e-05,
+      "input_tokens": 1598,
+      "output_tokens": 425
+    }
+  },
+  "RCP-014-L3": {
+    "answers": {
+      "category": {
+        "choice": "household_goods",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 1.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7032e-05,
+      "input_tokens": 1596,
+      "output_tokens": 425
+    }
+  },
+  "RCP-014-L4": {
+    "answers": {
+      "category": {
+        "choice": "alcohol",
+        "confidence": 0.93,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.93,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.07,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7284e-05,
+      "input_tokens": 1602,
+      "output_tokens": 424
+    }
+  },
+  "RCP-015-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 0.99,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.99,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.01,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 0.99,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 0.99,
+          "other_venue": 0.01,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6822e-05,
+      "input_tokens": 1591,
+      "output_tokens": 425
+    }
+  },
+  "RCP-015-L2": {
+    "answers": {
+      "category": {
+        "choice": "alcohol",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 1.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7032e-05,
+      "input_tokens": 1596,
+      "output_tokens": 424
+    }
+  },
+  "RCP-015-L3": {
+    "answers": {
+      "category": {
+        "choice": "service_fee",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 1.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.95,
+        "probabilities": {
+          "client": 0.01,
+          "employee": 0.03,
+          "government_official": 0.0,
+          "not_stated": 0.96
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6948e-05,
+      "input_tokens": 1594,
+      "output_tokens": 423
+    }
+  },
+  "RCP-016-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6864e-05,
+      "input_tokens": 1592,
+      "output_tokens": 425
+    }
+  },
+  "RCP-016-L2": {
+    "answers": {
+      "category": {
+        "choice": "alcohol",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 1.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7074e-05,
+      "input_tokens": 1597,
+      "output_tokens": 424
+    }
+  },
+  "RCP-016-L3": {
+    "answers": {
+      "category": {
+        "choice": "service_fee",
+        "confidence": 0.99,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.01,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.99,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.99,
+        "probabilities": {
+          "client": 0.01,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 0.99
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.678e-05,
+      "input_tokens": 1590,
+      "output_tokens": 423
+    }
+  },
+  "RCP-017-L1": {
+    "answers": {
+      "category": {
+        "choice": "personal_care",
+        "confidence": 0.97,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.02,
+          "personal_care": 0.97,
+          "personal_electronics": 0.0,
+          "service_fee": 0.01,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_essential",
+        "confidence": 0.98,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.99,
+          "not_stated": 0.01
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.99,
+        "probabilities": {
+          "client": 0.01,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 0.99
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 0.99,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 0.99,
+          "other_venue": 0.01,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6948e-05,
+      "input_tokens": 1594,
+      "output_tokens": 426
+    }
+  },
+  "RCP-017-L2": {
+    "classification_error": "essential_toiletry contradicts category service_fee"
+  },
+  "RCP-018-L1": {
+    "answers": {
+      "category": {
+        "choice": "jewelry",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 1.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "client",
+        "confidence": 0.99,
+        "probabilities": {
+          "client": 0.99,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 0.01
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7704e-05,
+      "input_tokens": 1612,
+      "output_tokens": 422
+    }
+  },
+  "RCP-019-L1": {
+    "answers": {
+      "category": {
+        "choice": "personal_electronics",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 1.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 0.97,
+        "probabilities": {
+          "mobile_phone": 0.02,
+          "not_stated": 0.98,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.8124e-05,
+      "input_tokens": 1622,
+      "output_tokens": 426
+    }
+  },
+  "RCP-019-L2": {
+    "answers": {
+      "category": {
+        "choice": "personal_electronics",
+        "confidence": 0.98,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.02,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.98,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7578e-05,
+      "input_tokens": 1609,
+      "output_tokens": 426
+    }
+  },
+  "RCP-020-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.699e-05,
+      "input_tokens": 1595,
+      "output_tokens": 425
+    }
+  },
+  "RCP-020-L2": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6906e-05,
+      "input_tokens": 1593,
+      "output_tokens": 425
+    }
+  },
+  "RCP-020-L3": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6654e-05,
+      "input_tokens": 1587,
+      "output_tokens": 425
+    }
+  },
+  "RCP-020-L4": {
+    "answers": {
+      "category": {
+        "choice": "service_fee",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 1.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.83,
+        "probabilities": {
+          "client": 0.01,
+          "employee": 0.12,
+          "government_official": 0.0,
+          "not_stated": 0.87
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6696e-05,
+      "input_tokens": 1588,
+      "output_tokens": 423
+    }
+  },
+  "RCP-021-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6906e-05,
+      "input_tokens": 1593,
+      "output_tokens": 425
+    }
+  },
+  "RCP-021-L2": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 0.99,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.99,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.01,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.678e-05,
+      "input_tokens": 1590,
+      "output_tokens": 425
+    }
+  },
+  "RCP-021-L3": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 0.99,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.99,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.01,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6864e-05,
+      "input_tokens": 1592,
+      "output_tokens": 425
+    }
+  },
+  "RCP-021-L4": {
+    "answers": {
+      "category": {
+        "choice": "service_fee",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 1.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.75,
+        "probabilities": {
+          "client": 0.02,
+          "employee": 0.17,
+          "government_official": 0.0,
+          "not_stated": 0.81
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6696e-05,
+      "input_tokens": 1588,
+      "output_tokens": 423
+    }
+  },
+  "RCP-022-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "government_official",
+        "confidence": 0.85,
+        "probabilities": {
+          "client": 0.03,
+          "employee": 0.06,
+          "government_official": 0.89,
+          "not_stated": 0.02
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 0.99,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 0.99,
+          "other_venue": 0.01,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7284e-05,
+      "input_tokens": 1602,
+      "output_tokens": 425
+    }
+  },
+  "RCP-022-L2": {
+    "answers": {
+      "category": {
+        "choice": "gift",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 1.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "government_official",
+        "confidence": 0.87,
+        "probabilities": {
+          "client": 0.02,
+          "employee": 0.05,
+          "government_official": 0.9,
+          "not_stated": 0.03
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7158e-05,
+      "input_tokens": 1599,
+      "output_tokens": 422
+    }
+  },
+  "RCP-023-L1": {
+    "answers": {
+      "category": {
+        "choice": "other",
+        "confidence": 0.92,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.08,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.92,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7032e-05,
+      "input_tokens": 1596,
+      "output_tokens": 422
+    }
+  },
+  "RCP-024-L1": {
+    "answers": {
+      "category": {
+        "choice": "tobacco",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 1.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6906e-05,
+      "input_tokens": 1593,
+      "output_tokens": 424
+    }
+  },
+  "RCP-024-L2": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6906e-05,
+      "input_tokens": 1593,
+      "output_tokens": 425
+    }
+  },
+  "RCP-024-L3": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6864e-05,
+      "input_tokens": 1592,
+      "output_tokens": 425
+    }
+  },
+  "RCP-025-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.762e-05,
+      "input_tokens": 1610,
+      "output_tokens": 425
+    }
+  },
+  "RCP-025-L2": {
+    "answers": {
+      "category": {
+        "choice": "alcohol",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 1.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.762e-05,
+      "input_tokens": 1610,
+      "output_tokens": 424
+    }
+  },
+  "RCP-025-L3": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7704e-05,
+      "input_tokens": 1612,
+      "output_tokens": 425
+    }
+  },
+  "RCP-026-L1": {
+    "answers": {
+      "category": {
+        "choice": "computer_accessory",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 1.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7074e-05,
+      "input_tokens": 1597,
+      "output_tokens": 425
+    }
+  },
+  "RCP-026-L2": {
+    "answers": {
+      "category": {
+        "choice": "computer_accessory",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 1.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.699e-05,
+      "input_tokens": 1595,
+      "output_tokens": 425
+    }
+  },
+  "RCP-027-L1": {
+    "answers": {
+      "category": {
+        "choice": "clothing",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 1.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.99,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.01,
+          "government_official": 0.0,
+          "not_stated": 0.99
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6654e-05,
+      "input_tokens": 1587,
+      "output_tokens": 424
+    }
+  },
+  "RCP-027-L2": {
+    "answers": {
+      "category": {
+        "choice": "clothing",
+        "confidence": 0.99,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.99,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.01,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6738e-05,
+      "input_tokens": 1589,
+      "output_tokens": 424
+    }
+  },
+  "RCP-028-L1": {
+    "answers": {
+      "category": {
+        "choice": "health_otc",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 1.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 0.98,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.01,
+          "not_stated": 0.99
+        }
+      },
+      "item_kind": {
+        "choice": "otc_medication",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 0.0,
+          "otc_medication": 1.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7158e-05,
+      "input_tokens": 1599,
+      "output_tokens": 426
+    }
+  },
+  "RCP-028-L2": {
+    "answers": {
+      "category": {
+        "choice": "health_otc",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 1.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 0.7,
+        "probabilities": {
+          "essential": 0.04,
+          "not_essential": 0.16,
+          "not_stated": 0.8
+        }
+      },
+      "item_kind": {
+        "choice": "otc_medication",
+        "confidence": 0.89,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 0.08,
+          "otc_medication": 0.92,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6864e-05,
+      "input_tokens": 1592,
+      "output_tokens": 426
+    }
+  },
+  "RCP-029-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6738e-05,
+      "input_tokens": 1589,
+      "output_tokens": 425
+    }
+  },
+  "RCP-029-L2": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6612e-05,
+      "input_tokens": 1586,
+      "output_tokens": 425
+    }
+  },
+  "RCP-029-L3": {
+    "answers": {
+      "category": {
+        "choice": "service_fee",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 1.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.68,
+        "probabilities": {
+          "client": 0.02,
+          "employee": 0.22,
+          "government_official": 0.0,
+          "not_stated": 0.76
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6696e-05,
+      "input_tokens": 1588,
+      "output_tokens": 423
+    }
+  },
+  "RCP-030-L1": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6738e-05,
+      "input_tokens": 1589,
+      "output_tokens": 425
+    }
+  },
+  "RCP-030-L2": {
+    "answers": {
+      "category": {
+        "choice": "food_beverage",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 1.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6738e-05,
+      "input_tokens": 1589,
+      "output_tokens": 425
+    }
+  },
+  "RCP-030-L3": {
+    "answers": {
+      "category": {
+        "choice": "service_fee",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 1.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 0.75,
+        "probabilities": {
+          "client": 0.02,
+          "employee": 0.17,
+          "government_official": 0.0,
+          "not_stated": 0.81
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.6738e-05,
+      "input_tokens": 1589,
+      "output_tokens": 423
+    }
+  },
+  "RCP-031-L1": {
+    "answers": {
+      "category": {
+        "choice": "laundry_service",
+        "confidence": 0.97,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.02,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.97,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.01,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 0.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.7578e-05,
+      "input_tokens": 1609,
+      "output_tokens": 425
+    }
+  },
+  "RCP-032-L1": {
+    "answers": {
+      "category": {
+        "choice": "software_subscription",
+        "confidence": 1.0,
+        "probabilities": {
+          "airfare": 0.0,
+          "alcohol": 0.0,
+          "clothing": 0.0,
+          "computer_accessory": 0.0,
+          "food_beverage": 0.0,
+          "gambling": 0.0,
+          "gift": 0.0,
+          "gift_card": 0.0,
+          "ground_transport": 0.0,
+          "health_otc": 0.0,
+          "household_goods": 0.0,
+          "jewelry": 0.0,
+          "laundry_service": 0.0,
+          "lodging": 0.0,
+          "office_supplies": 0.0,
+          "other": 0.0,
+          "personal_care": 0.0,
+          "personal_electronics": 0.0,
+          "service_fee": 0.0,
+          "software_subscription": 1.0,
+          "tobacco": 0.0
+        }
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "essential": 0.0,
+          "not_essential": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "mobile_phone": 0.0,
+          "not_stated": 1.0,
+          "otc_medication": 0.0,
+          "prescription_medication": 0.0
+        }
+      },
+      "recipient_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "client": 0.0,
+          "employee": 0.0,
+          "government_official": 0.0,
+          "not_stated": 1.0
+        }
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "confidence": 1.0,
+        "probabilities": {
+          "concert": 0.0,
+          "golf": 0.0,
+          "not_stated": 1.0,
+          "other_venue": 0.0,
+          "sporting_event": 0.0,
+          "theatre": 0.0
+        }
+      }
+    },
+    "attribute_thresholds": {
+      "essential_toiletry": 0.5,
+      "item_kind": 0.5,
+      "recipient_type": 0.5,
+      "venue_type": 0.5
+    },
+    "backend": "typesafe-jev",
+    "classification_error": null,
+    "model": "typesafe/jev-1.14-20261014",
+    "requested_model": "typesafe/jev-1.14",
+    "usage": {
+      "cost": 6.678e-05,
+      "input_tokens": 1590,
+      "output_tokens": 423
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "policy_doc": "threshold_conflict.md",
+  "document_sha256": "ca43d34a31c647ef3840ae84e419fc8b2adbbced62f6c6dfacff026f3b3c3c45",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "simulation",
+  "origin": "hand-written scenario response",
+  "response": "{\"rules\": [{\"rule_id\": \"ZZ-01\", \"title\": \"Peripheral cap\", \"section\": \"Limits\", \"severities\": [\"medium\"], \"review_signal\": false, \"thresholds\": [{\"value\": \"250\", \"unit\": \"usd\"}], \"references\": [\"EXC-02\"], \"quote\": \"capped at $200 per item\"}]}"
+}

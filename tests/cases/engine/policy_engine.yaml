@@ -39,21 +39,21 @@ templates:
   invalid: &invalid {field_changes: {}, rule_changes: {}, remove_rules: []}
 
 isolation:
-  - id: reused engine keeps customers receipts completeness and failed runs apart
+  - id: reused engine keeps receipts completeness and failed runs apart
     evaluations:
-      - {customer_id: first, receipts: [*meal, *second], complete: true}
-      - {customer_id: second, receipts: [*meal], complete: true}
-      - {customer_id: first, receipts: [*meal], complete: true}
-      - {customer_id: second, receipts: [*meal], complete: false}
-      - {customer_id: first, receipts: [*meal], complete: true}
-      - {customer_id: third, receipts: [], complete: true}
-      - {customer_id: first, receipts: [*second, *meal], complete: true}
+      - {receipts: [*meal, *second], complete: true}
+      - {receipts: [*meal], complete: true}
+      - {receipts: [*meal], complete: true}
+      - {receipts: [*meal], complete: false}
+      - {receipts: [*meal], complete: true}
+      - {receipts: [], complete: true}
+      - {receipts: [*second, *meal], complete: true}
     expected:
       runs:
         - [{receipt_id: R1, disposition: flag, decided: true, exceptions: [TIME-03]}, {receipt_id: R2, disposition: flag, decided: true, exceptions: [TIME-03]}]
         - [{receipt_id: R1, disposition: pass, decided: true, exceptions: []}]
         - [{receipt_id: R1, disposition: pass, decided: true, exceptions: []}]
-        - [{receipt_id: R1, disposition: review, decided: false, exceptions: []}]
+        - [{receipt_id: R1, disposition: pass, decided: false, exceptions: []}]
         - [{receipt_id: R1, disposition: pass, decided: true, exceptions: []}]
         - []
         - [{receipt_id: R1, disposition: flag, decided: true, exceptions: [TIME-03]}, {receipt_id: R2, disposition: flag, decided: true, exceptions: [TIME-03]}]

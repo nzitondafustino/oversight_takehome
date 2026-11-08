@@ -1,9 +1,4 @@
-"""Dispatch: the rule's helper name to the function that runs it.
-
-The keys are the helper names in policy/vocabulary.py, except baggage_allowance, which runs on a
-carve-out rule and is called directly by the carve-out step. A new helper needs its name and contract
-in the vocabulary, its function in the module for its domain, and a row here.
-"""
+"""Map helper names to their functions. baggage_allowance is called by the carve-out step instead."""
 
 from collections.abc import Mapping
 

@@ -1,0 +1,3783 @@
+[
+  {
+    "id": "RB-001",
+    "description": "Guinness 0.0 draught pint",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "misleading_name"
+    ],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "alcohol",
+    "final_category": "alcohol",
+    "selected_p": 0.98,
+    "jev_confidence": 0.98,
+    "top3": [
+      [
+        "alcohol",
+        0.98
+      ],
+      [
+        "food_beverage",
+        0.02
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": false,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.99,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-002",
+    "description": "Seedlip Garden and tonic",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "misleading_name",
+      "merchant_misleading"
+    ],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "alcohol",
+    "final_category": "alcohol",
+    "selected_p": 0.83,
+    "jev_confidence": 0.82,
+    "top3": [
+      [
+        "alcohol",
+        0.83
+      ],
+      [
+        "food_beverage",
+        0.17
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": false,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-003",
+    "description": "Beer cheese soup",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "misleading_name"
+    ],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "food_beverage",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-004",
+    "description": "Bourbon barrel-aged maple syrup",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "misleading_name"
+    ],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "food_beverage",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-005",
+    "description": "Hard seltzer variety 12-pack",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "merchant_misleading"
+    ],
+    "gold_category": "alcohol",
+    "acceptable": [
+      "alcohol"
+    ],
+    "jev_category": "alcohol",
+    "final_category": "alcohol",
+    "selected_p": 0.98,
+    "jev_confidence": 0.98,
+    "top3": [
+      [
+        "alcohol",
+        0.98
+      ],
+      [
+        "food_beverage",
+        0.02
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-006",
+    "description": "Penne alla vodka",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "misleading_name"
+    ],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "food_beverage",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-007",
+    "description": "Lager shandy pint",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary"
+    ],
+    "gold_category": "alcohol",
+    "acceptable": [
+      "alcohol"
+    ],
+    "jev_category": "alcohol",
+    "final_category": "alcohol",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "alcohol",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "clothing",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.99,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-008",
+    "description": "Sangría sin alcohol",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "multilingual",
+      "misleading_name"
+    ],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 0.99,
+    "jev_confidence": 0.99,
+    "top3": [
+      [
+        "food_beverage",
+        0.99
+      ],
+      [
+        "alcohol",
+        0.01
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-009",
+    "description": "Bière sans alcool 33cl",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "multilingual",
+      "misleading_name"
+    ],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 0.68,
+    "jev_confidence": 0.66,
+    "top3": [
+      [
+        "food_beverage",
+        0.68
+      ],
+      [
+        "alcohol",
+        0.32
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-010",
+    "description": "Glühwein 0,2l",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "multilingual"
+    ],
+    "gold_category": "alcohol",
+    "acceptable": [
+      "alcohol"
+    ],
+    "jev_category": "alcohol",
+    "final_category": "alcohol",
+    "selected_p": 0.98,
+    "jev_confidence": 0.98,
+    "top3": [
+      [
+        "alcohol",
+        0.98
+      ],
+      [
+        "food_beverage",
+        0.02
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 0.92,
+        "jev_confidence": 0.9,
+        "not_stated_p": 0.92,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-011",
+    "description": "梅酒 グラス",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "multilingual"
+    ],
+    "gold_category": "alcohol",
+    "acceptable": [
+      "alcohol"
+    ],
+    "jev_category": "household_goods",
+    "final_category": "household_goods",
+    "selected_p": 0.5,
+    "jev_confidence": 0.48,
+    "top3": [
+      [
+        "household_goods",
+        0.5
+      ],
+      [
+        "alcohol",
+        0.48
+      ],
+      [
+        "food_beverage",
+        0.02
+      ]
+    ],
+    "category_right": false,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-012",
+    "description": "ノンアルコールビール 350ml",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "multilingual",
+      "misleading_name"
+    ],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 0.61,
+    "jev_confidence": 0.59,
+    "top3": [
+      [
+        "food_beverage",
+        0.61
+      ],
+      [
+        "alcohol",
+        0.39
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-013",
+    "description": "Vinho do Porto 20 anos",
+    "ambiguity": "clear",
+    "challenges": [
+      "alcohol_boundary",
+      "multilingual"
+    ],
+    "gold_category": "alcohol",
+    "acceptable": [
+      "alcohol"
+    ],
+    "jev_category": "alcohol",
+    "final_category": "alcohol",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "alcohol",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "clothing",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-014",
+    "description": "Logitech MX Master 3S mouse",
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary",
+      "control"
+    ],
+    "gold_category": "computer_accessory",
+    "acceptable": [
+      "computer_accessory"
+    ],
+    "jev_category": "computer_accessory",
+    "final_category": "computer_accessory",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "computer_accessory",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-015",
+    "description": "AirPods Pro 2",
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary",
+      "control"
+    ],
+    "gold_category": "personal_electronics",
+    "acceptable": [
+      "personal_electronics"
+    ],
+    "jev_category": "personal_electronics",
+    "final_category": "personal_electronics",
+    "selected_p": 0.99,
+    "jev_confidence": 0.99,
+    "top3": [
+      [
+        "personal_electronics",
+        0.99
+      ],
+      [
+        "computer_accessory",
+        0.01
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-016",
+    "description": "Kindle Paperwhite leather cover",
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary",
+      "merchant_misleading"
+    ],
+    "gold_category": "personal_electronics",
+    "acceptable": [
+      "personal_electronics"
+    ],
+    "jev_category": "personal_electronics",
+    "final_category": "personal_electronics",
+    "selected_p": 0.94,
+    "jev_confidence": 0.94,
+    "top3": [
+      [
+        "personal_electronics",
+        0.94
+      ],
+      [
+        "computer_accessory",
+        0.06
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-017",
+    "description": "65W USB-C charger",
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "electronics_boundary"
+    ],
+    "gold_category": "personal_electronics",
+    "acceptable": [
+      "personal_electronics",
+      "computer_accessory"
+    ],
+    "jev_category": "personal_electronics",
+    "final_category": "personal_electronics",
+    "selected_p": 0.75,
+    "jev_confidence": 0.74,
+    "top3": [
+      [
+        "personal_electronics",
+        0.75
+      ],
+      [
+        "computer_accessory",
+        0.25
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-018",
+    "description": "Portable Bluetooth speaker",
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary"
+    ],
+    "gold_category": "personal_electronics",
+    "acceptable": [
+      "personal_electronics"
+    ],
+    "jev_category": "personal_electronics",
+    "final_category": "personal_electronics",
+    "selected_p": 0.74,
+    "jev_confidence": 0.73,
+    "top3": [
+      [
+        "personal_electronics",
+        0.74
+      ],
+      [
+        "computer_accessory",
+        0.18
+      ],
+      [
+        "other",
+        0.08
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-019",
+    "description": "Apple Pencil 2nd generation",
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary",
+      "misleading_name"
+    ],
+    "gold_category": "personal_electronics",
+    "acceptable": [
+      "personal_electronics"
+    ],
+    "jev_category": "computer_accessory",
+    "final_category": "computer_accessory",
+    "selected_p": 0.52,
+    "jev_confidence": 0.5,
+    "top3": [
+      [
+        "computer_accessory",
+        0.52
+      ],
+      [
+        "personal_electronics",
+        0.48
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": false,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-020",
+    "description": "Aluminum laptop stand",
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary",
+      "control"
+    ],
+    "gold_category": "computer_accessory",
+    "acceptable": [
+      "computer_accessory"
+    ],
+    "jev_category": "computer_accessory",
+    "final_category": "computer_accessory",
+    "selected_p": 0.98,
+    "jev_confidence": 0.98,
+    "top3": [
+      [
+        "computer_accessory",
+        0.98
+      ],
+      [
+        "other",
+        0.01
+      ],
+      [
+        "personal_electronics",
+        0.01
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-021",
+    "description": "Cat 6 ethernet cable 3m",
+    "ambiguity": "clear",
+    "challenges": [
+      "electronics_boundary",
+      "merchant_misleading"
+    ],
+    "gold_category": "computer_accessory",
+    "acceptable": [
+      "computer_accessory"
+    ],
+    "jev_category": "computer_accessory",
+    "final_category": "computer_accessory",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "computer_accessory",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-022",
+    "description": "Bouquet of roses",
+    "ambiguity": "clear",
+    "challenges": [
+      "gift_boundary",
+      "control"
+    ],
+    "gold_category": "gift",
+    "acceptable": [
+      "gift"
+    ],
+    "jev_category": "gift",
+    "final_category": "gift",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "gift",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-023",
+    "description": "Starbucks eGift $25",
+    "ambiguity": "clear",
+    "challenges": [
+      "gift_boundary",
+      "merchant_misleading",
+      "misleading_name"
+    ],
+    "gold_category": "gift_card",
+    "acceptable": [
+      "gift_card"
+    ],
+    "jev_category": "gift_card",
+    "final_category": "gift_card",
+    "selected_p": 0.99,
+    "jev_confidence": 0.99,
+    "top3": [
+      [
+        "gift_card",
+        0.99
+      ],
+      [
+        "gift",
+        0.01
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-024",
+    "description": "Visa prepaid card $100",
+    "ambiguity": "clear",
+    "challenges": [
+      "gift_boundary"
+    ],
+    "gold_category": "gift_card",
+    "acceptable": [
+      "gift_card"
+    ],
+    "jev_category": "gift_card",
+    "final_category": "gift_card",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "gift_card",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-025",
+    "description": "Company logo tote bags x25",
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "gift_boundary"
+    ],
+    "gold_category": "gift",
+    "acceptable": [
+      "gift",
+      "clothing",
+      "office_supplies"
+    ],
+    "jev_category": "clothing",
+    "final_category": "clothing",
+    "selected_p": 0.57,
+    "jev_confidence": 0.55,
+    "top3": [
+      [
+        "clothing",
+        0.57
+      ],
+      [
+        "gift",
+        0.38
+      ],
+      [
+        "office_supplies",
+        0.03
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-026",
+    "description": "Box of assorted chocolates",
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "gift_boundary"
+    ],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage",
+      "gift"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 0.96,
+    "jev_confidence": 0.96,
+    "top3": [
+      [
+        "food_beverage",
+        0.96
+      ],
+      [
+        "gift",
+        0.03
+      ],
+      [
+        "other",
+        0.01
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-027",
+    "description": "Sympathy card",
+    "ambiguity": "clear",
+    "challenges": [
+      "gift_boundary",
+      "merchant_misleading"
+    ],
+    "gold_category": "gift",
+    "acceptable": [
+      "gift"
+    ],
+    "jev_category": "gift",
+    "final_category": "gift",
+    "selected_p": 0.95,
+    "jev_confidence": 0.95,
+    "top3": [
+      [
+        "gift",
+        0.95
+      ],
+      [
+        "office_supplies",
+        0.05
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-028",
+    "description": "Cetirizine 10mg 30ct",
+    "ambiguity": "clear",
+    "challenges": [
+      "medication_boundary",
+      "control"
+    ],
+    "gold_category": "health_otc",
+    "acceptable": [
+      "health_otc"
+    ],
+    "jev_category": "health_otc",
+    "final_category": "health_otc",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "health_otc",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "otc_medication",
+        "p": 0.98,
+        "jev_confidence": 0.97,
+        "not_stated_p": 0.01,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 0.98,
+        "jev_confidence": 0.97,
+        "not_stated_p": 0.98,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-029",
+    "description": "Atorvastatin 20mg Rx #4471",
+    "ambiguity": "clear",
+    "challenges": [
+      "medication_boundary",
+      "out_of_taxonomy"
+    ],
+    "gold_category": "other",
+    "acceptable": [
+      "other"
+    ],
+    "jev_category": "other",
+    "final_category": "other",
+    "selected_p": 0.72,
+    "jev_confidence": 0.71,
+    "top3": [
+      [
+        "other",
+        0.72
+      ],
+      [
+        "health_otc",
+        0.27
+      ],
+      [
+        "personal_care",
+        0.01
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "prescription_medication",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 0.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-030",
+    "description": "Adhesive bandages assorted",
+    "ambiguity": "clear",
+    "challenges": [
+      "medication_boundary"
+    ],
+    "gold_category": "health_otc",
+    "acceptable": [
+      "health_otc"
+    ],
+    "jev_category": "health_otc",
+    "final_category": "health_otc",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "health_otc",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 0.82,
+        "jev_confidence": 0.76,
+        "not_stated_p": 0.82,
+        "class": "unlabelled"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 0.76,
+        "jev_confidence": 0.64,
+        "not_stated_p": 0.76,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-031",
+    "description": "Multivitamin gummies",
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "medication_boundary"
+    ],
+    "gold_category": "health_otc",
+    "acceptable": [
+      "health_otc",
+      "food_beverage"
+    ],
+    "jev_category": "health_otc",
+    "final_category": "health_otc",
+    "selected_p": 0.91,
+    "jev_confidence": 0.91,
+    "top3": [
+      [
+        "health_otc",
+        0.91
+      ],
+      [
+        "food_beverage",
+        0.04
+      ],
+      [
+        "other",
+        0.03
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 0.58,
+        "jev_confidence": 0.44,
+        "not_stated_p": 0.58,
+        "class": "unlabelled"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 0.9,
+        "jev_confidence": 0.85,
+        "not_stated_p": 0.9,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-032",
+    "description": "Prescription sunglasses",
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "medication_boundary",
+      "misleading_name"
+    ],
+    "gold_category": "clothing",
+    "acceptable": [
+      "clothing",
+      "other"
+    ],
+    "jev_category": "clothing",
+    "final_category": "clothing",
+    "selected_p": 0.66,
+    "jev_confidence": 0.64,
+    "top3": [
+      [
+        "clothing",
+        0.66
+      ],
+      [
+        "other",
+        0.3
+      ],
+      [
+        "personal_care",
+        0.03
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 0.98,
+        "jev_confidence": 0.97,
+        "not_stated_p": 0.98,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 0.95,
+        "jev_confidence": 0.92,
+        "not_stated_p": 0.95,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-033",
+    "description": "Paracetamol 500 mg Tabletten",
+    "ambiguity": "clear",
+    "challenges": [
+      "medication_boundary",
+      "multilingual"
+    ],
+    "gold_category": "health_otc",
+    "acceptable": [
+      "health_otc"
+    ],
+    "jev_category": "health_otc",
+    "final_category": "health_otc",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "health_otc",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "otc_medication",
+        "p": 0.96,
+        "jev_confidence": 0.95,
+        "not_stated_p": 0.02,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.98,
+        "not_stated_p": 0.99,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-034",
+    "description": "Insulin pen refills",
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "medication_boundary"
+    ],
+    "gold_category": "other",
+    "acceptable": [
+      "other",
+      "health_otc"
+    ],
+    "jev_category": "other",
+    "final_category": "other",
+    "selected_p": 0.72,
+    "jev_confidence": 0.71,
+    "top3": [
+      [
+        "other",
+        0.72
+      ],
+      [
+        "health_otc",
+        0.27
+      ],
+      [
+        "personal_care",
+        0.01
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "prescription_medication",
+        "p": 0.91,
+        "jev_confidence": 0.88,
+        "not_stated_p": 0.09,
+        "class": "unlabelled"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-035",
+    "description": "Suit pressing",
+    "ambiguity": "clear",
+    "challenges": [
+      "service_boundary",
+      "merchant_misleading"
+    ],
+    "gold_category": "laundry_service",
+    "acceptable": [
+      "laundry_service"
+    ],
+    "jev_category": "laundry_service",
+    "final_category": "laundry_service",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "laundry_service",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.98,
+        "not_stated_p": 0.99,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-036",
+    "description": "Fabric softener 1L",
+    "ambiguity": "clear",
+    "challenges": [
+      "service_boundary"
+    ],
+    "gold_category": "household_goods",
+    "acceptable": [
+      "household_goods"
+    ],
+    "jev_category": "household_goods",
+    "final_category": "household_goods",
+    "selected_p": 0.99,
+    "jev_confidence": 0.99,
+    "top3": [
+      [
+        "household_goods",
+        0.99
+      ],
+      [
+        "personal_care",
+        0.01
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.98,
+        "not_stated_p": 0.99,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-037",
+    "description": "Haircut and beard trim",
+    "ambiguity": "clear",
+    "challenges": [
+      "service_boundary",
+      "merchant_misleading"
+    ],
+    "gold_category": "personal_care",
+    "acceptable": [
+      "personal_care"
+    ],
+    "jev_category": "personal_care",
+    "final_category": "personal_care",
+    "selected_p": 0.98,
+    "jev_confidence": 0.98,
+    "top3": [
+      [
+        "personal_care",
+        0.98
+      ],
+      [
+        "other",
+        0.01
+      ],
+      [
+        "service_fee",
+        0.01
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.99,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_essential",
+        "p": 0.98,
+        "jev_confidence": 0.97,
+        "not_stated_p": 0.02,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-038",
+    "description": "Laptop screen repair labor",
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "service_boundary",
+      "out_of_taxonomy"
+    ],
+    "gold_category": "other",
+    "acceptable": [
+      "other",
+      "computer_accessory",
+      "service_fee"
+    ],
+    "jev_category": "service_fee",
+    "final_category": "service_fee",
+    "selected_p": 0.75,
+    "jev_confidence": 0.74,
+    "top3": [
+      [
+        "service_fee",
+        0.75
+      ],
+      [
+        "other",
+        0.22
+      ],
+      [
+        "personal_electronics",
+        0.02
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-039",
+    "description": "Delivery fee",
+    "ambiguity": "clear",
+    "challenges": [
+      "service_boundary",
+      "control"
+    ],
+    "gold_category": "service_fee",
+    "acceptable": [
+      "service_fee"
+    ],
+    "jev_category": "service_fee",
+    "final_category": "service_fee",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "service_fee",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-040",
+    "description": "Excess baggage fee",
+    "ambiguity": "clear",
+    "challenges": [
+      "service_boundary",
+      "misleading_name"
+    ],
+    "gold_category": "airfare",
+    "acceptable": [
+      "airfare"
+    ],
+    "jev_category": "airfare",
+    "final_category": "airfare",
+    "selected_p": 0.98,
+    "jev_confidence": 0.98,
+    "top3": [
+      [
+        "airfare",
+        0.98
+      ],
+      [
+        "service_fee",
+        0.02
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.99,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-041",
+    "description": "Lavandería - 5 camisas",
+    "ambiguity": "clear",
+    "challenges": [
+      "service_boundary",
+      "multilingual",
+      "merchant_misleading"
+    ],
+    "gold_category": "laundry_service",
+    "acceptable": [
+      "laundry_service"
+    ],
+    "jev_category": "laundry_service",
+    "final_category": "laundry_service",
+    "selected_p": 0.99,
+    "jev_confidence": 0.99,
+    "top3": [
+      [
+        "laundry_service",
+        0.99
+      ],
+      [
+        "clothing",
+        0.01
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-042",
+    "description": "Taxi zum Flughafen",
+    "ambiguity": "clear",
+    "challenges": [
+      "multilingual",
+      "control"
+    ],
+    "gold_category": "ground_transport",
+    "acceptable": [
+      "ground_transport"
+    ],
+    "jev_category": "ground_transport",
+    "final_category": "ground_transport",
+    "selected_p": 0.97,
+    "jev_confidence": 0.97,
+    "top3": [
+      [
+        "ground_transport",
+        0.97
+      ],
+      [
+        "other",
+        0.03
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.99,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-043",
+    "description": "Caderno A5 pautado",
+    "ambiguity": "clear",
+    "challenges": [
+      "multilingual",
+      "control"
+    ],
+    "gold_category": "office_supplies",
+    "acceptable": [
+      "office_supplies"
+    ],
+    "jev_category": "office_supplies",
+    "final_category": "office_supplies",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "office_supplies",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-044",
+    "description": "シャンプー 旅行用",
+    "ambiguity": "clear",
+    "challenges": [
+      "multilingual"
+    ],
+    "gold_category": "personal_care",
+    "acceptable": [
+      "personal_care"
+    ],
+    "jev_category": "personal_care",
+    "final_category": "personal_care",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "personal_care",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "essential",
+        "p": 0.98,
+        "jev_confidence": 0.97,
+        "not_stated_p": 0.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-045",
+    "description": "Cravate en soie",
+    "ambiguity": "clear",
+    "challenges": [
+      "multilingual"
+    ],
+    "gold_category": "clothing",
+    "acceptable": [
+      "clothing"
+    ],
+    "jev_category": "clothing",
+    "final_category": "clothing",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "clothing",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-046",
+    "description": "Samsung Galaxy S24 128GB",
+    "ambiguity": "clear",
+    "challenges": [
+      "out_of_taxonomy",
+      "electronics_boundary"
+    ],
+    "gold_category": "other",
+    "acceptable": [
+      "other"
+    ],
+    "jev_category": "personal_electronics",
+    "final_category": null,
+    "selected_p": 0.91,
+    "jev_confidence": 0.91,
+    "top3": [
+      [
+        "personal_electronics",
+        0.91
+      ],
+      [
+        "other",
+        0.08
+      ],
+      [
+        "computer_accessory",
+        0.01
+      ]
+    ],
+    "category_right": false,
+    "error": "item_kind mobile_phone contradicts category personal_electronics",
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "mobile_phone",
+        "p": 0.93,
+        "jev_confidence": 0.91,
+        "not_stated_p": 0.07,
+        "class": "contradictory"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-047",
+    "description": "Opera tickets x2",
+    "ambiguity": "clear",
+    "challenges": [
+      "out_of_taxonomy"
+    ],
+    "gold_category": "other",
+    "acceptable": [
+      "other"
+    ],
+    "jev_category": "airfare",
+    "final_category": null,
+    "selected_p": 0.74,
+    "jev_confidence": 0.73,
+    "top3": [
+      [
+        "airfare",
+        0.74
+      ],
+      [
+        "other",
+        0.25
+      ],
+      [
+        "gift_card",
+        0.01
+      ]
+    ],
+    "category_right": false,
+    "error": "venue_type contradicts category airfare",
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "theatre",
+        "p": 0.96,
+        "jev_confidence": 0.95,
+        "not_stated_p": 0.01,
+        "class": "contradictory"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-048",
+    "description": "Flu vaccination",
+    "ambiguity": "ambiguous",
+    "challenges": [
+      "out_of_taxonomy",
+      "medication_boundary"
+    ],
+    "gold_category": "other",
+    "acceptable": [
+      "other",
+      "health_otc"
+    ],
+    "jev_category": "other",
+    "final_category": "other",
+    "selected_p": 0.63,
+    "jev_confidence": 0.61,
+    "top3": [
+      [
+        "other",
+        0.63
+      ],
+      [
+        "health_otc",
+        0.22
+      ],
+      [
+        "service_fee",
+        0.14
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 0.9,
+        "jev_confidence": 0.87,
+        "not_stated_p": 0.9,
+        "class": "unlabelled"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-049",
+    "description": "Misc",
+    "ambiguity": "indeterminate",
+    "challenges": [
+      "incomplete"
+    ],
+    "gold_category": "other",
+    "acceptable": [
+      "other"
+    ],
+    "jev_category": "other",
+    "final_category": "other",
+    "selected_p": 0.99,
+    "jev_confidence": 0.99,
+    "top3": [
+      [
+        "other",
+        0.99
+      ],
+      [
+        "food_beverage",
+        0.01
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-050",
+    "description": "Item 7",
+    "ambiguity": "indeterminate",
+    "challenges": [
+      "incomplete",
+      "merchant_misleading"
+    ],
+    "gold_category": "other",
+    "acceptable": [
+      "other"
+    ],
+    "jev_category": "other",
+    "final_category": "other",
+    "selected_p": 0.99,
+    "jev_confidence": 0.99,
+    "top3": [
+      [
+        "other",
+        0.99
+      ],
+      [
+        "personal_electronics",
+        0.01
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-051",
+    "description": "Bottle",
+    "ambiguity": "indeterminate",
+    "challenges": [
+      "incomplete",
+      "merchant_misleading"
+    ],
+    "gold_category": "other",
+    "acceptable": [
+      "other",
+      "alcohol",
+      "food_beverage"
+    ],
+    "jev_category": "other",
+    "final_category": "other",
+    "selected_p": 0.51,
+    "jev_confidence": 0.49,
+    "top3": [
+      [
+        "other",
+        0.51
+      ],
+      [
+        "alcohol",
+        0.4
+      ],
+      [
+        "household_goods",
+        0.05
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.99,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-052",
+    "description": "Premium package",
+    "ambiguity": "indeterminate",
+    "challenges": [
+      "incomplete",
+      "merchant_misleading"
+    ],
+    "gold_category": "other",
+    "acceptable": [
+      "other",
+      "lodging"
+    ],
+    "jev_category": "other",
+    "final_category": "other",
+    "selected_p": 0.61,
+    "jev_confidence": 0.59,
+    "top3": [
+      [
+        "other",
+        0.61
+      ],
+      [
+        "lodging",
+        0.37
+      ],
+      [
+        "service_fee",
+        0.02
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 0.96,
+        "jev_confidence": 0.95,
+        "not_stated_p": 0.96,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-053",
+    "description": "Total due - no details",
+    "ambiguity": "clear",
+    "challenges": [
+      "incomplete",
+      "control"
+    ],
+    "gold_category": "other",
+    "acceptable": [
+      "other"
+    ],
+    "jev_category": "other",
+    "final_category": "other",
+    "selected_p": 0.98,
+    "jev_confidence": 0.98,
+    "top3": [
+      [
+        "other",
+        0.98
+      ],
+      [
+        "food_beverage",
+        0.02
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.99,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-054",
+    "description": "Dinner - guest Deputy Mayor T. Nguyen",
+    "ambiguity": "clear",
+    "challenges": [
+      "recipient"
+    ],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 0.97,
+    "jev_confidence": 0.97,
+    "top3": [
+      [
+        "food_beverage",
+        0.97
+      ],
+      [
+        "other",
+        0.03
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "government_official",
+        "p": 0.98,
+        "jev_confidence": 0.97,
+        "not_stated_p": 0.01,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 0.98,
+        "jev_confidence": 0.98,
+        "not_stated_p": 0.98,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-055",
+    "description": "Wine for D. Weiss, state-owned PetroNord",
+    "ambiguity": "clear",
+    "challenges": [
+      "recipient"
+    ],
+    "gold_category": "alcohol",
+    "acceptable": [
+      "alcohol"
+    ],
+    "jev_category": "alcohol",
+    "final_category": "alcohol",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "alcohol",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "clothing",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "government_official",
+        "p": 0.86,
+        "jev_confidence": 0.81,
+        "not_stated_p": 0.01,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-056",
+    "description": "Flowers for S. Ito",
+    "ambiguity": "clear",
+    "challenges": [
+      "recipient",
+      "gift_boundary"
+    ],
+    "gold_category": "gift",
+    "acceptable": [
+      "gift"
+    ],
+    "jev_category": "gift",
+    "final_category": "gift",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "gift",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 0.63,
+        "jev_confidence": 0.51,
+        "not_stated_p": 0.63,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-057",
+    "description": "Lunch with M. Lee of City National Bank",
+    "ambiguity": "clear",
+    "challenges": [
+      "recipient"
+    ],
+    "gold_category": "food_beverage",
+    "acceptable": [
+      "food_beverage"
+    ],
+    "jev_category": "food_beverage",
+    "final_category": "food_beverage",
+    "selected_p": 0.96,
+    "jev_confidence": 0.96,
+    "top3": [
+      [
+        "food_beverage",
+        0.96
+      ],
+      [
+        "other",
+        0.04
+      ],
+      [
+        "airfare",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "client",
+        "p": 0.74,
+        "jev_confidence": 0.65,
+        "not_stated_p": 0.23,
+        "class": "unlabelled"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.99,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-058",
+    "description": "Watch award for employee P. Singh",
+    "ambiguity": "clear",
+    "challenges": [
+      "recipient",
+      "misleading_name"
+    ],
+    "gold_category": "jewelry",
+    "acceptable": [
+      "jewelry"
+    ],
+    "jev_category": "jewelry",
+    "final_category": "jewelry",
+    "selected_p": 0.97,
+    "jev_confidence": 0.97,
+    "top3": [
+      [
+        "jewelry",
+        0.97
+      ],
+      [
+        "personal_electronics",
+        0.02
+      ],
+      [
+        "other",
+        0.01
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "employee",
+        "p": 0.99,
+        "jev_confidence": 0.99,
+        "not_stated_p": 0.01,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-059",
+    "description": "Mint nicotine pouches 15ct",
+    "ambiguity": "clear",
+    "challenges": [
+      "merchant_misleading",
+      "misleading_name"
+    ],
+    "gold_category": "tobacco",
+    "acceptable": [
+      "tobacco"
+    ],
+    "jev_category": "tobacco",
+    "final_category": "tobacco",
+    "selected_p": 0.94,
+    "jev_confidence": 0.94,
+    "top3": [
+      [
+        "tobacco",
+        0.94
+      ],
+      [
+        "health_otc",
+        0.02
+      ],
+      [
+        "other",
+        0.02
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 0.91,
+        "jev_confidence": 0.88,
+        "not_stated_p": 0.91,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 0.96,
+        "jev_confidence": 0.94,
+        "not_stated_p": 0.96,
+        "class": "right"
+      }
+    }
+  },
+  {
+    "id": "RB-060",
+    "description": "Scratch-off lottery ticket",
+    "ambiguity": "clear",
+    "challenges": [
+      "merchant_misleading"
+    ],
+    "gold_category": "gambling",
+    "acceptable": [
+      "gambling"
+    ],
+    "jev_category": "gambling",
+    "final_category": "gambling",
+    "selected_p": 1.0,
+    "jev_confidence": 1.0,
+    "top3": [
+      [
+        "gambling",
+        1.0
+      ],
+      [
+        "airfare",
+        0.0
+      ],
+      [
+        "alcohol",
+        0.0
+      ]
+    ],
+    "category_right": true,
+    "error": null,
+    "attributes": {
+      "recipient_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "venue_type": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "item_kind": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      },
+      "essential_toiletry": {
+        "choice": "not_stated",
+        "p": 1.0,
+        "jev_confidence": 1.0,
+        "not_stated_p": 1.0,
+        "class": "right"
+      }
+    }
+  }
+]

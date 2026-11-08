@@ -1,0 +1,8 @@
+{
+  "policy_doc": "fabricated_quote.md",
+  "document_sha256": "df0762f249107eb58bbc6e876da2423670e77219ad7ac04efac423ee2efdba30",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "simulation",
+  "origin": "hand-written scenario response",
+  "response": "{\"rules\": [{\"rule_id\": \"ZZ-01\", \"title\": \"Peripheral cap\", \"section\": \"Limits\", \"severities\": [\"medium\"], \"review_signal\": false, \"thresholds\": [{\"value\": \"200\", \"unit\": \"usd\"}], \"references\": [\"EXC-02\"], \"quote\": \"always reimbursable with approval\"}]}"
+}

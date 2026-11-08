@@ -1,4 +1,4 @@
-"""Receipt ingestion: validated receipts for the pipeline, with answers kept apart for scoring."""
+"""Ingest raw receipt records, keeping answers apart for scoring."""
 
 from expense_validator.ingestion.loader import ingest_record, iter_jsonl, iter_jsonl_lines
 from expense_validator.ingestion.models import (

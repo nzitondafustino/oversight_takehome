@@ -1,18 +1,7 @@
-"""Decides which candidate findings another rule has replaced, at the level the ruleset declares.
+"""Decide which candidate findings another rule replaces, at the declared level.
 
-    receipt  the replacing rule applies to this receipt, whether or not it caught anything
-    line     the replacing rule caught this line, so only that line's finding goes
-    finding  the replacing rule's finding established this target, so a declared target is only
-             eligible: TIME-03 replaces the threshold actually split around, not all it lists
-
-Candidates are kept as they were. A replaced finding is reported apart, with what replaced it.
-
-A replacement that depends on something not known is possible, not confirmed, so the finding stays
-active and the result is not complete: the replacing rule may be pending or undetermined, or its
-gate may read a value that is missing. A rule that is confirmed out of play no longer needs
-deciding, so its own pending or undetermined entries are set aside as moot.
-
-This decides nothing else. References, carve-outs, uncertainty and disposition come later.
+A replacement that depends on something unknown is possible, not confirmed: the finding stays active and
+the result is not complete.
 """
 
 from collections.abc import Mapping
@@ -34,7 +23,7 @@ BROKEN_BY_ONE_RECEIPT = frozenset({ITEMIZATION_RULE, GIFT_RULE})
 
 @dataclass(frozen=True)
 class ReplacedFinding:
-    """finding is the candidate marked replaced, with everything else as it was."""
+    """A candidate finding marked replaced."""
 
     finding: Finding
     replaced_by: str
@@ -44,7 +33,7 @@ class ReplacedFinding:
 
 @dataclass(frozen=True)
 class PossibleReplacement:
-    """This finding stays active: whether the rule replaces it is not known yet."""
+    """A finding that stays active because its replacement is not yet known."""
 
     finding: Finding
     possibly_by: str
@@ -75,7 +64,6 @@ class ReplacementResult:
 
 @dataclass(frozen=True)
 class _Claim:
-    """A rule replacing, or possibly replacing, a target: on these lines, or all of them if None."""
 
     target: str
     line_ids: frozenset[str] | None
@@ -90,7 +78,7 @@ class _Claim:
 def resolve_replacements(
     receipt: Receipt, result: CheckResult, ruleset: RuleSet, fields: Mapping[str, dict]
 ) -> ReplacementResult:
-    """result must be for this receipt, from a run on this ruleset."""
+    """Resolve replacements among a receipt's candidate findings."""
     if any(finding.receipt_id != receipt.receipt_id for finding in result.findings):
         raise ValueError(f"{receipt.receipt_id}: has findings for another receipt")
     rules = [rule for rule in ruleset.rules if isinstance(rule, CheckRule) and rule.status == "active"]

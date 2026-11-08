@@ -1,0 +1,142 @@
+{
+ "items": [
+  {
+   "document_id": "doc_6aef74c512548bd292ef54c6",
+   "revision": 1,
+   "filename": "transaction-pattern-rules.md",
+   "title": "transaction-pattern-rules",
+   "content_sha256": "1e6613b0fe7c719098e5798bc6a652ca067d6023557b9f31749d70e616b6ad84",
+   "size_bytes": 1779,
+   "source": {
+    "kind": "upload",
+    "description": null,
+    "reference": null
+   },
+   "based_on_revision": null,
+   "created_at": "2026-11-07T18:58:13.932000Z"
+  },
+  {
+   "document_id": "doc_6aef74c512548bd292ef54c5",
+   "revision": 1,
+   "filename": "technology-and-equipment-policy.md",
+   "title": "technology-and-equipment-policy",
+   "content_sha256": "9d09346fa6b4008d6d561cb7d9d55595d71d56a8fa1d2ce6f953b6454721003d",
+   "size_bytes": 1340,
+   "source": {
+    "kind": "upload",
+    "description": null,
+    "reference": null
+   },
+   "based_on_revision": null,
+   "created_at": "2026-11-07T18:58:13.931000Z"
+  },
+  {
+   "document_id": "doc_6aef74c512548bd292ef54c4",
+   "revision": 1,
+   "filename": "regional-addendum.md",
+   "title": "regional-addendum",
+   "content_sha256": "6a5c61b3f7e366be98d9fe0ec143c3d161fa42e40894819c2b580972a6d541aa",
+   "size_bytes": 1874,
+   "source": {
+    "kind": "upload",
+    "description": null,
+    "reference": null
+   },
+   "based_on_revision": null,
+   "created_at": "2026-11-07T18:58:13.930000Z"
+  },
+  {
+   "document_id": "doc_6aef74c512548bd292ef54c3",
+   "revision": 1,
+   "filename": "receipt-documentation-requirements.md",
+   "title": "receipt-documentation-requirements",
+   "content_sha256": "2db168ba4b1a6a7006ed9f71b4f710fa0bbf311e9236f85315b4f79432f597bb",
+   "size_bytes": 1921,
+   "source": {
+    "kind": "upload",
+    "description": null,
+    "reference": null
+   },
+   "based_on_revision": null,
+   "created_at": "2026-11-07T18:58:13.929000Z"
+  },
+  {
+   "document_id": "doc_6aef74c512548bd292ef54c2",
+   "revision": 1,
+   "filename": "non-reimbursable-items.md",
+   "title": "non-reimbursable-items",
+   "content_sha256": "57bc63c1b27ad4e9a3129b97f0162250542ea857f98e33f44002bfbaed7e735b",
+   "size_bytes": 1924,
+   "source": {
+    "kind": "upload",
+    "description": null,
+    "reference": null
+   },
+   "based_on_revision": null,
+   "created_at": "2026-11-07T18:58:13.928000Z"
+  },
+  {
+   "document_id": "doc_6aef74c512548bd292ef54c1",
+   "revision": 1,
+   "filename": "merchant-category-risk.md",
+   "title": "merchant-category-risk",
+   "content_sha256": "3d30b0928fe8e548f07e7e0f6ed37c49c541a115b95f8f9dd7086c45618b7a14",
+   "size_bytes": 1981,
+   "source": {
+    "kind": "upload",
+    "description": null,
+    "reference": null
+   },
+   "based_on_revision": null,
+   "created_at": "2026-11-07T18:58:13.927000Z"
+  },
+  {
+   "document_id": "doc_6aef74c512548bd292ef54c0",
+   "revision": 1,
+   "filename": "meals-and-entertainment-policy.md",
+   "title": "meals-and-entertainment-policy",
+   "content_sha256": "8f6713be91c1ae6d8848e66e36aae4fac4a742bafbc2a4547d25ce4ae68fffc1",
+   "size_bytes": 3775,
+   "source": {
+    "kind": "upload",
+    "description": null,
+    "reference": null
+   },
+   "based_on_revision": null,
+   "created_at": "2026-11-07T18:58:13.926000Z"
+  },
+  {
+   "document_id": "doc_6aef74c512548bd292ef54bf",
+   "revision": 1,
+   "filename": "gifts-and-awards-policy.md",
+   "title": "gifts-and-awards-policy",
+   "content_sha256": "cf97894bcae77330a374d43fea16703cc3ccd0ac30b9b40a1b8fc1668b9657f9",
+   "size_bytes": 2191,
+   "source": {
+    "kind": "upload",
+    "description": null,
+    "reference": null
+   },
+   "based_on_revision": null,
+   "created_at": "2026-11-07T18:58:13.924000Z"
+  },
+  {
+   "document_id": "doc_6aef74c512548bd292ef54be",
+   "revision": 1,
+   "filename": "approval-and-exception-handling.md",
+   "title": "approval-and-exception-handling",
+   "content_sha256": "94de7aed26ad781ce50f80560bb0e54c81b0df6598e2ea1b676bc044ec2d858c",
+   "size_bytes": 2593,
+   "source": {
+    "kind": "upload",
+    "description": null,
+    "reference": null
+   },
+   "based_on_revision": null,
+   "created_at": "2026-11-07T18:58:13.909000Z"
+  }
+ ],
+ "total": 9,
+ "limit": 20,
+ "offset": 0
+}

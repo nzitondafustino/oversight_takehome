@@ -69,7 +69,10 @@ def tampered(run, spec):
         report = report.model_copy(update=spec["report"])
     update = {**spec.get("result", {}), "report": report}
     if "reason" in spec:
-        update["reasons"] = (result.reasons[0].model_copy(update=spec["reason"]), *result.reasons[1:])
+        index = next(i for i, reason in enumerate(result.reasons) if reason.code == spec.get("reason_of", result.reasons[0].code))
+        reasons = list(result.reasons)
+        reasons[index] = reasons[index].model_copy(update=spec["reason"])
+        update["reasons"] = tuple(reasons)
     elif "reasons" in update:
         update["reasons"] = tuple(update["reasons"])
     result = result.model_copy(update=update)
@@ -124,7 +127,7 @@ def test_a_tie_between_rules_does_not_depend_on_their_order(case):
 @pytest.mark.parametrize("value", ["false", "true", 0, 1, None])
 def test_complete_must_be_a_real_bool_as_any_other_would_read_as_true(value):
     with pytest.raises(TypeError, match="complete must be True or False"):
-        evaluate_receipts("northwind", [], RULESET, FIELDS, complete=value)
+        evaluate_receipts([], RULESET, FIELDS, complete=value)
 
 
 def test_asking_for_a_receipt_not_in_a_run_is_an_error_a_caller_can_catch():
@@ -143,7 +146,7 @@ def test_the_entry_point_checks_each_run_before_returning_it(monkeypatch):
 
 
 def test_asking_for_a_receipt_not_assessed_is_an_error_a_caller_can_catch():
-    assessed = assess_context(build_context("northwind", [], FIELDS, complete=True), RULESET, FIELDS)
+    assessed = assess_context(build_context([], FIELDS, complete=True), RULESET, FIELDS)
     with pytest.raises(ValueError, match="NOPE: is not in the assessed context"):
         assessed.assessment_for("NOPE")
 
@@ -151,14 +154,6 @@ def test_asking_for_a_receipt_not_assessed_is_an_error_a_caller_can_catch():
 def test_the_checks_run_on_every_real_result():
     check_run(RUN, [row["receipt_id"] for row in ROWS], disposition_directive(RULESET), RULESET)
     assert len(RUN.results) == len(ROWS)
-
-
-def test_a_customer_id_does_not_prove_who_owns_a_receipt():
-    """Scoping, not authorization: the same receipts run under any name. This pins that it does not check."""
-    receipts = [classified(ROWS[0])]
-    first, second = evaluate(receipts, customer="northwind"), evaluate(receipts, customer="acme")
-    assert first.results[0].disposition == second.results[0].disposition
-    assert (first.customer_id, second.customer_id) == ("northwind", "acme")
 
 
 # --- Determinism, on all the real data ---

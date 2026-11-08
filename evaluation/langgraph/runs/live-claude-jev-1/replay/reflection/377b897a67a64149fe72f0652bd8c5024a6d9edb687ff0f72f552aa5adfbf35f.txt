@@ -1,0 +1,1 @@
+{"verdict":"accept","reason":"The line states a gift basket, which is an item made to be given and maps to the gift category; the recipient attributes are taken from the line text itself.","suggested_category":null,"feedback":null}

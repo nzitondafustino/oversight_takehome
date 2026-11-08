@@ -1,11 +1,6 @@
-"""What a condition means: the semantics the schema's docstring describes, as code.
+"""Evaluate rule conditions on flat facts.
 
-Facts are a flat mapping such as {"item.category": "alcohol", "receipt.mcc": "5812"}.
-A field that is absent or None is missing, and a comparison against a missing value is
-false. False and 0 are values, not missing.
-
-This is not the engine: it decides one condition, one rule or one receipt's replacements.
-Rules with a helper have logic this cannot run, and it does not read receipts.
+A missing field makes every comparison false. False and 0 are values, not missing.
 """
 
 from collections.abc import Collection, Mapping
@@ -48,10 +43,7 @@ def evaluate(condition: Condition, facts: Mapping[str, object], params: Mapping[
 def evaluate_with_unknowns(
     condition: Condition, facts: Mapping[str, object], params: Mapping[str, Param], unknowable: Collection[str]
 ) -> bool | None:
-    """As evaluate, but None if the answer turns on comparing a field in unknowable that has no value.
-
-    Any false branch of an all, or true branch of an any, settles it whatever the unknown value is.
-    """
+    """Evaluate a condition, or return None if the result depends on an unknown field."""
     if isinstance(condition, (AllOf, AnyOf)):
         results = [evaluate_with_unknowns(child, facts, params, unknowable) for child in condition.conditions]
         settling = isinstance(condition, AnyOf)
@@ -60,6 +52,26 @@ def evaluate_with_unknowns(
         result = evaluate_with_unknowns(condition.condition, facts, params, unknowable)
         return None if result is None else not result
     if isinstance(condition, Compare) and condition.field in unknowable and facts.get(condition.field) is None:
+        return None
+    return evaluate(condition, facts, params)
+
+
+def evaluate_known(
+    condition: Condition, facts: Mapping[str, object], params: Mapping[str, Param], unknown: Collection[str]
+) -> bool | None:
+    """Evaluate a condition when the named fields are unknown, whatever they hold.
+
+    Returns True or False when the known facts settle the condition for every value an unknown field
+    could take, and None when the result depends on one.
+    """
+    if isinstance(condition, (AllOf, AnyOf)):
+        results = [evaluate_known(child, facts, params, unknown) for child in condition.conditions]
+        settling = isinstance(condition, AnyOf)
+        return settling if settling in results else None if None in results else not settling
+    if isinstance(condition, Not):
+        result = evaluate_known(condition.condition, facts, params, unknown)
+        return None if result is None else not result
+    if condition.field in unknown:
         return None
     return evaluate(condition, facts, params)
 
@@ -83,7 +95,7 @@ def _compare(condition: Compare, actual: object, params: Mapping[str, Param]) ->
 
 
 def matches(rule: CheckRule, facts: Mapping[str, object]) -> bool:
-    """Whether a rule's conditions catch these facts, before any reference or replacement."""
+    """Return whether a rule's conditions match these facts."""
     if rule.helper is not None:
         raise ValueError(f"{rule.rule_id}: uses the helper {rule.helper}, which conditions cannot run")
     gate = rule.applies_when is None or evaluate(rule.applies_when, facts, rule.params)
@@ -91,7 +103,7 @@ def matches(rule: CheckRule, facts: Mapping[str, object]) -> bool:
 
 
 def replaced_on_receipt(ruleset: RuleSet, facts: Mapping[str, object]) -> set[str]:
-    """The rules out of play for this receipt, because a rule replacing them applies to it."""
+    """Return the rules replaced for a receipt because a replacing rule applies."""
     replaced = set()
     for rule in ruleset.rules:
         if not isinstance(rule, CheckRule) or rule.status != "active":

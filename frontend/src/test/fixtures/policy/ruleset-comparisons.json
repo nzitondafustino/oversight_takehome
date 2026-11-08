@@ -1,0 +1,103 @@
+{
+ "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+ "comparisons": [
+  {
+   "comparison_id": "cmp-4f9766c93a09b7d56985df0ffc850555",
+   "document_id": "doc_6aef74c512548bd292ef54c1",
+   "policy_doc": "merchant-category-risk.md",
+   "rule_id": "MCC-03",
+   "field": "thresholds",
+   "status": "unconfirmed",
+   "regex_value": [],
+   "llm_value": [],
+   "agreed_value": null,
+   "evidence": "A bar (MCC 5813) serves alcohol on the premises, so ALC-01 and\nALC-02 apply to it exactly as they do to a restaurant, and it is never treated as retail under\nALC-03.",
+   "location": {
+    "section": null,
+    "line": 39
+   },
+   "clause_hash": "0739a5f5cf2b2e4bc238ed934f12f22cc14541647366c0106b14b7dc833b7c05",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": true
+  },
+  {
+   "comparison_id": "cmp-341734e64f87a13cae8784a83a0f37d4",
+   "document_id": "doc_6aef74c512548bd292ef54c4",
+   "policy_doc": "regional-addendum.md",
+   "rule_id": "REG-01",
+   "field": "thresholds",
+   "status": "unconfirmed",
+   "regex_value": [],
+   "llm_value": [],
+   "agreed_value": null,
+   "evidence": "Alcohol is **never** reimbursable for APAC-entity employees, including\nwithin client entertainment. This overrides ALC-01 and ALC-02: where those rules would have\npermitted alcohol with an attendee count, REG-01 still makes it a **high** exception. For APAC employees REG-01 replaces ALC-01, ALC-02 and\nALC-03: report REG-01 instead of those three. Rules about the merchant, such as MCC-01, still apply.",
+   "location": {
+    "section": "APAC entity \u2014 employees in IN, JP, SG",
+    "line": 7
+   },
+   "clause_hash": "425afa0c4599424b49a25e305bf0ed5629984670633aef1e050219ccf2935019",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": true
+  },
+  {
+   "comparison_id": "cmp-e79828288e025d0dbbcc1db374aae43e",
+   "document_id": "doc_6aef74c512548bd292ef54c5",
+   "policy_doc": "technology-and-equipment-policy.md",
+   "rule_id": "TECH-01",
+   "field": "quote",
+   "status": "disagree",
+   "regex_value": null,
+   "llm_value": "Personal electronics are not reimbursable.",
+   "agreed_value": null,
+   "evidence": "This includes, and is not limited to:\nheadphones and earbuds, smart watches and fitness trackers, tablets and e-readers, games\nconsoles, cameras and drones, televisions, portable speakers, and item trackers. Accessories made\nfor such a device \u2014 cases, chargers, screen protectors \u2014 count as personal electronics too.\nPurchase of any of these on an expense report is a **high** exception, regardless of stated\nbusiness purpose.",
+   "location": {
+    "section": "Personal electronics",
+    "line": 5
+   },
+   "clause_hash": "a2eb18ae224c2d0750af1419a9dcd971284c2b6d21806804d3812a74477bc25c",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": true
+  },
+  {
+   "comparison_id": "cmp-8d1da12b8fd61ed8898b442807dc62d4",
+   "document_id": "doc_6aef74c512548bd292ef54c6",
+   "policy_doc": "transaction-pattern-rules.md",
+   "rule_id": "TIME-03",
+   "field": "thresholds",
+   "status": "disagree",
+   "regex_value": [
+    {
+     "unit": "count",
+     "value": "2"
+    },
+    {
+     "unit": "usd",
+     "value": "50"
+    },
+    {
+     "unit": "usd",
+     "value": "75"
+    }
+   ],
+   "llm_value": [
+    {
+     "unit": "usd",
+     "value": "50"
+    },
+    {
+     "unit": "usd",
+     "value": "75"
+    }
+   ],
+   "agreed_value": null,
+   "evidence": "Two or more receipts by the same employee, at the same merchant\n(by merchant name), on the same calendar date, are treated as a deliberate split when each one is\nat or below one of these thresholds but together they are above it: the $75 itemization threshold,\nwhen every receipt in the group is non-itemized (DOC-01); the employee's meal cap, compared per person (MEAL-01, REG-02, REG-03); or the $50 gift cap for\none recipient (GIFT-01). This **is** an exception, at **high** severity,\nand applies to every receipt in the group. It replaces the threshold rule being split around: report\nthe split, not a separate breach of that threshold.",
+   "location": {
+    "section": null,
+    "line": 15
+   },
+   "clause_hash": "48f515200a54ee0c5163fb6f99943aa9d4c92fe8003e39be5e3ceae89a12e472",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "review_required": true
+  }
+ ]
+}

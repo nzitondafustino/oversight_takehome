@@ -1,0 +1,1 @@
+{"category":"jewelry","confidence":0.9,"recipient_name":"A. Moreau","recipient_type":"client","venue_type":null,"item_kind":null,"essential_toiletry":null}

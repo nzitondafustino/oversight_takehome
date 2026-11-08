@@ -1,0 +1,312 @@
+{
+  "default_backend": "chat_completions",
+  "execution_modes": {
+    "default": "replay",
+    "replay": true,
+    "live": false,
+    "deterministic": true
+  },
+  "credential_configured": false,
+  "allowed_models": [],
+  "allowed_classification_models": [],
+  "allowed_translation_models": [],
+  "backends": [
+    {
+      "id": "chat_completions",
+      "name": "Chat completions adapter",
+      "kind": "adapter",
+      "legacy_ids": [
+        "openrouter"
+      ],
+      "provider": "openrouter",
+      "protocol": "chat_completions",
+      "installed": true,
+      "enabled": true,
+      "available": true,
+      "default": true,
+      "default_model": "anthropic/claude-haiku-5.5",
+      "allowed_models": [],
+      "capabilities": {
+        "review": true,
+        "revise": true
+      },
+      "replay": {
+        "supported": true,
+        "sets": [
+          {
+            "name": "jev",
+            "present": true,
+            "answer_files": 11,
+            "folder": "."
+          },
+          {
+            "name": "langgraph",
+            "present": true,
+            "answer_files": 14,
+            "folder": "."
+          },
+          {
+            "name": "openrouter",
+            "present": true,
+            "answer_files": 90,
+            "folder": "."
+          }
+        ]
+      },
+      "live": {
+        "permitted": false,
+        "credential_configured": false,
+        "available": false
+      }
+    },
+    {
+      "id": "decisions",
+      "name": "Decisions API adapter",
+      "kind": "adapter",
+      "legacy_ids": [
+        "jev"
+      ],
+      "provider": "openrouter",
+      "protocol": "decisions",
+      "installed": true,
+      "enabled": true,
+      "available": true,
+      "default": false,
+      "default_model": null,
+      "allowed_models": [],
+      "capabilities": {
+        "review": false,
+        "revise": false
+      },
+      "replay": {
+        "supported": true,
+        "sets": [
+          {
+            "name": "jev",
+            "present": true,
+            "answer_files": 79,
+            "folder": "jev"
+          },
+          {
+            "name": "langgraph",
+            "present": true,
+            "answer_files": 13,
+            "folder": "jev"
+          },
+          {
+            "name": "openrouter",
+            "present": false,
+            "answer_files": 0,
+            "folder": "jev"
+          }
+        ]
+      },
+      "live": {
+        "permitted": false,
+        "credential_configured": false,
+        "available": false
+      }
+    },
+    {
+      "id": "langgraph",
+      "name": "LangGraph orchestrator",
+      "kind": "orchestrator",
+      "legacy_ids": [],
+      "provider": null,
+      "protocol": null,
+      "installed": true,
+      "enabled": true,
+      "available": true,
+      "default": false,
+      "default_model": null,
+      "allowed_models": [],
+      "capabilities": {
+        "review": false,
+        "revise": false,
+        "order": [
+          {
+            "name": "primary",
+            "backend": "decisions",
+            "model": "typesafe/jev-1.14",
+            "provider": "openrouter",
+            "protocol": "decisions"
+          },
+          {
+            "name": "fallback",
+            "backend": "chat_completions",
+            "model": "anthropic/claude-haiku-5.5",
+            "provider": "openrouter",
+            "protocol": "chat_completions"
+          }
+        ],
+        "routing": {
+          "min_confidence": 0.9,
+          "fallback_on_error": true,
+          "fallback_on_low_confidence": true
+        },
+        "reflection": {
+          "enabled": false,
+          "reviewer": {
+            "backend": "chat_completions",
+            "model": "anthropic/claude-haiku-5.5",
+            "provider": "openrouter",
+            "protocol": "chat_completions"
+          },
+          "max_retries": 2,
+          "max_total_calls_per_line": 6
+        }
+      },
+      "replay": {
+        "supported": true,
+        "sets": [
+          {
+            "name": "jev",
+            "present": true,
+            "answer_files": null,
+            "folder": null
+          },
+          {
+            "name": "langgraph",
+            "present": true,
+            "answer_files": null,
+            "folder": null
+          },
+          {
+            "name": "openrouter",
+            "present": true,
+            "answer_files": null,
+            "folder": null
+          }
+        ]
+      },
+      "live": {
+        "permitted": false,
+        "credential_configured": false,
+        "available": false
+      }
+    }
+  ],
+  "orchestrators": [
+    {
+      "id": "direct",
+      "name": "Direct",
+      "installed": true,
+      "enabled": true,
+      "available": true,
+      "default": true,
+      "nodes": null
+    },
+    {
+      "id": "langgraph",
+      "name": "LangGraph",
+      "installed": true,
+      "enabled": true,
+      "available": true,
+      "default": false,
+      "nodes": [
+        {
+          "name": "primary",
+          "backend": "decisions",
+          "model": "typesafe/jev-1.14",
+          "provider": "openrouter",
+          "protocol": "decisions"
+        },
+        {
+          "name": "fallback",
+          "backend": "chat_completions",
+          "model": "anthropic/claude-haiku-5.5",
+          "provider": "openrouter",
+          "protocol": "chat_completions"
+        }
+      ]
+    }
+  ],
+  "providers": [
+    {
+      "id": "openrouter",
+      "name": "OpenRouter",
+      "adapters": [
+        "chat_completions",
+        "decisions"
+      ],
+      "credential_configured": false
+    }
+  ],
+  "classification_models": [
+    {
+      "model": "anthropic/claude-haiku-5.5",
+      "provider": "openrouter",
+      "backend": "chat_completions",
+      "protocol": "chat_completions",
+      "default": true,
+      "allowed": false,
+      "sources": [
+        "default",
+        "langgraph:fallback"
+      ],
+      "capabilities": {
+        "review": true,
+        "revise": true
+      }
+    },
+    {
+      "model": "typesafe/jev-1.14",
+      "provider": "openrouter",
+      "backend": "decisions",
+      "protocol": "decisions",
+      "default": false,
+      "allowed": false,
+      "sources": [
+        "langgraph:primary"
+      ],
+      "capabilities": {
+        "review": false,
+        "revise": false
+      }
+    }
+  ],
+  "policy_compiler": {
+    "replay": {
+      "supported": true,
+      "sets": [
+        {
+          "name": "fixtures",
+          "present": true,
+          "live_target": false
+        },
+        {
+          "name": "live",
+          "present": true,
+          "live_target": false
+        }
+      ]
+    },
+    "live": {
+      "permitted": false,
+      "configured": false,
+      "credential_configured": false,
+      "available": false
+    }
+  },
+  "rulesets": {
+    "preview_allowed": true,
+    "publication_modes": [
+      "production"
+    ]
+  },
+  "evaluations": {
+    "uncapped_allowed": false
+  },
+  "translation": {
+    "enabled": true,
+    "default_model": "tencent/hy-mt2-30b-a3b",
+    "models": [
+      {
+        "model": "tencent/hy-mt2-30b-a3b",
+        "provider": "openrouter",
+        "default": true,
+        "allowed": false
+      }
+    ]
+  }
+}

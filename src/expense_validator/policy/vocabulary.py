@@ -1,8 +1,4 @@
-"""The fixed words for rules themselves.
-
-A clause that needs a new helper, unit or directive goes to a developer, who adds
-it here. Receipt and item data, such as field names and categories, is not listed.
-"""
+"""Fixed vocabulary for rules: severities, units, helpers and directives."""
 
 from typing import Literal
 

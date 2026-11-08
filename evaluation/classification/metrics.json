@@ -267,6 +267,12 @@
       "description": "Ibuprofen 200mg 24ct",
       "category": "health_otc",
       "item_kind": "otc_medication"
+    },
+    {
+      "line_id": "RCP-028-L2",
+      "description": "Throat lozenges",
+      "category": "health_otc",
+      "item_kind": "otc_medication"
     }
   ],
   "failed": [],

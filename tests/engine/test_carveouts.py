@@ -40,7 +40,7 @@ def summary(result):
 
 
 def resolve(case, ruleset):
-    context = build_context("northwind", case["receipts"], FIELDS, complete=case["complete"])
+    context = build_context(case["receipts"], FIELDS, complete=case["complete"])
     receipt = next(item for item in context.receipts if item.receipt_id == case["receipt_id"])
     replacements = resolve_replacements(receipt, run_checks(receipt, ruleset, FIELDS, context), ruleset, FIELDS)
     approvals = resolve_approvals(receipt, replacements, ruleset)
@@ -156,7 +156,7 @@ def test_a_result_cannot_be_changed_and_keeps_every_candidate():
 
 def test_resolving_changes_nothing_it_is_given():
     case = case_named("a delay just above the threshold")
-    context = build_context("northwind", case["receipts"], FIELDS, complete=True)
+    context = build_context(case["receipts"], FIELDS, complete=True)
     receipt = context.receipts[0]
     replacements = resolve_replacements(receipt, run_checks(receipt, RULESET, FIELDS, context), RULESET, FIELDS)
     approvals = resolve_approvals(receipt, replacements, RULESET)
@@ -168,7 +168,7 @@ def test_resolving_changes_nothing_it_is_given():
 
 def test_findings_for_another_receipt_are_refused():
     case = case_named("a delay just above the threshold")
-    context = build_context("northwind", case["receipts"], FIELDS, complete=True)
+    context = build_context(case["receipts"], FIELDS, complete=True)
     receipt = context.receipts[0]
     replacements = resolve_replacements(receipt, run_checks(receipt, RULESET, FIELDS, context), RULESET, FIELDS)
     approvals = resolve_approvals(receipt, replacements, RULESET)

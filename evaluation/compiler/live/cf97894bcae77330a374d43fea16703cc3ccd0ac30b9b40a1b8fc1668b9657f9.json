@@ -1,0 +1,8 @@
+{
+  "policy_doc": "gifts-and-awards-policy.md",
+  "document_sha256": "cf97894bcae77330a374d43fea16703cc3ccd0ac30b9b40a1b8fc1668b9657f9",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "model",
+  "origin": "{\"provider\": \"openrouter\", \"url\": \"https://openrouter.ai/api/v1/chat/completions\", \"model\": \"anthropic/claude-haiku-5.5\", \"temperature\": 0.0, \"recorded_at\": \"2026-11-06T06:13:57+00:00\"}",
+  "response": "{\"rules\":[{\"rule_id\":\"GIFT-01\",\"title\":\"Client gift cap\",\"section\":null,\"severities\":[\"medium\"],\"review_signal\":false,\"thresholds\":[{\"value\":\"50\",\"unit\":\"usd\"},{\"value\":\"10\",\"unit\":\"usd\"}],\"references\":[\"GIFT-02\"],\"quote\":\"capped at $50 per recipient per occasion\"},{\"rule_id\":\"GIFT-02\",\"title\":\"Gift cards and cash equivalents\",\"section\":null,\"severities\":[\"high\"],\"review_signal\":false,\"thresholds\":[],\"references\":[],\"quote\":\"never reimbursable, at any amount and for any recipient\"},{\"rule_id\":\"GIFT-03\",\"title\":\"Employee gifts and awards\",\"section\":null,\"severities\":[\"medium\"],\"review_signal\":false,\"thresholds\":[],\"references\":[],\"quote\":\"must be processed through HR\"},{\"rule_id\":\"GIFT-04\",\"title\":\"Government officials\",\"section\":null,\"severities\":[\"critical\"],\"review_signal\":false,\"thresholds\":[],\"references\":[\"EXC-04\",\"GIFT-01\"],\"quote\":\"prohibited under our anti-corruption policy\"}]}"
+}

@@ -1,24 +1,7 @@
-"""EXC-04: the report of one receipt, with findings grouped as the policy says to cite them.
+"""Build the EXC-04 report for one receipt.
 
-A Finding stays atomic. A group holds its source findings whole, so nothing is lost by grouping:
-
-    exception     one group per rule and resolution. An item rule cites every line it caught, never
-                  a gratuity or service fee, and a rule EXC-04 lists as whole-receipt cites no lines.
-                  An item exception with no line it can cite is reported as uncitable, not active,
-                  as "an exception that cannot name its evidence must not be raised".
-    review_signal one group per rule, resolution and target. EXC-04 speaks of exceptions, so these
-                  are not merged.
-    uncertainty   the EXC-03 signals on the receipt, as one group, keeping each line's field and reason.
-
-Only active groups count as exceptions. Replaced, waived, excused and uncitable groups are audit
-history, and an unresolved one is still in question. A group reports the highest severity among its
-sources, and each source keeps its own.
-
-What the rules could not decide is summarised per rule in open_questions. Those are not violations.
-
-decided is the one answer to whether this receipt was fully evaluated, so a caller need not combine
-anything. A result from a run that skipped the uncertainty view is refused where that can be seen.
-This decides no disposition, and only evaluation.evaluate_receipts gives an authoritative result.
+Findings stay atomic inside groups. Only active groups are exceptions; replaced, waived, excused and
+uncitable groups are audit history. decided says whether the receipt was fully evaluated.
 """
 
 from collections.abc import Iterable, Mapping
@@ -58,7 +41,6 @@ class UncertaintyDetail(_Strict):
 
 class ReportGroup(_Strict):
     group_id: str
-    customer_id: str
     receipt_id: str
     rule_id: str
     kind: Kind
@@ -81,12 +63,12 @@ class ReportGroup(_Strict):
 
     @property
     def notes(self) -> tuple[str, ...]:
-        """The distinct notes, for reading. source_notes says which finding each belongs to."""
+        """Return the distinct source notes."""
         return tuple(sorted({note for note in self.source_notes if note is not None}))
 
 
 class OpenQuestion(_Strict):
-    """What one rule could not decide on this receipt. This is not a violation."""
+    """What one rule could not decide on a receipt. Not a violation."""
 
     rule_id: str
     whole_receipt: bool
@@ -96,7 +78,6 @@ class OpenQuestion(_Strict):
 
 
 class ReceiptReport(_Strict):
-    customer_id: str
     receipt_id: str
     ruleset_version: str
     groups: tuple[ReportGroup, ...]
@@ -122,7 +103,7 @@ class ReceiptReport(_Strict):
 
 @dataclass(frozen=True)
 class ReportEntry:
-    """One finding on its way into a group, with how it was resolved and why."""
+    """One finding on its way into a group, with its resolution."""
 
     finding: Finding
     resolution: Resolution
@@ -132,17 +113,14 @@ class ReportEntry:
 def build_report(
     assessed: AssessedContext, receipt_id: str, result: CarveOutResult, ruleset: RuleSet, fields: Mapping[str, dict]
 ) -> ReceiptReport:
-    """result must be from the steps run on this receipt's evaluation view, in this assessed context."""
+    """Build the report from the steps run on the receipt's evaluation view."""
     assessment = next((item for item in assessed.assessments if item.receipt_id == receipt_id), None)
     if assessment is None:
         raise ValueError(f"{receipt_id}: is not in the assessed context")
     _refuse_a_run_around_the_view(result, assessment.uncertain_line_ids, ruleset)
-    groups = group_entries(
-        assessed.original.customer_id, assessment.evaluation_receipt, _entries(result), assessment.signals, ruleset
-    )
+    groups = group_entries(assessment.evaluation_receipt, _entries(result), assessment.signals, ruleset)
     monetary = reconcile(assessment.receipt, fields)
     return ReceiptReport(
-        customer_id=assessed.original.customer_id,
         receipt_id=receipt_id,
         ruleset_version=ruleset.ruleset_version,
         groups=groups,
@@ -153,13 +131,12 @@ def build_report(
 
 
 def group_entries(
-    customer_id: str,
     receipt: Receipt,
     entries: Iterable[ReportEntry],
     signals: Iterable[UncertaintySignal],
     ruleset: RuleSet,
 ) -> tuple[ReportGroup, ...]:
-    """The same entries give the same groups, in the same order, whatever order they come in."""
+    """Group entries deterministically, whatever their input order."""
     rules = {rule.rule_id: rule for rule in ruleset.rules}
     whole_receipt = _whole_receipt_rules(ruleset)
     position = {line.line_id: index for index, line in enumerate(receipt.line_items)}
@@ -175,15 +152,15 @@ def group_entries(
 
     groups = []
     for (rule_id, resolution, _), members in gathered.items():
-        groups.append(_group(customer_id, receipt, rules[rule_id], resolution, members, whole_receipt, position, fees))
+        groups.append(_group(receipt, rules[rule_id], resolution, members, whole_receipt, position, fees))
     signals = tuple(signals)
     if signals:
-        groups.append(_uncertainty_group(customer_id, receipt, signals, position))
+        groups.append(_uncertainty_group(receipt, signals, position))
     return tuple(sorted(groups, key=lambda group: (RESOLUTIONS.index(group.resolution), KINDS.index(group.kind), group.group_id)))
 
 
 def entries_of(report: ReceiptReport) -> tuple[ReportEntry, ...]:
-    """The entries behind a report's groups, other than its uncertainty group."""
+    """Return the entries behind a report's groups, other than uncertainty."""
     entries = []
     for group in report.groups:
         if group.kind == "uncertainty":
@@ -251,7 +228,7 @@ def _refuse_what_evidence_forbids(finding: Finding, rules: Mapping, whole_receip
 
 
 def _refuse_a_run_around_the_view(result: CarveOutResult, uncertain: tuple[str, ...], ruleset: RuleSet) -> None:
-    """A rule reading the category cannot have caught a line whose category the view blanks."""
+    """Refuse a result that read a category the uncertainty view blanked."""
     rules = {rule.rule_id: rule for rule in ruleset.rules}
     for finding in result.candidates:
         rule = rules.get(finding.rule_id)
@@ -270,7 +247,6 @@ def _ordered_entries(members: Iterable[ReportEntry], position: Mapping[str, int]
 
 
 def _group(
-    customer_id: str,
     receipt: Receipt,
     rule,
     resolution: Resolution,
@@ -288,13 +264,12 @@ def _group(
         line_ids = () if rule.rule_id in whole_receipt else tuple(line for line in named if line not in fees)
         if resolution in {"active", "unresolved"} and rule.rule_id not in whole_receipt and not line_ids:
             resolution = "uncitable"
-    identity = [customer_id, receipt.receipt_id, rule.rule_id, resolution]
+    identity = [receipt.receipt_id, rule.rule_id, resolution]
     if kind != "exception":
         identity += named
     severities = [finding.severity for finding in sources if finding.severity is not None]
     return ReportGroup(
         group_id="/".join(identity),
-        customer_id=customer_id,
         receipt_id=receipt.receipt_id,
         rule_id=rule.rule_id,
         kind=kind,
@@ -311,13 +286,12 @@ def _group(
 
 
 def _uncertainty_group(
-    customer_id: str, receipt: Receipt, signals: tuple[UncertaintySignal, ...], position: Mapping[str, int]
+    receipt: Receipt, signals: tuple[UncertaintySignal, ...], position: Mapping[str, int]
 ) -> ReportGroup:
     ordered = sorted(signals, key=lambda item: (position[item.finding.line_ids[0]], item.reason, item.field))
     first = ordered[0].finding
     return ReportGroup(
-        group_id="/".join((customer_id, receipt.receipt_id, first.rule_id, "active")),
-        customer_id=customer_id,
+        group_id="/".join((receipt.receipt_id, first.rule_id, "active")),
         receipt_id=receipt.receipt_id,
         rule_id=first.rule_id,
         kind="uncertainty",

@@ -1,4 +1,4 @@
-"""Prepares receipt line descriptions for classification. Decides nothing about what an item is."""
+"""Prepare receipt line descriptions for classification."""
 
 from expense_validator.normalization.models import NormalizedLine, NormalizedReceipt
 from expense_validator.normalization.receipt import normalize_receipt

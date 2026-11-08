@@ -28,7 +28,7 @@ RECIPIENTS = {case.values[0]["line_id"]: case.values[0]["expected"] for case in 
 
 
 def context_for(case):
-    return build_context("northwind", case["receipts"], FIELDS, complete=case["complete"])
+    return build_context(case["receipts"], FIELDS, complete=case["complete"])
 
 
 def current(case, context):
@@ -60,7 +60,7 @@ def classified(row):
     return admit_receipt(without_answers(row), FIELDS).with_classifications(outputs)
 
 
-CONTEXT = build_context("northwind", [classified(row) for row in ROWS], FIELDS, complete=True)
+CONTEXT = build_context([classified(row) for row in ROWS], FIELDS, complete=True)
 
 
 @pytest.mark.parametrize("case", load_cases("helpers", "outcomes"))
@@ -107,7 +107,7 @@ def test_where_lines_stand_against_the_baggage_allowance(case):
 
 @pytest.mark.parametrize("case", load_cases("helpers", "contexts"))
 def test_a_context_holds_each_receipt_once_in_order(case):
-    context = build_context(case["customer_id"], case["receipts"], FIELDS, complete=case["complete"])
+    context = build_context(case["receipts"], FIELDS, complete=case["complete"])
     assert [receipt.receipt_id for receipt in context.receipts] == case["expected"]["receipt_ids"]
     assert context.complete is case["expected"]["complete"]
     assert isinstance(context.receipts, tuple)
@@ -116,7 +116,7 @@ def test_a_context_holds_each_receipt_once_in_order(case):
 @pytest.mark.parametrize("case", load_cases("helpers", "refused"))
 def test_a_context_is_refused(case):
     with pytest.raises(ValueError, match=case["expected"]):
-        build_context(case["customer_id"], case["receipts"], FIELDS, complete=case["complete"])
+        build_context(case["receipts"], FIELDS, complete=case["complete"])
 
 
 # --- The contract of a context, using the real data ---
@@ -124,7 +124,7 @@ def test_a_context_is_refused(case):
 
 def test_the_current_receipt_must_be_in_the_context():
     outside = classified(ROWS[0])
-    empty = build_context("northwind", [], FIELDS, complete=True)
+    empty = build_context([], FIELDS, complete=True)
     with pytest.raises(ValueError, match="is not in the context"):
         run_helper(RULES["MEAL-01"], outside, empty, RULESET, FIELDS)
     with pytest.raises(ValueError, match="is not in the context"):
@@ -137,12 +137,12 @@ def test_the_current_receipt_must_be_in_the_context_even_with_no_helper_rule_to_
     outside = classified(ROWS[0])
     no_helpers = RuleSet.model_validate({"ruleset_version": "v1", "rules": []})
     with pytest.raises(ValueError, match="is not in the context"):
-        run_checks(outside, no_helpers, FIELDS, build_context("northwind", [], FIELDS, complete=True))
+        run_checks(outside, no_helpers, FIELDS, build_context([], FIELDS, complete=True))
 
 
 def test_the_number_of_receipts_in_a_split_comes_from_the_rule():
     pair = [classified(row) for row in ROWS if row["receipt_id"] in {"RCP-020", "RCP-021"}]
-    context = build_context("northwind", pair, FIELDS, complete=True)
+    context = build_context(pair, FIELDS, complete=True)
     rule = RULES["TIME-03"]
     assert run_helper(rule, context.receipts[0], context, RULESET, FIELDS).findings
     params = {**rule.params, "min_receipts": rule.params["min_receipts"].model_copy(update={"value": Decimal(3)})}
@@ -152,7 +152,7 @@ def test_the_number_of_receipts_in_a_split_comes_from_the_rule():
 
 def test_the_early_exit_for_too_few_receipts_reads_the_number_from_the_rule():
     first, second = next(case.values[0] for case in load_cases("helpers", "outcomes") if case.values[0]["id"] == "two receipts with unknown lines stay open")["receipts"]
-    context = build_context("northwind", [first, second], FIELDS, complete=True)
+    context = build_context([first, second], FIELDS, complete=True)
     rule = RULES["TIME-03"]
     assert run_helper(rule, context.receipts[0], context, RULESET, FIELDS).undetermined
     params = {**rule.params, "min_receipts": rule.params["min_receipts"].model_copy(update={"value": Decimal(3)})}
@@ -161,7 +161,7 @@ def test_the_early_exit_for_too_few_receipts_reads_the_number_from_the_rule():
 
 
 def test_alcohol_per_attendee_needs_alc_01_to_tell_where_alcohol_is_permitted():
-    context = build_context("northwind", [classified(ROWS[0])], FIELDS, complete=True)
+    context = build_context([classified(ROWS[0])], FIELDS, complete=True)
     without = RuleSet.model_construct(rules=(RULES["ALC-02"],))
     with pytest.raises(ValueError, match="needs ALC-01"):
         run_helper(RULES["ALC-02"], context.receipts[0], context, without, FIELDS)
@@ -170,36 +170,35 @@ def test_alcohol_per_attendee_needs_alc_01_to_tell_where_alcohol_is_permitted():
 def test_a_receipt_that_differs_from_the_one_in_the_context_is_refused():
     row = ROWS[0]
     unclassified = admit_receipt(without_answers(row), FIELDS)
-    context = build_context("northwind", [classified(row)], FIELDS, complete=True)
+    context = build_context([classified(row)], FIELDS, complete=True)
     with pytest.raises(ValueError, match="differs from the one there"):
         run_checks(unclassified, RULESET, FIELDS, context)
 
 
 def test_a_repeated_receipt_is_not_counted_twice():
     row = next(item for item in ROWS if item["receipt_id"] == "RCP-020")
-    once = build_context("northwind", [classified(row)], FIELDS, complete=True)
-    twice = build_context("northwind", [classified(row), classified(row)], FIELDS, complete=True)
+    once = build_context([classified(row)], FIELDS, complete=True)
+    twice = build_context([classified(row), classified(row)], FIELDS, complete=True)
     assert twice == once
     assert run_checks(once.receipts[0], RULESET, FIELDS, twice) == run_checks(once.receipts[0], RULESET, FIELDS, once)
     assert "TIME-03" not in {item.rule_id for item in run_checks(once.receipts[0], RULESET, FIELDS, twice).findings}
 
 
-def test_customers_are_kept_apart_by_their_contexts():
-    """The same employee and receipts split between two customers do not add up to a split."""
+def test_receipts_in_separate_contexts_are_kept_apart():
+    """The same employee's receipts in two separate contexts do not add up to a split."""
     first, second = (next(item for item in ROWS if item["receipt_id"] == name) for name in ("RCP-020", "RCP-021"))
-    together = build_context("northwind", [classified(first), classified(second)], FIELDS, complete=True)
-    apart = build_context("northwind", [classified(first)], FIELDS, complete=True)
-    elsewhere = build_context("acme", [classified(second)], FIELDS, complete=True)
+    together = build_context([classified(first), classified(second)], FIELDS, complete=True)
+    apart = build_context([classified(first)], FIELDS, complete=True)
+    elsewhere = build_context([classified(second)], FIELDS, complete=True)
     assert "TIME-03" in {item.rule_id for item in run_checks(apart.receipts[0], RULESET, FIELDS, together).findings}
     assert "TIME-03" not in {item.rule_id for item in run_checks(apart.receipts[0], RULESET, FIELDS, apart).findings}
     assert "TIME-03" not in {item.rule_id for item in run_checks(elsewhere.receipts[0], RULESET, FIELDS, elsewhere).findings}
-    assert (apart.customer_id, elsewhere.customer_id) == ("northwind", "acme")
 
 
 def test_a_directly_built_receipt_is_admitted_on_the_way_into_a_context():
     data = {**without_answers(ROWS[0]), "employee_country": "IN", "entity": "GLOBAL"}
     with pytest.raises(ValueError, match="contradicts"):
-        build_context("northwind", [Receipt.model_validate(data)], FIELDS, complete=True)
+        build_context([Receipt.model_validate(data)], FIELDS, complete=True)
 
 
 def test_a_context_cannot_be_changed():
@@ -252,7 +251,7 @@ def test_every_helper_finding_on_the_real_data_comes_from_its_rule(receipt):
 @pytest.mark.parametrize("row", ROWS, ids=lambda row: row["receipt_id"])
 def test_an_unclassified_real_receipt_is_not_complete_in_a_complete_context(row):
     receipts = [admit_receipt(without_answers(item), FIELDS) for item in ROWS]
-    context = build_context("northwind", receipts, FIELDS, complete=True)
+    context = build_context(receipts, FIELDS, complete=True)
     receipt = next(item for item in context.receipts if item.receipt_id == row["receipt_id"])
     assert run_checks(receipt, RULESET, FIELDS, context).complete is False
 

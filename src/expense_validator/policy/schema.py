@@ -1,29 +1,7 @@
-"""The structure every written rule must fit.
+"""The schema every policy rule must fit.
 
-A RuleSet is a versioned list of rules, and each rule is one of three kinds:
-
-    check       flags lines or a receipt that break a clause, and may replace other rules
-    carve_out   excuses lines from other rules when a reference is on file
-    process     settings for the engine, with no logic of its own
-
-A rule decides what it catches with conditions, or with a named helper when
-conditions cannot express the clause. Thresholds and lists live in the rule's
-params, and conditions refer to them by name. A rule can also say which item
-classes it applies to, as plain names: this schema does not check them.
-
-The fixed words for rules live in vocabulary.py. This file reads top down:
-conditions, params, rules, then the RuleSet.
-
-The compiler produces these models, the engine reads them. Anything a clause
-needs that this schema cannot express goes to a developer, who extends the
-schema or adds a helper. An unknown helper is a validation error. This schema
-does not know the receipt and item data: field names and the values they are
-compared with are stored as written.
-
-Condition semantics: a comparison against a missing value is false, so `not`
-of it is true. That is how "absence of evidence does not satisfy a carve-out"
-is expressed. `ne` is a comparison too, so it is also false on a missing value:
-write `not` of `eq` when a missing value should satisfy the condition.
+A RuleSet holds check, carve_out and process rules. Thresholds live in params. A comparison against a
+missing value is false, so `not` of it is true: write `not` of `eq` when missing should satisfy a condition.
 """
 
 from collections.abc import Iterator
@@ -51,11 +29,7 @@ Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 
 
 class _Strict(BaseModel):
-    """Refuses unknown keys, checks defaults too, and cannot be changed once built.
-
-    Frozen only stops a field being reassigned, so collections are tuples and params a
-    read-only mapping: nothing inside a built rule can change either.
-    """
+    """Refuse unknown keys, validate defaults, and keep built rules immutable."""
 
     model_config = ConfigDict(extra="forbid", frozen=True, validate_default=True)
 

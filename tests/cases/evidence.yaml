@@ -1,0 +1,92 @@
+suite: evidence
+
+# policy_evidence on a small policy `text`, for `rule_id` and its signed `quote`.
+# cases:   expected is the evidence `text` and whether it was `expanded` beyond the quote.
+# refused: the policy text could not be verified, so it is an error matching `expected`.
+
+templates:
+  doc: &doc |
+    # Policy
+
+    **AA-01 — Cards.** Gift cards are **never** reimbursable, at any amount. This is a **high** exception.
+
+    **BB-02 — Meals.** Meals are capped at **$75** per day. Spend above the cap is a **medium** exception.
+
+cases:
+  - id: the sentence holding the quote is the evidence
+    text: *doc
+    rule_id: AA-01
+    quote: "are **never** reimbursable"
+    expected: {text: "Gift cards are never reimbursable, at any amount.", expanded: true}
+  - id: bold and spacing in the quote do not matter
+    text: *doc
+    rule_id: AA-01
+    quote: "are  never   reimbursable"
+    expected: {text: "Gift cards are never reimbursable, at any amount.", expanded: true}
+  - id: the next rule in the same document gives its own sentence
+    text: *doc
+    rule_id: BB-02
+    quote: "capped at **$75**"
+    expected: {text: "Meals are capped at $75 per day.", expanded: true}
+  - id: a quote that is already its whole sentence stays as it is
+    text: *doc
+    rule_id: BB-02
+    quote: "Spend above the cap is a **medium** exception."
+    expected: {text: "Spend above the cap is a medium exception.", expanded: false}
+  - id: a quote that crosses two sentences is kept
+    text: *doc
+    rule_id: AA-01
+    quote: "at any amount. This is"
+    expected: {text: "at any amount. This is", expanded: false}
+  - id: a quote that occurs twice in the clause is kept
+    text: "**AA-01 — Cards.** Cards are never reimbursable. Vouchers too are never reimbursable.\n"
+    rule_id: AA-01
+    quote: "are never reimbursable"
+    expected: {text: "are never reimbursable", expanded: false}
+  - id: a quote that occurs twice in one sentence is kept
+    text: "**AA-01 — Cards.** Cards are never reimbursable and vouchers are never reimbursable.\n"
+    rule_id: AA-01
+    quote: "are never reimbursable"
+    expected: {text: "are never reimbursable", expanded: false}
+  - id: a sentence about reporting, not the restriction, is not used
+    text: "**AA-01 — Officials.** Gifts to officials are prohibited. The exception cites each line and replaces BB-02 for them.\n"
+    rule_id: AA-01
+    quote: "replaces BB-02 for them"
+    expected: {text: "replaces BB-02 for them", expanded: false}
+  - id: a clause with two severities keeps the quote
+    text: "**AA-01 — Medicine.** OTC medication is reimbursable up to **$25**, or a **low** exception. Prescription medication is a **medium** exception.\n"
+    rule_id: AA-01
+    quote: "up to **$25**"
+    expected: {text: "up to $25", expanded: false}
+  - id: a list item is a passage of its own
+    text: "**AA-01 — Disposition.** A receipt is decided as follows:\n\n- any **critical** finding is never reimbursable\n- anything else is reviewed\n"
+    rule_id: AA-01
+    quote: "any **critical** finding"
+    expected: {text: "any critical finding is never reimbursable", expanded: true}
+  - id: a sentence ending in a dollar amount still splits at its full stop
+    text: "**AA-01 — Gifts.** Gifts are capped at **$50**. Cards under $10 need no name.\n"
+    rule_id: AA-01
+    quote: "capped at **$50**"
+    expected: {text: "Gifts are capped at $50.", expanded: true}
+
+refused:
+  - id: a document that repeats a rule is refused by extraction
+    text: "**AA-01 — One.** Never reimbursable.\n\n**AA-01 — Two.** Never reimbursable.\n"
+    rule_id: AA-01
+    quote: "Never reimbursable"
+    expected: "duplicate rule ids"
+  - id: no clause for the rule
+    text: *doc
+    rule_id: CC-03
+    quote: "anything"
+    expected: "has no clause for CC-03"
+  - id: a quote that is not in its clause
+    text: *doc
+    rule_id: AA-01
+    quote: "capped at **$75**"
+    expected: "source_quote is not in its clause"
+  - id: an empty quote
+    text: *doc
+    rule_id: AA-01
+    quote: "  "
+    expected: "source_quote is not in its clause"

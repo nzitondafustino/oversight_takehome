@@ -1,0 +1,1 @@
+{"verdict":"accept","reason":"The line states throat lozenges from a pharmacy, which is an over-the-counter medication matching the health_otc category.","suggested_category":null,"feedback":null}

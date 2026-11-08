@@ -1,0 +1,20 @@
+suite: classification
+
+# A registered backend is an execution adapter, not a provider: the model ID decides which one it needs.
+# Exactly one adapter accepts a model the deployment can run; a Decisions-style ID no adapter runs gets none.
+adapters:
+  - id: Jev runs through the Decisions API adapter
+    model: typesafe/jev-1.14
+    expected: {backends: [decisions]}
+  - id: a Jev snapshot runs through the Decisions API adapter
+    model: typesafe/jev-1.14-20261014
+    expected: {backends: [decisions]}
+  - id: a chat model runs through the chat completions adapter
+    model: anthropic/claude-haiku-5.5
+    expected: {backends: [chat_completions]}
+  - id: a translation model is a chat model
+    model: tencent/hy-mt2-30b-a3b
+    expected: {backends: [chat_completions]}
+  - id: a Jev alias neither adapter accepts runs nowhere
+    model: ~typesafe/jev-latest
+    expected: {backends: []}

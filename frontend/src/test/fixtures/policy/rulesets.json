@@ -1,0 +1,118 @@
+{
+ "items": [
+  {
+   "ruleset_id": "rs_6aef74c612548bd292ef54cb",
+   "name": "uploaded",
+   "version": 1,
+   "status": "draft",
+   "ruleset_version": "v1",
+   "schema_version": "1",
+   "artifact_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+   "rule_count": 42,
+   "active_rule_count": 41,
+   "source": {
+    "kind": "upload",
+    "description": null,
+    "reference": "rules/ruleset.json"
+   },
+   "based_on_version": null,
+   "compilation": null,
+   "review": null,
+   "approval_reference": null,
+   "approval_mode": null,
+   "publication_mode": null,
+   "created_at": "2026-11-07T18:58:14.931000Z",
+   "submitted_at": null,
+   "approved_at": null,
+   "published_at": null
+  },
+  {
+   "ruleset_id": "rs_6aef74c612548bd292ef54ca",
+   "name": "policies",
+   "version": 1,
+   "status": "published",
+   "ruleset_version": "v1",
+   "schema_version": "1",
+   "artifact_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+   "rule_count": 42,
+   "active_rule_count": 41,
+   "source": {
+    "kind": "policy_compiler",
+    "description": null,
+    "reference": null
+   },
+   "based_on_version": null,
+   "compilation": {
+    "recording_set": "live",
+    "recorded_with": null,
+    "extraction_id": "ext_6aef74c512548bd292ef54c7",
+    "prepared_review": {
+     "review_id": "rev_6aef74c612548bd292ef54c9",
+     "policy": "exceptions_only",
+     "review_sha256": "3d80d11d1b0725c5fc7e357c081153a2074c87d8e3a9744fc479df37004c0bcd"
+    },
+    "reading_kind": "model",
+    "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+    "output_sha256": "f6af5ff7c4ead5ec187f5811956741498cb4d8862bc81f8b0150a921c21fddf0",
+    "ready_for_approval": false,
+    "blockers": [
+     "unresolved: merchant-category-risk.md MCC-03 thresholds is unconfirmed",
+     "unresolved: regional-addendum.md REG-01 thresholds is unconfirmed",
+     "unresolved: technology-and-equipment-policy.md TECH-01 quote is disagree",
+     "unresolved: transaction-pattern-rules.md TIME-03 thresholds is disagree"
+    ],
+    "comparisons_needing_review": 4,
+    "documents": []
+   },
+   "review": {
+    "decision": "accepted",
+    "reviewer": {
+     "claimed": "r.eviewer",
+     "verified": false
+    },
+    "reason": null,
+    "decided_at": "2026-11-07T18:58:14.234000Z",
+    "policy": "exceptions_only",
+    "decisions": [
+     {
+      "comparison_id": "cmp-4f9766c93a09b7d56985df0ffc850555",
+      "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+      "reviewer": "r.eviewer",
+      "action": "accept_regex"
+     },
+     {
+      "comparison_id": "cmp-341734e64f87a13cae8784a83a0f37d4",
+      "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+      "reviewer": "r.eviewer",
+      "action": "accept_regex"
+     },
+     {
+      "comparison_id": "cmp-e79828288e025d0dbbcc1db374aae43e",
+      "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+      "reviewer": "r.eviewer",
+      "action": "override",
+      "value": "is a **high** exception, regardless of stated business purpose",
+      "rationale": "the quote the executable rule signs"
+     },
+     {
+      "comparison_id": "cmp-8d1da12b8fd61ed8898b442807dc62d4",
+      "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+      "reviewer": "r.eviewer",
+      "action": "accept_regex"
+     }
+    ],
+    "review_sha256": "3d80d11d1b0725c5fc7e357c081153a2074c87d8e3a9744fc479df37004c0bcd"
+   },
+   "approval_reference": "815a735d61fe8fdc80cce51b31c357fdf13bed2940133cc309c6e40f36c4addd",
+   "approval_mode": "production",
+   "publication_mode": "production",
+   "created_at": "2026-11-07T18:58:14.225000Z",
+   "submitted_at": "2026-11-07T18:58:14.231000Z",
+   "approved_at": "2026-11-07T18:58:14.630000Z",
+   "published_at": "2026-11-07T18:58:14.908000Z"
+  }
+ ],
+ "total": 2,
+ "limit": 20,
+ "offset": 0
+}

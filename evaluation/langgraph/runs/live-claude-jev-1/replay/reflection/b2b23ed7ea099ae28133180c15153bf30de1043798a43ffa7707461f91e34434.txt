@@ -1,0 +1,1 @@
+{"verdict":"accept","reason":"Guinness 0.0 is a non-alcoholic stout, so the line supports food_beverage as a non-alcoholic drink, not alcohol.","suggested_category":null,"feedback":null}

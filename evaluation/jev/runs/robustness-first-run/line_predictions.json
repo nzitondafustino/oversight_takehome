@@ -1,0 +1,375 @@
+{
+  "customer_id": "robustness-lines",
+  "source": {
+    "kind": "actual",
+    "name": "jev-robustness-lines",
+    "description": "Jev on the isolated robustness lines",
+    "model": "typesafe/jev-1.14"
+  },
+  "predictions": [
+    {
+      "line_id": "RB-001",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.98"
+    },
+    {
+      "line_id": "RB-002",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.83"
+    },
+    {
+      "line_id": "RB-003",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-004",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-005",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.98"
+    },
+    {
+      "line_id": "RB-006",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-007",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-008",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.99"
+    },
+    {
+      "line_id": "RB-009",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.68"
+    },
+    {
+      "line_id": "RB-010",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.98"
+    },
+    {
+      "line_id": "RB-011",
+      "category": "household_goods",
+      "restricted": true,
+      "confidence": "0.5"
+    },
+    {
+      "line_id": "RB-012",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.61"
+    },
+    {
+      "line_id": "RB-013",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-014",
+      "category": "computer_accessory",
+      "restricted": false,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-015",
+      "category": "personal_electronics",
+      "restricted": true,
+      "confidence": "0.99"
+    },
+    {
+      "line_id": "RB-016",
+      "category": "personal_electronics",
+      "restricted": true,
+      "confidence": "0.94"
+    },
+    {
+      "line_id": "RB-017",
+      "category": "personal_electronics",
+      "restricted": true,
+      "confidence": "0.75"
+    },
+    {
+      "line_id": "RB-018",
+      "category": "personal_electronics",
+      "restricted": true,
+      "confidence": "0.74"
+    },
+    {
+      "line_id": "RB-019",
+      "category": "computer_accessory",
+      "restricted": false,
+      "confidence": "0.52"
+    },
+    {
+      "line_id": "RB-020",
+      "category": "computer_accessory",
+      "restricted": false,
+      "confidence": "0.98"
+    },
+    {
+      "line_id": "RB-021",
+      "category": "computer_accessory",
+      "restricted": false,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-022",
+      "category": "gift",
+      "restricted": true,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-023",
+      "category": "gift_card",
+      "restricted": true,
+      "confidence": "0.99"
+    },
+    {
+      "line_id": "RB-024",
+      "category": "gift_card",
+      "restricted": true,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-025",
+      "category": "clothing",
+      "restricted": true,
+      "confidence": "0.57"
+    },
+    {
+      "line_id": "RB-026",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.96"
+    },
+    {
+      "line_id": "RB-027",
+      "category": "gift",
+      "restricted": true,
+      "confidence": "0.95"
+    },
+    {
+      "line_id": "RB-028",
+      "category": "health_otc",
+      "restricted": false,
+      "confidence": "1.0",
+      "item_kind": "otc_medication"
+    },
+    {
+      "line_id": "RB-029",
+      "category": "other",
+      "restricted": false,
+      "confidence": "0.72",
+      "item_kind": "prescription_medication"
+    },
+    {
+      "line_id": "RB-030",
+      "category": "health_otc",
+      "restricted": false,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-031",
+      "category": "health_otc",
+      "restricted": false,
+      "confidence": "0.91"
+    },
+    {
+      "line_id": "RB-032",
+      "category": "clothing",
+      "restricted": true,
+      "confidence": "0.66"
+    },
+    {
+      "line_id": "RB-033",
+      "category": "health_otc",
+      "restricted": false,
+      "confidence": "1.0",
+      "item_kind": "otc_medication"
+    },
+    {
+      "line_id": "RB-034",
+      "category": "other",
+      "restricted": false,
+      "confidence": "0.72",
+      "item_kind": "prescription_medication"
+    },
+    {
+      "line_id": "RB-035",
+      "category": "laundry_service",
+      "restricted": false,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-036",
+      "category": "household_goods",
+      "restricted": true,
+      "confidence": "0.99"
+    },
+    {
+      "line_id": "RB-037",
+      "category": "personal_care",
+      "restricted": true,
+      "confidence": "0.98",
+      "essential_toiletry": false
+    },
+    {
+      "line_id": "RB-038",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.75"
+    },
+    {
+      "line_id": "RB-039",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-040",
+      "category": "airfare",
+      "restricted": false,
+      "confidence": "0.98"
+    },
+    {
+      "line_id": "RB-041",
+      "category": "laundry_service",
+      "restricted": false,
+      "confidence": "0.99"
+    },
+    {
+      "line_id": "RB-042",
+      "category": "ground_transport",
+      "restricted": false,
+      "confidence": "0.97"
+    },
+    {
+      "line_id": "RB-043",
+      "category": "office_supplies",
+      "restricted": false,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-044",
+      "category": "personal_care",
+      "restricted": true,
+      "confidence": "1.0",
+      "essential_toiletry": true
+    },
+    {
+      "line_id": "RB-045",
+      "category": "clothing",
+      "restricted": true,
+      "confidence": "1.0"
+    },
+    {
+      "line_id": "RB-048",
+      "category": "other",
+      "restricted": false,
+      "confidence": "0.63"
+    },
+    {
+      "line_id": "RB-049",
+      "category": "other",
+      "restricted": false,
+      "confidence": "0.99"
+    },
+    {
+      "line_id": "RB-050",
+      "category": "other",
+      "restricted": false,
+      "confidence": "0.99"
+    },
+    {
+      "line_id": "RB-051",
+      "category": "other",
+      "restricted": false,
+      "confidence": "0.51"
+    },
+    {
+      "line_id": "RB-052",
+      "category": "other",
+      "restricted": false,
+      "confidence": "0.61"
+    },
+    {
+      "line_id": "RB-053",
+      "category": "other",
+      "restricted": false,
+      "confidence": "0.98"
+    },
+    {
+      "line_id": "RB-054",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.97",
+      "recipient_name": "T. Nguyen",
+      "recipient_type": "government_official"
+    },
+    {
+      "line_id": "RB-055",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "1.0",
+      "recipient_name": "D. Weiss",
+      "recipient_type": "government_official"
+    },
+    {
+      "line_id": "RB-056",
+      "category": "gift",
+      "restricted": true,
+      "confidence": "1.0",
+      "recipient_name": "S. Ito",
+      "recipient_type": "unidentified"
+    },
+    {
+      "line_id": "RB-057",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.96",
+      "recipient_name": "M. Lee",
+      "recipient_type": "client"
+    },
+    {
+      "line_id": "RB-058",
+      "category": "jewelry",
+      "restricted": true,
+      "confidence": "0.97",
+      "recipient_name": "P. Singh",
+      "recipient_type": "employee"
+    },
+    {
+      "line_id": "RB-059",
+      "category": "tobacco",
+      "restricted": true,
+      "confidence": "0.94"
+    },
+    {
+      "line_id": "RB-060",
+      "category": "gambling",
+      "restricted": true,
+      "confidence": "1.0"
+    }
+  ]
+}

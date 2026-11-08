@@ -1,16 +1,10 @@
-"""The receipts a helper may read, and HelperJob: one helper rule running on one receipt.
+"""The receipts helpers read across, and HelperJob.
 
-A ReceiptContext is one customer's receipts, and must include the receipt being evaluated.
-Receipts carry no customer of their own, so keeping customers apart rests on building one context
-per customer. complete says whether these are all the receipts that could matter. A partial context
-proves nothing about a cap on a total that spans receipts, either way: a receipt not seen could add to
-the total or hold an adjustment that lowers it. That covers the meal caps per day, TIME-03, HEALTH-01's
-total per trip and the baggage allowance per delay. Such a total stays undetermined, which is not
-compliance. What rests on one receipt or line alone is still confirmed: GIFT-01's occasion is one
-receipt, ALC-02 is per receipt, and categorical rules and HEALTH-01's "no trip record" read no total.
+With complete=False a total spanning receipts is neither confirmed nor
+cleared, as an unseen receipt could raise or lower it.
 """
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -23,23 +17,18 @@ from expense_validator.policy.schema import CheckRule, RuleSet
 
 @dataclass(frozen=True)
 class ReceiptContext:
-    customer_id: str
     receipts: tuple[Receipt, ...]
     complete: bool
 
 
-def build_context(
-    customer_id: str, receipts: Iterable[Receipt | Mapping[str, object]], fields: Mapping[str, dict], *, complete: bool
-) -> ReceiptContext:
-    """One customer's receipts, each admitted, in receipt ID order. A repeat of a receipt counts once."""
-    if not customer_id.strip():
-        raise ValueError("a receipt context needs a customer_id")
+def build_context(receipts: Iterable[Receipt | Mapping[str, object]], fields: Mapping[str, dict], *, complete: bool) -> ReceiptContext:
+    """Admit receipts into a context, in receipt ID order."""
     admitted: dict[str, Receipt] = {}
     for given in receipts:
         receipt = admit_receipt(given, fields)
         if admitted.setdefault(receipt.receipt_id, receipt) != receipt:
             raise ValueError(f"{receipt.receipt_id}: appears twice with different contents")
-    return ReceiptContext(customer_id, tuple(admitted[receipt_id] for receipt_id in sorted(admitted)), complete)
+    return ReceiptContext(tuple(admitted[receipt_id] for receipt_id in sorted(admitted)), complete)
 
 
 def require_in_context(receipt: Receipt, context: ReceiptContext) -> None:
@@ -49,7 +38,7 @@ def require_in_context(receipt: Receipt, context: ReceiptContext) -> None:
 
 @dataclass(frozen=True)
 class HelperJob:
-    """One helper rule on one receipt, with what its helper may read. Knows no policy domain."""
+    """One helper rule running on one receipt."""
 
     rule: CheckRule
     receipt: Receipt
@@ -86,18 +75,18 @@ class HelperJob:
     def same_employee(self) -> list[Receipt]:
         return [other for other in self.context.receipts if other.employee_id == self.receipt.employee_id]
 
-    def same_day(self) -> list[Receipt] | None:
-        """This employee's receipts on this receipt's date. None if a date is missing, as it could be this one."""
-        mine = self.same_employee()
+    def same_day(self, relevant: Callable[[Receipt], bool] | None = None) -> list[Receipt] | None:
+        """Return this employee's receipts on this receipt's date, or None if a date is missing.
+
+        With relevant, only the receipts it accepts are returned, so a missing date on any other cannot matter.
+        """
+        mine = [other for other in self.same_employee() if relevant is None or relevant(other)]
         if any(other.transaction_datetime is None for other in mine):
             return None
         return [other for other in mine if other.transaction_datetime.date() == self.receipt.transaction_datetime.date()]
 
     def euro_rate(self) -> Decimal | None:
-        """A euro receipt's own rate, or else the one rate on euro receipts that day, if there is one.
-
-        Lives here because euro meal caps and the euro VAT threshold both read it, and neither owns it.
-        """
+        """Return the receipt's own euro rate, or the single euro rate recorded that day."""
         if self.receipt.currency == "EUR" and self.receipt.fx_rate_to_usd is not None:
             return self.receipt.fx_rate_to_usd
         if self.receipt.transaction_datetime is None:

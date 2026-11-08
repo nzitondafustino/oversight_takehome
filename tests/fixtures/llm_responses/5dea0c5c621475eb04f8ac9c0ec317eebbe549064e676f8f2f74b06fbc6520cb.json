@@ -1,0 +1,8 @@
+{
+  "policy_doc": "malformed.md",
+  "document_sha256": "5dea0c5c621475eb04f8ac9c0ec317eebbe549064e676f8f2f74b06fbc6520cb",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "simulation",
+  "origin": "hand-written scenario response",
+  "response": "I found one rule: ZZ-01, capped at $200."
+}

@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "pilot_id": "jev-pilot-v1",
+  "model": "jev-1.14.0",
+  "description": "Ten existing evaluation lines across nine receipts. Category/restricted expectations are source dataset labels; attributes and uncertainty are explicit derived expectations. Whole receipts remain context; unselected lines are not measured. No live calls authorized by this manifest.",
+  "dataset_sha256": "a277d73b45a8296389099abdb94b152aa89e99d71d141db47fdd7402f6489dff",
+  "golden_reference_sha256": "fba85ccea0a1d454d59058883332e6976ce3e7a04f30dd37ac13fddd6d784d15",
+  "lines": [
+    {
+      "receipt_id": "RCP-001",
+      "line_id": "RCP-001-L1",
+      "reason": "Straightforward food classification; ordinary meal context.",
+      "expected_category": "food_beverage",
+      "expected_restricted": false,
+      "category_origin": "dataset_label",
+      "label_source": "data/receipts.jsonl#RCP-001-L1.labels",
+      "attributes": [],
+      "policy_rules": [
+        "MEAL-01"
+      ],
+      "policy_rules_origin": "derived_expectation",
+      "expected_uncertainty": "No secondary uncertainty expected when these category/attribute values are accepted; actual confidence remains backend-reported.",
+      "uncertainty_origin": "derived_expectation",
+      "expectation_source": "evaluation/final/receipts.jsonl#RCP-001; descriptive expectation under unchanged engine rules, not a new gold label"
+    },
+    {
+      "receipt_id": "RCP-004",
+      "line_id": "RCP-004-L1",
+      "reason": "Misleading alcohol keyword in a food dish; guards against keyword classification.",
+      "expected_category": "food_beverage",
+      "expected_restricted": false,
+      "category_origin": "dataset_label",
+      "label_source": "data/receipts.jsonl#RCP-004-L1.labels",
+      "attributes": [],
+      "policy_rules": [
+        "ALC-01",
+        "MEAL-01"
+      ],
+      "policy_rules_origin": "derived_expectation",
+      "expected_uncertainty": "No secondary uncertainty expected when these category/attribute values are accepted; actual confidence remains backend-reported.",
+      "uncertainty_origin": "derived_expectation",
+      "expectation_source": "evaluation/final/receipts.jsonl#RCP-004; descriptive expectation under unchanged engine rules, not a new gold label"
+    },
+    {
+      "receipt_id": "RCP-010",
+      "line_id": "RCP-010-L2",
+      "reason": "Actual alcohol; changes ALC-01 findings.",
+      "expected_category": "alcohol",
+      "expected_restricted": true,
+      "category_origin": "dataset_label",
+      "label_source": "data/receipts.jsonl#RCP-010-L2.labels",
+      "attributes": [],
+      "policy_rules": [
+        "ALC-01"
+      ],
+      "policy_rules_origin": "derived_expectation",
+      "expected_uncertainty": "No secondary uncertainty expected when these category/attribute values are accepted; actual confidence remains backend-reported.",
+      "uncertainty_origin": "derived_expectation",
+      "expectation_source": "evaluation/final/receipts.jsonl#RCP-010; descriptive expectation under unchanged engine rules, not a new gold label"
+    },
+    {
+      "receipt_id": "RCP-012",
+      "line_id": "RCP-012-L1",
+      "reason": "Restricted electronics; affects TECH-01 and DOC-03.",
+      "expected_category": "personal_electronics",
+      "expected_restricted": true,
+      "category_origin": "dataset_label",
+      "label_source": "data/receipts.jsonl#RCP-012-L1.labels",
+      "attributes": [],
+      "policy_rules": [
+        "DOC-03",
+        "TECH-01"
+      ],
+      "policy_rules_origin": "derived_expectation",
+      "expected_uncertainty": "No secondary uncertainty expected when these category/attribute values are accepted; actual confidence remains backend-reported.",
+      "uncertainty_origin": "derived_expectation",
+      "expectation_source": "evaluation/final/receipts.jsonl#RCP-012; descriptive expectation under unchanged engine rules, not a new gold label"
+    },
+    {
+      "receipt_id": "RCP-013",
+      "line_id": "RCP-013-L1",
+      "reason": "Gift card with no identified recipient; GIFT-02 remains established while GIFT-04 stays open.",
+      "expected_category": "gift_card",
+      "expected_restricted": true,
+      "category_origin": "dataset_label",
+      "label_source": "data/receipts.jsonl#RCP-013-L1.labels",
+      "attributes": [
+        {
+          "field": "recipient_type",
+          "value": null,
+          "origin": "derived_expectation",
+          "source": "data/receipts.jsonl#RCP-013-L1.description_raw",
+          "basis": "Description states no recipient type; existing golden replay leaves it missing."
+        }
+      ],
+      "policy_rules": [
+        "EXC-03",
+        "GIFT-02",
+        "GIFT-04"
+      ],
+      "policy_rules_origin": "derived_expectation",
+      "expected_uncertainty": "Missing recipient_type requires EXC-03 review and leaves GIFT-04 open; GIFT-02 remains established.",
+      "uncertainty_origin": "derived_expectation",
+      "expectation_source": "evaluation/final/receipts.jsonl#RCP-013; descriptive expectation under unchanged engine rules, not a new gold label"
+    },
+    {
+      "receipt_id": "RCP-018",
+      "line_id": "RCP-018-L1",
+      "reason": "Jewelry given to a named client; recipient identifiability and GIFT-01 cap semantics.",
+      "expected_category": "jewelry",
+      "expected_restricted": true,
+      "category_origin": "dataset_label",
+      "label_source": "data/receipts.jsonl#RCP-018-L1.labels",
+      "attributes": [
+        {
+          "field": "recipient_name",
+          "value": "A. Moreau",
+          "origin": "derived_expectation",
+          "source": "evaluation/final/receipts.jsonl#RCP-018-L1.attributes.recipient_name",
+          "basis": "Existing replayed LLM output, not an independently labeled attribute."
+        },
+        {
+          "field": "recipient_type",
+          "value": "client",
+          "origin": "derived_expectation",
+          "source": "evaluation/final/receipts.jsonl#RCP-018-L1.attributes.recipient_type",
+          "basis": "Existing replayed LLM output, not an independently labeled attribute."
+        }
+      ],
+      "policy_rules": [
+        "GIFT-01",
+        "GIFT-04",
+        "MCC-01"
+      ],
+      "policy_rules_origin": "derived_expectation",
+      "expected_uncertainty": "No secondary uncertainty expected when these category/attribute values are accepted; actual confidence remains backend-reported.",
+      "uncertainty_origin": "derived_expectation",
+      "expectation_source": "evaluation/final/receipts.jsonl#RCP-018; descriptive expectation under unchanged engine rules, not a new gold label"
+    },
+    {
+      "receipt_id": "RCP-022",
+      "line_id": "RCP-022-L1",
+      "reason": "Named official receiving a meal; GIFT-04 applies independently of gift category.",
+      "expected_category": "food_beverage",
+      "expected_restricted": false,
+      "category_origin": "dataset_label",
+      "label_source": "data/receipts.jsonl#RCP-022-L1.labels",
+      "attributes": [
+        {
+          "field": "recipient_name",
+          "value": "R. Delgado",
+          "origin": "derived_expectation",
+          "source": "evaluation/final/receipts.jsonl#RCP-022-L1.attributes.recipient_name",
+          "basis": "Existing replayed LLM output, not an independently labeled attribute."
+        },
+        {
+          "field": "recipient_type",
+          "value": "government_official",
+          "origin": "derived_expectation",
+          "source": "evaluation/final/receipts.jsonl#RCP-022-L1.attributes.recipient_type",
+          "basis": "Existing replayed LLM output, not an independently labeled attribute."
+        }
+      ],
+      "policy_rules": [
+        "GIFT-04"
+      ],
+      "policy_rules_origin": "derived_expectation",
+      "expected_uncertainty": "No secondary uncertainty expected when these category/attribute values are accepted; actual confidence remains backend-reported.",
+      "uncertainty_origin": "derived_expectation",
+      "expectation_source": "evaluation/final/receipts.jsonl#RCP-022; descriptive expectation under unchanged engine rules, not a new gold label"
+    },
+    {
+      "receipt_id": "RCP-022",
+      "line_id": "RCP-022-L2",
+      "reason": "Gift basket to the same official; category, name preservation and GIFT-04 replacement.",
+      "expected_category": "gift",
+      "expected_restricted": true,
+      "category_origin": "dataset_label",
+      "label_source": "data/receipts.jsonl#RCP-022-L2.labels",
+      "attributes": [
+        {
+          "field": "recipient_name",
+          "value": "R. Delgado",
+          "origin": "derived_expectation",
+          "source": "evaluation/final/receipts.jsonl#RCP-022-L2.attributes.recipient_name",
+          "basis": "Existing replayed LLM output, not an independently labeled attribute."
+        },
+        {
+          "field": "recipient_type",
+          "value": "government_official",
+          "origin": "derived_expectation",
+          "source": "evaluation/final/receipts.jsonl#RCP-022-L2.attributes.recipient_type",
+          "basis": "Existing replayed LLM output, not an independently labeled attribute."
+        }
+      ],
+      "policy_rules": [
+        "GIFT-01",
+        "GIFT-04"
+      ],
+      "policy_rules_origin": "derived_expectation",
+      "expected_uncertainty": "No secondary uncertainty expected when these category/attribute values are accepted; actual confidence remains backend-reported.",
+      "uncertainty_origin": "derived_expectation",
+      "expectation_source": "evaluation/final/receipts.jsonl#RCP-022; descriptive expectation under unchanged engine rules, not a new gold label"
+    },
+    {
+      "receipt_id": "RCP-023",
+      "line_id": "RCP-023-L1",
+      "reason": "Unitemized unknown contents; non-itemized other exemption despite low confidence.",
+      "expected_category": "other",
+      "expected_restricted": false,
+      "category_origin": "dataset_label",
+      "label_source": "data/receipts.jsonl#RCP-023-L1.labels",
+      "attributes": [],
+      "policy_rules": [
+        "DOC-01"
+      ],
+      "policy_rules_origin": "derived_expectation",
+      "expected_uncertainty": "Non-itemized other is exempt from category-confidence review; contents remain unknown. DOC-01 still applies.",
+      "uncertainty_origin": "derived_expectation",
+      "expectation_source": "evaluation/final/receipts.jsonl#RCP-023; descriptive expectation under unchanged engine rules, not a new gold label"
+    },
+    {
+      "receipt_id": "RCP-025",
+      "line_id": "RCP-025-L2",
+      "reason": "German wine description; verifies cached translation replay and alcohol classification.",
+      "expected_category": "alcohol",
+      "expected_restricted": true,
+      "category_origin": "dataset_label",
+      "label_source": "data/receipts.jsonl#RCP-025-L2.labels",
+      "attributes": [],
+      "policy_rules": [
+        "ALC-01"
+      ],
+      "policy_rules_origin": "derived_expectation",
+      "expected_uncertainty": "No secondary uncertainty expected when these category/attribute values are accepted; actual confidence remains backend-reported.",
+      "uncertainty_origin": "derived_expectation",
+      "expectation_source": "evaluation/final/receipts.jsonl#RCP-025; descriptive expectation under unchanged engine rules, not a new gold label"
+    }
+  ]
+}

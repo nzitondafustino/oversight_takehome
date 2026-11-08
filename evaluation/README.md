@@ -35,4 +35,5 @@ Each prediction may also hold `recipient_name`, `recipient_type`, `venue_type`, 
 |---|---|
 | `oracle_recipients.yaml` | Recipients read by hand from three printed lines. Not gold labels. |
 | `baseline_10_6.yaml` | Benchmarks A to F at the Module 10.6 freeze, which the harness must reproduce. |
+| `engine_corrections.yaml` | What the policy-engine corrections of 2026-11-07 changed in frozen records (F in `baseline_10_6.yaml`, and RCP-017 in the Jev first run), applied over them by the harness and the tests. The records stay as written. |
 | `synthetic/proof_smoke.jsonl` | Six hand-written receipts that exercise inevitable-violation proofs. Not real data. |

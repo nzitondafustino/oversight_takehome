@@ -260,11 +260,11 @@ families:
   - {id: EXC-03, rule_id: EXC-03, expected: {family: EXC}}
 
 sources_refused:
-  - {id: actual with no model, prediction_set: {customer_id: c, source: {kind: actual, name: n, description: d}}, expected: must name the model}
-  - {id: synthetic claiming a model, prediction_set: {customer_id: c, source: {kind: synthetic, name: n, description: d, model: m}}, expected: have no model}
-  - {id: oracle claiming a model, prediction_set: {customer_id: c, source: {kind: oracle, name: n, description: d, model: m}}, expected: have no model}
-  - {id: an unknown kind, prediction_set: {customer_id: c, source: {kind: measured, name: n, description: d}}, expected: kind}
-  - {id: two predictions for one line, prediction_set: {customer_id: c, source: {kind: none, name: n, description: d}, predictions: [{line_id: L1}, {line_id: L1}]}, expected: more than one prediction}
-  - {id: confidence above 1, prediction_set: {customer_id: c, source: {kind: none, name: n, description: d}, predictions: [{line_id: L1, confidence: "1.5"}]}, expected: confidence}
-  - {id: a field no classifier output has, prediction_set: {customer_id: c, source: {kind: none, name: n, description: d}, predictions: [{line_id: L1, severity: high}]}, expected: severity}
-  - {id: gold labels in a prediction, prediction_set: {customer_id: c, source: {kind: none, name: n, description: d}, predictions: [{line_id: L1, labels: {category: x}}]}, expected: labels}
+  - {id: actual with no model, prediction_set: {source: {kind: actual, name: n, description: d}}, expected: must name the model}
+  - {id: synthetic claiming a model, prediction_set: {source: {kind: synthetic, name: n, description: d, model: m}}, expected: have no model}
+  - {id: oracle claiming a model, prediction_set: {source: {kind: oracle, name: n, description: d, model: m}}, expected: have no model}
+  - {id: an unknown kind, prediction_set: {source: {kind: measured, name: n, description: d}}, expected: kind}
+  - {id: two predictions for one line, prediction_set: {source: {kind: none, name: n, description: d}, predictions: [{line_id: L1}, {line_id: L1}]}, expected: more than one prediction}
+  - {id: confidence above 1, prediction_set: {source: {kind: none, name: n, description: d}, predictions: [{line_id: L1, confidence: "1.5"}]}, expected: confidence}
+  - {id: a field no classifier output has, prediction_set: {source: {kind: none, name: n, description: d}, predictions: [{line_id: L1, severity: high}]}, expected: severity}
+  - {id: gold labels in a prediction, prediction_set: {source: {kind: none, name: n, description: d}, predictions: [{line_id: L1, labels: {category: x}}]}, expected: labels}

@@ -38,7 +38,7 @@ answers:
   - {id: a level below the threshold stands, description: Wine, answer: {<<: *answer, confidence: 0.3}, expected: {confidence: "0.3"}}
   - {id: the level at the threshold stands, description: Wine, answer: {<<: *answer, confidence: 0.5}, expected: {confidence: "0.5"}}
   - {id: a named recipient and their type, description: "Bracelet - client gift for A. Moreau, Halcyon", answer: {<<: *answer, category: jewelry, recipient_name: A. Moreau, recipient_type: client}, expected: {recipient_name: A. Moreau, recipient_type: client}}
-  - {id: a recipient's name is matched without regard to case, description: Flowers for A. MOREAU, answer: {<<: *answer, category: gift, recipient_name: A. Moreau}, expected: {recipient_name: A. Moreau, recipient_type: null}}
+  - {id: a case-insensitive name match preserves receipt spelling, description: Flowers for A. MOREAU, answer: {<<: *answer, category: gift, recipient_name: A. Moreau}, expected: {recipient_name: A. MOREAU, recipient_type: null}}
   - {id: a recipient's type with no name is kept apart from both missing, description: Flowers for a client, answer: {<<: *answer, category: gift, recipient_type: client}, expected: {recipient_name: null, recipient_type: client}}
   - {id: a venue on an other line, description: Golf green fees, answer: {<<: *answer, category: other, venue_type: golf}, expected: {category: other, venue_type: golf}}
   - {id: a phone on an other line, description: iPhone 15, answer: {<<: *answer, category: other, item_kind: mobile_phone}, expected: {category: other, item_kind: mobile_phone}}
@@ -47,6 +47,14 @@ answers:
   - {id: true is kept, description: Toothpaste, answer: {<<: *answer, category: personal_care, essential_toiletry: true}, expected: {essential_toiletry: true}}
   - {id: nothing stated leaves every attribute missing, description: Wine, answer: *answer, expected: {recipient_name: null, recipient_type: null, venue_type: null, item_kind: null, essential_toiletry: null}}
   - {id: spacing around valid JSON does not matter, description: Wine, answer: " {\"category\": \"alcohol\", \"confidence\": 0.7, \"recipient_name\": null, \"recipient_type\": null,\n\"venue_type\": null, \"item_kind\": null, \"essential_toiletry\": null} \n", expected: {confidence: "0.7"}}
+
+  # The answers the gift and venue instructions ask for, which the contract must accept as they are.
+  - {id: a watch given as an award to an employee stays jewelry, description: Watch award for employee P. Singh, answer: {<<: *answer, category: jewelry, confidence: 0.7, recipient_name: P. Singh, recipient_type: employee}, expected: {category: jewelry, restricted: true, recipient_name: P. Singh, recipient_type: employee}}
+  - {id: a bracelet bought as a client gift stays jewelry, description: "Silver bracelet - client gift for R. Okoye", answer: {<<: *answer, category: jewelry, recipient_name: R. Okoye, recipient_type: client}, expected: {category: jewelry, restricted: true, recipient_type: client}}
+  - {id: a gift basket is a gift product, description: Gift basket, answer: {<<: *answer, category: gift}, expected: {category: gift, restricted: true, recipient_name: null}}
+  - {id: stadium tickets at a sports promoter are a sporting event, description: Stadium suite tickets x4, answer: {<<: *answer, category: other, confidence: 0.7, venue_type: sporting_event}, expected: {category: other, venue_type: sporting_event}}
+  - {id: stadium tickets at a concert promoter are a concert, description: Stadium tickets x2, answer: {<<: *answer, category: other, venue_type: concert}, expected: {category: other, venue_type: concert}}
+  - {id: generic tickets with no venue evidence leave the venue null, description: Tickets x2, answer: {<<: *answer, category: other, confidence: 0.5}, expected: {category: other, venue_type: null}}
 
 answers_refused:
   # Not an answer at all.
@@ -77,6 +85,7 @@ answers_refused:
   # Attributes outside the catalog, or left out.
   - {id: a secondary key left out, description: Wine, answer: {category: alcohol, confidence: 0.9, recipient_name: null, recipient_type: null, venue_type: null, item_kind: null}, expected: "essential_toiletry: missing"}
   - {id: a recipient type outside the catalog, description: Wine for a vendor, answer: {<<: *answer, recipient_type: vendor}, expected: "recipient_type is not in the catalog: 'vendor'"}
+  - {id: the model cannot give the marker reserved for an unread recipient, description: Wine for R. Okoye, answer: {<<: *answer, recipient_type: unidentified}, expected: "recipient_type is not in the catalog: 'unidentified'"}
   - {id: a venue type outside the catalog, description: Bowling, answer: {<<: *answer, category: other, venue_type: bowling}, expected: "venue_type is not in the catalog"}
   - {id: an item kind outside the catalog, description: Pager, answer: {<<: *answer, category: other, item_kind: pager}, expected: "item_kind is not in the catalog"}
   - {id: essential toiletry as text, description: Soap, answer: {<<: *answer, category: personal_care, essential_toiletry: "yes"}, expected: "essential_toiletry: bool_type"}

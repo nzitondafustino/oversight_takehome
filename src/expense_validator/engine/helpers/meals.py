@@ -1,7 +1,4 @@
-"""MEAL-01, REG-02, REG-03 and ALC-02: meal caps per person per day, and alcohol per attendee.
-
-MealPolicy is what MEAL-01 defines and TIME-03 also needs to compare a split against the meal cap.
-"""
+"""MEAL-01, REG-02, REG-03 and ALC-02: daily meal caps per person, and alcohol per attendee."""
 
 from dataclasses import dataclass
 from decimal import Decimal
@@ -21,15 +18,25 @@ PRECISION = Decimal("1E-10")
 
 @dataclass(frozen=True)
 class MealPolicy:
-    """The meal questions asked of any receipt in the job's context, not only the job's own."""
+    """Meal questions for any receipt in the job's context, shared with TIME-03."""
 
     job: HelperJob
 
     def is_meal(self, receipt: Receipt) -> bool | None:
         return receipt_facts(receipt, self.job.fields)["receipt.is_meal_receipt"]
 
+    def could_be_meal(self, receipt: Receipt) -> bool:
+        return self.is_meal(receipt) is not False
+
+    def day_meals(self) -> list[Receipt] | None:
+        """Return the employee's receipts that could be meals on this date, or None if one has no date.
+
+        A receipt known not to be a meal cannot change a daily meal total, so its date does not matter.
+        """
+        return self.job.same_day(self.could_be_meal)
+
     def per_person(self, receipt: Receipt) -> Decimal | None:
-        """Meal spend per person, as MEAL-01 defines both. None if a line it depends on is not known."""
+        """Return meal spend per person, or None if a line it depends on is unknown."""
         if receipt.itemized:
             lines = receipt.line_items
             if not all(self.job.category_known(line) for line in lines):
@@ -41,12 +48,7 @@ class MealPolicy:
         return None if spend is None else (spend / (receipt.attendee_count or 1)).quantize(PRECISION)
 
     def spend_bounds(self, receipt: Receipt) -> tuple[Decimal | None, Decimal | None]:
-        """The least and most meal spend per person could be, or None where that has no bound.
-
-        A line of unknown category may or may not be meal spend, so a discount could lower the total
-        and a charge could raise it. A line of a known category outside meal spend counts for nothing,
-        so it offsets nothing. A receipt not known to be a meal may count for nothing at all.
-        """
+        """Return the least and most meal spend per person could be, or None if unbounded."""
         least, most = Decimal(0), Decimal(0)
         if not receipt.itemized:
             least = most = receipt.total_amount_usd
@@ -72,7 +74,7 @@ class MealPolicy:
         return tuple(None if value is None else (value / people).quantize(PRECISION) for value in (least, most))
 
     def meal_cap(self, rule: CheckRule, meals: list[Receipt]) -> Decimal | None:
-        """The cap that applies to these meals. None if it cannot be worked out."""
+        """Return the cap that applies to these meals, or None."""
         params = rule.params
         if "cap_usd" in params:
             return params["cap_usd"].value
@@ -85,8 +87,18 @@ class MealPolicy:
         international = any(meal.currency != homes[meal.employee_country] for meal in meals)
         return params["international_usd"].value if international else params["domestic_usd"].value
 
+    def highest_cap(self, rule: CheckRule) -> Decimal | None:
+        """Return the most the rule's cap could be on any day, or None if that is not known."""
+        params = rule.params
+        if "cap_usd" in params:
+            return params["cap_usd"].value
+        if "cap_eur" in params:
+            rate = self.job.euro_rate()
+            return None if rate is None else params["cap_eur"].value * rate
+        return max(params["domestic_usd"].value, params["international_usd"].value)
+
     def employee_rule(self) -> CheckRule | None:
-        """The meal cap rule for this employee: the regional one, where one replaces MEAL-01."""
+        """Return the employee's meal cap rule, regional where one replaces MEAL-01."""
         job = self.job
         facts = receipt_facts(job.receipt, job.fields)
         replaced = replaced_on_receipt(job.ruleset, facts)
@@ -106,10 +118,9 @@ def _meal_cap(job: HelperJob) -> HelperOutcome:
         return HelperOutcome()
     if job.receipt.transaction_datetime is None:
         return job.not_known("the receipt has no transaction date")
-    day = job.same_day()
-    if day is None:
-        return job.not_known("a receipt by this employee has no transaction date")
-    meals = [other for other in day if policy.is_meal(other) is not False]
+    meals = policy.day_meals()
+    if meals is None:
+        return job.not_known("a receipt by this employee that could be a meal has no transaction date")
     cap = policy.meal_cap(job.rule, meals)
     if cap is None:
         return job.not_known("the cap that applies cannot be worked out")
@@ -134,7 +145,7 @@ def _meal_cap(job: HelperJob) -> HelperOutcome:
 
 
 def _alcohol_per_attendee(job: HelperJob) -> HelperOutcome:
-    """ALC-02 applies only where ALC-01 permits the alcohol, so it reads ALC-01's conditions."""
+    """ALC-02 applies only where ALC-01 permits the alcohol."""
     receipt = job.receipt
     alc_01 = next((rule for rule in job.ruleset.rules if rule.rule_id == "ALC-01"), None)
     if not isinstance(alc_01, CheckRule):

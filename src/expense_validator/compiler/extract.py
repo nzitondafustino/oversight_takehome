@@ -1,13 +1,4 @@
-"""Finds the rules in a policy document, without any LLM.
-
-This is the Parse step of the compiler. It splits a document into clauses, keeps
-each clause's text as written, and picks out the values that regexes can find
-reliably. Anything it cannot read as a rule goes in `context`, so no text is lost.
-
-Clause text runs until the next rule, heading or bold note. Thresholds are read
-from the forms the policy uses: money, nights, hours, clock times, attendee counts
-and receipt counts. A number written any other way stays in the text only.
-"""
+"""Extract rule clauses and regex-readable fields while retaining surrounding text."""
 
 import re
 from dataclasses import dataclass
@@ -70,7 +61,8 @@ def _number(written: str) -> Decimal:
     return Decimal(NUMBER_WORDS.get(written.lower(), written.replace(",", "")))
 
 
-def _thresholds(text: str) -> list[Threshold]:
+def thresholds_in(text: str) -> list[Threshold]:
+    """Return the limits a text states, each read in its unit's own form, such as $200 or four nights."""
     found = [
         (match.start(), Threshold(_number(match.group(1)), unit))
         for pattern, unit in THRESHOLDS
@@ -90,13 +82,17 @@ def _clause(heading: re.Match, lines: list[str], policy_doc: str, section: str |
         text=text,
         severities=_unique(SEVERITY.findall(text)),
         review_signal=REVIEW_SIGNAL in text,
-        thresholds=_thresholds(text),
+        thresholds=thresholds_in(text),
         references=[found for found in _unique(RULE_ID.findall(text)) if found != rule_id],
     )
 
 
 def extract_document(text: str, policy_doc: str) -> PolicyDocument:
-    """Refuses a malformed rule heading, because reading it as prose would lose a rule."""
+    """Extract the rule clauses of one policy document.
+
+    Raises:
+        ValueError: If a rule heading is malformed or a rule ID repeats.
+    """
     title = None
     section = None
     blocks: list[tuple[re.Match | None, str | None, list[str]]] = []

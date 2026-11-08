@@ -171,8 +171,8 @@ def test_real_records_are_not_changed():
 
 
 def test_the_engine_gets_the_same_results_from_sanitized_receipts():
-    from_ingestion = evaluate_receipts("c", [item.receipt for item in EVALUATED], RULESET, FIELDS, complete=True)
-    from_rows = evaluate_receipts("c", [without_answers(row) for row in ROWS], RULESET, FIELDS, complete=True)
+    from_ingestion = evaluate_receipts([item.receipt for item in EVALUATED], RULESET, FIELDS, complete=True)
+    from_rows = evaluate_receipts([without_answers(row) for row in ROWS], RULESET, FIELDS, complete=True)
     assert [run.receipt_id for run in from_ingestion.results] == sorted(row["receipt_id"] for row in ROWS)
     assert from_ingestion == from_rows
 

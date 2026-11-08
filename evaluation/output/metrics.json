@@ -83,11 +83,11 @@
     "F": {
       "differs": {},
       "harness": {
-        "accuracy": 21,
-        "decided": 0,
-        "flag": 16,
-        "pass": 0,
-        "review": 16
+        "accuracy": 32,
+        "decided": 15,
+        "flag": 18,
+        "pass": 9,
+        "review": 5
       },
       "reproduced": true
     }
@@ -96,7 +96,7 @@
     "dataset_customer": "northwind",
     "dataset_receipts": 32,
     "dataset_sha256": "a277d73b45a8296389099abdb94b152aa89e99d71d141db47fdd7402f6489dff",
-    "fields_sha256": "d8b4e9d78472bdc30a6179ff24aa6e1b615c7f0b3f60e419cd67d5c0d7313d4c",
+    "fields_sha256": "8c0331daf2b771bae7d47d5cea5762424152043980e3119c1fbb65c2c50b43c4",
     "oracle_recipients_sha256": "ec5d261cc0660e258582b03670999f55ce90ccc81f1c77eb9530b0749af4de7d",
     "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
     "ruleset_version": "v1",
@@ -9440,20 +9440,20 @@
           "Client Entertainment": {
             "abstention": {
               "denominator": 5,
-              "numerator": 1,
-              "value": 0.2,
+              "numerator": 0,
+              "value": 0.0,
               "wilson_95": [
-                0.036224,
-                0.624465
+                0.0,
+                0.434482
               ]
             },
             "accuracy": {
               "denominator": 5,
-              "numerator": 4,
-              "value": 0.8,
+              "numerator": 5,
+              "value": 1.0,
               "wilson_95": [
-                0.375535,
-                0.963776
+                0.565518,
+                1.0
               ]
             },
             "decided": {
@@ -9514,11 +9514,11 @@
             },
             "decided": {
               "denominator": 2,
-              "numerator": 0,
-              "value": 0.0,
+              "numerator": 1,
+              "value": 0.5,
               "wilson_95": [
-                0.0,
-                0.65762
+                0.094531,
+                0.905469
               ]
             },
             "false_flag": {
@@ -9549,29 +9549,29 @@
           "Computer Equipment": {
             "abstention": {
               "denominator": 3,
-              "numerator": 1,
-              "value": 0.333333,
-              "wilson_95": [
-                0.061492,
-                0.79234
-              ]
-            },
-            "accuracy": {
-              "denominator": 3,
-              "numerator": 2,
-              "value": 0.666667,
-              "wilson_95": [
-                0.20766,
-                0.938508
-              ]
-            },
-            "decided": {
-              "denominator": 3,
               "numerator": 0,
               "value": 0.0,
               "wilson_95": [
                 0.0,
                 0.561497
+              ]
+            },
+            "accuracy": {
+              "denominator": 3,
+              "numerator": 3,
+              "value": 1.0,
+              "wilson_95": [
+                0.438503,
+                1.0
+              ]
+            },
+            "decided": {
+              "denominator": 3,
+              "numerator": 3,
+              "value": 1.0,
+              "wilson_95": [
+                0.438503,
+                1.0
               ]
             },
             "false_flag": {
@@ -9605,29 +9605,29 @@
           "Lodging": {
             "abstention": {
               "denominator": 2,
-              "numerator": 1,
-              "value": 0.5,
-              "wilson_95": [
-                0.094531,
-                0.905469
-              ]
-            },
-            "accuracy": {
-              "denominator": 2,
-              "numerator": 1,
-              "value": 0.5,
-              "wilson_95": [
-                0.094531,
-                0.905469
-              ]
-            },
-            "decided": {
-              "denominator": 2,
               "numerator": 0,
               "value": 0.0,
               "wilson_95": [
                 0.0,
                 0.65762
+              ]
+            },
+            "accuracy": {
+              "denominator": 2,
+              "numerator": 2,
+              "value": 1.0,
+              "wilson_95": [
+                0.34238,
+                1.0
+              ]
+            },
+            "decided": {
+              "denominator": 2,
+              "numerator": 2,
+              "value": 1.0,
+              "wilson_95": [
+                0.34238,
+                1.0
               ]
             },
             "false_flag": {
@@ -9661,29 +9661,29 @@
           "Meals - Individual": {
             "abstention": {
               "denominator": 8,
-              "numerator": 3,
-              "value": 0.375,
-              "wilson_95": [
-                0.136844,
-                0.694258
-              ]
-            },
-            "accuracy": {
-              "denominator": 8,
-              "numerator": 5,
-              "value": 0.625,
-              "wilson_95": [
-                0.305742,
-                0.863156
-              ]
-            },
-            "decided": {
-              "denominator": 8,
               "numerator": 0,
               "value": 0.0,
               "wilson_95": [
                 0.0,
                 0.324408
+              ]
+            },
+            "accuracy": {
+              "denominator": 8,
+              "numerator": 8,
+              "value": 1.0,
+              "wilson_95": [
+                0.675592,
+                1.0
+              ]
+            },
+            "decided": {
+              "denominator": 8,
+              "numerator": 2,
+              "value": 0.25,
+              "wilson_95": [
+                0.071479,
+                0.590725
               ]
             },
             "false_flag": {
@@ -9706,31 +9706,31 @@
             },
             "receipts": 8,
             "rules": {
-              "f1": 0.857143,
-              "fn": 2,
+              "f1": 1.0,
+              "fn": 0,
               "fp": 0,
               "precision": 1.0,
-              "recall": 0.75,
-              "tp": 6
+              "recall": 1.0,
+              "tp": 8
             }
           },
           "Meals - Team": {
             "abstention": {
               "denominator": 4,
-              "numerator": 3,
-              "value": 0.75,
+              "numerator": 0,
+              "value": 0.0,
               "wilson_95": [
-                0.300642,
-                0.954413
+                0.0,
+                0.489891
               ]
             },
             "accuracy": {
               "denominator": 4,
-              "numerator": 1,
-              "value": 0.25,
+              "numerator": 4,
+              "value": 1.0,
               "wilson_95": [
-                0.045587,
-                0.699358
+                0.510109,
+                1.0
               ]
             },
             "decided": {
@@ -9773,29 +9773,29 @@
           "Office Supplies": {
             "abstention": {
               "denominator": 3,
-              "numerator": 1,
-              "value": 0.333333,
-              "wilson_95": [
-                0.061492,
-                0.79234
-              ]
-            },
-            "accuracy": {
-              "denominator": 3,
-              "numerator": 2,
-              "value": 0.666667,
-              "wilson_95": [
-                0.20766,
-                0.938508
-              ]
-            },
-            "decided": {
-              "denominator": 3,
               "numerator": 0,
               "value": 0.0,
               "wilson_95": [
                 0.0,
                 0.561497
+              ]
+            },
+            "accuracy": {
+              "denominator": 3,
+              "numerator": 3,
+              "value": 1.0,
+              "wilson_95": [
+                0.438503,
+                1.0
+              ]
+            },
+            "decided": {
+              "denominator": 3,
+              "numerator": 3,
+              "value": 1.0,
+              "wilson_95": [
+                0.438503,
+                1.0
               ]
             },
             "false_flag": {
@@ -9847,11 +9847,11 @@
             },
             "decided": {
               "denominator": 1,
-              "numerator": 0,
-              "value": 0.0,
+              "numerator": 1,
+              "value": 1.0,
               "wilson_95": [
-                0.0,
-                0.793451
+                0.206549,
+                1.0
               ]
             },
             "false_flag": {
@@ -9885,29 +9885,29 @@
           "Travel - Other": {
             "abstention": {
               "denominator": 4,
-              "numerator": 1,
-              "value": 0.25,
+              "numerator": 0,
+              "value": 0.0,
               "wilson_95": [
-                0.045587,
-                0.699358
+                0.0,
+                0.489891
               ]
             },
             "accuracy": {
+              "denominator": 4,
+              "numerator": 4,
+              "value": 1.0,
+              "wilson_95": [
+                0.510109,
+                1.0
+              ]
+            },
+            "decided": {
               "denominator": 4,
               "numerator": 3,
               "value": 0.75,
               "wilson_95": [
                 0.300642,
                 0.954413
-              ]
-            },
-            "decided": {
-              "denominator": 4,
-              "numerator": 0,
-              "value": 0.0,
-              "wilson_95": [
-                0.0,
-                0.489891
               ]
             },
             "false_flag": {
@@ -10013,29 +10013,29 @@
           "0.9_to_1": {
             "abstention": {
               "denominator": 32,
-              "numerator": 11,
-              "value": 0.34375,
-              "wilson_95": [
-                0.204104,
-                0.516889
-              ]
-            },
-            "accuracy": {
-              "denominator": 32,
-              "numerator": 21,
-              "value": 0.65625,
-              "wilson_95": [
-                0.483111,
-                0.795896
-              ]
-            },
-            "decided": {
-              "denominator": 32,
               "numerator": 0,
               "value": 0.0,
               "wilson_95": [
                 0.0,
                 0.107179
+              ]
+            },
+            "accuracy": {
+              "denominator": 32,
+              "numerator": 32,
+              "value": 1.0,
+              "wilson_95": [
+                0.892821,
+                1.0
+              ]
+            },
+            "decided": {
+              "denominator": 32,
+              "numerator": 15,
+              "value": 0.46875,
+              "wilson_95": [
+                0.308694,
+                0.635505
               ]
             },
             "false_flag": {
@@ -10058,12 +10058,12 @@
             },
             "receipts": 32,
             "rules": {
-              "f1": 0.944444,
-              "fn": 3,
+              "f1": 0.972973,
+              "fn": 1,
               "fp": 1,
-              "precision": 0.971429,
-              "recall": 0.918919,
-              "tp": 34
+              "precision": 0.972973,
+              "recall": 0.972973,
+              "tp": 36
             }
           }
         },
@@ -10157,12 +10157,12 @@
             "tp": 4
           },
           "TIME": {
-            "f1": 0.666667,
-            "fn": 2,
+            "f1": 1.0,
+            "fn": 0,
             "fp": 0,
             "precision": 1.0,
-            "recall": 0.5,
-            "tp": 2
+            "recall": 1.0,
+            "tp": 4
           }
         }
       },
@@ -10381,29 +10381,29 @@
       "disposition": {
         "abstention": {
           "denominator": 32,
-          "numerator": 11,
-          "value": 0.34375,
-          "wilson_95": [
-            0.204104,
-            0.516889
-          ]
-        },
-        "accuracy": {
-          "denominator": 32,
-          "numerator": 21,
-          "value": 0.65625,
-          "wilson_95": [
-            0.483111,
-            0.795896
-          ]
-        },
-        "decided": {
-          "denominator": 32,
           "numerator": 0,
           "value": 0.0,
           "wilson_95": [
             0.0,
             0.107179
+          ]
+        },
+        "accuracy": {
+          "denominator": 32,
+          "numerator": 32,
+          "value": 1.0,
+          "wilson_95": [
+            0.892821,
+            1.0
+          ]
+        },
+        "decided": {
+          "denominator": 32,
+          "numerator": 15,
+          "value": 0.46875,
+          "wilson_95": [
+            0.308694,
+            0.635505
           ]
         },
         "false_flag": {
@@ -10425,24 +10425,24 @@
           ]
         },
         "flagged_undecided": {
-          "denominator": 16,
-          "numerator": 16,
-          "value": 1.0,
+          "denominator": 18,
+          "numerator": 9,
+          "value": 0.5,
           "wilson_95": [
-            0.806392,
-            1.0
+            0.29031,
+            0.70969
           ]
         },
         "matrix_gold_by_predicted": {
           "flag": {
-            "flag": 16,
+            "flag": 18,
             "pass": 0,
-            "review": 2
+            "review": 0
           },
           "pass": {
             "flag": 0,
-            "pass": 0,
-            "review": 9
+            "pass": 9,
+            "review": 0
           },
           "review": {
             "flag": 0,
@@ -10452,11 +10452,11 @@
         },
         "missed_flag_any": {
           "denominator": 18,
-          "numerator": 2,
-          "value": 0.111111,
+          "numerator": 0,
+          "value": 0.0,
           "wilson_95": [
-            0.03102,
-            0.327998
+            0.0,
+            0.175879
           ]
         },
         "missed_flag_passed": {
@@ -10470,31 +10470,31 @@
         },
         "review": {
           "denominator": 32,
-          "numerator": 16,
-          "value": 0.5,
+          "numerator": 5,
+          "value": 0.15625,
           "wilson_95": [
-            0.336309,
-            0.663691
+            0.068644,
+            0.317541
           ]
         }
       },
       "exact_match": {
         "rules": {
           "denominator": 32,
-          "numerator": 28,
-          "value": 0.875,
+          "numerator": 30,
+          "value": 0.9375,
           "wilson_95": [
-            0.719317,
-            0.950299
+            0.798529,
+            0.982689
           ]
         },
         "rules_and_lines": {
           "denominator": 32,
-          "numerator": 28,
-          "value": 0.875,
+          "numerator": 30,
+          "value": 0.9375,
           "wilson_95": [
-            0.719317,
-            0.950299
+            0.798529,
+            0.982689
           ]
         }
       },
@@ -10543,25 +10543,25 @@
       },
       "rules": {
         "diagnostic": {
-          "f1": 0.957746,
-          "fn": 3,
+          "f1": 0.986301,
+          "fn": 1,
           "fp": 0,
           "precision": 1.0,
-          "recall": 0.918919,
-          "tp": 34
+          "recall": 0.972973,
+          "tp": 36
         },
         "evidence_exact": {
-          "denominator": 25,
-          "numerator": 25,
+          "denominator": 27,
+          "numerator": 27,
           "value": 1.0,
           "wilson_95": [
-            0.866808,
+            0.875445,
             1.0
           ]
         },
         "fn_by_kind": {
           "in_proof": 0,
-          "open": 3,
+          "open": 1,
           "silent": 0,
           "unresolved": 0
         },
@@ -11274,38 +11274,44 @@
           },
           "TIME-03": {
             "evidence_exact": {
-              "denominator": 0,
-              "numerator": 0,
-              "value": null,
-              "wilson_95": null
+              "denominator": 2,
+              "numerator": 2,
+              "value": 1.0,
+              "wilson_95": [
+                0.34238,
+                1.0
+              ]
             },
-            "f1": 0.0,
-            "fn": 2,
+            "f1": 1.0,
+            "fn": 0,
             "fn_by_kind": {
               "in_proof": 0,
-              "open": 2,
+              "open": 0,
               "silent": 0,
               "unresolved": 0
             },
             "fp": 0,
-            "precision": null,
-            "recall": 0.0,
+            "precision": 1.0,
+            "recall": 1.0,
             "severity_exact": {
-              "denominator": 0,
-              "numerator": 0,
-              "value": null,
-              "wilson_95": null
+              "denominator": 2,
+              "numerator": 2,
+              "value": 1.0,
+              "wilson_95": [
+                0.34238,
+                1.0
+              ]
             },
-            "tp": 0
+            "tp": 2
           }
         },
         "strict": {
-          "f1": 0.944444,
-          "fn": 3,
+          "f1": 0.972973,
+          "fn": 1,
           "fp": 1,
-          "precision": 0.971429,
-          "recall": 0.918919,
-          "tp": 34
+          "precision": 0.972973,
+          "recall": 0.972973,
+          "tp": 36
         }
       },
       "secondary_field_accuracy": {
@@ -11548,20 +11554,20 @@
           "Meals - Individual": {
             "abstention": {
               "denominator": 8,
-              "numerator": 3,
-              "value": 0.375,
+              "numerator": 1,
+              "value": 0.125,
               "wilson_95": [
-                0.136844,
-                0.694258
+                0.022417,
+                0.470888
               ]
             },
             "accuracy": {
               "denominator": 8,
-              "numerator": 4,
-              "value": 0.5,
+              "numerator": 6,
+              "value": 0.75,
               "wilson_95": [
-                0.215216,
-                0.784784
+                0.409275,
+                0.928521
               ]
             },
             "decided": {
@@ -11593,12 +11599,12 @@
             },
             "receipts": 8,
             "rules": {
-              "f1": 0.526316,
-              "fn": 3,
+              "f1": 0.666667,
+              "fn": 1,
               "fp": 6,
-              "precision": 0.454545,
-              "recall": 0.625,
-              "tp": 5
+              "precision": 0.538462,
+              "recall": 0.875,
+              "tp": 7
             }
           },
           "Meals - Team": {
@@ -11880,20 +11886,20 @@
           "category:low_confidence": {
             "abstention": {
               "denominator": 26,
-              "numerator": 13,
-              "value": 0.5,
-              "wilson_95": [
-                0.320606,
-                0.679394
-              ]
-            },
-            "accuracy": {
-              "denominator": 26,
               "numerator": 11,
               "value": 0.423077,
               "wilson_95": [
                 0.255444,
                 0.610514
+              ]
+            },
+            "accuracy": {
+              "denominator": 26,
+              "numerator": 13,
+              "value": 0.5,
+              "wilson_95": [
+                0.320606,
+                0.679394
               ]
             },
             "decided": {
@@ -11926,12 +11932,12 @@
             "lines": 38,
             "receipts": 26,
             "rules": {
-              "f1": 0.465753,
-              "fn": 13,
+              "f1": 0.506667,
+              "fn": 11,
               "fp": 26,
-              "precision": 0.395349,
-              "recall": 0.566667,
-              "tp": 17
+              "precision": 0.422222,
+              "recall": 0.633333,
+              "tp": 19
             }
           },
           "recipient_type:missing": {
@@ -12102,20 +12108,20 @@
           "below_0.5": {
             "abstention": {
               "denominator": 27,
-              "numerator": 13,
-              "value": 0.481481,
+              "numerator": 11,
+              "value": 0.407407,
               "wilson_95": [
-                0.307432,
-                0.660144
+                0.245148,
+                0.592733
               ]
             },
             "accuracy": {
               "denominator": 27,
-              "numerator": 12,
-              "value": 0.444444,
+              "numerator": 14,
+              "value": 0.518519,
               "wilson_95": [
-                0.275859,
-                0.62687
+                0.339856,
+                0.692568
               ]
             },
             "decided": {
@@ -12147,12 +12153,12 @@
             },
             "receipts": 27,
             "rules": {
-              "f1": 0.48,
-              "fn": 13,
+              "f1": 0.519481,
+              "fn": 11,
               "fp": 26,
-              "precision": 0.409091,
-              "recall": 0.580645,
-              "tp": 18
+              "precision": 0.434783,
+              "recall": 0.645161,
+              "tp": 20
             }
           }
         },
@@ -12246,12 +12252,12 @@
             "tp": 3
           },
           "TIME": {
-            "f1": 0.666667,
-            "fn": 2,
+            "f1": 1.0,
+            "fn": 0,
             "fp": 0,
             "precision": 1.0,
-            "recall": 0.5,
-            "tp": 2
+            "recall": 1.0,
+            "tp": 4
           }
         }
       },
@@ -12470,20 +12476,20 @@
       "disposition": {
         "abstention": {
           "denominator": 32,
-          "numerator": 13,
-          "value": 0.40625,
+          "numerator": 11,
+          "value": 0.34375,
           "wilson_95": [
-            0.255196,
-            0.5774
+            0.204104,
+            0.516889
           ]
         },
         "accuracy": {
           "denominator": 32,
-          "numerator": 17,
-          "value": 0.53125,
+          "numerator": 19,
+          "value": 0.59375,
           "wilson_95": [
-            0.364495,
-            0.691306
+            0.4226,
+            0.744804
           ]
         },
         "decided": {
@@ -12514,19 +12520,19 @@
           ]
         },
         "flagged_undecided": {
-          "denominator": 11,
-          "numerator": 7,
-          "value": 0.636364,
+          "denominator": 13,
+          "numerator": 9,
+          "value": 0.692308,
           "wilson_95": [
-            0.353801,
-            0.848335
+            0.423693,
+            0.873193
           ]
         },
         "matrix_gold_by_predicted": {
           "flag": {
-            "flag": 11,
+            "flag": 13,
             "pass": 0,
-            "review": 7
+            "review": 5
           },
           "pass": {
             "flag": 0,
@@ -12541,11 +12547,11 @@
         },
         "missed_flag_any": {
           "denominator": 18,
-          "numerator": 7,
-          "value": 0.388889,
+          "numerator": 5,
+          "value": 0.277778,
           "wilson_95": [
-            0.203052,
-            0.61381
+            0.124998,
+            0.508727
           ]
         },
         "missed_flag_passed": {
@@ -12559,11 +12565,11 @@
         },
         "review": {
           "denominator": 32,
-          "numerator": 20,
-          "value": 0.625,
+          "numerator": 18,
+          "value": 0.5625,
           "wilson_95": [
-            0.452544,
-            0.770661
+            0.393256,
+            0.718347
           ]
         }
       },
@@ -12632,25 +12638,25 @@
       },
       "rules": {
         "diagnostic": {
-          "f1": 0.786885,
-          "fn": 13,
+          "f1": 0.825397,
+          "fn": 11,
           "fp": 0,
           "precision": 1.0,
-          "recall": 0.648649,
-          "tp": 24
+          "recall": 0.702703,
+          "tp": 26
         },
         "evidence_exact": {
-          "denominator": 15,
-          "numerator": 13,
-          "value": 0.866667,
+          "denominator": 17,
+          "numerator": 15,
+          "value": 0.882353,
           "wilson_95": [
-            0.62118,
-            0.962639
+            0.656636,
+            0.96712
           ]
         },
         "fn_by_kind": {
           "in_proof": 0,
-          "open": 13,
+          "open": 11,
           "silent": 0,
           "unresolved": 0
         },
@@ -13321,38 +13327,44 @@
           },
           "TIME-03": {
             "evidence_exact": {
-              "denominator": 0,
-              "numerator": 0,
-              "value": null,
-              "wilson_95": null
+              "denominator": 2,
+              "numerator": 2,
+              "value": 1.0,
+              "wilson_95": [
+                0.34238,
+                1.0
+              ]
             },
-            "f1": 0.0,
-            "fn": 2,
+            "f1": 1.0,
+            "fn": 0,
             "fn_by_kind": {
               "in_proof": 0,
-              "open": 2,
+              "open": 0,
               "silent": 0,
               "unresolved": 0
             },
             "fp": 0,
-            "precision": null,
-            "recall": 0.0,
+            "precision": 1.0,
+            "recall": 1.0,
             "severity_exact": {
-              "denominator": 0,
-              "numerator": 0,
-              "value": null,
-              "wilson_95": null
+              "denominator": 2,
+              "numerator": 2,
+              "value": 1.0,
+              "wilson_95": [
+                0.34238,
+                1.0
+              ]
             },
-            "tp": 0
+            "tp": 2
           }
         },
         "strict": {
-          "f1": 0.551724,
-          "fn": 13,
+          "f1": 0.58427,
+          "fn": 11,
           "fp": 26,
-          "precision": 0.48,
-          "recall": 0.648649,
-          "tp": 24
+          "precision": 0.5,
+          "recall": 0.702703,
+          "tp": 26
         }
       },
       "secondary_field_accuracy": {
@@ -23696,20 +23708,20 @@
           "Meals - Individual": {
             "abstention": {
               "denominator": 8,
-              "numerator": 4,
-              "value": 0.5,
+              "numerator": 2,
+              "value": 0.25,
               "wilson_95": [
-                0.215216,
-                0.784784
+                0.071479,
+                0.590725
               ]
             },
             "accuracy": {
               "denominator": 8,
-              "numerator": 4,
-              "value": 0.5,
+              "numerator": 6,
+              "value": 0.75,
               "wilson_95": [
-                0.215216,
-                0.784784
+                0.409275,
+                0.928521
               ]
             },
             "decided": {
@@ -23741,12 +23753,12 @@
             },
             "receipts": 8,
             "rules": {
-              "f1": 0.588235,
-              "fn": 3,
+              "f1": 0.736842,
+              "fn": 1,
               "fp": 4,
-              "precision": 0.555556,
-              "recall": 0.625,
-              "tp": 5
+              "precision": 0.636364,
+              "recall": 0.875,
+              "tp": 7
             }
           },
           "Meals - Team": {
@@ -24004,20 +24016,20 @@
           "category:low_confidence": {
             "abstention": {
               "denominator": 9,
-              "numerator": 6,
-              "value": 0.666667,
+              "numerator": 4,
+              "value": 0.444444,
               "wilson_95": [
-                0.354202,
-                0.879416
+                0.188779,
+                0.733349
               ]
             },
             "accuracy": {
               "denominator": 9,
-              "numerator": 3,
-              "value": 0.333333,
+              "numerator": 5,
+              "value": 0.555556,
               "wilson_95": [
-                0.120584,
-                0.645798
+                0.266651,
+                0.811221
               ]
             },
             "decided": {
@@ -24050,12 +24062,12 @@
             "lines": 9,
             "receipts": 9,
             "rules": {
-              "f1": 0.363636,
-              "fn": 5,
+              "f1": 0.5,
+              "fn": 3,
               "fp": 9,
-              "precision": 0.307692,
-              "recall": 0.444444,
-              "tp": 4
+              "precision": 0.4,
+              "recall": 0.666667,
+              "tp": 6
             }
           },
           "recipient_type:missing": {
@@ -24173,20 +24185,20 @@
           "below_0.5": {
             "abstention": {
               "denominator": 9,
-              "numerator": 6,
-              "value": 0.666667,
+              "numerator": 4,
+              "value": 0.444444,
               "wilson_95": [
-                0.354202,
-                0.879416
+                0.188779,
+                0.733349
               ]
             },
             "accuracy": {
               "denominator": 9,
-              "numerator": 3,
-              "value": 0.333333,
+              "numerator": 5,
+              "value": 0.555556,
               "wilson_95": [
-                0.120584,
-                0.645798
+                0.266651,
+                0.811221
               ]
             },
             "decided": {
@@ -24218,12 +24230,12 @@
             },
             "receipts": 9,
             "rules": {
-              "f1": 0.363636,
-              "fn": 5,
+              "f1": 0.5,
+              "fn": 3,
               "fp": 9,
-              "precision": 0.307692,
-              "recall": 0.444444,
-              "tp": 4
+              "precision": 0.4,
+              "recall": 0.666667,
+              "tp": 6
             }
           }
         },
@@ -24317,12 +24329,12 @@
             "tp": 4
           },
           "TIME": {
-            "f1": 0.666667,
-            "fn": 2,
+            "f1": 1.0,
+            "fn": 0,
             "fp": 0,
             "precision": 1.0,
-            "recall": 0.5,
-            "tp": 2
+            "recall": 1.0,
+            "tp": 4
           }
         }
       },
@@ -24541,20 +24553,20 @@
       "disposition": {
         "abstention": {
           "denominator": 32,
-          "numerator": 6,
-          "value": 0.1875,
+          "numerator": 4,
+          "value": 0.125,
           "wilson_95": [
-            0.088895,
-            0.353092
+            0.049701,
+            0.280683
           ]
         },
         "accuracy": {
           "denominator": 32,
-          "numerator": 26,
-          "value": 0.8125,
+          "numerator": 28,
+          "value": 0.875,
           "wilson_95": [
-            0.646908,
-            0.911105
+            0.719317,
+            0.950299
           ]
         },
         "decided": {
@@ -24585,19 +24597,19 @@
           ]
         },
         "flagged_undecided": {
-          "denominator": 15,
-          "numerator": 3,
-          "value": 0.2,
+          "denominator": 17,
+          "numerator": 5,
+          "value": 0.294118,
           "wilson_95": [
-            0.070475,
-            0.451854
+            0.1328,
+            0.531331
           ]
         },
         "matrix_gold_by_predicted": {
           "flag": {
-            "flag": 15,
+            "flag": 17,
             "pass": 0,
-            "review": 3
+            "review": 1
           },
           "pass": {
             "flag": 0,
@@ -24612,11 +24624,11 @@
         },
         "missed_flag_any": {
           "denominator": 18,
-          "numerator": 3,
-          "value": 0.166667,
+          "numerator": 1,
+          "value": 0.055556,
           "wilson_95": [
-            0.058366,
-            0.39222
+            0.009875,
+            0.257573
           ]
         },
         "missed_flag_passed": {
@@ -24630,11 +24642,11 @@
         },
         "review": {
           "denominator": 32,
-          "numerator": 11,
-          "value": 0.34375,
+          "numerator": 9,
+          "value": 0.28125,
           "wilson_95": [
-            0.204104,
-            0.516889
+            0.155646,
+            0.453745
           ]
         }
       },
@@ -24703,25 +24715,25 @@
       },
       "rules": {
         "diagnostic": {
-          "f1": 0.927536,
-          "fn": 5,
+          "f1": 0.957746,
+          "fn": 3,
           "fp": 0,
           "precision": 1.0,
-          "recall": 0.864865,
-          "tp": 32
+          "recall": 0.918919,
+          "tp": 34
         },
         "evidence_exact": {
-          "denominator": 23,
-          "numerator": 23,
+          "denominator": 25,
+          "numerator": 25,
           "value": 1.0,
           "wilson_95": [
-            0.856883,
+            0.866808,
             1.0
           ]
         },
         "fn_by_kind": {
           "in_proof": 0,
-          "open": 5,
+          "open": 3,
           "silent": 0,
           "unresolved": 0
         },
@@ -25434,38 +25446,44 @@
           },
           "TIME-03": {
             "evidence_exact": {
-              "denominator": 0,
-              "numerator": 0,
-              "value": null,
-              "wilson_95": null
+              "denominator": 2,
+              "numerator": 2,
+              "value": 1.0,
+              "wilson_95": [
+                0.34238,
+                1.0
+              ]
             },
-            "f1": 0.0,
-            "fn": 2,
+            "f1": 1.0,
+            "fn": 0,
             "fn_by_kind": {
               "in_proof": 0,
-              "open": 2,
+              "open": 0,
               "silent": 0,
               "unresolved": 0
             },
             "fp": 0,
-            "precision": null,
-            "recall": 0.0,
+            "precision": 1.0,
+            "recall": 1.0,
             "severity_exact": {
-              "denominator": 0,
-              "numerator": 0,
-              "value": null,
-              "wilson_95": null
+              "denominator": 2,
+              "numerator": 2,
+              "value": 1.0,
+              "wilson_95": [
+                0.34238,
+                1.0
+              ]
             },
-            "tp": 0
+            "tp": 2
           }
         },
         "strict": {
-          "f1": 0.810127,
-          "fn": 5,
+          "f1": 0.839506,
+          "fn": 3,
           "fp": 10,
-          "precision": 0.761905,
-          "recall": 0.864865,
-          "tp": 32
+          "precision": 0.772727,
+          "recall": 0.918919,
+          "tp": 34
         }
       },
       "secondary_field_accuracy": {
@@ -27720,29 +27738,29 @@
           "Meals - Individual": {
             "abstention": {
               "denominator": 8,
-              "numerator": 2,
-              "value": 0.25,
+              "numerator": 0,
+              "value": 0.0,
               "wilson_95": [
-                0.071479,
-                0.590725
+                0.0,
+                0.324408
               ]
             },
             "accuracy": {
               "denominator": 8,
-              "numerator": 6,
-              "value": 0.75,
+              "numerator": 8,
+              "value": 1.0,
               "wilson_95": [
-                0.409275,
-                0.928521
+                0.675592,
+                1.0
               ]
             },
             "decided": {
               "denominator": 8,
-              "numerator": 4,
-              "value": 0.5,
+              "numerator": 5,
+              "value": 0.625,
               "wilson_95": [
-                0.215216,
-                0.784784
+                0.305742,
+                0.863156
               ]
             },
             "false_flag": {
@@ -27765,12 +27783,12 @@
             },
             "receipts": 8,
             "rules": {
-              "f1": 0.705882,
-              "fn": 2,
+              "f1": 0.842105,
+              "fn": 0,
               "fp": 3,
-              "precision": 0.666667,
-              "recall": 0.75,
-              "tp": 6
+              "precision": 0.727273,
+              "recall": 1.0,
+              "tp": 8
             }
           },
           "Meals - Team": {
@@ -28028,20 +28046,20 @@
           "category:low_confidence": {
             "abstention": {
               "denominator": 9,
-              "numerator": 2,
-              "value": 0.222222,
+              "numerator": 1,
+              "value": 0.111111,
               "wilson_95": [
-                0.063225,
-                0.547411
+                0.019891,
+                0.435
               ]
             },
             "accuracy": {
               "denominator": 9,
-              "numerator": 6,
-              "value": 0.666667,
+              "numerator": 7,
+              "value": 0.777778,
               "wilson_95": [
-                0.354202,
-                0.879416
+                0.452589,
+                0.936775
               ]
             },
             "decided": {
@@ -28074,12 +28092,12 @@
             "lines": 9,
             "receipts": 9,
             "rules": {
-              "f1": 0.625,
-              "fn": 3,
+              "f1": 0.666667,
+              "fn": 2,
               "fp": 9,
-              "precision": 0.526316,
-              "recall": 0.769231,
-              "tp": 10
+              "precision": 0.55,
+              "recall": 0.846154,
+              "tp": 11
             }
           },
           "recipient_type:missing": {
@@ -28141,29 +28159,29 @@
           "0.9_to_1": {
             "abstention": {
               "denominator": 23,
-              "numerator": 1,
-              "value": 0.043478,
+              "numerator": 0,
+              "value": 0.0,
               "wilson_95": [
-                0.007717,
-                0.209912
+                0.0,
+                0.143117
               ]
             },
             "accuracy": {
               "denominator": 23,
-              "numerator": 22,
-              "value": 0.956522,
+              "numerator": 23,
+              "value": 1.0,
               "wilson_95": [
-                0.790088,
-                0.992283
+                0.856883,
+                1.0
               ]
             },
             "decided": {
               "denominator": 23,
-              "numerator": 22,
-              "value": 0.956522,
+              "numerator": 23,
+              "value": 1.0,
               "wilson_95": [
-                0.790088,
-                0.992283
+                0.856883,
+                1.0
               ]
             },
             "false_flag": {
@@ -28186,31 +28204,31 @@
             },
             "receipts": 23,
             "rules": {
-              "f1": 0.978723,
-              "fn": 1,
+              "f1": 1.0,
+              "fn": 0,
               "fp": 0,
               "precision": 1.0,
-              "recall": 0.958333,
-              "tp": 23
+              "recall": 1.0,
+              "tp": 24
             }
           },
           "below_0.5": {
             "abstention": {
               "denominator": 9,
-              "numerator": 2,
-              "value": 0.222222,
+              "numerator": 1,
+              "value": 0.111111,
               "wilson_95": [
-                0.063225,
-                0.547411
+                0.019891,
+                0.435
               ]
             },
             "accuracy": {
               "denominator": 9,
-              "numerator": 6,
-              "value": 0.666667,
+              "numerator": 7,
+              "value": 0.777778,
               "wilson_95": [
-                0.354202,
-                0.879416
+                0.452589,
+                0.936775
               ]
             },
             "decided": {
@@ -28242,12 +28260,12 @@
             },
             "receipts": 9,
             "rules": {
-              "f1": 0.625,
-              "fn": 3,
+              "f1": 0.666667,
+              "fn": 2,
               "fp": 9,
-              "precision": 0.526316,
-              "recall": 0.769231,
-              "tp": 10
+              "precision": 0.55,
+              "recall": 0.846154,
+              "tp": 11
             }
           }
         },
@@ -28341,12 +28359,12 @@
             "tp": 4
           },
           "TIME": {
-            "f1": 0.666667,
-            "fn": 2,
+            "f1": 1.0,
+            "fn": 0,
             "fp": 0,
             "precision": 1.0,
-            "recall": 0.5,
-            "tp": 2
+            "recall": 1.0,
+            "tp": 4
           }
         }
       },
@@ -28565,29 +28583,29 @@
       "disposition": {
         "abstention": {
           "denominator": 32,
-          "numerator": 3,
-          "value": 0.09375,
+          "numerator": 1,
+          "value": 0.03125,
           "wilson_95": [
-            0.032402,
-            0.242182
+            0.005538,
+            0.157443
           ]
         },
         "accuracy": {
           "denominator": 32,
-          "numerator": 28,
-          "value": 0.875,
+          "numerator": 30,
+          "value": 0.9375,
           "wilson_95": [
-            0.719317,
-            0.950299
+            0.798529,
+            0.982689
           ]
         },
         "decided": {
           "denominator": 32,
-          "numerator": 22,
-          "value": 0.6875,
+          "numerator": 23,
+          "value": 0.71875,
           "wilson_95": [
-            0.514333,
-            0.820475
+            0.546255,
+            0.844354
           ]
         },
         "false_flag": {
@@ -28609,19 +28627,19 @@
           ]
         },
         "flagged_undecided": {
-          "denominator": 15,
-          "numerator": 3,
-          "value": 0.2,
+          "denominator": 17,
+          "numerator": 4,
+          "value": 0.235294,
           "wilson_95": [
-            0.070475,
-            0.451854
+            0.09555,
+            0.472618
           ]
         },
         "matrix_gold_by_predicted": {
           "flag": {
-            "flag": 15,
+            "flag": 17,
             "pass": 0,
-            "review": 3
+            "review": 1
           },
           "pass": {
             "flag": 0,
@@ -28636,11 +28654,11 @@
         },
         "missed_flag_any": {
           "denominator": 18,
-          "numerator": 3,
-          "value": 0.166667,
+          "numerator": 1,
+          "value": 0.055556,
           "wilson_95": [
-            0.058366,
-            0.39222
+            0.009875,
+            0.257573
           ]
         },
         "missed_flag_passed": {
@@ -28654,31 +28672,31 @@
         },
         "review": {
           "denominator": 32,
-          "numerator": 9,
-          "value": 0.28125,
+          "numerator": 7,
+          "value": 0.21875,
           "wilson_95": [
-            0.155646,
-            0.453745
+            0.110238,
+            0.38755
           ]
         }
       },
       "exact_match": {
         "rules": {
           "denominator": 32,
-          "numerator": 22,
-          "value": 0.6875,
+          "numerator": 23,
+          "value": 0.71875,
           "wilson_95": [
-            0.514333,
-            0.820475
+            0.546255,
+            0.844354
           ]
         },
         "rules_and_lines": {
           "denominator": 32,
-          "numerator": 22,
-          "value": 0.6875,
+          "numerator": 23,
+          "value": 0.71875,
           "wilson_95": [
-            0.514333,
-            0.820475
+            0.546255,
+            0.844354
           ]
         }
       },
@@ -28727,25 +28745,25 @@
       },
       "rules": {
         "diagnostic": {
-          "f1": 0.942857,
-          "fn": 4,
+          "f1": 0.972222,
+          "fn": 2,
           "fp": 0,
           "precision": 1.0,
-          "recall": 0.891892,
-          "tp": 33
+          "recall": 0.945946,
+          "tp": 35
         },
         "evidence_exact": {
-          "denominator": 24,
-          "numerator": 22,
-          "value": 0.916667,
+          "denominator": 26,
+          "numerator": 24,
+          "value": 0.923077,
           "wilson_95": [
-            0.741512,
-            0.976841
+            0.758584,
+            0.978645
           ]
         },
         "fn_by_kind": {
           "in_proof": 0,
-          "open": 4,
+          "open": 2,
           "silent": 0,
           "unresolved": 0
         },
@@ -29458,38 +29476,44 @@
           },
           "TIME-03": {
             "evidence_exact": {
-              "denominator": 0,
-              "numerator": 0,
-              "value": null,
-              "wilson_95": null
+              "denominator": 2,
+              "numerator": 2,
+              "value": 1.0,
+              "wilson_95": [
+                0.34238,
+                1.0
+              ]
             },
-            "f1": 0.0,
-            "fn": 2,
+            "f1": 1.0,
+            "fn": 0,
             "fn_by_kind": {
               "in_proof": 0,
-              "open": 2,
+              "open": 0,
               "silent": 0,
               "unresolved": 0
             },
             "fp": 0,
-            "precision": null,
-            "recall": 0.0,
+            "precision": 1.0,
+            "recall": 1.0,
             "severity_exact": {
-              "denominator": 0,
-              "numerator": 0,
-              "value": null,
-              "wilson_95": null
+              "denominator": 2,
+              "numerator": 2,
+              "value": 1.0,
+              "wilson_95": [
+                0.34238,
+                1.0
+              ]
             },
-            "tp": 0
+            "tp": 2
           }
         },
         "strict": {
-          "f1": 0.835443,
-          "fn": 4,
+          "f1": 0.864198,
+          "fn": 2,
           "fp": 9,
-          "precision": 0.785714,
-          "recall": 0.891892,
-          "tp": 33
+          "precision": 0.795455,
+          "recall": 0.945946,
+          "tp": 35
         }
       },
       "secondary_field_accuracy": {

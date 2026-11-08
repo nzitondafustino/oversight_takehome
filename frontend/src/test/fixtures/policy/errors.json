@@ -1,0 +1,32 @@
+{
+ "approve_uploaded": {
+  "error": {
+   "code": "invalid_transition",
+   "message": "this step needs a in_review version, and this one is draft",
+   "details": {
+    "status": "draft"
+   }
+  }
+ },
+ "revision_unchanged": {
+  "error": {
+   "code": "revision_unchanged",
+   "message": "the content is the same as the latest revision",
+   "details": {
+    "revision": 1
+   }
+  }
+ },
+ "unknown_recording_set": {
+  "error": {
+   "code": "unknown_recording_set",
+   "message": "no compiler recording set 'nope'",
+   "details": {
+    "available": [
+     "fixtures",
+     "live"
+    ]
+   }
+  }
+ }
+}

@@ -1,8 +1,4 @@
-"""GIFT-01 and GIFT-04: which lines are gifts, the cap for one recipient, and gifts to officials.
-
-is_client_gift, may_need_recipient and is_official_line are the domain's questions, and other modules
-ask them too: TIME-03 totals gifts per recipient, and the uncertainty step asks what needs a recipient.
-"""
+"""GIFT-01 and GIFT-04: client gifts, the per-recipient cap, and gifts to officials."""
 
 from collections.abc import Mapping
 from decimal import Decimal
@@ -17,7 +13,7 @@ GIFT_CATEGORIES = frozenset({"gift", "gift_card", "jewelry"})
 
 
 def is_client_gift(line: LineItem, receipt: Receipt, fields: Mapping[str, dict]) -> bool | None:
-    """Whether a line is a gift GIFT-01 covers. None if that depends on something not known."""
+    """Return whether GIFT-01 covers a line, or None if that is not known."""
     declared = receipt.submitted_expense_type == "Client Gifts"
     if not declared and line.recipient_name is None:
         return False
@@ -35,26 +31,26 @@ def is_client_gift(line: LineItem, receipt: Receipt, fields: Mapping[str, dict])
 
 
 def may_need_recipient(line: LineItem, receipt: Receipt, fields: Mapping[str, dict]) -> bool:
-    """Whether a line's recipient type could decide a gift rule, from structured facts alone."""
+    """Return whether a line's recipient type could decide a gift rule.
+
+    A named line that is not a service fee may need one, as GIFT-04 covers meals. This makes no line a gift.
+    """
     if line.category in GIFT_CATEGORIES:
         return True
-    if receipt.submitted_expense_type == "Client Gifts" and line.category != "service_fee":
+    if line.category == "service_fee":
+        return False
+    if receipt.submitted_expense_type == "Client Gifts" or line.recipient_name is not None:
         return True
     return is_client_gift(line, receipt, fields) is None
 
 
 def is_official_line(line: LineItem) -> bool:
-    """A gift GIFT-04 takes out of GIFT-01, as it "replaces GIFT-01 for those lines"."""
+    """Return whether a line is for a government official, which GIFT-04 takes from GIFT-01."""
     return line.recipient_type == "government_official"
 
 
 class _GiftCapCheck:
-    """GIFT-01 on one receipt: a class because each phase below reads what the ones before it sorted out.
-
-    Lines fall into three groups: settled gifts, gifts whose recipient may be an official (status_open),
-    and lines that may or may not count toward a total at all (unsettled, which includes status_open).
-    Lines that are status_open are judged first, so the order of findings is part of the behaviour.
-    """
+    """GIFT-01 on one receipt. Lines whose recipient may be an official are judged first."""
 
     def __init__(self, job: HelperJob) -> None:
         self.job = job
@@ -91,9 +87,7 @@ class _GiftCapCheck:
                 self.settled.append(line)
 
     def _settled_totals(self) -> dict[tuple[str, bool], Decimal]:
-        """Per recipient. An official's lines are totalled apart: GIFT-04 replaces their GIFT-01, so
-        they are never part of what an ordinary gift to the same name is measured against.
-        """
+        """Total settled gifts per recipient. Officials' lines are totalled apart."""
         totals: dict[tuple[str, bool], Decimal] = {}
         for line in self.settled:
             if line.recipient_name is not None:
@@ -106,9 +100,7 @@ class _GiftCapCheck:
             self.findings.append(self.job.line_finding(line, "a gift of this value must name its recipient", amount_usd=line.amount_usd))
 
     def _judge_status_open(self, line: LineItem) -> None:
-        """Worked out as if ordinary, the only way this rule reaches it. If it is an official's, GIFT-04
-        replaces the finding on this line, and GIFT-04 is left open on it, so it stays only possible.
-        """
+        """Judge a line that may be an official's; GIFT-04 stays open on it."""
         name = line.recipient_name
         if name is None:
             self._require_name(line)

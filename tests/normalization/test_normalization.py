@@ -481,7 +481,7 @@ def test_nothing_earlier_or_downstream_imports_normalization():
 
 
 def test_normalization_reads_no_answers_and_needs_no_new_dependency():
-    project = {"expense_validator.config", "expense_validator.engine.models", "expense_validator.compiler.llm_extract"}
+    project = {"expense_validator.config", "expense_validator.engine.models", "expense_validator.compiler.llm_extract", "expense_validator.exceptions"}
     for path in (SOURCE / "normalization").glob("*.py"):
         for name in _imports(path):
             if name.startswith("expense_validator.normalization"):

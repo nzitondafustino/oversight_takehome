@@ -1,0 +1,2788 @@
+{
+  "A": {
+    "category_accuracy": "9/13",
+    "classified": "11/13",
+    "logical_calls": 13,
+    "new_paid_requests": 11,
+    "new_paid_by_kind": {
+      "decision": 11
+    },
+    "wall_ms": {
+      "golden": 1455,
+      "robust": 818,
+      "RB-002": 309
+    },
+    "policy": {
+      "golden": {
+        "dispositions_right": {
+          "numerator": 5,
+          "denominator": 5,
+          "value": 1.0,
+          "wilson_95": [
+            0.565518,
+            1.0
+          ]
+        },
+        "decided": {
+          "numerator": 4,
+          "denominator": 5,
+          "value": 0.8,
+          "wilson_95": [
+            0.375535,
+            0.963776
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 5,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.434482
+          ]
+        },
+        "silent_misses": 0,
+        "rules_strict": {
+          "tp": 7,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.875,
+          "recall": 0.875
+        },
+        "exc_03": 0,
+        "unresolved": 0,
+        "open": 14,
+        "receipts": {
+          "RCP-011": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "ALC-03",
+              "MCC-01"
+            ],
+            "gold_exceptions": [
+              "ALC-03",
+              "MCC-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-017": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "MCC-01",
+              "PERS-01"
+            ],
+            "gold_exceptions": [
+              "DOC-03",
+              "MCC-01",
+              "PERS-01"
+            ],
+            "signals": [],
+            "decided": false
+          },
+          "RCP-022": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "GIFT-04"
+            ],
+            "gold_exceptions": [
+              "GIFT-04"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-023": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "DOC-01"
+            ],
+            "gold_exceptions": [
+              "DOC-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-028": {
+            "gold": "review",
+            "got": "review",
+            "exceptions": [],
+            "gold_exceptions": [],
+            "signals": [
+              "MCC-02"
+            ],
+            "decided": true
+          }
+        }
+      },
+      "robust": {
+        "dispositions_right": {
+          "numerator": 0,
+          "denominator": 2,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.65762
+          ]
+        },
+        "decided": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5,
+          "wilson_95": [
+            0.094531,
+            0.905469
+          ]
+        },
+        "false_flag": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "silent_misses": 1,
+        "rules_strict": {
+          "tp": 0,
+          "fp": 2,
+          "fn": 1,
+          "precision": 0.0,
+          "recall": 0.0
+        },
+        "exc_03": 0,
+        "unresolved": 0,
+        "open": 16,
+        "receipts": {
+          "RBX-001": {
+            "gold": "pass",
+            "got": "flag",
+            "exceptions": [
+              "ALC-01"
+            ],
+            "gold_exceptions": [],
+            "signals": [],
+            "decided": true
+          },
+          "RBX-009": {
+            "gold": "flag",
+            "got": "review",
+            "exceptions": [],
+            "gold_exceptions": [
+              "ENT-01"
+            ],
+            "signals": [],
+            "decided": false
+          }
+        }
+      }
+    },
+    "lines": {
+      "RCP-011-L1": {
+        "gold": "alcohol",
+        "got": "alcohol",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-011-L2": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-017-L1": {
+        "gold": "personal_care",
+        "got": "personal_care",
+        "right": true,
+        "confidence": 0.99,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            0.99
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-017-L2": {
+        "gold": "service_fee",
+        "got": null,
+        "right": false,
+        "confidence": null,
+        "error": "essential_toiletry contradicts category service_fee",
+        "answered_by": "jev",
+        "result": "exhausted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "error",
+            null
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-022-L1": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 0.99,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            0.99
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-022-L2": {
+        "gold": "gift",
+        "got": "gift",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-023-L1": {
+        "gold": "other",
+        "got": "other",
+        "right": true,
+        "confidence": 0.89,
+        "error": null,
+        "answered_by": "jev",
+        "result": "exhausted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "low_confidence",
+            0.89
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-028-L1": {
+        "gold": "health_otc",
+        "got": "health_otc",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-028-L2": {
+        "gold": "health_otc",
+        "got": "health_otc",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RBX-001-L1": {
+        "gold": "food_beverage",
+        "got": "alcohol",
+        "right": false,
+        "confidence": 0.95,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            0.95
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RBX-001-L2": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RBX-009-L1": {
+        "gold": "other",
+        "got": null,
+        "right": false,
+        "confidence": null,
+        "error": "venue_type contradicts category airfare",
+        "answered_by": "jev",
+        "result": "exhausted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "error",
+            null
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RB-002": {
+        "gold": "food_beverage",
+        "got": "alcohol",
+        "right": false,
+        "confidence": "0.83",
+        "error": null,
+        "answered_by": "jev",
+        "result": "exhausted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "low_confidence",
+            0.83
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      }
+    }
+  },
+  "B": {
+    "category_accuracy": "13/13",
+    "classified": "13/13",
+    "logical_calls": 13,
+    "new_paid_requests": 13,
+    "new_paid_by_kind": {
+      "chat": 13
+    },
+    "wall_ms": {
+      "golden": 10790,
+      "robust": 5935,
+      "RB-002": 2026
+    },
+    "policy": {
+      "golden": {
+        "dispositions_right": {
+          "numerator": 5,
+          "denominator": 5,
+          "value": 1.0,
+          "wilson_95": [
+            0.565518,
+            1.0
+          ]
+        },
+        "decided": {
+          "numerator": 5,
+          "denominator": 5,
+          "value": 1.0,
+          "wilson_95": [
+            0.565518,
+            1.0
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 5,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.434482
+          ]
+        },
+        "silent_misses": 0,
+        "rules_strict": {
+          "tp": 8,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "exc_03": 0,
+        "unresolved": 0,
+        "open": 0,
+        "receipts": {
+          "RCP-011": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "ALC-03",
+              "MCC-01"
+            ],
+            "gold_exceptions": [
+              "ALC-03",
+              "MCC-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-017": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "DOC-03",
+              "MCC-01",
+              "PERS-01"
+            ],
+            "gold_exceptions": [
+              "DOC-03",
+              "MCC-01",
+              "PERS-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-022": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "GIFT-04"
+            ],
+            "gold_exceptions": [
+              "GIFT-04"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-023": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "DOC-01"
+            ],
+            "gold_exceptions": [
+              "DOC-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-028": {
+            "gold": "review",
+            "got": "review",
+            "exceptions": [],
+            "gold_exceptions": [],
+            "signals": [
+              "MCC-02"
+            ],
+            "decided": true
+          }
+        }
+      },
+      "robust": {
+        "dispositions_right": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "decided": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "silent_misses": 0,
+        "rules_strict": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "exc_03": 0,
+        "unresolved": 0,
+        "open": 0,
+        "receipts": {
+          "RBX-001": {
+            "gold": "pass",
+            "got": "pass",
+            "exceptions": [],
+            "gold_exceptions": [],
+            "signals": [],
+            "decided": true
+          },
+          "RBX-009": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "ENT-01"
+            ],
+            "gold_exceptions": [
+              "ENT-01"
+            ],
+            "signals": [],
+            "decided": true
+          }
+        }
+      }
+    },
+    "lines": {
+      "RCP-011-L1": {
+        "gold": "alcohol",
+        "got": "alcohol",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-011-L2": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-017-L1": {
+        "gold": "personal_care",
+        "got": "personal_care",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-017-L2": {
+        "gold": "service_fee",
+        "got": "service_fee",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-022-L1": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-022-L2": {
+        "gold": "gift",
+        "got": "gift",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-023-L1": {
+        "gold": "other",
+        "got": "other",
+        "right": true,
+        "confidence": 0.1,
+        "error": null,
+        "answered_by": "claude",
+        "result": "exhausted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "low_confidence",
+            0.1
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-028-L1": {
+        "gold": "health_otc",
+        "got": "health_otc",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-028-L2": {
+        "gold": "health_otc",
+        "got": "health_otc",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RBX-001-L1": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RBX-001-L2": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RBX-009-L1": {
+        "gold": "other",
+        "got": "other",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RB-002": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": "0.7",
+        "error": null,
+        "answered_by": "claude",
+        "result": "exhausted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "low_confidence",
+            0.7
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      }
+    }
+  },
+  "C": {
+    "category_accuracy": "12/13",
+    "classified": "13/13",
+    "logical_calls": 17,
+    "new_paid_requests": 0,
+    "new_paid_by_kind": {},
+    "wall_ms": {
+      "golden": 21,
+      "robust": 12,
+      "RB-002": 1
+    },
+    "policy": {
+      "golden": {
+        "dispositions_right": {
+          "numerator": 5,
+          "denominator": 5,
+          "value": 1.0,
+          "wilson_95": [
+            0.565518,
+            1.0
+          ]
+        },
+        "decided": {
+          "numerator": 5,
+          "denominator": 5,
+          "value": 1.0,
+          "wilson_95": [
+            0.565518,
+            1.0
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 5,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.434482
+          ]
+        },
+        "silent_misses": 0,
+        "rules_strict": {
+          "tp": 8,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "exc_03": 0,
+        "unresolved": 0,
+        "open": 0,
+        "receipts": {
+          "RCP-011": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "ALC-03",
+              "MCC-01"
+            ],
+            "gold_exceptions": [
+              "ALC-03",
+              "MCC-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-017": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "DOC-03",
+              "MCC-01",
+              "PERS-01"
+            ],
+            "gold_exceptions": [
+              "DOC-03",
+              "MCC-01",
+              "PERS-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-022": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "GIFT-04"
+            ],
+            "gold_exceptions": [
+              "GIFT-04"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-023": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "DOC-01"
+            ],
+            "gold_exceptions": [
+              "DOC-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-028": {
+            "gold": "review",
+            "got": "review",
+            "exceptions": [],
+            "gold_exceptions": [],
+            "signals": [
+              "MCC-02"
+            ],
+            "decided": true
+          }
+        }
+      },
+      "robust": {
+        "dispositions_right": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5,
+          "wilson_95": [
+            0.094531,
+            0.905469
+          ]
+        },
+        "decided": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "false_flag": {
+          "numerator": 1,
+          "denominator": 1,
+          "value": 1.0,
+          "wilson_95": [
+            0.206549,
+            1.0
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "silent_misses": 0,
+        "rules_strict": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.5,
+          "recall": 1.0
+        },
+        "exc_03": 0,
+        "unresolved": 0,
+        "open": 0,
+        "receipts": {
+          "RBX-001": {
+            "gold": "pass",
+            "got": "flag",
+            "exceptions": [
+              "ALC-01"
+            ],
+            "gold_exceptions": [],
+            "signals": [],
+            "decided": true
+          },
+          "RBX-009": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "ENT-01"
+            ],
+            "gold_exceptions": [
+              "ENT-01"
+            ],
+            "signals": [],
+            "decided": true
+          }
+        }
+      }
+    },
+    "lines": {
+      "RCP-011-L1": {
+        "gold": "alcohol",
+        "got": "alcohol",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-011-L2": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-017-L1": {
+        "gold": "personal_care",
+        "got": "personal_care",
+        "right": true,
+        "confidence": 0.99,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            0.99
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-017-L2": {
+        "gold": "service_fee",
+        "got": "service_fee",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "error",
+            null
+          ],
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 2
+      },
+      "RCP-022-L1": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 0.99,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            0.99
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-022-L2": {
+        "gold": "gift",
+        "got": "gift",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-023-L1": {
+        "gold": "other",
+        "got": "other",
+        "right": true,
+        "confidence": 0.1,
+        "error": null,
+        "answered_by": "claude",
+        "result": "exhausted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "low_confidence",
+            0.89
+          ],
+          [
+            "claude",
+            0,
+            "low_confidence",
+            0.1
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 2
+      },
+      "RCP-028-L1": {
+        "gold": "health_otc",
+        "got": "health_otc",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RCP-028-L2": {
+        "gold": "health_otc",
+        "got": "health_otc",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RBX-001-L1": {
+        "gold": "food_beverage",
+        "got": "alcohol",
+        "right": false,
+        "confidence": 0.95,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            0.95
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RBX-001-L2": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 1
+      },
+      "RBX-009-L1": {
+        "gold": "other",
+        "got": "other",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "error",
+            null
+          ],
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 2
+      },
+      "RB-002": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": "0.7",
+        "error": null,
+        "answered_by": "claude",
+        "result": "exhausted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "low_confidence",
+            0.83
+          ],
+          [
+            "claude",
+            0,
+            "low_confidence",
+            0.7
+          ]
+        ],
+        "reviews": [],
+        "unresolved": null,
+        "calls": 2
+      }
+    }
+  },
+  "D": {
+    "category_accuracy": "13/13",
+    "classified": "13/13",
+    "logical_calls": 30,
+    "new_paid_requests": 15,
+    "new_paid_by_kind": {
+      "decision": 2,
+      "chat": 13
+    },
+    "wall_ms": {
+      "golden": 8680,
+      "robust": 7870,
+      "RB-002": 1
+    },
+    "policy": {
+      "golden": {
+        "dispositions_right": {
+          "numerator": 5,
+          "denominator": 5,
+          "value": 1.0,
+          "wilson_95": [
+            0.565518,
+            1.0
+          ]
+        },
+        "decided": {
+          "numerator": 5,
+          "denominator": 5,
+          "value": 1.0,
+          "wilson_95": [
+            0.565518,
+            1.0
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 5,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.434482
+          ]
+        },
+        "silent_misses": 0,
+        "rules_strict": {
+          "tp": 8,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "exc_03": 0,
+        "unresolved": 0,
+        "open": 0,
+        "receipts": {
+          "RCP-011": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "ALC-03",
+              "MCC-01"
+            ],
+            "gold_exceptions": [
+              "ALC-03",
+              "MCC-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-017": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "DOC-03",
+              "MCC-01",
+              "PERS-01"
+            ],
+            "gold_exceptions": [
+              "DOC-03",
+              "MCC-01",
+              "PERS-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-022": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "GIFT-04"
+            ],
+            "gold_exceptions": [
+              "GIFT-04"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-023": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "DOC-01"
+            ],
+            "gold_exceptions": [
+              "DOC-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-028": {
+            "gold": "review",
+            "got": "review",
+            "exceptions": [],
+            "gold_exceptions": [],
+            "signals": [
+              "MCC-02"
+            ],
+            "decided": true
+          }
+        }
+      },
+      "robust": {
+        "dispositions_right": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "decided": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "silent_misses": 0,
+        "rules_strict": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "exc_03": 0,
+        "unresolved": 0,
+        "open": 0,
+        "receipts": {
+          "RBX-001": {
+            "gold": "pass",
+            "got": "pass",
+            "exceptions": [],
+            "gold_exceptions": [],
+            "signals": [],
+            "decided": true
+          },
+          "RBX-009": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "ENT-01"
+            ],
+            "gold_exceptions": [
+              "ENT-01"
+            ],
+            "signals": [],
+            "decided": true
+          }
+        }
+      }
+    },
+    "lines": {
+      "RCP-011-L1": {
+        "gold": "alcohol",
+        "got": "alcohol",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [
+          [
+            "jev",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-011-L2": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [
+          [
+            "jev",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-017-L1": {
+        "gold": "personal_care",
+        "got": "personal_care",
+        "right": true,
+        "confidence": 0.99,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            0.99
+          ]
+        ],
+        "reviews": [
+          [
+            "jev",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-017-L2": {
+        "gold": "service_fee",
+        "got": "service_fee",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "error",
+            null
+          ],
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 3
+      },
+      "RCP-022-L1": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 0.99,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            0.99
+          ]
+        ],
+        "reviews": [
+          [
+            "jev",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-022-L2": {
+        "gold": "gift",
+        "got": "gift",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [
+          [
+            "jev",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-023-L1": {
+        "gold": "other",
+        "got": "other",
+        "right": true,
+        "confidence": 0.1,
+        "error": null,
+        "answered_by": "claude",
+        "result": "exhausted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "low_confidence",
+            0.89
+          ],
+          [
+            "claude",
+            0,
+            "low_confidence",
+            0.1
+          ]
+        ],
+        "reviews": [],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-028-L1": {
+        "gold": "health_otc",
+        "got": "health_otc",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [
+          [
+            "jev",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-028-L2": {
+        "gold": "health_otc",
+        "got": "health_otc",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [
+          [
+            "jev",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RBX-001-L1": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            0.95
+          ],
+          [
+            "claude",
+            1,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "jev",
+            0,
+            "verdict",
+            "revise",
+            "food_beverage",
+            "Guinness 0.0 is an alcohol-free beer; the 0.0 designation states it is non-alcoholic, so reconsider alcohol and classify as a non-alcoholic drink instead."
+          ],
+          [
+            "claude",
+            1,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 4
+      },
+      "RBX-001-L2": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 1.0,
+        "error": null,
+        "answered_by": "jev",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "accepted",
+            1.0
+          ]
+        ],
+        "reviews": [
+          [
+            "jev",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RBX-009-L1": {
+        "gold": "other",
+        "got": "other",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "error",
+            null
+          ],
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 3
+      },
+      "RB-002": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": "0.7",
+        "error": null,
+        "answered_by": "claude",
+        "result": "exhausted",
+        "attempts": [
+          [
+            "jev",
+            0,
+            "low_confidence",
+            0.83
+          ],
+          [
+            "claude",
+            0,
+            "low_confidence",
+            0.7
+          ]
+        ],
+        "reviews": [],
+        "unresolved": false,
+        "calls": 2
+      }
+    }
+  },
+  "E": {
+    "category_accuracy": "12/13",
+    "classified": "13/13",
+    "logical_calls": 26,
+    "new_paid_requests": 1,
+    "new_paid_by_kind": {
+      "chat": 1
+    },
+    "wall_ms": {
+      "golden": 1226,
+      "robust": 12,
+      "RB-002": 1
+    },
+    "policy": {
+      "golden": {
+        "dispositions_right": {
+          "numerator": 5,
+          "denominator": 5,
+          "value": 1.0,
+          "wilson_95": [
+            0.565518,
+            1.0
+          ]
+        },
+        "decided": {
+          "numerator": 5,
+          "denominator": 5,
+          "value": 1.0,
+          "wilson_95": [
+            0.565518,
+            1.0
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 5,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.434482
+          ]
+        },
+        "silent_misses": 0,
+        "rules_strict": {
+          "tp": 8,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "exc_03": 0,
+        "unresolved": 0,
+        "open": 0,
+        "receipts": {
+          "RCP-011": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "ALC-03",
+              "MCC-01"
+            ],
+            "gold_exceptions": [
+              "ALC-03",
+              "MCC-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-017": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "DOC-03",
+              "MCC-01",
+              "PERS-01"
+            ],
+            "gold_exceptions": [
+              "DOC-03",
+              "MCC-01",
+              "PERS-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-022": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "GIFT-04"
+            ],
+            "gold_exceptions": [
+              "GIFT-04"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-023": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "DOC-01"
+            ],
+            "gold_exceptions": [
+              "DOC-01"
+            ],
+            "signals": [],
+            "decided": true
+          },
+          "RCP-028": {
+            "gold": "review",
+            "got": "review",
+            "exceptions": [],
+            "gold_exceptions": [],
+            "signals": [
+              "MCC-02"
+            ],
+            "decided": true
+          }
+        }
+      },
+      "robust": {
+        "dispositions_right": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "decided": {
+          "numerator": 2,
+          "denominator": 2,
+          "value": 1.0,
+          "wilson_95": [
+            0.34238,
+            1.0
+          ]
+        },
+        "false_flag": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "false_pass": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.793451
+          ]
+        },
+        "silent_misses": 0,
+        "rules_strict": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0
+        },
+        "exc_03": 0,
+        "unresolved": 0,
+        "open": 0,
+        "receipts": {
+          "RBX-001": {
+            "gold": "pass",
+            "got": "pass",
+            "exceptions": [],
+            "gold_exceptions": [],
+            "signals": [],
+            "decided": true
+          },
+          "RBX-009": {
+            "gold": "flag",
+            "got": "flag",
+            "exceptions": [
+              "ENT-01"
+            ],
+            "gold_exceptions": [
+              "ENT-01"
+            ],
+            "signals": [],
+            "decided": true
+          }
+        }
+      }
+    },
+    "lines": {
+      "RCP-011-L1": {
+        "gold": "alcohol",
+        "got": "alcohol",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-011-L2": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-017-L1": {
+        "gold": "personal_care",
+        "got": "personal_care",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-017-L2": {
+        "gold": "service_fee",
+        "got": "service_fee",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-022-L1": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-022-L2": {
+        "gold": "gift",
+        "got": "gift",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-023-L1": {
+        "gold": "other",
+        "got": "other",
+        "right": true,
+        "confidence": 0.89,
+        "error": null,
+        "answered_by": "jev",
+        "result": "exhausted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "low_confidence",
+            0.1
+          ],
+          [
+            "jev",
+            0,
+            "low_confidence",
+            0.89
+          ]
+        ],
+        "reviews": [],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-028-L1": {
+        "gold": "health_otc",
+        "got": "health_otc",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RCP-028-L2": {
+        "gold": "health_otc",
+        "got": "health_otc",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RBX-001-L1": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RBX-001-L2": {
+        "gold": "food_beverage",
+        "got": "food_beverage",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RBX-009-L1": {
+        "gold": "other",
+        "got": "other",
+        "right": true,
+        "confidence": 0.9,
+        "error": null,
+        "answered_by": "claude",
+        "result": "accepted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "accepted",
+            0.9
+          ]
+        ],
+        "reviews": [
+          [
+            "claude",
+            0,
+            "verdict",
+            "accept",
+            null,
+            null
+          ]
+        ],
+        "unresolved": false,
+        "calls": 2
+      },
+      "RB-002": {
+        "gold": "food_beverage",
+        "got": "alcohol",
+        "right": false,
+        "confidence": "0.83",
+        "error": null,
+        "answered_by": "jev",
+        "result": "exhausted",
+        "attempts": [
+          [
+            "claude",
+            0,
+            "low_confidence",
+            0.7
+          ],
+          [
+            "jev",
+            0,
+            "low_confidence",
+            0.83
+          ]
+        ],
+        "reviews": [],
+        "unresolved": false,
+        "calls": 2
+      }
+    }
+  },
+  "usage": {
+    "requests": 40,
+    "by_kind": {
+      "decision": 13,
+      "chat": 27
+    },
+    "failed": [],
+    "latency_ms_by_kind": {
+      "chat": [
+        709,
+        763,
+        891,
+        954,
+        986,
+        1011,
+        1039,
+        1062,
+        1131,
+        1142,
+        1166,
+        1170,
+        1192,
+        1233,
+        1290,
+        1316,
+        1386,
+        1729,
+        1835,
+        1941,
+        2024,
+        2058,
+        2059,
+        2197,
+        2204,
+        2384,
+        2828
+      ],
+      "decision": [
+        180,
+        182,
+        185,
+        186,
+        187,
+        193,
+        199,
+        211,
+        215,
+        228,
+        281,
+        306,
+        368
+      ]
+    },
+    "tokens": {
+      "chat": [
+        {
+          "completion_tokens": 89,
+          "prompt_tokens": 1749,
+          "total_tokens": 1838,
+          "completion_tokens_details": {
+            "audio_tokens": 0,
+            "reasoning_tokens": 0
+          },
+          "cost": 0.0002194,
+          "cost_details": {
+            "upstream_inference_completions_cost": 4.45e-05,
+            "upstream_inference_prompt_cost": 0.0001749,
+            "upstream_inference_cost": 0.0002194
+          },
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "audio_tokens": 0,
+            "cache_write_tokens": 0,
+            "cached_tokens": 0,
+            "video_tokens": 0
+          }
+        },
+        {
+          "completion_tokens": 75,
+          "prompt_tokens": 1743,
+          "total_tokens": 1818,
+          "completion_tokens_details": {
+            "audio_tokens": 0,
+            "reasoning_tokens": 0
+          },
+          "cost": 0.0002118,
+          "cost_details": {
+            "upstream_inference_completions_cost": 3.75e-05,
+            "upstream_inference_prompt_cost": 0.0001743,
+            "upstream_inference_cost": 0.0002118
+          },
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "audio_tokens": 0,
+            "cache_write_tokens": 0,
+            "cached_tokens": 0,
+            "video_tokens": 0
+          }
+        },
+        {
+          "completion_tokens": 65,
+          "prompt_tokens": 2705,
+          "total_tokens": 2770,
+          "completion_tokens_details": {
+            "audio_tokens": 0,
+            "reasoning_tokens": 0
+          },
+          "cost": 0.000303,
+          "cost_details": {
+            "upstream_inference_completions_cost": 3.25e-05,
+            "upstream_inference_prompt_cost": 0.0002705,
+            "upstream_inference_cost": 0.000303
+          },
+          "is_byok": false,
+          "prompt_tokens_details": {
+            "audio_tokens": 0,
+            "cache_write_tokens": 0,
+            "cached_tokens": 0,
+            "video_tokens": 0
+          }
+        }
+      ],
+      "decision": [
+        {
+          "input_tokens": 1602,
+          "output_tokens": 425,
+          "cost": 6.7284e-05
+        },
+        {
+          "input_tokens": 1599,
+          "output_tokens": 422,
+          "cost": 6.7158e-05
+        },
+        {
+          "input_tokens": 1619,
+          "output_tokens": 424,
+          "cost": 6.7998e-05
+        }
+      ]
+    }
+  },
+  "standalone_estimates": {
+    "basis": "logical calls of each configuration x provider-reported mean cost and measured median latency per call type; estimated, as the shared cache served repeats",
+    "per_call_cost": {
+      "chat": 0.0002897703703703704,
+      "decision": 6.696415384615384e-05
+    },
+    "per_call_latency_ms": {
+      "chat": 1233,
+      "decision": 199
+    },
+    "configs": {
+      "A": {
+        "jev": 13,
+        "claude_classify_or_revise": 0,
+        "reviews": 0,
+        "calls_per_line": 1.0,
+        "standalone_cost_usd": 0.00087,
+        "standalone_latency_s_13_lines": 2.6
+      },
+      "B": {
+        "jev": 0,
+        "claude_classify_or_revise": 13,
+        "reviews": 0,
+        "calls_per_line": 1.0,
+        "standalone_cost_usd": 0.00377,
+        "standalone_latency_s_13_lines": 16.0
+      },
+      "C": {
+        "jev": 13,
+        "claude_classify_or_revise": 4,
+        "reviews": 0,
+        "calls_per_line": 1.31,
+        "standalone_cost_usd": 0.00203,
+        "standalone_latency_s_13_lines": 7.5
+      },
+      "D": {
+        "jev": 13,
+        "claude_classify_or_revise": 5,
+        "reviews": 12,
+        "calls_per_line": 2.31,
+        "standalone_cost_usd": 0.0058,
+        "standalone_latency_s_13_lines": 23.5
+      },
+      "E": {
+        "jev": 2,
+        "claude_classify_or_revise": 13,
+        "reviews": 11,
+        "calls_per_line": 2.0,
+        "standalone_cost_usd": 0.00709,
+        "standalone_latency_s_13_lines": 30.0
+      }
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "RBX-009-L1": {
+    "current": {
+      "gold_disposition": "flag",
+      "disposition": "review",
+      "decided": false,
+      "signals": [],
+      "exceptions": [],
+      "gold_exceptions": [
+        "ENT-01"
+      ],
+      "open": 16
+    },
+    "option_b": {
+      "gold_disposition": "flag",
+      "disposition": "flag",
+      "decided": true,
+      "signals": [],
+      "exceptions": [
+        "DOC-03"
+      ],
+      "gold_exceptions": [
+        "ENT-01"
+      ],
+      "open": 0
+    },
+    "option_b_disposition_accuracy": 11,
+    "current_disposition_accuracy": 10,
+    "option_b_false_pass": 0
+  },
+  "RCP-017-L2": {
+    "current": {
+      "gold_disposition": "flag",
+      "disposition": "flag",
+      "decided": false,
+      "signals": [],
+      "exceptions": [
+        "MCC-01",
+        "PERS-01"
+      ],
+      "gold_exceptions": [
+        "DOC-03",
+        "MCC-01",
+        "PERS-01"
+      ],
+      "open": 14
+    },
+    "option_b": {
+      "gold_disposition": "flag",
+      "disposition": "flag",
+      "decided": true,
+      "signals": [],
+      "exceptions": [
+        "DOC-03",
+        "MCC-01",
+        "PERS-01"
+      ],
+      "gold_exceptions": [
+        "DOC-03",
+        "MCC-01",
+        "PERS-01"
+      ],
+      "open": 0
+    },
+    "option_b_disposition_accuracy": 32,
+    "current_disposition_accuracy": 32,
+    "option_b_false_pass": 0
+  }
+}

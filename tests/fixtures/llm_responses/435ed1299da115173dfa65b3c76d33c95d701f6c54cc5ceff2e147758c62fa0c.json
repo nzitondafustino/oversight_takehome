@@ -1,0 +1,8 @@
+{
+  "policy_doc": "agree.md",
+  "document_sha256": "435ed1299da115173dfa65b3c76d33c95d701f6c54cc5ceff2e147758c62fa0c",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "simulation",
+  "origin": "hand-written scenario response",
+  "response": "{\"rules\": [{\"rule_id\": \"ZZ-01\", \"title\": \"Peripheral cap\", \"section\": \"Limits\", \"severities\": [\"medium\"], \"review_signal\": false, \"thresholds\": [{\"value\": \"200\", \"unit\": \"usd\"}], \"references\": [\"EXC-02\"], \"quote\": \"capped at $200 per item\"}]}"
+}

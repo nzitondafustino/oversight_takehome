@@ -1,0 +1,28 @@
+{
+  "run": "first-run",
+  "date": "2026-11-06",
+  "backend": "typesafe-jev",
+  "requested_model": "typesafe/jev-1.14",
+  "reviewed_snapshot": "typesafe/jev-1.14-20261014",
+  "provider_routing": {
+    "only": [
+      "typesafe"
+    ],
+    "allow_fallbacks": false
+  },
+  "retries": "none",
+  "attribute_thresholds": {
+    "recipient_type": 0.5,
+    "venue_type": 0.5,
+    "item_kind": 0.5,
+    "essential_toiletry": 0.5
+  },
+  "questions_sha256": "9c0baf7dfaa7a1019c8fc02f6435873190cd61dbf978440be0e449ab5074dec5",
+  "dataset_sha256": "a277d73b45a8296389099abdb94b152aa89e99d71d141db47fdd7402f6489dff",
+  "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+  "taxonomy_sha256": "67c47b6545330193eccf63e55ae32f8fa66bb2ebc8862ea3d1a4190a194db188",
+  "fields_sha256": "d8b4e9d78472bdc30a6179ff24aa6e1b615c7f0b3f60e419cd67d5c0d7313d4c",
+  "translation_model": "tencent/hy-mt2-30b-a3b",
+  "receipts": 32,
+  "lines": 79
+}

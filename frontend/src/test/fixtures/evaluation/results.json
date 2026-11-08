@@ -1,0 +1,884 @@
+{
+ "evaluation_id": "eval_6aef704a71782376b05ced5a",
+ "items": [
+  {
+   "receipt_id": "RCP-001",
+   "index": 0,
+   "status": "ok",
+   "error": null,
+   "context": "dataset",
+   "latency_ms": 3,
+   "expected": {
+    "disposition": "pass",
+    "findings": {
+     "exceptions": [],
+     "signals": []
+    },
+    "lines": {
+     "RCP-001-L1": {
+      "category": "food_beverage",
+      "restricted": false
+     },
+     "RCP-001-L2": {
+      "category": "food_beverage",
+      "restricted": false
+     },
+     "RCP-001-L3": {
+      "category": "food_beverage",
+      "restricted": false
+     },
+     "RCP-001-L4": {
+      "category": "service_fee",
+      "restricted": false
+     }
+    }
+   },
+   "scoring": {
+    "lines": {
+     "RCP-001-L1": {
+      "expected": "food_beverage",
+      "predicted": "food_beverage",
+      "outcome": "correct"
+     },
+     "RCP-001-L2": {
+      "expected": "food_beverage",
+      "predicted": "food_beverage",
+      "outcome": "correct"
+     },
+     "RCP-001-L3": {
+      "expected": "food_beverage",
+      "predicted": "food_beverage",
+      "outcome": "correct"
+     },
+     "RCP-001-L4": {
+      "expected": "service_fee",
+      "predicted": "service_fee",
+      "outcome": "correct"
+     }
+    },
+    "classification_correct": true,
+    "expected_disposition": "pass",
+    "disposition_correct": true
+   },
+   "result": {
+    "receipt_id": "RCP-001",
+    "disposition": "pass",
+    "line_items": [
+     {
+      "line_id": "RCP-001-L1",
+      "description_raw": "Grilled salmon entree",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     },
+     {
+      "line_id": "RCP-001-L2",
+      "description_raw": "Side garden salad",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     },
+     {
+      "line_id": "RCP-001-L3",
+      "description_raw": "Iced tea",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     },
+     {
+      "line_id": "RCP-001-L4",
+      "description_raw": "Gratuity 18%",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     }
+    ],
+    "exceptions": [],
+    "review_signals": [],
+    "decided": true,
+    "disposition_reasons": [
+     {
+      "code": "nothing_found",
+      "basis": "EXC-01",
+      "rule_ids": []
+     }
+    ],
+    "open_questions": [],
+    "uncertainty": [],
+    "metadata": {
+     "model": "anthropic/claude-haiku-5.5",
+     "translation_model": "tencent/hy-mt2-30b-a3b",
+     "retriever": "none",
+     "prompt_sha256": "80e4fc42008b4538d57d11e2d6fe85c640c05b54e1c1560e146bafcc70ee228d",
+     "ruleset_version": "v1",
+     "replayed": true,
+     "latency_ms": null
+    },
+    "provenance": {
+     "mode": "replay",
+     "context_complete": true,
+     "receipts_in_context": 32,
+     "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+     "model_overrides": [],
+     "classification_backend": "openrouter"
+    }
+   },
+   "spend": {
+    "calls": {
+     "total": 4,
+     "live": 0,
+     "cached": 0,
+     "replayed": 4,
+     "failed": 0
+    },
+    "tokens": {
+     "input": null,
+     "output": null
+    },
+    "actual_cost_usd": "0",
+    "estimated_cost_usd": "0",
+    "unpriced_usage": {
+     "calls": 0,
+     "input_tokens": null,
+     "output_tokens": null
+    },
+    "new_spend_usd": "0",
+    "cost_completeness": "complete",
+    "historical": {
+     "cost_usd": null,
+     "calls_with_cost": 0,
+     "calls_without_cost": 4
+    }
+   }
+  },
+  {
+   "receipt_id": "RCP-002",
+   "index": 1,
+   "status": "ok",
+   "error": null,
+   "context": "dataset",
+   "latency_ms": 2,
+   "expected": {
+    "disposition": "pass",
+    "findings": {
+     "exceptions": [],
+     "signals": []
+    },
+    "lines": {
+     "RCP-002-L1": {
+      "category": "food_beverage",
+      "restricted": false
+     },
+     "RCP-002-L2": {
+      "category": "alcohol",
+      "restricted": true
+     },
+     "RCP-002-L3": {
+      "category": "service_fee",
+      "restricted": false
+     }
+    }
+   },
+   "scoring": {
+    "lines": {
+     "RCP-002-L1": {
+      "expected": "food_beverage",
+      "predicted": "food_beverage",
+      "outcome": "correct"
+     },
+     "RCP-002-L2": {
+      "expected": "alcohol",
+      "predicted": "alcohol",
+      "outcome": "correct"
+     },
+     "RCP-002-L3": {
+      "expected": "service_fee",
+      "predicted": "service_fee",
+      "outcome": "correct"
+     }
+    },
+    "classification_correct": true,
+    "expected_disposition": "pass",
+    "disposition_correct": true
+   },
+   "result": {
+    "receipt_id": "RCP-002",
+    "disposition": "pass",
+    "line_items": [
+     {
+      "line_id": "RCP-002-L1",
+      "description_raw": "Prix fixe dinner",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     },
+     {
+      "line_id": "RCP-002-L2",
+      "description_raw": "Chianti Classico bottle",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     },
+     {
+      "line_id": "RCP-002-L3",
+      "description_raw": "Gratuity",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     }
+    ],
+    "exceptions": [],
+    "review_signals": [],
+    "decided": true,
+    "disposition_reasons": [
+     {
+      "code": "nothing_found",
+      "basis": "EXC-01",
+      "rule_ids": []
+     }
+    ],
+    "open_questions": [],
+    "uncertainty": [],
+    "metadata": {
+     "model": "anthropic/claude-haiku-5.5",
+     "translation_model": "tencent/hy-mt2-30b-a3b",
+     "retriever": "none",
+     "prompt_sha256": "80e4fc42008b4538d57d11e2d6fe85c640c05b54e1c1560e146bafcc70ee228d",
+     "ruleset_version": "v1",
+     "replayed": true,
+     "latency_ms": null
+    },
+    "provenance": {
+     "mode": "replay",
+     "context_complete": true,
+     "receipts_in_context": 32,
+     "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+     "model_overrides": [],
+     "classification_backend": "openrouter"
+    }
+   },
+   "spend": {
+    "calls": {
+     "total": 3,
+     "live": 0,
+     "cached": 0,
+     "replayed": 3,
+     "failed": 0
+    },
+    "tokens": {
+     "input": null,
+     "output": null
+    },
+    "actual_cost_usd": "0",
+    "estimated_cost_usd": "0",
+    "unpriced_usage": {
+     "calls": 0,
+     "input_tokens": null,
+     "output_tokens": null
+    },
+    "new_spend_usd": "0",
+    "cost_completeness": "complete",
+    "historical": {
+     "cost_usd": null,
+     "calls_with_cost": 0,
+     "calls_without_cost": 3
+    }
+   }
+  },
+  {
+   "receipt_id": "RCP-003",
+   "index": 2,
+   "status": "ok",
+   "error": null,
+   "context": "dataset",
+   "latency_ms": 2,
+   "expected": {
+    "disposition": "pass",
+    "findings": {
+     "exceptions": [],
+     "signals": []
+    },
+    "lines": {
+     "RCP-003-L1": {
+      "category": "computer_accessory",
+      "restricted": false
+     },
+     "RCP-003-L2": {
+      "category": "office_supplies",
+      "restricted": false
+     },
+     "RCP-003-L3": {
+      "category": "office_supplies",
+      "restricted": false
+     }
+    }
+   },
+   "scoring": {
+    "lines": {
+     "RCP-003-L1": {
+      "expected": "computer_accessory",
+      "predicted": "computer_accessory",
+      "outcome": "correct"
+     },
+     "RCP-003-L2": {
+      "expected": "office_supplies",
+      "predicted": "office_supplies",
+      "outcome": "correct"
+     },
+     "RCP-003-L3": {
+      "expected": "office_supplies",
+      "predicted": "office_supplies",
+      "outcome": "correct"
+     }
+    },
+    "classification_correct": true,
+    "expected_disposition": "pass",
+    "disposition_correct": true
+   },
+   "result": {
+    "receipt_id": "RCP-003",
+    "disposition": "pass",
+    "line_items": [
+     {
+      "line_id": "RCP-003-L1",
+      "description_raw": "USB-C to HDMI adapter",
+      "category": "computer_accessory",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     },
+     {
+      "line_id": "RCP-003-L2",
+      "description_raw": "Legal pads 3-pack",
+      "category": "office_supplies",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     },
+     {
+      "line_id": "RCP-003-L3",
+      "description_raw": "Ballpoint pens box of 12",
+      "category": "office_supplies",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     }
+    ],
+    "exceptions": [],
+    "review_signals": [],
+    "decided": true,
+    "disposition_reasons": [
+     {
+      "code": "nothing_found",
+      "basis": "EXC-01",
+      "rule_ids": []
+     }
+    ],
+    "open_questions": [],
+    "uncertainty": [],
+    "metadata": {
+     "model": "anthropic/claude-haiku-5.5",
+     "translation_model": "tencent/hy-mt2-30b-a3b",
+     "retriever": "none",
+     "prompt_sha256": "80e4fc42008b4538d57d11e2d6fe85c640c05b54e1c1560e146bafcc70ee228d",
+     "ruleset_version": "v1",
+     "replayed": true,
+     "latency_ms": null
+    },
+    "provenance": {
+     "mode": "replay",
+     "context_complete": true,
+     "receipts_in_context": 32,
+     "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+     "model_overrides": [],
+     "classification_backend": "openrouter"
+    }
+   },
+   "spend": {
+    "calls": {
+     "total": 3,
+     "live": 0,
+     "cached": 0,
+     "replayed": 3,
+     "failed": 0
+    },
+    "tokens": {
+     "input": null,
+     "output": null
+    },
+    "actual_cost_usd": "0",
+    "estimated_cost_usd": "0",
+    "unpriced_usage": {
+     "calls": 0,
+     "input_tokens": null,
+     "output_tokens": null
+    },
+    "new_spend_usd": "0",
+    "cost_completeness": "complete",
+    "historical": {
+     "cost_usd": null,
+     "calls_with_cost": 0,
+     "calls_without_cost": 3
+    }
+   }
+  },
+  {
+   "receipt_id": "RCP-004",
+   "index": 3,
+   "status": "ok",
+   "error": null,
+   "context": "dataset",
+   "latency_ms": 3,
+   "expected": {
+    "disposition": "pass",
+    "findings": {
+     "exceptions": [],
+     "signals": []
+    },
+    "lines": {
+     "RCP-004-L1": {
+      "category": "food_beverage",
+      "restricted": false
+     },
+     "RCP-004-L2": {
+      "category": "food_beverage",
+      "restricted": false
+     },
+     "RCP-004-L3": {
+      "category": "food_beverage",
+      "restricted": false
+     },
+     "RCP-004-L4": {
+      "category": "food_beverage",
+      "restricted": false
+     }
+    }
+   },
+   "scoring": {
+    "lines": {
+     "RCP-004-L1": {
+      "expected": "food_beverage",
+      "predicted": "food_beverage",
+      "outcome": "correct"
+     },
+     "RCP-004-L2": {
+      "expected": "food_beverage",
+      "predicted": "food_beverage",
+      "outcome": "correct"
+     },
+     "RCP-004-L3": {
+      "expected": "food_beverage",
+      "predicted": "food_beverage",
+      "outcome": "correct"
+     },
+     "RCP-004-L4": {
+      "expected": "food_beverage",
+      "predicted": "food_beverage",
+      "outcome": "correct"
+     }
+    },
+    "classification_correct": true,
+    "expected_disposition": "pass",
+    "disposition_correct": true
+   },
+   "result": {
+    "receipt_id": "RCP-004",
+    "disposition": "pass",
+    "line_items": [
+     {
+      "line_id": "RCP-004-L1",
+      "description_raw": "Beer battered cod & chips",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     },
+     {
+      "line_id": "RCP-004-L2",
+      "description_raw": "Arnold Palmer",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": 0.7,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     },
+     {
+      "line_id": "RCP-004-L3",
+      "description_raw": "Mojito sin alcohol",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": "Non-alcoholic mojito",
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     },
+     {
+      "line_id": "RCP-004-L4",
+      "description_raw": "Rum cake slice",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     }
+    ],
+    "exceptions": [],
+    "review_signals": [],
+    "decided": true,
+    "disposition_reasons": [
+     {
+      "code": "nothing_found",
+      "basis": "EXC-01",
+      "rule_ids": []
+     }
+    ],
+    "open_questions": [],
+    "uncertainty": [],
+    "metadata": {
+     "model": "anthropic/claude-haiku-5.5",
+     "translation_model": "tencent/hy-mt2-30b-a3b",
+     "retriever": "none",
+     "prompt_sha256": "80e4fc42008b4538d57d11e2d6fe85c640c05b54e1c1560e146bafcc70ee228d",
+     "ruleset_version": "v1",
+     "replayed": true,
+     "latency_ms": null
+    },
+    "provenance": {
+     "mode": "replay",
+     "context_complete": true,
+     "receipts_in_context": 32,
+     "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+     "model_overrides": [],
+     "classification_backend": "openrouter"
+    }
+   },
+   "spend": {
+    "calls": {
+     "total": 5,
+     "live": 0,
+     "cached": 0,
+     "replayed": 5,
+     "failed": 0
+    },
+    "tokens": {
+     "input": null,
+     "output": null
+    },
+    "actual_cost_usd": "0",
+    "estimated_cost_usd": "0",
+    "unpriced_usage": {
+     "calls": 0,
+     "input_tokens": null,
+     "output_tokens": null
+    },
+    "new_spend_usd": "0",
+    "cost_completeness": "complete",
+    "historical": {
+     "cost_usd": null,
+     "calls_with_cost": 0,
+     "calls_without_cost": 5
+    }
+   }
+  },
+  {
+   "receipt_id": "RCP-005",
+   "index": 4,
+   "status": "ok",
+   "error": null,
+   "context": "dataset",
+   "latency_ms": 2,
+   "expected": {
+    "disposition": "pass",
+    "findings": {
+     "exceptions": [],
+     "signals": []
+    },
+    "lines": {
+     "RCP-005-L1": {
+      "category": "lodging",
+      "restricted": false
+     },
+     "RCP-005-L2": {
+      "category": "lodging",
+      "restricted": false
+     },
+     "RCP-005-L3": {
+      "category": "ground_transport",
+      "restricted": false
+     }
+    }
+   },
+   "scoring": {
+    "lines": {
+     "RCP-005-L1": {
+      "expected": "lodging",
+      "predicted": "lodging",
+      "outcome": "correct"
+     },
+     "RCP-005-L2": {
+      "expected": "lodging",
+      "predicted": "lodging",
+      "outcome": "correct"
+     },
+     "RCP-005-L3": {
+      "expected": "ground_transport",
+      "predicted": "ground_transport",
+      "outcome": "correct"
+     }
+    },
+    "classification_correct": true,
+    "expected_disposition": "pass",
+    "disposition_correct": true
+   },
+   "result": {
+    "receipt_id": "RCP-005",
+    "disposition": "pass",
+    "line_items": [
+     {
+      "line_id": "RCP-005-L1",
+      "description_raw": "Room charge, 3 nights",
+      "category": "lodging",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     },
+     {
+      "line_id": "RCP-005-L2",
+      "description_raw": "Occupancy tax",
+      "category": "lodging",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     },
+     {
+      "line_id": "RCP-005-L3",
+      "description_raw": "Self parking, 3 nights",
+      "category": "ground_transport",
+      "restricted": false,
+      "confidence": 0.7,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     }
+    ],
+    "exceptions": [],
+    "review_signals": [],
+    "decided": true,
+    "disposition_reasons": [
+     {
+      "code": "nothing_found",
+      "basis": "EXC-01",
+      "rule_ids": []
+     }
+    ],
+    "open_questions": [],
+    "uncertainty": [],
+    "metadata": {
+     "model": "anthropic/claude-haiku-5.5",
+     "translation_model": "tencent/hy-mt2-30b-a3b",
+     "retriever": "none",
+     "prompt_sha256": "80e4fc42008b4538d57d11e2d6fe85c640c05b54e1c1560e146bafcc70ee228d",
+     "ruleset_version": "v1",
+     "replayed": true,
+     "latency_ms": null
+    },
+    "provenance": {
+     "mode": "replay",
+     "context_complete": true,
+     "receipts_in_context": 32,
+     "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+     "model_overrides": [],
+     "classification_backend": "openrouter"
+    }
+   },
+   "spend": {
+    "calls": {
+     "total": 3,
+     "live": 0,
+     "cached": 0,
+     "replayed": 3,
+     "failed": 0
+    },
+    "tokens": {
+     "input": null,
+     "output": null
+    },
+    "actual_cost_usd": "0",
+    "estimated_cost_usd": "0",
+    "unpriced_usage": {
+     "calls": 0,
+     "input_tokens": null,
+     "output_tokens": null
+    },
+    "new_spend_usd": "0",
+    "cost_completeness": "complete",
+    "historical": {
+     "cost_usd": null,
+     "calls_with_cost": 0,
+     "calls_without_cost": 3
+    }
+   }
+  },
+  {
+   "receipt_id": "RCP-006",
+   "index": 5,
+   "status": "ok",
+   "error": null,
+   "context": "dataset",
+   "latency_ms": 1,
+   "expected": {
+    "disposition": "pass",
+    "findings": {
+     "exceptions": [],
+     "signals": []
+    },
+    "lines": {
+     "RCP-006-L1": {
+      "category": "computer_accessory",
+      "restricted": false
+     }
+    }
+   },
+   "scoring": {
+    "lines": {
+     "RCP-006-L1": {
+      "expected": "computer_accessory",
+      "predicted": "computer_accessory",
+      "outcome": "correct"
+     }
+    },
+    "classification_correct": true,
+    "expected_disposition": "pass",
+    "disposition_correct": true
+   },
+   "result": {
+    "receipt_id": "RCP-006",
+    "disposition": "pass",
+    "line_items": [
+     {
+      "line_id": "RCP-006-L1",
+      "description_raw": "USB-C docking station, dual HDMI",
+      "category": "computer_accessory",
+      "restricted": false,
+      "confidence": 0.9,
+      "english_translation": null,
+      "attributes": null,
+      "classification_error": null,
+      "classification_details": null
+     }
+    ],
+    "exceptions": [],
+    "review_signals": [],
+    "decided": true,
+    "disposition_reasons": [
+     {
+      "code": "nothing_found",
+      "basis": "EXC-01",
+      "rule_ids": []
+     }
+    ],
+    "open_questions": [],
+    "uncertainty": [],
+    "metadata": {
+     "model": "anthropic/claude-haiku-5.5",
+     "translation_model": "tencent/hy-mt2-30b-a3b",
+     "retriever": "none",
+     "prompt_sha256": "80e4fc42008b4538d57d11e2d6fe85c640c05b54e1c1560e146bafcc70ee228d",
+     "ruleset_version": "v1",
+     "replayed": true,
+     "latency_ms": null
+    },
+    "provenance": {
+     "mode": "replay",
+     "context_complete": true,
+     "receipts_in_context": 32,
+     "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+     "model_overrides": [],
+     "classification_backend": "openrouter"
+    }
+   },
+   "spend": {
+    "calls": {
+     "total": 1,
+     "live": 0,
+     "cached": 0,
+     "replayed": 1,
+     "failed": 0
+    },
+    "tokens": {
+     "input": null,
+     "output": null
+    },
+    "actual_cost_usd": "0",
+    "estimated_cost_usd": "0",
+    "unpriced_usage": {
+     "calls": 0,
+     "input_tokens": null,
+     "output_tokens": null
+    },
+    "new_spend_usd": "0",
+    "cost_completeness": "complete",
+    "historical": {
+     "cost_usd": null,
+     "calls_with_cost": 0,
+     "calls_without_cost": 1
+    }
+   }
+  }
+ ],
+ "total": 32,
+ "limit": 6,
+ "offset": 0
+}

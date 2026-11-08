@@ -1,7 +1,4 @@
-"""A receipt's lines prepared for classification, held beside the receipt rather than added to it.
-
-These predict nothing: no category, restricted flag, confidence, finding or disposition.
-"""
+"""Normalized lines, held beside the unchanged receipt. They predict nothing."""
 
 from pydantic import BaseModel, ConfigDict, StrictStr, model_validator
 
@@ -11,7 +8,7 @@ from expense_validator.normalization.translation import TranslationStatus
 
 
 class _Normalized(BaseModel):
-    """Refuses unknown keys and cannot be changed once built, as the engine's models do."""
+    """Refuse unknown keys and forbid changes after construction."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -38,7 +35,7 @@ class NormalizedLine(_Normalized):
 
 
 class NormalizedReceipt(_Normalized):
-    """The original receipt, unchanged, and one normalized line for each of its lines, in order."""
+    """The unchanged receipt and one normalized line per line, in order."""
 
     receipt: Receipt
     lines: tuple[NormalizedLine, ...]

@@ -44,7 +44,7 @@ def run_all(view, assessed, ruleset=RULESET):
 
 
 def assessed_case(case):
-    context = build_context("northwind", case["receipts"], FIELDS, complete=case["complete"])
+    context = build_context(case["receipts"], FIELDS, complete=case["complete"])
     assessed = assess_context(context, RULESET, FIELDS)
     return assessed, assessed.assessment_for(case["receipt_id"])
 
@@ -107,7 +107,7 @@ def uncertain_receipt():
 def test_the_admitted_receipt_is_unchanged_and_the_view_differs_only_in_categories():
     assessment = uncertain_receipt()
     case = case_named("only the uncertain line is left out")
-    admitted = build_context("northwind", case["receipts"], FIELDS, complete=True).receipts[0]
+    admitted = build_context(case["receipts"], FIELDS, complete=True).receipts[0]
     assert assessment.receipt == admitted
     view = assessment.evaluation_receipt
     assert view.model_dump(exclude={"line_items"}) == admitted.model_dump(exclude={"line_items"})
@@ -145,7 +145,7 @@ def test_the_threshold_comes_from_the_rule_and_is_marked_a_project_decision():
     rule = RULES["EXC-03"]
     assert rule.params["min_confidence"].source == "project_decision"
     case = case_named("a category just below the threshold")
-    receipt = build_context("northwind", case["receipts"], FIELDS, complete=True).receipts[0]
+    receipt = build_context(case["receipts"], FIELDS, complete=True).receipts[0]
     params = {"min_confidence": rule.params["min_confidence"].model_copy(update={"value": Decimal("0.4")})}
     lower = RuleSet.model_construct(rules=(rule.model_copy(update={"params": params}),))
     assert assess_uncertainty(receipt, lower, FIELDS).signals == ()
@@ -168,7 +168,7 @@ def test_every_receipt_in_a_context_is_read_through_the_same_decision():
     assert [receipt.receipt_id for receipt in assessed.evaluation.receipts] == ["R1", "R2"]
     assert assessed.evaluation.receipts[1].line_items[0].category is None
     assert assessed.original.receipts[1].line_items[0].category == "food_beverage"
-    assert (assessed.evaluation.customer_id, assessed.evaluation.complete) == ("northwind", True)
+    assert assessed.evaluation.complete is True
 
 
 def test_a_view_needs_no_second_admission_and_keeps_its_lines_when_all_are_uncertain():
@@ -235,7 +235,7 @@ def test_with_gold_categories_no_line_is_category_uncertain():
 @pytest.mark.parametrize("row", ROWS, ids=lambda row: row["receipt_id"])
 def test_a_real_receipt_with_no_classifier_says_it_is_not_decided(row):
     receipts = [admit_receipt(without_answers(item), FIELDS) for item in ROWS]
-    assessed = assess_context(build_context("northwind", receipts, FIELDS, complete=True), RULESET, FIELDS)
+    assessed = assess_context(build_context(receipts, FIELDS, complete=True), RULESET, FIELDS)
     assessment = assessed.assessment_for(row["receipt_id"])
     result = run_all(assessment.evaluation_receipt, assessed)
     assert {item.scope for item in result.candidates} <= {"receipt"}

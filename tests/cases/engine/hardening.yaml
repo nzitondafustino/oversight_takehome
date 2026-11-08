@@ -10,7 +10,8 @@ suite: hardening
 # tampered_refused:   check_run on a real run with what `tamper` says changed. tamper holds any of:
 #                     result, fields on the first result; report and group, fields on its report and
 #                     first group; source, fields on that group's first finding; reason, fields on its
-#                     first reason; run, fields on the run; and results, duplicate or drop.
+#                     first reason, or on its reason with the code in reason_of; run, fields on the run;
+#                     and results, duplicate or drop.
 # completeness:       a real run, on rules changed by `patches`, a mapping of rule ID to fields.
 #                     expected holds any of disposition, decided, reasons, unresolved, open and audit.
 # ties:               a run on rules changed by `patches`, plus `extra_rules`, must give one result
@@ -79,13 +80,10 @@ directives_refused:
 
 tampered_refused:
   # Identity
-  - {id: a result with another customer, receipts: [*alcohol], tamper: {result: {customer_id: acme}}, expected: "R1: its customer or ruleset version is not the run's"}
-  - {id: a result with another ruleset version, receipts: [*alcohol], tamper: {result: {ruleset_version: v2}}, expected: "R1: its customer or ruleset version is not the run's"}
-  - {id: a report for another customer, receipts: [*alcohol], tamper: {report: {customer_id: acme}}, expected: "R1: its report is for another customer, receipt or ruleset version"}
-  - {id: a report for another receipt, receipts: [*alcohol], tamper: {report: {receipt_id: R9}}, expected: "R1: its report is for another customer, receipt or ruleset version"}
-  - {id: a report on another ruleset version, receipts: [*alcohol], tamper: {report: {ruleset_version: v2}}, expected: "R1: its report is for another customer, receipt or ruleset version"}
-  - {id: a group for another customer, receipts: [*alcohol], tamper: {group: {customer_id: acme}}, expected: "is for another customer or receipt"}
-  - {id: a group for another receipt, receipts: [*alcohol], tamper: {group: {receipt_id: R9}}, expected: "is for another customer or receipt"}
+  - {id: a result with another ruleset version, receipts: [*alcohol], tamper: {result: {ruleset_version: v2}}, expected: "R1: its ruleset version is not the run's"}
+  - {id: a report for another receipt, receipts: [*alcohol], tamper: {report: {receipt_id: R9}}, expected: "R1: its report is for another receipt or ruleset version"}
+  - {id: a report on another ruleset version, receipts: [*alcohol], tamper: {report: {ruleset_version: v2}}, expected: "R1: its report is for another receipt or ruleset version"}
+  - {id: a group for another receipt, receipts: [*alcohol], tamper: {group: {receipt_id: R9}}, expected: "is for another receipt"}
   - {id: a finding for another receipt, receipts: [*alcohol], tamper: {source: {receipt_id: R9}}, expected: "holds a finding for another receipt"}
 
   # One result per receipt
@@ -95,7 +93,9 @@ tampered_refused:
 
   # Decided
   - {id: decided that disagrees with its report, receipts: [*alcohol], tamper: {result: {decided: false}}, expected: "decided does not agree with its report"}
-  - {id: a pass on an undecided report, receipts: [*meal], tamper: {report: {decided: false}, result: {decided: false}}, expected: "a pass needs a fully decided report"}
+  # A pass that is not decided is provisional, and must say what is still open.
+  - {id: a pass on an undecided report, receipts: [*meal], tamper: {report: {decided: false}, result: {decided: false}}, expected: "a pass that is not decided needs its incomplete evidence"}
+  - {id: a decided pass that names incomplete evidence, receipts: [{<<: *meal, employee_country: FR, currency: USD}], tamper: {report: {decided: true}, result: {decided: true}}, expected: "a decided pass rests on nothing found alone"}
 
   # Outcomes
   - {id: a pass with an active exception, receipts: [*alcohol], tamper: {result: {disposition: pass}}, expected: "a pass cannot have an active exception"}
@@ -109,7 +109,7 @@ tampered_refused:
   # Reasons
   - {id: no reasons, receipts: [*alcohol], tamper: {result: {reasons: []}}, expected: "needs at least one reason"}
   - {id: an exception resting on the project decision, receipts: [*alcohol], tamper: {reason: {basis: project_decision}}, expected: "exception_flags cannot rest on project_decision"}
-  - {id: incomplete evidence attributed to EXC-01, receipts: [{<<: *meal, employee_country: FR, currency: USD}], tamper: {reason: {basis: EXC-01}}, expected: "incomplete_evidence cannot rest on EXC-01"}
+  - {id: incomplete evidence attributed to EXC-01, receipts: [{<<: *meal, employee_country: FR, currency: USD}], tamper: {reason_of: incomplete_evidence, reason: {basis: EXC-01}}, expected: "incomplete_evidence cannot rest on EXC-01"}
   - {id: a reason with no rule behind it, receipts: [*alcohol], tamper: {reason: {rule_ids: [NOPE-99]}}, expected: "names rules not in the ruleset"}
   - {id: uncertainty with no signal to rest on, receipts: [*alcohol], tamper: {reason: {code: uncertainty, basis: EXC-03}}, expected: "uncertainty cannot rest on EXC-03"}
 

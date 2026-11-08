@@ -1,0 +1,1 @@
+{"verdict":"accept","reason":"The original description 'Vino tinto Rioja Reserva 750ml' and its translation both identify a bottled red wine, which is squarely alcohol.","suggested_category":null,"feedback":null}

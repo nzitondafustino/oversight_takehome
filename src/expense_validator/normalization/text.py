@@ -1,8 +1,4 @@
-"""Deterministic clean-up of printed text. It changes how text is encoded, never what it says.
-
-NFC and not NFKC: NFKC would rewrite full-width characters, ligatures and symbols such as
-"½", which are what the receipt printed. Spelling is left alone too, so "Cafe" stays "Cafe".
-"""
+"""Deterministic text clean-up. NFC, not NFKC, so printed characters such as full-width digits survive."""
 
 import unicodedata
 
@@ -21,10 +17,7 @@ def _is_removed(character: str) -> bool:
 
 
 def normalize_text(description: str) -> str:
-    """Text in NFC, with invisible characters gone and every run of whitespace one plain space.
-
-    Pure and idempotent. Text with nothing visible in it comes back empty.
-    """
+    """Return NFC text without invisible characters and with single spaces. Idempotent."""
     if not isinstance(description, str):
         raise TypeError(f"normalize_text needs text, got {type(description).__name__}")
     kept = "".join(character for character in description if not _is_removed(character))

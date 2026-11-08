@@ -1,0 +1,7 @@
+[console_scripts]
+expense-validator-agreement = expense_validator.compiler.agreement:main
+expense-validator-build-rules = expense_validator.compiler.build_rules:main
+expense-validator-eval = expense_validator.evaluation.cli.policy:main
+expense-validator-eval-classification = expense_validator.evaluation.cli.classification:main
+expense-validator-eval-robustness = expense_validator.evaluation.cli.robustness:main
+expense-validator-run = expense_validator.run_receipts:main

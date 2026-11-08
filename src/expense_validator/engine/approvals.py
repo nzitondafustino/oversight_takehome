@@ -1,14 +1,7 @@
-"""Decides which active findings an approval reference waives, after replacements.
+"""Decide which active findings an approval reference waives (EXC-02).
 
-The EXC-02 directive says which kind of reference each rule accepts, and each kind has its own
-field on the receipt. A value in the right field waives that rule. A value in any other field
-waives nothing, and the kind is never read from the reference's format.
-
-A reference is a supplied claim, and EXC-02 asks for no more than that: "a recorded one satisfies
-that rule". Nothing here authenticates it, or checks that an approval came first.
-
-A baggage-delay reference is not an approval: it belongs to the carve-out step. Replaced findings
-stay replaced, and a waiver cannot settle what replacements left open, so that stays open too.
+Each reference kind has its own receipt field, and is never read from the reference's format. A
+reference is a supplied claim; nothing authenticates it.
 """
 
 from collections.abc import Mapping
@@ -26,7 +19,7 @@ REFERENCE_FIELDS = {kind: f"{kind}_ref" for kind in get_args(RefKind)}
 
 @dataclass(frozen=True)
 class WaivedFinding:
-    """finding is the candidate marked waived, with everything else as it was."""
+    """A candidate finding marked waived."""
 
     finding: Finding
     kind: str
@@ -37,7 +30,7 @@ class WaivedFinding:
 
 @dataclass(frozen=True)
 class ApprovalGap:
-    """An active finding its rule would let a reference waive, and why none did."""
+    """An active finding a reference could waive, and why none did."""
 
     finding: Finding
     required_kind: str
@@ -67,7 +60,7 @@ class ApprovalResult:
 
 
 def resolve_approvals(receipt: Receipt, replacements: ReplacementResult, ruleset: RuleSet) -> ApprovalResult:
-    """replacements must be for this receipt, from a run on this ruleset."""
+    """Waive the active findings whose rule accepts a recorded reference."""
     if any(finding.receipt_id != receipt.receipt_id for finding in replacements.active):
         raise ValueError(f"{receipt.receipt_id}: has findings for another receipt")
     directive, kinds = _reference_kinds(ruleset)
@@ -85,11 +78,7 @@ def resolve_approvals(receipt: Receipt, replacements: ReplacementResult, ruleset
 
 
 def _reference_kinds(ruleset: RuleSet) -> tuple[str | None, Mapping[str, str]]:
-    """The directive's ID, and the kind of reference each check rule accepts, by rule ID.
-
-    The directive decides, and every rule must agree with it, as a reference must never waive
-    a rule that does not allow it. A rule that accepts none is simply not listed.
-    """
+    """Return the EXC-02 directive ID and the reference kind each rule accepts."""
     active = [rule for rule in ruleset.rules if rule.status == "active"]
     directive = next((rule for rule in active if isinstance(rule, ProcessRule) and rule.directive == "reference_kinds"), None)
     listed: dict[str, str] = {}

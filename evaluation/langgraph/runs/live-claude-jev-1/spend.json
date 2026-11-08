@@ -1,0 +1,8 @@
+{
+  "before": 0.37967957,
+  "after": 0.385009804,
+  "delta": 0.005330233999999989,
+  "requests": 40,
+  "conservative_estimate": 0.012099999999999996,
+  "budget": 0.1
+}

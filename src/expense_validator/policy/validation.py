@@ -1,7 +1,4 @@
-"""Rule compatibility checks shared by runtime configuration and the compiler.
-
-These checks need only a rule and a field catalog, never policy source documents.
-"""
+"""Rule compatibility checks shared by the runtime and the compiler."""
 
 from collections.abc import Mapping
 

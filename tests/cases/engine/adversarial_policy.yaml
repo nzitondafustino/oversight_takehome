@@ -139,7 +139,7 @@ bounds:
       - {<<: *travel, line_items: [*otc_30]}
       - {<<: *travel, receipt_id: R2, merchant_name: Other Shop, total_amount: "0.00", total_amount_usd: "0.00", line_items: [*unknown]}
     expected:
-      R1: {disposition: review, decided: false, active: [], rules: {HEALTH-01: undetermined}}
+      R1: {disposition: pass, decided: false, active: [], rules: {HEALTH-01: undetermined}}
       R2: {disposition: review, decided: false, active: []}
   - id: an uncertain discount on another trip cannot lower this trip
     bound: {rule: HEALTH-01, param: trip_cap_usd, threshold: "25", per: 1, known: "30.00", uncertain: null, status: confirmed, scope: medication on all of this trip's receipts}
@@ -264,7 +264,7 @@ bounds:
       - {<<: *travel, line_items: [*otc_20]}
       - {<<: *travel, receipt_id: R2, merchant_name: Other Shop, line_items: [{<<: *unknown, category: other, item_kind: made_up, unit_price: "10.00", amount: "10.00", amount_usd: "10.00"}]}
     expected:
-      R1: {disposition: review, decided: false, active: [], rules: {HEALTH-01: undetermined}}
+      R1: {disposition: pass, decided: false, active: [], rules: {HEALTH-01: undetermined}}
       R2: {decided: false}
   # Prescription medication is outside the OTC total whatever its category, so it lowers nothing. Only
   # L1 is asserted: whether a negative prescription line is itself a breach is the refund question.
@@ -465,27 +465,27 @@ conflicts_refused:
 
 # Each run stands alone: run in either order, and neither sees the other's receipts.
 separate_runs:
-  - id: one receipt ID with different contents for two customers
+  - id: one receipt ID with different contents in two runs
     runs:
-      northwind: [{<<: *retail, line_items: [*tobacco]}]
-      southwind: [{<<: *computer, pre_approval_ref: PA-1, line_items: [*monitor]}]
+      first: [{<<: *retail, line_items: [*tobacco]}]
+      second: [{<<: *computer, pre_approval_ref: PA-1, line_items: [*monitor]}]
     expected:
-      northwind: {R1: {disposition: flag, active: [DOC-03, PERS-03]}}
-      southwind: {R1: {disposition: pass, active: [], audit: [{rule_id: TECH-02, resolution: waived}]}}
-  - id: an allowance is not shared across customers with the same employee and reference
+      first: {R1: {disposition: flag, active: [DOC-03, PERS-03]}}
+      second: {R1: {disposition: pass, active: [], audit: [{rule_id: TECH-02, resolution: waived}]}}
+  - id: an allowance is not carried from one run to the next with the same employee and reference
     runs:
-      northwind: [{<<: *delayed, line_items: [*clothing_100]}]
-      southwind: [{<<: *delayed, line_items: [*clothing_100]}]
+      first: [{<<: *delayed, line_items: [*clothing_100]}]
+      second: [{<<: *delayed, line_items: [*clothing_100]}]
     expected:
-      northwind: {R1: {disposition: pass, active: []}}
-      southwind: {R1: {disposition: pass, active: []}}
-  - id: a trip total is not shared across customers
+      first: {R1: {disposition: pass, active: []}}
+      second: {R1: {disposition: pass, active: []}}
+  - id: a trip total is not carried from one run to the next
     runs:
-      northwind: [{<<: *travel, line_items: [*otc_20]}]
-      southwind: [{<<: *travel, line_items: [*otc_20]}]
+      first: [{<<: *travel, line_items: [*otc_20]}]
+      second: [{<<: *travel, line_items: [*otc_20]}]
     expected:
-      northwind: {R1: {disposition: pass, active: []}}
-      southwind: {R1: {disposition: pass, active: []}}
+      first: {R1: {disposition: pass, active: []}}
+      second: {R1: {disposition: pass, active: []}}
 
 # Part 4. Each ladder changes one amount. statuses is the rule's status at each step, from the bound.
 ladders:

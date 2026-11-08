@@ -1,0 +1,1 @@
+{"verdict":"accept","reason":"The line is a 60-minute deep tissue massage, which the personal_care category explicitly covers as spa and massage, and the merchant context agrees.","suggested_category":null,"feedback":null}

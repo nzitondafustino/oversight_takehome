@@ -1,0 +1,8 @@
+{
+  "policy_doc": "both_missed_a_number.md",
+  "document_sha256": "004c8f59779480115b327ad0bf1c5d58317512b1a01c323c4129a9400a01a936",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "simulation",
+  "origin": "hand-written scenario response",
+  "response": "{\"rules\": [{\"rule_id\": \"ZZ-01\", \"title\": \"Filing window\", \"section\": \"Limits\", \"severities\": [\"low\"], \"review_signal\": false, \"thresholds\": [], \"references\": [], \"quote\": \"filed within 30 days\"}]}"
+}

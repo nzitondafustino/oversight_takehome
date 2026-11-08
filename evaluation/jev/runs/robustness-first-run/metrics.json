@@ -1,0 +1,2667 @@
+{
+  "run": "robustness-first-run",
+  "date": "2026-11-06",
+  "backend": "typesafe-jev",
+  "requested_model": "typesafe/jev-1.14",
+  "reviewed_snapshot": "typesafe/jev-1.14-20261014",
+  "provider_routing": {
+    "only": [
+      "typesafe"
+    ],
+    "allow_fallbacks": false
+  },
+  "retries": "none",
+  "attribute_thresholds": {
+    "recipient_type": 0.5,
+    "venue_type": 0.5,
+    "item_kind": 0.5,
+    "essential_toiletry": 0.5
+  },
+  "questions_sha256": "9c0baf7dfaa7a1019c8fc02f6435873190cd61dbf978440be0e449ab5074dec5",
+  "lines_sha256": "81ea36565f43c8ae16fe14f5bfd049ef410e3b850e73f3e971fb1dbf1fc306d9",
+  "receipts_sha256": "ac2f8f776f33e40b3efee88cc830904d22577eaf0de533a36a8768c9febadc35",
+  "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+  "translation_model": "tencent/hy-mt2-30b-a3b",
+  "recordings": {
+    "recordings": 77,
+    "models": {
+      "typesafe/jev-1.14-20261014": 77
+    },
+    "providers": {
+      "TypeSafe": 77
+    },
+    "usage": {
+      "cost": 0.005092373999999999
+    }
+  },
+  "lines": {
+    "scores": {
+      "lines": 60,
+      "accuracy": {
+        "numerator": 52,
+        "denominator": 60,
+        "value": 0.866667,
+        "wilson_95": [
+          0.758348,
+          0.930859
+        ]
+      },
+      "missing_category": {
+        "numerator": 2,
+        "denominator": 60,
+        "value": 0.033333,
+        "wilson_95": [
+          0.009189,
+          0.113638
+        ]
+      },
+      "missing_confidence": {
+        "numerator": 2,
+        "denominator": 60,
+        "value": 0.033333,
+        "wilson_95": [
+          0.009189,
+          0.113638
+        ]
+      },
+      "missing_restricted": {
+        "numerator": 2,
+        "denominator": 60,
+        "value": 0.033333,
+        "wilson_95": [
+          0.009189,
+          0.113638
+        ]
+      },
+      "macro": {
+        "precision": 0.901629,
+        "recall": 0.94362,
+        "f1": 0.907781
+      },
+      "per_category": {
+        "airfare": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "alcohol": {
+          "tp": 5,
+          "fp": 2,
+          "fn": 1,
+          "precision": 0.714286,
+          "recall": 0.833333,
+          "f1": 0.769231
+        },
+        "clothing": {
+          "tp": 2,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.666667,
+          "recall": 1.0,
+          "f1": 0.8
+        },
+        "computer_accessory": {
+          "tp": 3,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.75,
+          "recall": 1.0,
+          "f1": 0.857143
+        },
+        "food_beverage": {
+          "tp": 9,
+          "fp": 0,
+          "fn": 2,
+          "precision": 1.0,
+          "recall": 0.818182,
+          "f1": 0.9
+        },
+        "gambling": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "gift": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.75,
+          "f1": 0.857143
+        },
+        "gift_card": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "ground_transport": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "health_otc": {
+          "tp": 4,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "household_goods": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.666667
+        },
+        "jewelry": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "laundry_service": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "office_supplies": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "other": {
+          "tp": 8,
+          "fp": 0,
+          "fn": 3,
+          "precision": 1.0,
+          "recall": 0.727273,
+          "f1": 0.842105
+        },
+        "personal_care": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "personal_electronics": {
+          "tp": 4,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.8,
+          "f1": 0.888889
+        },
+        "service_fee": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.666667
+        },
+        "tobacco": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "restricted": {
+        "tp": 24,
+        "fp": 2,
+        "fn": 1,
+        "precision": 0.923077,
+        "recall": 0.96,
+        "f1": 0.941176
+      },
+      "restricted_accuracy": {
+        "numerator": 55,
+        "denominator": 60,
+        "value": 0.916667,
+        "wilson_95": [
+          0.819311,
+          0.96388
+        ]
+      },
+      "failures": {
+        "numerator": 2,
+        "denominator": 60,
+        "value": 0.033333,
+        "wilson_95": [
+          0.009189,
+          0.113638
+        ]
+      }
+    },
+    "by_ambiguity": {
+      "ambiguous": {
+        "cases": 8,
+        "failed": 0,
+        "strict_right": 6,
+        "acceptable_right": 8,
+        "restricted_right": 8
+      },
+      "clear": {
+        "cases": 48,
+        "failed": 2,
+        "strict_right": 42,
+        "acceptable_right": 42,
+        "restricted_right": 43
+      },
+      "indeterminate": {
+        "cases": 4,
+        "failed": 0,
+        "strict_right": 4,
+        "acceptable_right": 4,
+        "restricted_right": 4
+      }
+    },
+    "by_challenge": {
+      "alcohol_boundary": {
+        "cases": 13,
+        "failed": 0,
+        "strict_right": 10,
+        "acceptable_right": 10,
+        "restricted_right": 11
+      },
+      "control": {
+        "cases": 9,
+        "failed": 0,
+        "strict_right": 9,
+        "acceptable_right": 9,
+        "restricted_right": 9
+      },
+      "electronics_boundary": {
+        "cases": 9,
+        "failed": 1,
+        "strict_right": 7,
+        "acceptable_right": 7,
+        "restricted_right": 7
+      },
+      "gift_boundary": {
+        "cases": 7,
+        "failed": 0,
+        "strict_right": 6,
+        "acceptable_right": 7,
+        "restricted_right": 7
+      },
+      "incomplete": {
+        "cases": 5,
+        "failed": 0,
+        "strict_right": 5,
+        "acceptable_right": 5,
+        "restricted_right": 5
+      },
+      "medication_boundary": {
+        "cases": 8,
+        "failed": 0,
+        "strict_right": 8,
+        "acceptable_right": 8,
+        "restricted_right": 8
+      },
+      "merchant_misleading": {
+        "cases": 14,
+        "failed": 0,
+        "strict_right": 13,
+        "acceptable_right": 13,
+        "restricted_right": 13
+      },
+      "misleading_name": {
+        "cases": 14,
+        "failed": 0,
+        "strict_right": 11,
+        "acceptable_right": 11,
+        "restricted_right": 11
+      },
+      "multilingual": {
+        "cases": 12,
+        "failed": 0,
+        "strict_right": 11,
+        "acceptable_right": 11,
+        "restricted_right": 12
+      },
+      "out_of_taxonomy": {
+        "cases": 5,
+        "failed": 2,
+        "strict_right": 2,
+        "acceptable_right": 3,
+        "restricted_right": 3
+      },
+      "recipient": {
+        "cases": 5,
+        "failed": 0,
+        "strict_right": 5,
+        "acceptable_right": 5,
+        "restricted_right": 5
+      },
+      "service_boundary": {
+        "cases": 7,
+        "failed": 0,
+        "strict_right": 6,
+        "acceptable_right": 7,
+        "restricted_right": 7
+      }
+    },
+    "confusion_matrix": {
+      "airfare": {
+        "airfare": 1
+      },
+      "alcohol": {
+        "alcohol": 5,
+        "household_goods": 1
+      },
+      "clothing": {
+        "clothing": 2
+      },
+      "computer_accessory": {
+        "computer_accessory": 3
+      },
+      "food_beverage": {
+        "alcohol": 2,
+        "food_beverage": 9
+      },
+      "gambling": {
+        "gambling": 1
+      },
+      "gift": {
+        "clothing": 1,
+        "gift": 3
+      },
+      "gift_card": {
+        "gift_card": 2
+      },
+      "ground_transport": {
+        "ground_transport": 1
+      },
+      "health_otc": {
+        "health_otc": 4
+      },
+      "household_goods": {
+        "household_goods": 1
+      },
+      "jewelry": {
+        "jewelry": 1
+      },
+      "laundry_service": {
+        "laundry_service": 2
+      },
+      "office_supplies": {
+        "office_supplies": 1
+      },
+      "other": {
+        "FAILED": 2,
+        "other": 8,
+        "service_fee": 1
+      },
+      "personal_care": {
+        "personal_care": 2
+      },
+      "personal_electronics": {
+        "computer_accessory": 1,
+        "personal_electronics": 4
+      },
+      "service_fee": {
+        "service_fee": 1
+      },
+      "tobacco": {
+        "tobacco": 1
+      }
+    },
+    "confidence_levels": {
+      "0.5": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.793451
+        ]
+      },
+      "0.51": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0,
+        "wilson_95": [
+          0.206549,
+          1.0
+        ]
+      },
+      "0.52": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.793451
+        ]
+      },
+      "0.57": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0,
+        "wilson_95": [
+          0.206549,
+          1.0
+        ]
+      },
+      "0.61": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0,
+        "wilson_95": [
+          0.34238,
+          1.0
+        ]
+      },
+      "0.63": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0,
+        "wilson_95": [
+          0.206549,
+          1.0
+        ]
+      },
+      "0.66": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0,
+        "wilson_95": [
+          0.206549,
+          1.0
+        ]
+      },
+      "0.68": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0,
+        "wilson_95": [
+          0.206549,
+          1.0
+        ]
+      },
+      "0.72": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0,
+        "wilson_95": [
+          0.34238,
+          1.0
+        ]
+      },
+      "0.74": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0,
+        "wilson_95": [
+          0.206549,
+          1.0
+        ]
+      },
+      "0.75": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0,
+        "wilson_95": [
+          0.34238,
+          1.0
+        ]
+      },
+      "0.83": {
+        "numerator": 0,
+        "denominator": 1,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.793451
+        ]
+      },
+      "0.91": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0,
+        "wilson_95": [
+          0.206549,
+          1.0
+        ]
+      },
+      "0.94": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0,
+        "wilson_95": [
+          0.34238,
+          1.0
+        ]
+      },
+      "0.95": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0,
+        "wilson_95": [
+          0.206549,
+          1.0
+        ]
+      },
+      "0.96": {
+        "numerator": 2,
+        "denominator": 2,
+        "value": 1.0,
+        "wilson_95": [
+          0.34238,
+          1.0
+        ]
+      },
+      "0.97": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0,
+        "wilson_95": [
+          0.438503,
+          1.0
+        ]
+      },
+      "0.98": {
+        "numerator": 6,
+        "denominator": 7,
+        "value": 0.857143,
+        "wilson_95": [
+          0.486872,
+          0.97432
+        ]
+      },
+      "0.99": {
+        "numerator": 7,
+        "denominator": 7,
+        "value": 1.0,
+        "wilson_95": [
+          0.64567,
+          1.0
+        ]
+      },
+      "1.0": {
+        "numerator": 20,
+        "denominator": 20,
+        "value": 1.0,
+        "wilson_95": [
+          0.838875,
+          1.0
+        ]
+      },
+      "none": {
+        "numerator": 0,
+        "denominator": 2,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.65762
+        ]
+      }
+    },
+    "confidence_separation": {
+      "right": 54,
+      "wrong": 4,
+      "mean_confidence_right": 0.914,
+      "mean_confidence_wrong": 0.708,
+      "calibration": {
+        "points": 58,
+        "ece": 0.076207,
+        "brier": 0.062586,
+        "bins": [
+          {
+            "low": 0.5,
+            "high": 0.6,
+            "points": 4,
+            "mean_confidence": 0.525,
+            "accuracy": 0.5
+          },
+          {
+            "low": 0.6,
+            "high": 0.7,
+            "points": 5,
+            "mean_confidence": 0.638,
+            "accuracy": 1.0
+          },
+          {
+            "low": 0.7,
+            "high": 0.8,
+            "points": 5,
+            "mean_confidence": 0.736,
+            "accuracy": 1.0
+          },
+          {
+            "low": 0.8,
+            "high": 0.9,
+            "points": 1,
+            "mean_confidence": 0.83,
+            "accuracy": 0.0
+          },
+          {
+            "low": 0.9,
+            "high": 1.0,
+            "points": 43,
+            "mean_confidence": 0.985116,
+            "accuracy": 0.976744
+          }
+        ]
+      }
+    },
+    "thresholds": {
+      "0.3": {
+        "coverage": {
+          "numerator": 58,
+          "denominator": 60,
+          "value": 0.966667,
+          "wilson_95": [
+            0.886362,
+            0.990811
+          ]
+        },
+        "accuracy_when_accepted": {
+          "numerator": 54,
+          "denominator": 58,
+          "value": 0.931034,
+          "wilson_95": [
+            0.835663,
+            0.972856
+          ]
+        },
+        "accepted_wrong": 4,
+        "set_aside_right": 0,
+        "set_aside_wrong": 2
+      },
+      "0.5": {
+        "coverage": {
+          "numerator": 58,
+          "denominator": 60,
+          "value": 0.966667,
+          "wilson_95": [
+            0.886362,
+            0.990811
+          ]
+        },
+        "accuracy_when_accepted": {
+          "numerator": 54,
+          "denominator": 58,
+          "value": 0.931034,
+          "wilson_95": [
+            0.835663,
+            0.972856
+          ]
+        },
+        "accepted_wrong": 4,
+        "set_aside_right": 0,
+        "set_aside_wrong": 2
+      },
+      "0.7": {
+        "coverage": {
+          "numerator": 49,
+          "denominator": 60,
+          "value": 0.816667,
+          "wilson_95": [
+            0.700802,
+            0.894422
+          ]
+        },
+        "accuracy_when_accepted": {
+          "numerator": 47,
+          "denominator": 49,
+          "value": 0.959184,
+          "wilson_95": [
+            0.86287,
+            0.988734
+          ]
+        },
+        "accepted_wrong": 2,
+        "set_aside_right": 7,
+        "set_aside_wrong": 4
+      },
+      "0.9": {
+        "coverage": {
+          "numerator": 43,
+          "denominator": 60,
+          "value": 0.716667,
+          "wilson_95": [
+            0.592327,
+            0.814932
+          ]
+        },
+        "accuracy_when_accepted": {
+          "numerator": 42,
+          "denominator": 43,
+          "value": 0.976744,
+          "wilson_95": [
+            0.87941,
+            0.995883
+          ]
+        },
+        "accepted_wrong": 1,
+        "set_aside_right": 12,
+        "set_aside_wrong": 5
+      }
+    },
+    "attributes": {
+      "recipient_name": {
+        "labelled": 58,
+        "right": 58,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      },
+      "recipient_type": {
+        "labelled": 57,
+        "right": 56,
+        "fabricated": 1,
+        "missed": 0,
+        "wrong_value": 0
+      },
+      "venue_type": {
+        "labelled": 58,
+        "right": 58,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      },
+      "item_kind": {
+        "labelled": 54,
+        "right": 54,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      },
+      "essential_toiletry": {
+        "labelled": 58,
+        "right": 58,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      }
+    },
+    "safety": {
+      "failed": [
+        "RB-046",
+        "RB-047"
+      ],
+      "accepted_wrong_by_exc_03": [
+        "RB-001",
+        "RB-002",
+        "RB-011",
+        "RB-019"
+      ],
+      "high_confidence_wrong": [
+        "RB-001",
+        "RB-002"
+      ],
+      "low_confidence_right": [],
+      "indeterminate_at_high_confidence": [
+        "RB-049",
+        "RB-050"
+      ],
+      "indeterminate_accepted_by_exc_03": [
+        "RB-049",
+        "RB-050",
+        "RB-051",
+        "RB-052"
+      ],
+      "official_without_support": []
+    }
+  },
+  "receipts": {
+    "disposition": {
+      "matrix_gold_by_predicted": {
+        "flag": {
+          "flag": 6,
+          "review": 1,
+          "pass": 0
+        },
+        "review": {
+          "flag": 0,
+          "review": 1,
+          "pass": 0
+        },
+        "pass": {
+          "flag": 1,
+          "review": 0,
+          "pass": 3
+        }
+      },
+      "accuracy": {
+        "numerator": 10,
+        "denominator": 12,
+        "value": 0.833333,
+        "wilson_95": [
+          0.551969,
+          0.953035
+        ]
+      },
+      "false_pass": {
+        "numerator": 0,
+        "denominator": 8,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.324408
+        ]
+      },
+      "missed_flag_passed": {
+        "numerator": 0,
+        "denominator": 7,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.35433
+        ]
+      },
+      "missed_flag_any": {
+        "numerator": 1,
+        "denominator": 7,
+        "value": 0.142857,
+        "wilson_95": [
+          0.02568,
+          0.513128
+        ]
+      },
+      "false_flag": {
+        "numerator": 1,
+        "denominator": 5,
+        "value": 0.2,
+        "wilson_95": [
+          0.036224,
+          0.624465
+        ]
+      },
+      "review": {
+        "numerator": 2,
+        "denominator": 12,
+        "value": 0.166667,
+        "wilson_95": [
+          0.046965,
+          0.448031
+        ]
+      },
+      "abstention": {
+        "numerator": 1,
+        "denominator": 12,
+        "value": 0.083333,
+        "wilson_95": [
+          0.014865,
+          0.35388
+        ]
+      },
+      "decided": {
+        "numerator": 11,
+        "denominator": 12,
+        "value": 0.916667,
+        "wilson_95": [
+          0.64612,
+          0.985135
+        ]
+      },
+      "flagged_undecided": {
+        "numerator": 0,
+        "denominator": 7,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.35433
+        ]
+      }
+    },
+    "rules": {
+      "tp": 9,
+      "fp": 2,
+      "fn": 1,
+      "precision": 0.818182,
+      "recall": 0.9,
+      "f1": 0.857143
+    },
+    "exact_match": {
+      "rules": {
+        "numerator": 10,
+        "denominator": 12,
+        "value": 0.833333,
+        "wilson_95": [
+          0.551969,
+          0.953035
+        ]
+      },
+      "rules_and_lines": {
+        "numerator": 10,
+        "denominator": 12,
+        "value": 0.833333,
+        "wilson_95": [
+          0.551969,
+          0.953035
+        ]
+      }
+    },
+    "classification_accuracy": {
+      "numerator": 15,
+      "denominator": 17,
+      "value": 0.882353,
+      "wilson_95": [
+        0.656636,
+        0.96712
+      ]
+    },
+    "receipts": [
+      {
+        "receipt_id": "RBX-001",
+        "gold_disposition": "pass",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "ALC-01": {
+            "line_ids": [
+              "RBX-001-L1"
+            ],
+            "severity": "high",
+            "policy_doc": "meals-and-entertainment-policy.md"
+          }
+        },
+        "gold_exceptions": {},
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-002",
+        "gold_disposition": "flag",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "ALC-01": {
+            "line_ids": [
+              "RBX-002-L1"
+            ],
+            "severity": "high",
+            "policy_doc": "meals-and-entertainment-policy.md"
+          }
+        },
+        "gold_exceptions": {
+          "ALC-01": {
+            "line_ids": [
+              "RBX-002-L1"
+            ],
+            "severity": "high"
+          }
+        },
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-003",
+        "gold_disposition": "flag",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "TECH-01": {
+            "line_ids": [
+              "RBX-003-L1"
+            ],
+            "severity": "high",
+            "policy_doc": "technology-and-equipment-policy.md"
+          }
+        },
+        "gold_exceptions": {
+          "TECH-01": {
+            "line_ids": [
+              "RBX-003-L1"
+            ],
+            "severity": "high"
+          }
+        },
+        "signals": [
+          "MCC-02"
+        ],
+        "gold_signals": [
+          "MCC-02"
+        ],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-004",
+        "gold_disposition": "pass",
+        "disposition": "pass",
+        "decided": true,
+        "exceptions": {},
+        "gold_exceptions": {},
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-005",
+        "gold_disposition": "flag",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "GIFT-04": {
+            "line_ids": [
+              "RBX-005-L1"
+            ],
+            "severity": "critical",
+            "policy_doc": "gifts-and-awards-policy.md"
+          }
+        },
+        "gold_exceptions": {
+          "GIFT-04": {
+            "line_ids": [
+              "RBX-005-L1"
+            ],
+            "severity": "critical"
+          }
+        },
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-006",
+        "gold_disposition": "pass",
+        "disposition": "pass",
+        "decided": true,
+        "exceptions": {},
+        "gold_exceptions": {},
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-007",
+        "gold_disposition": "review",
+        "disposition": "review",
+        "decided": true,
+        "exceptions": {},
+        "gold_exceptions": {},
+        "signals": [
+          "MCC-02"
+        ],
+        "gold_signals": [
+          "MCC-02"
+        ],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-008",
+        "gold_disposition": "flag",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "HEALTH-01": {
+            "line_ids": [
+              "RBX-008-L1"
+            ],
+            "severity": "medium",
+            "policy_doc": "non-reimbursable-items.md"
+          }
+        },
+        "gold_exceptions": {
+          "HEALTH-01": {
+            "line_ids": [
+              "RBX-008-L1"
+            ],
+            "severity": "medium"
+          }
+        },
+        "signals": [
+          "MCC-02"
+        ],
+        "gold_signals": [
+          "MCC-02"
+        ],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-009",
+        "gold_disposition": "flag",
+        "disposition": "review",
+        "decided": false,
+        "exceptions": {},
+        "gold_exceptions": {
+          "ENT-01": {
+            "line_ids": [
+              "RBX-009-L1"
+            ],
+            "severity": "medium"
+          }
+        },
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [
+          "ALC-03",
+          "DOC-03",
+          "ENT-02",
+          "GIFT-02",
+          "GIFT-03",
+          "HEALTH-01",
+          "HOUSE-01",
+          "LAUNDRY-01",
+          "MEAL-01",
+          "MEAL-02",
+          "PERS-01",
+          "PERS-02",
+          "PERS-03",
+          "TECH-01",
+          "TECH-02",
+          "TECH-04"
+        ],
+        "uncertainty": [
+          {
+            "line_id": "RBX-009-L1",
+            "field": "category",
+            "state": "missing",
+            "reason": "category_uncertain"
+          }
+        ]
+      },
+      {
+        "receipt_id": "RBX-010",
+        "gold_disposition": "flag",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "REG-01": {
+            "line_ids": [
+              "RBX-010-L1"
+            ],
+            "severity": "high",
+            "policy_doc": "regional-addendum.md"
+          }
+        },
+        "gold_exceptions": {
+          "REG-01": {
+            "line_ids": [
+              "RBX-010-L1"
+            ],
+            "severity": "high"
+          }
+        },
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-011",
+        "gold_disposition": "pass",
+        "disposition": "pass",
+        "decided": true,
+        "exceptions": {},
+        "gold_exceptions": {},
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-012",
+        "gold_disposition": "flag",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "GIFT-04": {
+            "line_ids": [
+              "RBX-012-L1"
+            ],
+            "severity": "critical",
+            "policy_doc": "gifts-and-awards-policy.md"
+          }
+        },
+        "gold_exceptions": {
+          "GIFT-04": {
+            "line_ids": [
+              "RBX-012-L1"
+            ],
+            "severity": "critical"
+          }
+        },
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      }
+    ],
+    "attributes": {
+      "recipient_name": {
+        "labelled": 16,
+        "right": 16,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      },
+      "recipient_type": {
+        "labelled": 16,
+        "right": 16,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      },
+      "venue_type": {
+        "labelled": 16,
+        "right": 16,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      },
+      "item_kind": {
+        "labelled": 16,
+        "right": 16,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      },
+      "essential_toiletry": {
+        "labelled": 16,
+        "right": 16,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      }
+    },
+    "failed": [
+      "RBX-009-L1"
+    ]
+  },
+  "probability": {
+    "selected_p_by_ambiguity": {
+      "ambiguous": {
+        "lines": 8,
+        "mean_selected_p": 0.744,
+        "min_selected_p": 0.57,
+        "category_right": 8
+      },
+      "clear": {
+        "lines": 48,
+        "mean_selected_p": 0.932,
+        "min_selected_p": 0.5,
+        "category_right": 42
+      },
+      "indeterminate": {
+        "lines": 4,
+        "mean_selected_p": 0.775,
+        "min_selected_p": 0.51,
+        "category_right": 4
+      }
+    },
+    "confidently_wrong_p_ge_0_9": [
+      [
+        "RB-001",
+        "food_beverage",
+        "alcohol",
+        0.98
+      ],
+      [
+        "RB-046",
+        "other",
+        "personal_electronics",
+        0.91
+      ]
+    ],
+    "wrong": [
+      [
+        "RB-001",
+        "food_beverage",
+        "alcohol",
+        0.98,
+        "clear"
+      ],
+      [
+        "RB-002",
+        "food_beverage",
+        "alcohol",
+        0.83,
+        "clear"
+      ],
+      [
+        "RB-011",
+        "alcohol",
+        "household_goods",
+        0.5,
+        "clear"
+      ],
+      [
+        "RB-019",
+        "personal_electronics",
+        "computer_accessory",
+        0.52,
+        "clear"
+      ],
+      [
+        "RB-046",
+        "other",
+        "personal_electronics",
+        0.91,
+        "clear"
+      ],
+      [
+        "RB-047",
+        "other",
+        "airfare",
+        0.74,
+        "clear"
+      ]
+    ],
+    "selected_p_below_0_9": [
+      [
+        "RB-002",
+        "alcohol",
+        0.83,
+        false,
+        "clear"
+      ],
+      [
+        "RB-009",
+        "food_beverage",
+        0.68,
+        true,
+        "clear"
+      ],
+      [
+        "RB-011",
+        "household_goods",
+        0.5,
+        false,
+        "clear"
+      ],
+      [
+        "RB-012",
+        "food_beverage",
+        0.61,
+        true,
+        "clear"
+      ],
+      [
+        "RB-017",
+        "personal_electronics",
+        0.75,
+        true,
+        "ambiguous"
+      ],
+      [
+        "RB-018",
+        "personal_electronics",
+        0.74,
+        true,
+        "clear"
+      ],
+      [
+        "RB-019",
+        "computer_accessory",
+        0.52,
+        false,
+        "clear"
+      ],
+      [
+        "RB-025",
+        "clothing",
+        0.57,
+        true,
+        "ambiguous"
+      ],
+      [
+        "RB-029",
+        "other",
+        0.72,
+        true,
+        "clear"
+      ],
+      [
+        "RB-032",
+        "clothing",
+        0.66,
+        true,
+        "ambiguous"
+      ],
+      [
+        "RB-034",
+        "other",
+        0.72,
+        true,
+        "ambiguous"
+      ],
+      [
+        "RB-038",
+        "service_fee",
+        0.75,
+        true,
+        "ambiguous"
+      ],
+      [
+        "RB-047",
+        "airfare",
+        0.74,
+        false,
+        "clear"
+      ],
+      [
+        "RB-048",
+        "other",
+        0.63,
+        true,
+        "ambiguous"
+      ],
+      [
+        "RB-051",
+        "other",
+        0.51,
+        true,
+        "indeterminate"
+      ],
+      [
+        "RB-052",
+        "other",
+        0.61,
+        true,
+        "indeterminate"
+      ]
+    ],
+    "jev_confidence_vs_selected_p": [],
+    "line_confidence_buckets": {
+      "0.5_to_0.7": {
+        "lines": 9,
+        "category_correct": {
+          "numerator": 6,
+          "denominator": 9,
+          "value": 0.666667,
+          "wilson_95": [
+            0.354202,
+            0.879416
+          ]
+        }
+      },
+      "0.7_to_0.9": {
+        "lines": 6,
+        "category_correct": {
+          "numerator": 4,
+          "denominator": 6,
+          "value": 0.666667,
+          "wilson_95": [
+            0.299993,
+            0.903229
+          ]
+        }
+      },
+      "0.9_to_1": {
+        "lines": 43,
+        "category_correct": {
+          "numerator": 42,
+          "denominator": 43,
+          "value": 0.976744,
+          "wilson_95": [
+            0.87941,
+            0.995883
+          ]
+        }
+      },
+      "missing": {
+        "lines": 2,
+        "category_correct": {
+          "numerator": 0,
+          "denominator": 2,
+          "value": 0.0,
+          "wilson_95": [
+            0.0,
+            0.65762
+          ]
+        }
+      }
+    }
+  },
+  "applicability": {
+    "classes": {
+      "lines": {
+        "recipient_type": {
+          "right": 59,
+          "unlabelled": 1
+        },
+        "venue_type": {
+          "right": 59,
+          "contradictory": 1
+        },
+        "item_kind": {
+          "right": 55,
+          "unlabelled": 4,
+          "contradictory": 1
+        },
+        "essential_toiletry": {
+          "right": 60
+        }
+      },
+      "receipts": {
+        "recipient_type": {
+          "right": 17
+        },
+        "venue_type": {
+          "right": 16,
+          "contradictory": 1
+        },
+        "item_kind": {
+          "right": 17
+        },
+        "essential_toiletry": {
+          "right": 17
+        }
+      }
+    },
+    "rejected_lines": [
+      {
+        "id": "RB-046",
+        "error": "item_kind mobile_phone contradicts category personal_electronics",
+        "jev_category": "personal_electronics",
+        "category_right": false,
+        "selected_p": 0.91,
+        "offending": {
+          "item_kind": {
+            "choice": "mobile_phone",
+            "p": 0.93,
+            "not_stated_p": 0.07,
+            "class": "contradictory"
+          }
+        }
+      },
+      {
+        "id": "RB-047",
+        "error": "venue_type contradicts category airfare",
+        "jev_category": "airfare",
+        "category_right": false,
+        "selected_p": 0.74,
+        "offending": {
+          "venue_type": {
+            "choice": "theatre",
+            "p": 0.96,
+            "not_stated_p": 0.01,
+            "class": "contradictory"
+          }
+        }
+      },
+      {
+        "id": "RBX-009-L1",
+        "error": "venue_type contradicts category airfare",
+        "jev_category": "airfare",
+        "category_right": false,
+        "selected_p": 0.92,
+        "offending": {
+          "venue_type": {
+            "choice": "sporting_event",
+            "p": 0.96,
+            "not_stated_p": 0.03,
+            "class": "contradictory"
+          }
+        }
+      }
+    ],
+    "suppressed_by_threshold": [],
+    "attribute_errors": [],
+    "correct_categories_discarded": []
+  },
+  "llm_baselines": {
+    "safeguard-rep1": {
+      "model": "anthropic/claude-haiku-5.5",
+      "lines": {
+        "scores": {
+          "lines": 60,
+          "accuracy": {
+            "numerator": 59,
+            "denominator": 60,
+            "value": 0.983333,
+            "wilson_95": [
+              0.911449,
+              0.997052
+            ]
+          },
+          "missing_category": {
+            "numerator": 0,
+            "denominator": 60,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.060172
+            ]
+          },
+          "missing_confidence": {
+            "numerator": 0,
+            "denominator": 60,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.060172
+            ]
+          },
+          "missing_restricted": {
+            "numerator": 0,
+            "denominator": 60,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.060172
+            ]
+          },
+          "macro": {
+            "precision": 0.995614,
+            "recall": 0.973684,
+            "f1": 0.980168
+          },
+          "per_category": {
+            "airfare": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "alcohol": {
+              "tp": 6,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "clothing": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 1,
+              "precision": 1.0,
+              "recall": 0.5,
+              "f1": 0.666667
+            },
+            "computer_accessory": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "food_beverage": {
+              "tp": 11,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "gambling": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "gift": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "gift_card": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "ground_transport": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "health_otc": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "household_goods": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "jewelry": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "laundry_service": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "office_supplies": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "other": {
+              "tp": 11,
+              "fp": 1,
+              "fn": 0,
+              "precision": 0.916667,
+              "recall": 1.0,
+              "f1": 0.956522
+            },
+            "personal_care": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "personal_electronics": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "service_fee": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "tobacco": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            }
+          },
+          "restricted": {
+            "tp": 24,
+            "fp": 0,
+            "fn": 1,
+            "precision": 1.0,
+            "recall": 0.96,
+            "f1": 0.979592
+          },
+          "restricted_accuracy": {
+            "numerator": 59,
+            "denominator": 60,
+            "value": 0.983333,
+            "wilson_95": [
+              0.911449,
+              0.997052
+            ]
+          },
+          "failures": {
+            "numerator": 0,
+            "denominator": 60,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.060172
+            ]
+          }
+        },
+        "confidence_separation": {
+          "right": 60,
+          "wrong": 0,
+          "mean_confidence_right": 0.743,
+          "mean_confidence_wrong": null,
+          "calibration": {
+            "points": 60,
+            "ece": 0.256667,
+            "brier": 0.126,
+            "bins": [
+              {
+                "low": 0.1,
+                "high": 0.2,
+                "points": 5,
+                "mean_confidence": 0.1,
+                "accuracy": 1.0
+              },
+              {
+                "low": 0.3,
+                "high": 0.4,
+                "points": 2,
+                "mean_confidence": 0.3,
+                "accuracy": 1.0
+              },
+              {
+                "low": 0.5,
+                "high": 0.6,
+                "points": 4,
+                "mean_confidence": 0.5,
+                "accuracy": 1.0
+              },
+              {
+                "low": 0.7,
+                "high": 0.8,
+                "points": 13,
+                "mean_confidence": 0.7,
+                "accuracy": 1.0
+              },
+              {
+                "low": 0.9,
+                "high": 1.0,
+                "points": 36,
+                "mean_confidence": 0.9,
+                "accuracy": 1.0
+              }
+            ]
+          }
+        },
+        "attributes": {
+          "recipient_name": {
+            "labelled": 60,
+            "right": 58,
+            "fabricated": 0,
+            "missed": 2,
+            "wrong_value": 0
+          },
+          "recipient_type": {
+            "labelled": 59,
+            "right": 57,
+            "fabricated": 1,
+            "missed": 1,
+            "wrong_value": 0
+          },
+          "venue_type": {
+            "labelled": 60,
+            "right": 60,
+            "fabricated": 0,
+            "missed": 0,
+            "wrong_value": 0
+          },
+          "item_kind": {
+            "labelled": 56,
+            "right": 55,
+            "fabricated": 0,
+            "missed": 1,
+            "wrong_value": 0
+          },
+          "essential_toiletry": {
+            "labelled": 60,
+            "right": 60,
+            "fabricated": 0,
+            "missed": 0,
+            "wrong_value": 0
+          }
+        },
+        "safety": {
+          "failed": [],
+          "accepted_wrong_by_exc_03": [],
+          "high_confidence_wrong": [],
+          "low_confidence_right": [
+            "RB-032",
+            "RB-048",
+            "RB-049",
+            "RB-050",
+            "RB-051",
+            "RB-052",
+            "RB-053"
+          ],
+          "indeterminate_at_high_confidence": [],
+          "indeterminate_accepted_by_exc_03": [],
+          "official_without_support": []
+        }
+      },
+      "receipts": {
+        "disposition": {
+          "matrix_gold_by_predicted": {
+            "flag": {
+              "flag": 7,
+              "review": 0,
+              "pass": 0
+            },
+            "review": {
+              "flag": 0,
+              "review": 1,
+              "pass": 0
+            },
+            "pass": {
+              "flag": 0,
+              "review": 0,
+              "pass": 4
+            }
+          },
+          "accuracy": {
+            "numerator": 12,
+            "denominator": 12,
+            "value": 1.0,
+            "wilson_95": [
+              0.757506,
+              1.0
+            ]
+          },
+          "false_pass": {
+            "numerator": 0,
+            "denominator": 8,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.324408
+            ]
+          },
+          "missed_flag_passed": {
+            "numerator": 0,
+            "denominator": 7,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.35433
+            ]
+          },
+          "missed_flag_any": {
+            "numerator": 0,
+            "denominator": 7,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.35433
+            ]
+          },
+          "false_flag": {
+            "numerator": 0,
+            "denominator": 5,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.434482
+            ]
+          },
+          "review": {
+            "numerator": 1,
+            "denominator": 12,
+            "value": 0.083333,
+            "wilson_95": [
+              0.014865,
+              0.35388
+            ]
+          },
+          "abstention": {
+            "numerator": 0,
+            "denominator": 12,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.242494
+            ]
+          },
+          "decided": {
+            "numerator": 12,
+            "denominator": 12,
+            "value": 1.0,
+            "wilson_95": [
+              0.757506,
+              1.0
+            ]
+          },
+          "flagged_undecided": {
+            "numerator": 0,
+            "denominator": 7,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.35433
+            ]
+          }
+        },
+        "rules": {
+          "tp": 10,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "exact_match": {
+          "rules": {
+            "numerator": 12,
+            "denominator": 12,
+            "value": 1.0,
+            "wilson_95": [
+              0.757506,
+              1.0
+            ]
+          },
+          "rules_and_lines": {
+            "numerator": 12,
+            "denominator": 12,
+            "value": 1.0,
+            "wilson_95": [
+              0.757506,
+              1.0
+            ]
+          }
+        },
+        "classification_accuracy": {
+          "numerator": 17,
+          "denominator": 17,
+          "value": 1.0,
+          "wilson_95": [
+            0.815682,
+            1.0
+          ]
+        },
+        "attributes": {
+          "recipient_name": {
+            "labelled": 17,
+            "right": 17,
+            "fabricated": 0,
+            "missed": 0,
+            "wrong_value": 0
+          },
+          "recipient_type": {
+            "labelled": 17,
+            "right": 17,
+            "fabricated": 0,
+            "missed": 0,
+            "wrong_value": 0
+          },
+          "venue_type": {
+            "labelled": 17,
+            "right": 17,
+            "fabricated": 0,
+            "missed": 0,
+            "wrong_value": 0
+          },
+          "item_kind": {
+            "labelled": 17,
+            "right": 16,
+            "fabricated": 0,
+            "missed": 1,
+            "wrong_value": 0
+          },
+          "essential_toiletry": {
+            "labelled": 17,
+            "right": 17,
+            "fabricated": 0,
+            "missed": 0,
+            "wrong_value": 0
+          }
+        },
+        "failed": []
+      }
+    },
+    "safeguard-rep2": {
+      "model": "anthropic/claude-haiku-5.5",
+      "lines": {
+        "scores": {
+          "lines": 60,
+          "accuracy": {
+            "numerator": 58,
+            "denominator": 60,
+            "value": 0.966667,
+            "wilson_95": [
+              0.886362,
+              0.990811
+            ]
+          },
+          "missing_category": {
+            "numerator": 0,
+            "denominator": 60,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.060172
+            ]
+          },
+          "missing_confidence": {
+            "numerator": 0,
+            "denominator": 60,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.060172
+            ]
+          },
+          "missing_restricted": {
+            "numerator": 0,
+            "denominator": 60,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.060172
+            ]
+          },
+          "macro": {
+            "precision": 0.969298,
+            "recall": 0.964912,
+            "f1": 0.957839
+          },
+          "per_category": {
+            "airfare": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "alcohol": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 1,
+              "precision": 1.0,
+              "recall": 0.833333,
+              "f1": 0.909091
+            },
+            "clothing": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 1,
+              "precision": 1.0,
+              "recall": 0.5,
+              "f1": 0.666667
+            },
+            "computer_accessory": {
+              "tp": 3,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "food_beverage": {
+              "tp": 11,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "gambling": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "gift": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "gift_card": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "ground_transport": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "health_otc": {
+              "tp": 4,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "household_goods": {
+              "tp": 1,
+              "fp": 1,
+              "fn": 0,
+              "precision": 0.5,
+              "recall": 1.0,
+              "f1": 0.666667
+            },
+            "jewelry": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "laundry_service": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "office_supplies": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "other": {
+              "tp": 11,
+              "fp": 1,
+              "fn": 0,
+              "precision": 0.916667,
+              "recall": 1.0,
+              "f1": 0.956522
+            },
+            "personal_care": {
+              "tp": 2,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "personal_electronics": {
+              "tp": 5,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "service_fee": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            },
+            "tobacco": {
+              "tp": 1,
+              "fp": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0
+            }
+          },
+          "restricted": {
+            "tp": 24,
+            "fp": 0,
+            "fn": 1,
+            "precision": 1.0,
+            "recall": 0.96,
+            "f1": 0.979592
+          },
+          "restricted_accuracy": {
+            "numerator": 59,
+            "denominator": 60,
+            "value": 0.983333,
+            "wilson_95": [
+              0.911449,
+              0.997052
+            ]
+          },
+          "failures": {
+            "numerator": 0,
+            "denominator": 60,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.060172
+            ]
+          }
+        },
+        "confidence_separation": {
+          "right": 59,
+          "wrong": 1,
+          "mean_confidence_right": 0.761,
+          "mean_confidence_wrong": 0.9,
+          "calibration": {
+            "points": 60,
+            "ece": 0.22,
+            "brier": 0.127333,
+            "bins": [
+              {
+                "low": 0.1,
+                "high": 0.2,
+                "points": 5,
+                "mean_confidence": 0.1,
+                "accuracy": 1.0
+              },
+              {
+                "low": 0.3,
+                "high": 0.4,
+                "points": 2,
+                "mean_confidence": 0.3,
+                "accuracy": 1.0
+              },
+              {
+                "low": 0.5,
+                "high": 0.6,
+                "points": 1,
+                "mean_confidence": 0.5,
+                "accuracy": 1.0
+              },
+              {
+                "low": 0.7,
+                "high": 0.8,
+                "points": 13,
+                "mean_confidence": 0.7,
+                "accuracy": 1.0
+              },
+              {
+                "low": 0.9,
+                "high": 1.0,
+                "points": 39,
+                "mean_confidence": 0.9,
+                "accuracy": 0.974359
+              }
+            ]
+          }
+        },
+        "attributes": {
+          "recipient_name": {
+            "labelled": 60,
+            "right": 59,
+            "fabricated": 0,
+            "missed": 1,
+            "wrong_value": 0
+          },
+          "recipient_type": {
+            "labelled": 59,
+            "right": 58,
+            "fabricated": 1,
+            "missed": 0,
+            "wrong_value": 0
+          },
+          "venue_type": {
+            "labelled": 60,
+            "right": 60,
+            "fabricated": 0,
+            "missed": 0,
+            "wrong_value": 0
+          },
+          "item_kind": {
+            "labelled": 56,
+            "right": 55,
+            "fabricated": 0,
+            "missed": 1,
+            "wrong_value": 0
+          },
+          "essential_toiletry": {
+            "labelled": 60,
+            "right": 60,
+            "fabricated": 0,
+            "missed": 0,
+            "wrong_value": 0
+          }
+        },
+        "safety": {
+          "failed": [],
+          "accepted_wrong_by_exc_03": [
+            "RB-011"
+          ],
+          "high_confidence_wrong": [
+            "RB-011"
+          ],
+          "low_confidence_right": [
+            "RB-032",
+            "RB-048",
+            "RB-049",
+            "RB-050",
+            "RB-051",
+            "RB-052",
+            "RB-053"
+          ],
+          "indeterminate_at_high_confidence": [],
+          "indeterminate_accepted_by_exc_03": [],
+          "official_without_support": []
+        }
+      },
+      "receipts": {
+        "disposition": {
+          "matrix_gold_by_predicted": {
+            "flag": {
+              "flag": 7,
+              "review": 0,
+              "pass": 0
+            },
+            "review": {
+              "flag": 0,
+              "review": 1,
+              "pass": 0
+            },
+            "pass": {
+              "flag": 0,
+              "review": 0,
+              "pass": 4
+            }
+          },
+          "accuracy": {
+            "numerator": 12,
+            "denominator": 12,
+            "value": 1.0,
+            "wilson_95": [
+              0.757506,
+              1.0
+            ]
+          },
+          "false_pass": {
+            "numerator": 0,
+            "denominator": 8,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.324408
+            ]
+          },
+          "missed_flag_passed": {
+            "numerator": 0,
+            "denominator": 7,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.35433
+            ]
+          },
+          "missed_flag_any": {
+            "numerator": 0,
+            "denominator": 7,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.35433
+            ]
+          },
+          "false_flag": {
+            "numerator": 0,
+            "denominator": 5,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.434482
+            ]
+          },
+          "review": {
+            "numerator": 1,
+            "denominator": 12,
+            "value": 0.083333,
+            "wilson_95": [
+              0.014865,
+              0.35388
+            ]
+          },
+          "abstention": {
+            "numerator": 0,
+            "denominator": 12,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.242494
+            ]
+          },
+          "decided": {
+            "numerator": 12,
+            "denominator": 12,
+            "value": 1.0,
+            "wilson_95": [
+              0.757506,
+              1.0
+            ]
+          },
+          "flagged_undecided": {
+            "numerator": 0,
+            "denominator": 7,
+            "value": 0.0,
+            "wilson_95": [
+              0.0,
+              0.35433
+            ]
+          }
+        },
+        "rules": {
+          "tp": 10,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "exact_match": {
+          "rules": {
+            "numerator": 12,
+            "denominator": 12,
+            "value": 1.0,
+            "wilson_95": [
+              0.757506,
+              1.0
+            ]
+          },
+          "rules_and_lines": {
+            "numerator": 12,
+            "denominator": 12,
+            "value": 1.0,
+            "wilson_95": [
+              0.757506,
+              1.0
+            ]
+          }
+        },
+        "classification_accuracy": {
+          "numerator": 17,
+          "denominator": 17,
+          "value": 1.0,
+          "wilson_95": [
+            0.815682,
+            1.0
+          ]
+        },
+        "attributes": {
+          "recipient_name": {
+            "labelled": 17,
+            "right": 17,
+            "fabricated": 0,
+            "missed": 0,
+            "wrong_value": 0
+          },
+          "recipient_type": {
+            "labelled": 17,
+            "right": 17,
+            "fabricated": 0,
+            "missed": 0,
+            "wrong_value": 0
+          },
+          "venue_type": {
+            "labelled": 17,
+            "right": 17,
+            "fabricated": 0,
+            "missed": 0,
+            "wrong_value": 0
+          },
+          "item_kind": {
+            "labelled": 17,
+            "right": 16,
+            "fabricated": 0,
+            "missed": 1,
+            "wrong_value": 0
+          },
+          "essential_toiletry": {
+            "labelled": 17,
+            "right": 17,
+            "fabricated": 0,
+            "missed": 0,
+            "wrong_value": 0
+          }
+        },
+        "failed": []
+      }
+    }
+  }
+}

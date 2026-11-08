@@ -1,10 +1,4 @@
-"""Turns a validated receipt into the flat facts that policy/evaluate.py reads.
-
-Every model field becomes a fact under its own name, and the fields rules/fields.yaml
-marks as derived are worked out here. A value that is not known stays None, which
-evaluate.py reads as missing, while False and 0 stay values. This module checks nothing:
-that happens in inputs.py, before a receipt gets here.
-"""
+"""Turn an admitted receipt into the flat facts rules read. None means missing; False and 0 are values."""
 
 from collections.abc import Mapping
 
@@ -27,7 +21,7 @@ def receipt_facts(receipt: Receipt, fields: Mapping[str, dict]) -> dict[str, obj
 
 
 def item_facts(receipt: Receipt, item: LineItem, fields: Mapping[str, dict]) -> dict[str, object]:
-    """One line's facts along with its receipt's, as item rules read both, such as LAUNDRY-01."""
+    """Return one line's facts together with its receipt's."""
     return {
         **receipt_facts(receipt, fields),
         **_prefixed("item", item.model_dump()),
@@ -41,7 +35,7 @@ def _prefixed(prefix: str, values: Mapping[str, object]) -> dict[str, object]:
 
 
 def _is_meal_receipt(receipt: Receipt, fields: Mapping[str, dict]) -> bool | None:
-    """None when it depends on a missing or unknown category: that is not known to be False."""
+    """None when the answer depends on a missing or unknown category."""
     if receipt.submitted_expense_type not in MEAL_TYPES:
         return False
     if not receipt.itemized:

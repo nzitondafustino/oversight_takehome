@@ -1,0 +1,319 @@
+suite: policy_compiler
+
+documents_refused:
+  - id: no documents
+    documents: []
+    expected: at least one policy document
+  - id: one mapping instead of a list
+    documents: {document_id: a, filename: a.md, content: text}
+    expected: must be a list
+  - id: text instead of a list
+    documents: "**AA-01 — One.** SECRET"
+    expected: must be a list
+  - id: no filename
+    documents: [{document_id: a, content: "SECRET"}]
+    expected: "documents.0: filename: Field required"
+  - id: a folder in the filename
+    documents: [{document_id: a, filename: ../rules/ruleset.md, content: "SECRET"}]
+    expected: "documents.0: filename: String should match pattern"
+  - id: not a markdown file
+    documents: [{document_id: a, filename: policy.pdf, content: "SECRET"}]
+    expected: "documents.0: filename: String should match pattern"
+  - id: blank content
+    documents: [{document_id: a, filename: a.md, content: "  \n "}]
+    expected: "documents.0: content: String should match pattern"
+  - id: content that is not text
+    documents: [{document_id: a, filename: a.md, content: 12}]
+    expected: "documents.0: content: Input should be a valid string"
+  - id: blank document id
+    documents: [{document_id: " ", filename: a.md, content: "SECRET"}]
+    expected: "documents.0: document_id: String should match pattern"
+  - id: an unknown key
+    documents: [{document_id: a, filename: a.md, content: "SECRET", owner: SECRET}]
+    expected: "documents.0: owner: Extra inputs are not permitted"
+  - id: a filename given twice
+    documents:
+      - {document_id: a, filename: a.md, content: "SECRET"}
+      - {document_id: b, filename: a.md, content: "SECRET"}
+    expected: "filenames given more than once: \\['a.md'\\]"
+  - id: a document id given twice
+    documents:
+      - {document_id: a, filename: a.md, content: "SECRET"}
+      - {document_id: a, filename: b.md, content: "SECRET"}
+    expected: "document_ids given more than once: \\['a'\\]"
+  - id: a malformed rule heading, without quoting the line
+    documents: [{document_id: a, filename: a.md, content: "# Policy\n\n**AA-1 — SECRET.** text"}]
+    expected: "^a.md:3: malformed rule heading$"
+  - id: a repeated rule id
+    documents: [{document_id: a, filename: a.md, content: "**AA-01 — One.** SECRET\n\n**AA-01 — Two.** SECRET"}]
+    expected: "a.md: duplicate rule ids: \\['AA-01'\\]"
+
+resolutions_refused:
+  - id: one mapping instead of a list
+    resolutions: {policy_doc: a.md}
+    expected: must be a list of resolutions
+  - id: no reviewer
+    resolutions:
+      - {policy_doc: regional-addendum.md, rule_id: REG-01, field: thresholds, value: [], rationale: why, clause_hash: "0000000000000000000000000000000000000000000000000000000000000000"}
+    expected: "resolutions.0: reviewer: Field required"
+  - id: a clause hash that is not one
+    resolutions:
+      - {policy_doc: regional-addendum.md, rule_id: REG-01, field: thresholds, value: [], reviewer: r, rationale: why, clause_hash: abc}
+    expected: "resolutions.0: clause_hash: String should match pattern"
+
+settings_refused:
+  - id: replay with no recordings folder
+    mode: replay
+    changes: {recordings_dir: null}
+    completion: false
+    expected: replay mode needs recordings_dir
+  - id: replay with a recordings folder that does not exist
+    mode: replay
+    changes: {recordings_dir: no/such/folder}
+    completion: false
+    expected: replay mode needs recordings_dir
+  - id: replay with a model
+    mode: replay
+    changes: {extraction_model: vendor/model}
+    completion: false
+    expected: replay reads recordings by document
+  - id: replay with an injected completion
+    mode: replay
+    changes: {}
+    completion: true
+    expected: replay mode calls no model
+  - id: live with no model
+    mode: live
+    changes: {extraction_model: null}
+    completion: false
+    expected: live mode needs extraction_model
+  - id: live with a blank model
+    mode: live
+    changes: {extraction_model: " "}
+    completion: false
+    expected: extraction_model must be a model ID
+  - id: live with no key and nothing injected
+    mode: live
+    changes: {openrouter_api_key: null}
+    completion: false
+    expected: live mode needs OPENROUTER_API_KEY
+  - id: no rule logic file
+    mode: live
+    changes: {rule_logic_path: no/such/rule_logic.yaml}
+    completion: false
+    expected: "rule_logic_path: no file"
+  - id: an unknown mode
+    mode: live
+    changes: {mode: production}
+    completion: false
+    expected: "mode\\s+Input should be 'replay' or 'live'"
+  - id: a negative temperature
+    mode: live
+    changes: {temperature: -1}
+    completion: false
+    expected: "temperature\\s+Input should be greater than or equal to 0"
+
+overrides_refused:
+  - id: a blank model
+    mode: live
+    overrides: {extraction_model: " "}
+    expected: extraction_model must be a model ID
+  - id: a model that is not text
+    mode: live
+    overrides: {extraction_model: 5}
+    expected: extraction_model must be a model ID
+  - id: a negative temperature
+    mode: live
+    overrides: {temperature: -0.1}
+    expected: temperature must be a number from 0 to 2
+  - id: a temperature above OpenRouter's range
+    mode: live
+    overrides: {temperature: 2.5}
+    expected: temperature must be a number from 0 to 2
+  - id: a temperature that is not a number
+    mode: live
+    overrides: {temperature: .nan}
+    expected: temperature must be a number from 0 to 2
+  - id: a temperature given as text
+    mode: live
+    overrides: {temperature: "0.2"}
+    expected: temperature must be a number from 0 to 2
+  - id: a temperature given as a boolean
+    mode: live
+    overrides: {temperature: true}
+    expected: temperature must be a number from 0 to 2
+  - id: a zero timeout
+    mode: live
+    overrides: {timeout_seconds: 0}
+    expected: timeout_seconds must be a whole number of seconds above 0
+  - id: a fractional timeout
+    mode: live
+    overrides: {timeout_seconds: 1.5}
+    expected: timeout_seconds must be a whole number of seconds above 0
+  - id: a timeout given as text
+    mode: live
+    overrides: {timeout_seconds: "30"}
+    expected: timeout_seconds must be a whole number of seconds above 0
+  - id: a timeout given as a boolean
+    mode: live
+    overrides: {timeout_seconds: true}
+    expected: timeout_seconds must be a whole number of seconds above 0
+  - id: replay with a model
+    mode: replay
+    overrides: {extraction_model: vendor/model}
+    expected: replay reads recordings by document, so it takes no extraction_model, temperature or timeout_seconds
+  - id: replay with a temperature, even the configured one
+    mode: replay
+    overrides: {temperature: 0}
+    expected: replay reads recordings by document
+  - id: replay with a timeout
+    mode: replay
+    overrides: {timeout_seconds: 30}
+    expected: replay reads recordings by document
+
+recording_keys:
+  - id: the same request
+    changes: {}
+    expected: {same: true}
+  - id: the same temperature written as an integer
+    changes: {temperature: 0}
+    expected: {same: true}
+  - id: another model
+    changes: {model: vendor/other}
+    expected: {same: false}
+  - id: another temperature
+    changes: {temperature: 0.2}
+    expected: {same: false}
+  - id: another prompt
+    changes: {prompt: "a changed prompt"}
+    expected: {same: false}
+  - id: another document
+    changes: {text: "a policy."}
+    expected: {same: false}
+  - id: another provider endpoint
+    changes: {url: "https://other.example/v1/chat/completions"}
+    expected: {same: false}
+
+# One decision on the real policy, beside accept_regex for its two unconfirmed fields (MCC-03 and REG-01
+# thresholds) unless the decision is for one of them. codes: every issue, sorted, which may name no field.
+review_decisions:
+  - id: an agreed value is confirmed
+    rule_id: MEAL-01
+    field: thresholds
+    decision: {action: confirm}
+    expected: {outcome: confirmed, codes: [], ready: true}
+  - id: an agreed value is overridden with the same limits written another way
+    rule_id: MEAL-01
+    field: thresholds
+    decision: {action: override, value: [{value: "75.00", unit: usd}, {value: "100", unit: usd}], rationale: same limits}
+    expected: {outcome: override, codes: [], ready: true}
+  - id: a stated limit the executable rules do not hold alone is blocked
+    rule_id: MEAL-01
+    field: thresholds
+    decision: {action: override, value: [{value: "100", unit: usd}], rationale: the cap is 100}
+    expected: {outcome: override, codes: [executable_conflict], ready: false}
+  - id: a limit the clause does not state is refused
+    rule_id: MEAL-01
+    field: thresholds
+    decision: {action: override, value: [{value: "80", unit: usd}, {value: "100", unit: usd}], rationale: probe}
+    expected: {outcome: override, codes: [unsupported_value], ready: false}
+  - id: a merchant code is not a count limit
+    rule_id: MCC-03
+    field: thresholds
+    decision: {action: override, value: [{value: "5813", unit: count}], rationale: probe}
+    expected: {outcome: override, codes: [unsupported_value], ready: false}
+  - id: the word three is not an hour limit
+    rule_id: REG-01
+    field: thresholds
+    decision: {action: override, value: [{value: "3", unit: hour}], rationale: probe}
+    expected: {outcome: override, codes: [unsupported_value], ready: false}
+  - id: an unconfirmed field cannot be confirmed
+    rule_id: MCC-03
+    field: thresholds
+    decision: {action: confirm}
+    expected: {outcome: undecided, codes: [confirm_not_agreed], ready: false}
+  - id: an unconfirmed field takes the regex reading explicitly
+    rule_id: MCC-03
+    field: thresholds
+    decision: {action: accept_regex}
+    expected: {outcome: regex, codes: [], ready: true}
+  - id: an unconfirmed field takes the LLM reading explicitly
+    rule_id: REG-01
+    field: thresholds
+    decision: {action: accept_llm}
+    expected: {outcome: llm, codes: [], ready: true}
+  - id: an agreed field takes the LLM reading
+    rule_id: TECH-01
+    field: severities
+    decision: {action: accept_llm}
+    expected: {outcome: llm, codes: [], ready: true}
+  - id: removing a stated severity disagrees with the executable rule
+    rule_id: TECH-01
+    field: severities
+    decision: {action: override, value: [], rationale: probe}
+    expected: {outcome: override, codes: [executable_conflict], ready: false}
+  - id: a severity the clause does not state is refused
+    rule_id: TECH-01
+    field: severities
+    decision: {action: override, value: [medium], rationale: probe}
+    expected: {outcome: override, codes: [unsupported_value], ready: false}
+  - id: a review signal the executable rule depends on cannot be removed
+    rule_id: MCC-02
+    field: review_signal
+    decision: {action: override, value: false, rationale: probe}
+    expected: {outcome: override, codes: [unsupported_value], ready: false}
+  - id: the exact heading is a valid title override
+    rule_id: TECH-01
+    field: title
+    decision: {action: override, value: Personal electronics are not reimbursable, rationale: as written}
+    expected: {outcome: override, codes: [], ready: true}
+  - id: a title that is not the heading is refused
+    rule_id: TECH-01
+    field: title
+    decision: {action: override, value: Electronics, rationale: shorter}
+    expected: {outcome: override, codes: [unsupported_value], ready: false}
+  - id: another quote from the clause is checked against the source only
+    rule_id: TECH-01
+    field: quote
+    decision: {action: override, value: "Purchase of any of these on an expense report is a **high** exception", rationale: the operative sentence}
+    expected: {outcome: override, codes: [source_only], ready: true}
+  - id: a quote that is not in the clause is refused
+    rule_id: TECH-01
+    field: quote
+    decision: {action: override, value: Electronics are always reimbursable, rationale: probe}
+    expected: {outcome: override, codes: [unsupported_value], ready: false}
+  - id: the regex reading has no quote to accept
+    rule_id: TECH-01
+    field: quote
+    decision: {action: accept_regex}
+    expected: {outcome: agreed, codes: [no_source_value], ready: false}
+  - id: a null section is an explicit value
+    rule_id: MEAL-01
+    field: section
+    decision: {action: override, value: null, rationale: probe}
+    expected: {outcome: override, codes: [source_only], ready: true}
+  - id: an override needs a value
+    rule_id: MEAL-01
+    field: thresholds
+    decision: {action: override, rationale: probe}
+    expected: {outcome: agreed, codes: [value_required], ready: false}
+  - id: an override needs a rationale
+    rule_id: MEAL-01
+    field: thresholds
+    decision: {action: override, value: [{value: "75", unit: usd}, {value: "100", unit: usd}]}
+    expected: {outcome: agreed, codes: [rationale_required], ready: false}
+  - id: a confirmation takes no value
+    rule_id: MEAL-01
+    field: thresholds
+    decision: {action: confirm, value: [{value: "75", unit: usd}]}
+    expected: {outcome: agreed, codes: [value_not_allowed], ready: false}
+  - id: a rejection blocks approval
+    rule_id: MEAL-01
+    field: thresholds
+    decision: {action: reject, rationale: the clause is ambiguous}
+    expected: {outcome: rejected, codes: [rejected], ready: false}
+  - id: a rejection needs a rationale
+    rule_id: MEAL-01
+    field: thresholds
+    decision: {action: reject}
+    expected: {outcome: agreed, codes: [rationale_required], ready: false}

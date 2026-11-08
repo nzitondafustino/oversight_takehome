@@ -95,7 +95,7 @@ def made_up_input(case):
 def test_the_real_rules_replace_these_the_same_way_every_time(case):
     # Only these rules, built around validation, as a rule may refer to others not in the list.
     ruleset = RuleSet.model_construct(rules=tuple(RULES[name] for name in case["rule_ids"]))
-    context = build_context("northwind", case["receipts"], FIELDS, complete=case["complete"])
+    context = build_context(case["receipts"], FIELDS, complete=case["complete"])
     receipt = next(item for item in context.receipts if item.receipt_id == case["receipt_id"])
     run = lambda: resolve_replacements(
         receipt, run_checks(receipt, ruleset, FIELDS, context if case["with_context"] else None), ruleset, FIELDS
@@ -203,7 +203,7 @@ def test_no_target_established_keeps_the_split_and_everything_else():
     """A rule that lists no target for this threshold can report the split, but replaces nothing."""
     pair = [row for row in ROWS if row["receipt_id"] in {"RCP-020", "RCP-021"}]
     receipts = [item for item in CONTEXT.receipts if item.receipt_id in {row["receipt_id"] for row in pair}]
-    context = build_context("northwind", receipts, FIELDS, complete=True)
+    context = build_context(receipts, FIELDS, complete=True)
     only_gifts = RULES["TIME-03"].model_copy(update={"replaces": ()})
     rules = tuple(only_gifts if rule.rule_id == "TIME-03" else rule for rule in RULESET.rules)
     ruleset = RuleSet.model_construct(rules=rules)
@@ -216,7 +216,7 @@ def test_no_target_established_keeps_the_split_and_everything_else():
 
 def test_an_unclassified_real_receipt_does_not_lose_a_finding_to_a_rule_not_decided():
     receipts = [admit_receipt(without_answers(row), FIELDS) for row in ROWS]
-    context = build_context("northwind", receipts, FIELDS, complete=True)
+    context = build_context(receipts, FIELDS, complete=True)
     for receipt in context.receipts:
         result = run_checks(receipt, RULESET, FIELDS, context)
         resolved = resolve_replacements(receipt, result, RULESET, FIELDS)

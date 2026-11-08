@@ -1,0 +1,1095 @@
+{
+  "run": "gift-venue-rep2",
+  "model": "anthropic/claude-haiku-5.5",
+  "translation_model": "tencent/hy-mt2-30b-a3b",
+  "prompt_sha256": "5f4352298bfc618d2e3c903e04609d84bdae5a2fb59ab12f9eda2354c5cc8f3c",
+  "lines_sha256": "81ea36565f43c8ae16fe14f5bfd049ef410e3b850e73f3e971fb1dbf1fc306d9",
+  "receipts_sha256": "ac2f8f776f33e40b3efee88cc830904d22577eaf0de533a36a8768c9febadc35",
+  "key_spend_usd": {
+    "before": 0.255697028,
+    "after": 0.281675042
+  },
+  "lines": {
+    "scores": {
+      "lines": 60,
+      "accuracy": {
+        "numerator": 58,
+        "denominator": 60,
+        "value": 0.966667,
+        "wilson_95": [
+          0.886362,
+          0.990811
+        ]
+      },
+      "missing_category": {
+        "numerator": 0,
+        "denominator": 60,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.060172
+        ]
+      },
+      "missing_confidence": {
+        "numerator": 0,
+        "denominator": 60,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.060172
+        ]
+      },
+      "missing_restricted": {
+        "numerator": 0,
+        "denominator": 60,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.060172
+        ]
+      },
+      "macro": {
+        "precision": 0.987697,
+        "recall": 0.9689,
+        "f1": 0.973623
+      },
+      "per_category": {
+        "airfare": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "alcohol": {
+          "tp": 6,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.857143,
+          "recall": 1.0,
+          "f1": 0.923077
+        },
+        "clothing": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.666667
+        },
+        "computer_accessory": {
+          "tp": 3,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "food_beverage": {
+          "tp": 11,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "gambling": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "gift": {
+          "tp": 4,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "gift_card": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "ground_transport": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "health_otc": {
+          "tp": 4,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "household_goods": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "jewelry": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "laundry_service": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "office_supplies": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "other": {
+          "tp": 10,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.909091,
+          "recall": 0.909091,
+          "f1": 0.909091
+        },
+        "personal_care": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "personal_electronics": {
+          "tp": 5,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "service_fee": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "tobacco": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "restricted": {
+        "tp": 24,
+        "fp": 1,
+        "fn": 1,
+        "precision": 0.96,
+        "recall": 0.96,
+        "f1": 0.96
+      },
+      "restricted_accuracy": {
+        "numerator": 58,
+        "denominator": 60,
+        "value": 0.966667,
+        "wilson_95": [
+          0.886362,
+          0.990811
+        ]
+      },
+      "failures": {
+        "numerator": 0,
+        "denominator": 60,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.060172
+        ]
+      }
+    },
+    "by_ambiguity": {
+      "ambiguous": {
+        "cases": 8,
+        "failed": 0,
+        "strict_right": 7,
+        "acceptable_right": 8,
+        "restricted_right": 7
+      },
+      "clear": {
+        "cases": 48,
+        "failed": 0,
+        "strict_right": 48,
+        "acceptable_right": 48,
+        "restricted_right": 48
+      },
+      "indeterminate": {
+        "cases": 4,
+        "failed": 0,
+        "strict_right": 3,
+        "acceptable_right": 4,
+        "restricted_right": 3
+      }
+    },
+    "by_challenge": {
+      "alcohol_boundary": {
+        "cases": 13,
+        "failed": 0,
+        "strict_right": 13,
+        "acceptable_right": 13,
+        "restricted_right": 13
+      },
+      "control": {
+        "cases": 9,
+        "failed": 0,
+        "strict_right": 9,
+        "acceptable_right": 9,
+        "restricted_right": 9
+      },
+      "electronics_boundary": {
+        "cases": 9,
+        "failed": 0,
+        "strict_right": 9,
+        "acceptable_right": 9,
+        "restricted_right": 9
+      },
+      "gift_boundary": {
+        "cases": 7,
+        "failed": 0,
+        "strict_right": 7,
+        "acceptable_right": 7,
+        "restricted_right": 7
+      },
+      "incomplete": {
+        "cases": 5,
+        "failed": 0,
+        "strict_right": 4,
+        "acceptable_right": 5,
+        "restricted_right": 4
+      },
+      "medication_boundary": {
+        "cases": 8,
+        "failed": 0,
+        "strict_right": 7,
+        "acceptable_right": 8,
+        "restricted_right": 7
+      },
+      "merchant_misleading": {
+        "cases": 14,
+        "failed": 0,
+        "strict_right": 13,
+        "acceptable_right": 14,
+        "restricted_right": 13
+      },
+      "misleading_name": {
+        "cases": 14,
+        "failed": 0,
+        "strict_right": 13,
+        "acceptable_right": 14,
+        "restricted_right": 13
+      },
+      "multilingual": {
+        "cases": 12,
+        "failed": 0,
+        "strict_right": 12,
+        "acceptable_right": 12,
+        "restricted_right": 12
+      },
+      "out_of_taxonomy": {
+        "cases": 5,
+        "failed": 0,
+        "strict_right": 5,
+        "acceptable_right": 5,
+        "restricted_right": 5
+      },
+      "recipient": {
+        "cases": 5,
+        "failed": 0,
+        "strict_right": 5,
+        "acceptable_right": 5,
+        "restricted_right": 5
+      },
+      "service_boundary": {
+        "cases": 7,
+        "failed": 0,
+        "strict_right": 7,
+        "acceptable_right": 7,
+        "restricted_right": 7
+      }
+    },
+    "confusion_matrix": {
+      "airfare": {
+        "airfare": 1
+      },
+      "alcohol": {
+        "alcohol": 6
+      },
+      "clothing": {
+        "clothing": 1,
+        "other": 1
+      },
+      "computer_accessory": {
+        "computer_accessory": 3
+      },
+      "food_beverage": {
+        "food_beverage": 11
+      },
+      "gambling": {
+        "gambling": 1
+      },
+      "gift": {
+        "gift": 4
+      },
+      "gift_card": {
+        "gift_card": 2
+      },
+      "ground_transport": {
+        "ground_transport": 1
+      },
+      "health_otc": {
+        "health_otc": 4
+      },
+      "household_goods": {
+        "household_goods": 1
+      },
+      "jewelry": {
+        "jewelry": 1
+      },
+      "laundry_service": {
+        "laundry_service": 2
+      },
+      "office_supplies": {
+        "office_supplies": 1
+      },
+      "other": {
+        "alcohol": 1,
+        "other": 10
+      },
+      "personal_care": {
+        "personal_care": 2
+      },
+      "personal_electronics": {
+        "personal_electronics": 5
+      },
+      "service_fee": {
+        "service_fee": 1
+      },
+      "tobacco": {
+        "tobacco": 1
+      }
+    },
+    "confidence_levels": {
+      "0.1": {
+        "numerator": 4,
+        "denominator": 4,
+        "value": 1.0,
+        "wilson_95": [
+          0.510109,
+          1.0
+        ]
+      },
+      "0.3": {
+        "numerator": 1,
+        "denominator": 1,
+        "value": 1.0,
+        "wilson_95": [
+          0.206549,
+          1.0
+        ]
+      },
+      "0.5": {
+        "numerator": 3,
+        "denominator": 3,
+        "value": 1.0,
+        "wilson_95": [
+          0.438503,
+          1.0
+        ]
+      },
+      "0.7": {
+        "numerator": 18,
+        "denominator": 18,
+        "value": 1.0,
+        "wilson_95": [
+          0.824121,
+          1.0
+        ]
+      },
+      "0.9": {
+        "numerator": 34,
+        "denominator": 34,
+        "value": 1.0,
+        "wilson_95": [
+          0.898485,
+          1.0
+        ]
+      }
+    },
+    "confidence_separation": {
+      "right": 60,
+      "wrong": 0,
+      "mean_confidence_right": 0.757,
+      "mean_confidence_wrong": null,
+      "calibration": {
+        "points": 60,
+        "ece": 0.243333,
+        "brier": 0.107333,
+        "bins": [
+          {
+            "low": 0.1,
+            "high": 0.2,
+            "points": 4,
+            "mean_confidence": 0.1,
+            "accuracy": 1.0
+          },
+          {
+            "low": 0.3,
+            "high": 0.4,
+            "points": 1,
+            "mean_confidence": 0.3,
+            "accuracy": 1.0
+          },
+          {
+            "low": 0.5,
+            "high": 0.6,
+            "points": 3,
+            "mean_confidence": 0.5,
+            "accuracy": 1.0
+          },
+          {
+            "low": 0.7,
+            "high": 0.8,
+            "points": 18,
+            "mean_confidence": 0.7,
+            "accuracy": 1.0
+          },
+          {
+            "low": 0.9,
+            "high": 1.0,
+            "points": 34,
+            "mean_confidence": 0.9,
+            "accuracy": 1.0
+          }
+        ]
+      }
+    },
+    "thresholds": {
+      "0.3": {
+        "coverage": {
+          "numerator": 57,
+          "denominator": 60,
+          "value": 0.95,
+          "wilson_95": [
+            0.862995,
+            0.98285
+          ]
+        },
+        "accuracy_when_accepted": {
+          "numerator": 57,
+          "denominator": 57,
+          "value": 1.0,
+          "wilson_95": [
+            0.936861,
+            1.0
+          ]
+        },
+        "accepted_wrong": 0,
+        "set_aside_right": 3,
+        "set_aside_wrong": 0
+      },
+      "0.5": {
+        "coverage": {
+          "numerator": 56,
+          "denominator": 60,
+          "value": 0.933333,
+          "wilson_95": [
+            0.840746,
+            0.973771
+          ]
+        },
+        "accuracy_when_accepted": {
+          "numerator": 56,
+          "denominator": 56,
+          "value": 1.0,
+          "wilson_95": [
+            0.935806,
+            1.0
+          ]
+        },
+        "accepted_wrong": 0,
+        "set_aside_right": 4,
+        "set_aside_wrong": 0
+      },
+      "0.7": {
+        "coverage": {
+          "numerator": 53,
+          "denominator": 60,
+          "value": 0.883333,
+          "wilson_95": [
+            0.778212,
+            0.942323
+          ]
+        },
+        "accuracy_when_accepted": {
+          "numerator": 53,
+          "denominator": 53,
+          "value": 1.0,
+          "wilson_95": [
+            0.932418,
+            1.0
+          ]
+        },
+        "accepted_wrong": 0,
+        "set_aside_right": 7,
+        "set_aside_wrong": 0
+      },
+      "0.9": {
+        "coverage": {
+          "numerator": 35,
+          "denominator": 60,
+          "value": 0.583333,
+          "wilson_95": [
+            0.457281,
+            0.699357
+          ]
+        },
+        "accuracy_when_accepted": {
+          "numerator": 35,
+          "denominator": 35,
+          "value": 1.0,
+          "wilson_95": [
+            0.901099,
+            1.0
+          ]
+        },
+        "accepted_wrong": 0,
+        "set_aside_right": 25,
+        "set_aside_wrong": 0
+      }
+    },
+    "attributes": {
+      "recipient_name": {
+        "labelled": 60,
+        "right": 59,
+        "fabricated": 0,
+        "missed": 1,
+        "wrong_value": 0
+      },
+      "recipient_type": {
+        "labelled": 59,
+        "right": 59,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      },
+      "venue_type": {
+        "labelled": 60,
+        "right": 60,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      },
+      "item_kind": {
+        "labelled": 56,
+        "right": 54,
+        "fabricated": 0,
+        "missed": 2,
+        "wrong_value": 0
+      },
+      "essential_toiletry": {
+        "labelled": 60,
+        "right": 60,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      }
+    },
+    "safety": {
+      "failed": [],
+      "accepted_wrong_by_exc_03": [],
+      "high_confidence_wrong": [],
+      "low_confidence_right": [
+        "RB-032",
+        "RB-049",
+        "RB-050",
+        "RB-052",
+        "RB-053"
+      ],
+      "indeterminate_at_high_confidence": [],
+      "indeterminate_accepted_by_exc_03": [
+        "RB-051"
+      ],
+      "official_without_support": []
+    }
+  },
+  "receipts": {
+    "disposition": {
+      "matrix_gold_by_predicted": {
+        "flag": {
+          "flag": 6,
+          "review": 0,
+          "pass": 1
+        },
+        "review": {
+          "flag": 0,
+          "review": 1,
+          "pass": 0
+        },
+        "pass": {
+          "flag": 0,
+          "review": 0,
+          "pass": 4
+        }
+      },
+      "accuracy": {
+        "numerator": 11,
+        "denominator": 12,
+        "value": 0.916667,
+        "wilson_95": [
+          0.64612,
+          0.985135
+        ]
+      },
+      "false_pass": {
+        "numerator": 1,
+        "denominator": 8,
+        "value": 0.125,
+        "wilson_95": [
+          0.022417,
+          0.470888
+        ]
+      },
+      "missed_flag_passed": {
+        "numerator": 1,
+        "denominator": 7,
+        "value": 0.142857,
+        "wilson_95": [
+          0.02568,
+          0.513128
+        ]
+      },
+      "missed_flag_any": {
+        "numerator": 1,
+        "denominator": 7,
+        "value": 0.142857,
+        "wilson_95": [
+          0.02568,
+          0.513128
+        ]
+      },
+      "false_flag": {
+        "numerator": 0,
+        "denominator": 5,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.434482
+        ]
+      },
+      "review": {
+        "numerator": 1,
+        "denominator": 12,
+        "value": 0.083333,
+        "wilson_95": [
+          0.014865,
+          0.35388
+        ]
+      },
+      "abstention": {
+        "numerator": 0,
+        "denominator": 12,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.242494
+        ]
+      },
+      "decided": {
+        "numerator": 12,
+        "denominator": 12,
+        "value": 1.0,
+        "wilson_95": [
+          0.757506,
+          1.0
+        ]
+      },
+      "flagged_undecided": {
+        "numerator": 0,
+        "denominator": 6,
+        "value": 0.0,
+        "wilson_95": [
+          0.0,
+          0.390334
+        ]
+      }
+    },
+    "rules": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.9,
+      "f1": 0.947368
+    },
+    "exact_match": {
+      "rules": {
+        "numerator": 11,
+        "denominator": 12,
+        "value": 0.916667,
+        "wilson_95": [
+          0.64612,
+          0.985135
+        ]
+      },
+      "rules_and_lines": {
+        "numerator": 11,
+        "denominator": 12,
+        "value": 0.916667,
+        "wilson_95": [
+          0.64612,
+          0.985135
+        ]
+      }
+    },
+    "classification_accuracy": {
+      "numerator": 17,
+      "denominator": 17,
+      "value": 1.0,
+      "wilson_95": [
+        0.815682,
+        1.0
+      ]
+    },
+    "receipts": [
+      {
+        "receipt_id": "RBX-001",
+        "gold_disposition": "pass",
+        "disposition": "pass",
+        "decided": true,
+        "exceptions": {},
+        "gold_exceptions": {},
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-002",
+        "gold_disposition": "flag",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "ALC-01": {
+            "line_ids": [
+              "RBX-002-L1"
+            ],
+            "severity": "high",
+            "policy_doc": "meals-and-entertainment-policy.md"
+          }
+        },
+        "gold_exceptions": {
+          "ALC-01": {
+            "line_ids": [
+              "RBX-002-L1"
+            ],
+            "severity": "high"
+          }
+        },
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-003",
+        "gold_disposition": "flag",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "TECH-01": {
+            "line_ids": [
+              "RBX-003-L1"
+            ],
+            "severity": "high",
+            "policy_doc": "technology-and-equipment-policy.md"
+          }
+        },
+        "gold_exceptions": {
+          "TECH-01": {
+            "line_ids": [
+              "RBX-003-L1"
+            ],
+            "severity": "high"
+          }
+        },
+        "signals": [
+          "MCC-02"
+        ],
+        "gold_signals": [
+          "MCC-02"
+        ],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-004",
+        "gold_disposition": "pass",
+        "disposition": "pass",
+        "decided": true,
+        "exceptions": {},
+        "gold_exceptions": {},
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-005",
+        "gold_disposition": "flag",
+        "disposition": "pass",
+        "decided": true,
+        "exceptions": {},
+        "gold_exceptions": {
+          "GIFT-04": {
+            "line_ids": [
+              "RBX-005-L1"
+            ],
+            "severity": "critical"
+          }
+        },
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-006",
+        "gold_disposition": "pass",
+        "disposition": "pass",
+        "decided": true,
+        "exceptions": {},
+        "gold_exceptions": {},
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-007",
+        "gold_disposition": "review",
+        "disposition": "review",
+        "decided": true,
+        "exceptions": {},
+        "gold_exceptions": {},
+        "signals": [
+          "MCC-02"
+        ],
+        "gold_signals": [
+          "MCC-02"
+        ],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-008",
+        "gold_disposition": "flag",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "HEALTH-01": {
+            "line_ids": [
+              "RBX-008-L1"
+            ],
+            "severity": "medium",
+            "policy_doc": "non-reimbursable-items.md"
+          }
+        },
+        "gold_exceptions": {
+          "HEALTH-01": {
+            "line_ids": [
+              "RBX-008-L1"
+            ],
+            "severity": "medium"
+          }
+        },
+        "signals": [
+          "MCC-02"
+        ],
+        "gold_signals": [
+          "MCC-02"
+        ],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-009",
+        "gold_disposition": "flag",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "ENT-01": {
+            "line_ids": [
+              "RBX-009-L1"
+            ],
+            "severity": "medium",
+            "policy_doc": "meals-and-entertainment-policy.md"
+          }
+        },
+        "gold_exceptions": {
+          "ENT-01": {
+            "line_ids": [
+              "RBX-009-L1"
+            ],
+            "severity": "medium"
+          }
+        },
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-010",
+        "gold_disposition": "flag",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "REG-01": {
+            "line_ids": [
+              "RBX-010-L1"
+            ],
+            "severity": "high",
+            "policy_doc": "regional-addendum.md"
+          }
+        },
+        "gold_exceptions": {
+          "REG-01": {
+            "line_ids": [
+              "RBX-010-L1"
+            ],
+            "severity": "high"
+          }
+        },
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-011",
+        "gold_disposition": "pass",
+        "disposition": "pass",
+        "decided": true,
+        "exceptions": {},
+        "gold_exceptions": {},
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      },
+      {
+        "receipt_id": "RBX-012",
+        "gold_disposition": "flag",
+        "disposition": "flag",
+        "decided": true,
+        "exceptions": {
+          "GIFT-04": {
+            "line_ids": [
+              "RBX-012-L1"
+            ],
+            "severity": "critical",
+            "policy_doc": "gifts-and-awards-policy.md"
+          }
+        },
+        "gold_exceptions": {
+          "GIFT-04": {
+            "line_ids": [
+              "RBX-012-L1"
+            ],
+            "severity": "critical"
+          }
+        },
+        "signals": [],
+        "gold_signals": [],
+        "unresolved": [],
+        "open": [],
+        "uncertainty": []
+      }
+    ],
+    "attributes": {
+      "recipient_name": {
+        "labelled": 17,
+        "right": 16,
+        "fabricated": 0,
+        "missed": 1,
+        "wrong_value": 0
+      },
+      "recipient_type": {
+        "labelled": 17,
+        "right": 16,
+        "fabricated": 0,
+        "missed": 1,
+        "wrong_value": 0
+      },
+      "venue_type": {
+        "labelled": 17,
+        "right": 17,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      },
+      "item_kind": {
+        "labelled": 17,
+        "right": 16,
+        "fabricated": 0,
+        "missed": 1,
+        "wrong_value": 0
+      },
+      "essential_toiletry": {
+        "labelled": 17,
+        "right": 17,
+        "fabricated": 0,
+        "missed": 0,
+        "wrong_value": 0
+      }
+    },
+    "failed": []
+  }
+}

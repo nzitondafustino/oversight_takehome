@@ -1,0 +1,8 @@
+{
+  "policy_doc": "merchant-category-risk.md",
+  "document_sha256": "3d30b0928fe8e548f07e7e0f6ed37c49c541a115b95f8f9dd7086c45618b7a14",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "model",
+  "origin": "{\"provider\": \"openrouter\", \"url\": \"https://openrouter.ai/api/v1/chat/completions\", \"model\": \"anthropic/claude-haiku-5.5\", \"temperature\": 0.0, \"recorded_at\": \"2026-11-06T06:13:57+00:00\"}",
+  "response": "```json\n{\"rules\": [\n  {\n    \"rule_id\": \"MCC-01\",\n    \"title\": \"High-risk merchant category\",\n    \"section\": null,\n    \"severities\": [\"high\"],\n    \"review_signal\": false,\n    \"thresholds\": [],\n    \"references\": [],\n    \"quote\": \"A transaction at a high-risk MCC raises a\"\n  },\n  {\n    \"rule_id\": \"MCC-02\",\n    \"title\": \"Medium-risk merchant category\",\n    \"section\": null,\n    \"severities\": [],\n    \"review_signal\": true,\n    \"thresholds\": [],\n    \"references\": [],\n    \"quote\": \"It is always reported as its own review signal\"\n  },\n  {\n    \"rule_id\": \"MCC-03\",\n    \"title\": \"Bars and taverns\",\n    \"section\": null,\n    \"severities\": [],\n    \"review_signal\": false,\n    \"thresholds\": [],\n    \"references\": [\"ALC-01\", \"ALC-02\", \"ALC-03\"],\n    \"quote\": \"A bar (MCC 5813) serves alcohol on the premises\"\n  }\n]}\n```"
+}

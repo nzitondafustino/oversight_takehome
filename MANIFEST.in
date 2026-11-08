@@ -1,0 +1,3 @@
+# The sdist is the installable package: the test suite needs the whole checkout (cases, fixtures, data), so it stays out.
+prune tests
+global-exclude __pycache__ *.py[co]

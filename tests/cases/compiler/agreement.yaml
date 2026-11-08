@@ -193,3 +193,107 @@ refused:
   - id: a repeated rule ID
     response: '{"rules": [{"rule_id": "AA-01", "title": "One", "section": null, "severities": [], "review_signal": false, "thresholds": [], "references": [], "quote": "q"}, {"rule_id": "AA-01", "title": "One", "section": null, "severities": [], "review_signal": false, "thresholds": [], "references": [], "quote": "q"}]}'
     expected: "duplicate rule ids"
+
+# A scenario document in tests/fixtures/policy_scenarios, read by the regex and by its recorded response,
+# through the real parse_response and extract_with_llm. expected is as for cases, plus the counts.
+recorded:
+  - {id: every field agrees, scenario: agree, expected: {rules: {ZZ-01: {}}, counts: {agreed: 7, disagree: 0, unconfirmed: 0, only_regex: 0, only_llm: 0}}}
+  - {id: a different threshold, scenario: threshold_conflict, expected: {rules: {ZZ-01: {disagree: [thresholds]}}, counts: {agreed: 6, disagree: 1, unconfirmed: 0, only_regex: 0, only_llm: 0}}}
+  - {id: a different severity, scenario: severity_conflict, expected: {rules: {ZZ-01: {disagree: [severities]}}, counts: {agreed: 6, disagree: 1, unconfirmed: 0, only_regex: 0, only_llm: 0}}}
+  - {id: a rule only the regex found, scenario: llm_missed_a_rule, expected: {rules: {ZZ-01: {}, ZZ-02: only_regex}, counts: {agreed: 7, disagree: 0, unconfirmed: 0, only_regex: 1, only_llm: 0}}}
+  - {id: a rule only the LLM found, scenario: llm_added_a_rule, expected: {rules: {ZZ-01: {}, ZZ-09: only_llm}, counts: {agreed: 7, disagree: 0, unconfirmed: 0, only_regex: 0, only_llm: 1}}}
+  - {id: a quote that is not in the clause, scenario: fabricated_quote, expected: {rules: {ZZ-01: {disagree: [quote]}}, counts: {agreed: 6, disagree: 1, unconfirmed: 0, only_regex: 0, only_llm: 0}}}
+  - {id: both readings missed a number in the text, scenario: both_missed_a_number, expected: {rules: {ZZ-01: {unconfirmed: [thresholds]}}, counts: {agreed: 6, disagree: 0, unconfirmed: 1, only_regex: 0, only_llm: 0}}}
+
+recorded_refused:
+  - {id: a malformed recorded response, scenario: malformed, expected: "Invalid JSON"}
+  - {id: a document with no recording, scenario: no_recording, expected: "no recorded response for the document with sha256"}
+
+# Reviewer resolutions on a scenario's results. A resolution names its rule (ZZ-01 unless given), field and
+# value. Its clause hash is the result's own, unless `clause_hash: stale` gives one from an older clause.
+# expected: the results resolved and still unresolved, as "rule_id field", and a regex for each refusal.
+resolutions:
+  - id: the regex value settles a threshold disagreement
+    scenario: threshold_conflict
+    resolutions: [{field: thresholds, value: [{value: "200", unit: usd}]}]
+    expected: {resolved: [ZZ-01 thresholds], unresolved: [], errors: []}
+  - id: the same number written another way is accepted
+    scenario: threshold_conflict
+    resolutions: [{field: thresholds, value: [{value: "200.00", unit: usd}]}]
+    expected: {resolved: [ZZ-01 thresholds], unresolved: [], errors: []}
+  - id: the LLM's number is refused when the text does not state it
+    scenario: threshold_conflict
+    resolutions: [{field: thresholds, value: [{value: "250", unit: usd}]}]
+    expected: {resolved: [], unresolved: [ZZ-01 thresholds], errors: ["does not state the number 250"]}
+  - id: a threshold with a unit outside the vocabulary is refused
+    scenario: threshold_conflict
+    resolutions: [{field: thresholds, value: [{value: "200", unit: days}]}]
+    expected: {resolved: [], unresolved: [ZZ-01 thresholds], errors: ["unit from"]}
+  - id: a threshold that is not a list is refused
+    scenario: threshold_conflict
+    resolutions: [{field: thresholds, value: "200"}]
+    expected: {resolved: [], unresolved: [ZZ-01 thresholds], errors: ["must be a list"]}
+  - id: the severity the clause states settles a severity disagreement
+    scenario: severity_conflict
+    resolutions: [{field: severities, value: [medium]}]
+    expected: {resolved: [ZZ-01 severities], unresolved: [], errors: []}
+  - id: the LLM's severity is refused when the clause does not state it
+    scenario: severity_conflict
+    resolutions: [{field: severities, value: [high]}]
+    expected: {resolved: [], unresolved: [ZZ-01 severities], errors: ["does not state \\['high'\\]"]}
+  - id: a severity outside the vocabulary is refused
+    scenario: severity_conflict
+    resolutions: [{field: severities, value: [urgent]}]
+    expected: {resolved: [], unresolved: [ZZ-01 severities], errors: ["drawn from"]}
+  - id: a rule only the regex found is confirmed present
+    scenario: llm_missed_a_rule
+    resolutions: [{rule_id: ZZ-02, field: rule, value: present}]
+    expected: {resolved: [ZZ-02 rule], unresolved: [], errors: []}
+  - id: a rule with a heading cannot be called absent
+    scenario: llm_missed_a_rule
+    resolutions: [{rule_id: ZZ-02, field: rule, value: absent}]
+    expected: {resolved: [], unresolved: [ZZ-02 rule], errors: ["has a heading for this rule"]}
+  - id: a rule only the LLM found is confirmed absent
+    scenario: llm_added_a_rule
+    resolutions: [{rule_id: ZZ-09, field: rule, value: absent}]
+    expected: {resolved: [ZZ-09 rule], unresolved: [], errors: []}
+  - id: a rule with no heading cannot be called present
+    scenario: llm_added_a_rule
+    resolutions: [{rule_id: ZZ-09, field: rule, value: present}]
+    expected: {resolved: [], unresolved: [ZZ-09 rule], errors: ["no heading for this rule"]}
+  - id: a corrected quote from the clause settles a fabricated one
+    scenario: fabricated_quote
+    resolutions: [{field: quote, value: capped at $200 per item}]
+    expected: {resolved: [ZZ-01 quote], unresolved: [], errors: []}
+  - id: keeping the fabricated quote is refused
+    scenario: fabricated_quote
+    resolutions: [{field: quote, value: always reimbursable with approval}]
+    expected: {resolved: [], unresolved: [ZZ-01 quote], errors: ["must be in the clause"]}
+  - id: no threshold settles a number that is not a limit
+    scenario: both_missed_a_number
+    resolutions: [{field: thresholds, value: []}]
+    expected: {resolved: [ZZ-01 thresholds], unresolved: [], errors: []}
+  - id: a resolution for a clause that has since changed is stale
+    scenario: threshold_conflict
+    resolutions: [{field: thresholds, value: [{value: "200", unit: usd}], clause_hash: stale}]
+    expected: {resolved: [], unresolved: [ZZ-01 thresholds], errors: ["stale"]}
+  - id: a resolution for an agreed field is refused
+    scenario: threshold_conflict
+    resolutions: [{field: title, value: Peripheral cap}]
+    expected: {resolved: [], unresolved: [ZZ-01 thresholds], errors: ["no unresolved result"]}
+  - id: a field that cannot be resolved is refused
+    scenario: threshold_conflict
+    resolutions: [{field: colour, value: red}]
+    expected: {resolved: [], unresolved: [ZZ-01 thresholds], errors: ["no unresolved result"]}
+  - id: a second resolution for the same result is refused
+    scenario: threshold_conflict
+    resolutions: [{field: thresholds, value: [{value: "200", unit: usd}]}, {field: thresholds, value: [{value: "200", unit: usd}]}]
+    expected: {resolved: [ZZ-01 thresholds], unresolved: [], errors: ["resolved more than once"]}
+  - id: a stated number in another unit is refused
+    scenario: threshold_conflict
+    resolutions: [{field: thresholds, value: [{value: "200", unit: count}]}]
+    expected: {resolved: [], unresolved: [ZZ-01 thresholds], errors: ["states 200, but not as a limit with unit count. Its limits are: 200 usd"]}
+  - id: a number that is not written as a limit is refused
+    scenario: both_missed_a_number
+    resolutions: [{field: thresholds, value: [{value: "30", unit: count}]}]
+    expected: {resolved: [], unresolved: [ZZ-01 thresholds], errors: ["states 30, but not as a limit with unit count. Its limits are: none"]}

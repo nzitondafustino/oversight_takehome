@@ -1,13 +1,7 @@
-"""What every helper produces, and the one calculation they all share. Reads no receipt context.
+"""What helpers produce, and the lowest-total calculation they share.
 
-A helper gives one of three results: candidate findings, nothing, or undetermined when something it
-needs is not known. Undetermined is never a clean result.
-
-A breach of a cap on a total must hold at the lowest that total could be. A line that may or may not
-count toward it, such as one of unknown category, could be a discount, so a cap above that lowest
-total is left undetermined. That is a project decision: the policy does not mention discounts, and
-EXC-03 alone would leave the line out, but it also says a false accusation costs more than a missed
-review.
+A cap breach must hold at the lowest the total could be, so an unknown line that may be a discount leaves
+the cap undetermined. This is a project decision.
 """
 
 from collections.abc import Iterable, Mapping
@@ -34,7 +28,7 @@ class HelperOutcome:
 
 
 def fields_read_by(rule: CheckRule) -> list[str]:
-    """Every fact the rule reads, in order. A finding cites them all, whatever their value."""
+    """Return every fact the rule reads, in order."""
     return sorted({node.field for condition in rule.conditions() for node in walk(condition) if hasattr(node, "field")})
 
 
@@ -47,7 +41,7 @@ def make_finding(
     worked_out: Mapping[str, object] | None = None,
     replaces: tuple[ReplacementTarget, ...] = (),
 ) -> Finding:
-    """worked_out holds what a helper calculated, cited after the facts the rule read."""
+    """Build a finding citing the facts read, then what the helper worked out."""
     default = rule.title if item is None else f"{rule.title}: {item.description_raw}"
     read = [Evidence(fact=name, value=facts[name]) for name in fields_read_by(rule)]
     calculated = [Evidence(fact=f"helper.{name}", value=value) for name, value in (worked_out or {}).items()]
@@ -75,10 +69,7 @@ def _severity(rule: CheckRule, facts: Mapping[str, object]) -> Severity | None:
 
 
 def lowest_total(known: Decimal, unsettled: Iterable[LineItem]) -> Decimal | None:
-    """The least a total could be, given lines that may count toward it. None if it has no lower bound.
-
-    Only a negative line can lower it. One with no USD amount has only its sign known.
-    """
+    """Return the least a total could be, or None if it has no lower bound."""
     lowest = known
     for line in unsettled:
         if line.amount < 0:

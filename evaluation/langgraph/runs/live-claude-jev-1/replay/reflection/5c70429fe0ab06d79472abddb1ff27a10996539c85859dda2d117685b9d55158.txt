@@ -1,0 +1,1 @@
+{"verdict":"accept","reason":"The line is a gratuity charge, which is a service charge, so service_fee fits the item itself regardless of the spa merchant.","suggested_category":null,"feedback":null}

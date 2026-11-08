@@ -1,0 +1,77 @@
+{
+ "evaluation_id": "eval_6aef704a71782376b05ced5c",
+ "status": "queued",
+ "provisional": true,
+ "schema_version": "evaluation-metrics/1",
+ "result_context": "isolated_receipts",
+ "context_complete": null,
+ "classification": {
+  "available": false,
+  "reason": "no line has an expected category"
+ },
+ "disposition": {
+  "available": false,
+  "reason": "no receipt has an expected disposition"
+ },
+ "findings": {
+  "available": false,
+  "reason": "no receipt has expected findings (expected_exceptions with review_signals)"
+ },
+ "operational": {
+  "receipts": 32,
+  "not_run": 32,
+  "run": 0,
+  "evaluated": 0,
+  "execution_errors": {
+   "numerator": 0,
+   "denominator": 0,
+   "value": null,
+   "wilson_95": null
+  },
+  "execution_error_codes": {},
+  "lines": 0,
+  "coverage": {
+   "numerator": 0,
+   "denominator": 0,
+   "value": null,
+   "wilson_95": null
+  },
+  "classification_errors": {
+   "numerator": 0,
+   "denominator": 0,
+   "value": null,
+   "wilson_95": null
+  },
+  "uncertainty": {
+   "receipts": {
+    "numerator": 0,
+    "denominator": 0,
+    "value": null,
+    "wilson_95": null
+   },
+   "lines": {
+    "numerator": 0,
+    "denominator": 0,
+    "value": null,
+    "wilson_95": null
+   },
+   "by_reason": {}
+  },
+  "undetermined_receipts": {
+   "numerator": 0,
+   "denominator": 0,
+   "value": null,
+   "wilson_95": null
+  },
+  "dispositions": {
+   "flag": 0,
+   "review": 0,
+   "pass": 0
+  },
+  "latency": {
+   "receipts_timed": 0,
+   "total_ms": null,
+   "mean_per_receipt_ms": null
+  }
+ }
+}

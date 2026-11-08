@@ -48,7 +48,6 @@ templates:
     provenance: *provenance
   result: &result
     receipt_id: RCP-001
-    customer_id: northwind
     ruleset_version: v1
     disposition: flag
     findings: [*finding]
@@ -308,7 +307,7 @@ accepted:
   - id: a result can flag
     model: EvaluationResult
     data: *result
-    expected: {receipt_id: RCP-001, customer_id: northwind, ruleset_version: v1, disposition: flag}
+    expected: {receipt_id: RCP-001, ruleset_version: v1, disposition: flag}
   - id: a result needs no findings
     model: EvaluationResult
     data: {<<: *result, disposition: pass, findings: []}
@@ -407,7 +406,6 @@ refused:
 
   # Evaluation results
   - {id: an unknown disposition, model: EvaluationResult, data: {<<: *result, disposition: reject}, expected: disposition}
-  - {id: a blank customer, model: EvaluationResult, data: {<<: *result, customer_id: ""}, expected: customer_id}
   - {id: a blank ruleset version, model: EvaluationResult, data: {<<: *result, ruleset_version: ""}, expected: ruleset_version}
   - {id: a finding for another receipt, model: EvaluationResult, data: {<<: *result, findings: [{<<: *finding, receipt_id: RCP-002}]}, expected: has findings for other receipts}
   - {id: an unexpected result field, model: EvaluationResult, data: {<<: *result, surprise: 1}, expected: surprise}
@@ -433,7 +431,6 @@ left_out_refused:
   - {id: finding without source_quote, model: Finding, data: *finding, field: source_quote, expected: source_quote}
   - {id: finding without provenance, model: Finding, data: *finding, field: provenance, expected: provenance}
   - {id: result without receipt_id, model: EvaluationResult, data: *result, field: receipt_id, expected: receipt_id}
-  - {id: result without customer_id, model: EvaluationResult, data: *result, field: customer_id, expected: customer_id}
   - {id: result without ruleset_version, model: EvaluationResult, data: *result, field: ruleset_version, expected: ruleset_version}
   - {id: result without disposition, model: EvaluationResult, data: *result, field: disposition, expected: disposition}
 

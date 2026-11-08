@@ -1,0 +1,367 @@
+/**
+ * Validation configuration rules, derived only from what the API reports: the ruleset's lifecycle state
+ * (GET /v1/rulesets) and the deployment's backends and modes (GET /v1/backends). The API checks all of this
+ * again; these rules only stop a request it would certainly refuse, and say why.
+ */
+import type { BackendInfo, Backends, ClassificationModelInfo, ClassificationSetup, ExecutionMode, OrchestratorNode, RulesetSummary, ValidationClassification } from "@/api/types";
+import type { JsonObject, JsonValue } from "@/lib/losslessJson";
+import { stringifyJson } from "@/lib/losslessJson";
+
+/**
+ * What a person chooses for classification: how lines reach a model (the orchestrator), the API provider, and the
+ * model. The execution adapter a request names as its `backend` is never chosen: it follows from these (backendIdFor).
+ */
+export interface ClassificationChoice {
+  /** "direct" or "langgraph". null: the deployment's default. */
+  orchestrator: string | null;
+  /** null: the chosen model's provider, else the default model's, else the only one. */
+  provider: string | null;
+  /** Direct only. Empty: the deployment's default model, from its config.yaml. */
+  model: string;
+}
+
+export interface ValidationConfig extends ClassificationChoice {
+  rulesetId: string | null;
+  mode: ExecutionMode;
+  /** Empty: the deployment's default replay set. */
+  replaySet: string;
+  contextComplete: boolean;
+  liveConfirmed: boolean;
+}
+
+export const INITIAL_CONFIG: ValidationConfig = {
+  rulesetId: null,
+  mode: "replay",
+  orchestrator: null,
+  provider: null,
+  model: "",
+  replaySet: "",
+  // On unless the user says receipts a cross-receipt rule could need are missing from the batch.
+  contextComplete: true,
+  liveConfirmed: false,
+};
+
+// --- Rulesets ---
+
+/** POST /v1/validate (without preview) accepts only a version published for production (check_publication). */
+export function isEligibleRuleset(ruleset: RulesetSummary): boolean {
+  return ruleset.status === "published" && ruleset.publication_mode === "production";
+}
+
+export function ineligibleReason(ruleset: RulesetSummary): string {
+  if (ruleset.status === "published") return `Published for ${ruleset.publication_mode ?? "an unknown mode"}, not production`;
+  return `${ruleset.status.replace("_", " ")}: not published`;
+}
+
+/** The newest eligible version: the list is newest first. */
+export function defaultRuleset(rulesets: readonly RulesetSummary[]): RulesetSummary | undefined {
+  return rulesets.find(isEligibleRuleset);
+}
+
+// --- Modes and backends ---
+
+export interface Availability {
+  available: boolean;
+  reason?: string;
+}
+
+export const MODE_COPY: Record<ExecutionMode, { label: string; description: string }> = {
+  replay: { label: "Replay", description: "Uses recorded model responses. No provider is called and nothing new is spent. A receipt with no recorded answer is refused, never answered live." },
+  live: { label: "Live", description: "Calls the classification providers now. It may incur provider charges, and the deployment must allow it." },
+  deterministic: {
+    label: "Deterministic",
+    description: "No classifier runs, so no line gets a category. Rules that need a category stay undecided, and receipts come back for review.",
+  },
+};
+
+export function modeAvailability(backends: Backends, mode: ExecutionMode): Availability {
+  const flag = backends.execution_modes[mode];
+  if (flag === true) return { available: true };
+  if (mode === "live") return { available: false, reason: "This deployment does not allow live inference (EXPENSE_API_ALLOW_LIVE is off)." };
+  if (mode === "replay") return { available: false, reason: "This deployment has no replay sets." };
+  return { available: false, reason: "Not supported by this deployment." };
+}
+
+/** Whether one backend can run in one mode. Deterministic mode uses no backend. */
+export function backendAvailability(backend: BackendInfo, mode: ExecutionMode): Availability {
+  if (!backend.installed) return { available: false, reason: "Not installed in this deployment" };
+  if (!backend.enabled) return { available: false, reason: "Not enabled in this deployment" };
+  if (mode === "replay" && !backend.replay.supported) return { available: false, reason: "No replay support" };
+  if (mode === "replay" && !backend.replay.sets.some((set) => set.present)) return { available: false, reason: "No recorded answers" };
+  if (mode === "live" && !backend.live.permitted) return { available: false, reason: "Live use not permitted" };
+  if (mode === "live" && !backend.live.available) return { available: false, reason: "No provider credential configured" };
+  return { available: backend.available };
+}
+
+// --- Orchestrator, provider, model, and the adapter they imply ---
+
+export const DIRECT = "direct";
+export const LANGGRAPH = "langgraph";
+
+export function defaultOrchestrator(backends: Backends): string {
+  return backends.default_backend === LANGGRAPH ? LANGGRAPH : DIRECT;
+}
+
+export function orchestratorOf(choice: ClassificationChoice, backends: Backends): string {
+  return choice.orchestrator ?? defaultOrchestrator(backends);
+}
+
+/** config.yaml's direct classification model, as discovery reports it. */
+export function defaultModel(backends: Backends): ClassificationModelInfo | undefined {
+  return backends.classification_models.find((item) => item.default);
+}
+
+export function providerOf(choice: ClassificationChoice, backends: Backends): string | null {
+  if (choice.provider) return choice.provider;
+  const model = backends.classification_models.find((item) => item.model === choice.model) ?? defaultModel(backends);
+  return model?.provider ?? (backends.providers.length === 1 ? backends.providers[0]!.id : null);
+}
+
+/** The classification models discovery offers through one provider, each with the adapter its ID needs. */
+export function modelsFor(provider: string | null, backends: Backends): ClassificationModelInfo[] {
+  return backends.classification_models.filter((item) => item.provider === provider);
+}
+
+/**
+ * The execution adapter (a registered backend) or orchestrator a request names for this choice, or why there is none.
+ * Direct classification takes the adapter discovery reports for the chosen model, never one picked apart from it.
+ */
+export function backendIdFor(choice: ClassificationChoice, backends: Backends): { id: string | null; reason?: string } {
+  if (orchestratorOf(choice, backends) === LANGGRAPH) return { id: LANGGRAPH };
+  const model = choice.model.trim();
+  if (model) {
+    const info = backends.classification_models.find((item) => item.model === model);
+    return info ? { id: info.backend } : { id: null, reason: `${model} is not a classification model this deployment offers.` };
+  }
+  const fallback = defaultModel(backends);
+  if (!fallback) return { id: null, reason: "Choose a classification model: the deployment has no default for direct classification." };
+  if (providerOf(choice, backends) !== fallback.provider) return { id: null, reason: `Choose a classification model offered through ${providerName(providerOf(choice, backends), backends)}.` };
+  return { id: fallback.backend };
+}
+
+export function backendFor(choice: ClassificationChoice, backends: Backends): BackendInfo | undefined {
+  const { id } = backendIdFor(choice, backends);
+  return backends.backends.find((item) => item.id === id);
+}
+
+export function providerName(id: string | null | undefined, backends?: Backends): string {
+  if (!id) return "—";
+  return backends?.providers.find((item) => item.id === id)?.name ?? PROVIDER_LABELS[id] ?? id;
+}
+
+/** The adapter's discovered name, such as "Decisions API adapter". */
+export function adapterName(id: string | null | undefined, backends?: Backends): string {
+  if (!id) return "—";
+  return backends?.backends.find((item) => item.id === id)?.name ?? (PROTOCOL_LABELS[id] ? `${PROTOCOL_LABELS[id]} adapter` : id);
+}
+
+// Display only, for records read without discovery: the options themselves always come from GET /v1/backends.
+const PROVIDER_LABELS: Record<string, string> = { openrouter: "OpenRouter" };
+const PROTOCOL_LABELS: Record<string, string> = { chat_completions: "Chat completions", decisions: "Decisions API" };
+
+export function protocolName(protocol: string | null | undefined): string {
+  return protocol ? PROTOCOL_LABELS[protocol] ?? protocol : "—";
+}
+
+export function nodeText(node: OrchestratorNode): string {
+  return `${node.name ?? "node"}: ${providerName(node.provider)} · ${node.model ?? "no model"} (${protocolName(node.protocol)})`;
+}
+
+/**
+ * A recorded classification in one line, from the setup the API works out when read: "Direct · OpenRouter ·
+ * typesafe/jev-1.14 (Decisions API)", or LangGraph with each node. Falls back to the recorded backend.
+ */
+export function setupText(setup: ClassificationSetup | undefined, backend: string | null | undefined): string {
+  if (!setup) return backend ?? "—";
+  if (setup.orchestrator === LANGGRAPH) return `LangGraph · ${(setup.nodes ?? []).map(nodeText).join(" → ") || "no nodes recorded"}`;
+  if (setup.orchestrator === null) return "No classifier";
+  return `Direct · ${providerName(setup.provider)} · ${setup.model ?? "default model"} (${protocolName(setup.protocol)})`;
+}
+
+/** The choice in a few words, for summaries: "OpenRouter · typesafe/jev-1.14", or LangGraph. */
+export function choiceText(choice: ClassificationChoice, backends: Backends): string {
+  if (orchestratorOf(choice, backends) === LANGGRAPH) return "LangGraph";
+  const backend = backendFor(choice, backends);
+  return backend ? `${providerName(backend.provider, backends)} · ${choice.model.trim() || defaultModel(backends)?.model || "default model"}` : "—";
+}
+
+export function orchestratorName(setup: ClassificationSetup | undefined): string {
+  if (!setup) return "—";
+  return setup.orchestrator === LANGGRAPH ? "LangGraph" : setup.orchestrator === null ? "None: no classifier ran" : "Direct";
+}
+
+/**
+ * One recorded classification as labelled facts, for detail views: orchestrator, provider (or each LangGraph node),
+ * model and adapter. A record without a setup shows only its recorded backend, never a guessed provider.
+ */
+export function setupFacts(setup: ClassificationSetup | null | undefined, backend: string | null | undefined, model?: string | null): [string, string][] {
+  if (!setup) return [["Adapter (recorded backend)", backend ?? "—"], ["Classification model", model ?? "—"]];
+  if (setup.orchestrator === null) return [["Orchestrator", "None: no classifier ran"]];
+  if (setup.orchestrator === LANGGRAPH) {
+    return [["Orchestrator", "LangGraph"], ["Model nodes", setup.nodes ? setup.nodes.map(nodeText).join(" → ") : "Not recorded"]];
+  }
+  return [
+    ["Orchestrator", "Direct"],
+    ["Provider", providerName(setup.provider)],
+    ["Classification model", model ?? setup.model ?? "Not recorded"],
+    ["Adapter", adapterText(setup, backend)],
+  ];
+}
+
+/** A recorded run's orchestrator and provider, for lists: "Direct · OpenRouter", or LangGraph. */
+export function setupHeadline(setup: ClassificationSetup | undefined, backend: string | null | undefined): string {
+  if (!setup) return backend ?? "—";
+  if (setup.orchestrator === LANGGRAPH) return "LangGraph";
+  if (setup.orchestrator === null) return "No classifier";
+  return `Direct · ${providerName(setup.provider)}`;
+}
+
+/** A recorded run's execution adapter, with the backend identifier it was recorded under: "Decisions API (jev)". */
+/** A recorded run's execution adapter, by its protocol: "Decisions API", whether it recorded decisions or jev. */
+export function adapterText(setup: ClassificationSetup | undefined, backend: string | null | undefined): string {
+  if (setup?.orchestrator === LANGGRAPH) return "Per node";
+  if (!setup?.protocol) return backend ?? "—";
+  return protocolName(setup.protocol);
+}
+
+/** The adapter's own name for a recorded run, for matching runs across the rename; else the name it recorded. */
+export function adapterIdentity(setup: ClassificationSetup | undefined, backend: string | null | undefined): string | null {
+  return setup?.adapter ?? backend ?? null;
+}
+
+/**
+ * A recorded run's classification model(s), from its setup: the model, or each LangGraph node's, never the recorded
+ * label, which names adapters by the names of the day ("primary=jev:…" before the rename).
+ */
+export function modelText(setup: ClassificationSetup | undefined, label: string | null | undefined): string {
+  if (!setup) return label ?? "—";
+  if (setup.orchestrator === LANGGRAPH) return setup.nodes ? setup.nodes.map((node) => `${node.name ?? "node"}: ${node.model ?? "no model"}`).join(" → ") : label ?? "—";
+  if (setup.orchestrator === null) return "—";
+  return setup.model ?? label ?? "—";
+}
+
+/** A LangGraph orchestration runs its configured order of backends, each with its own model: no single model. */
+export function takesSingleModel(backend: BackendInfo): boolean {
+  return !Array.isArray(backend.capabilities.order);
+}
+
+/**
+ * Whether a discovered model can be chosen in this mode: its adapter must be able to run, and a live run may name only
+ * an allowed model, as the API refuses any other.
+ */
+export function modelAvailability(model: ClassificationModelInfo, backends: Backends, mode: ExecutionMode): Availability {
+  const adapter = backends.backends.find((item) => item.id === model.backend);
+  if (!adapter) return { available: false, reason: "Its adapter is not installed" };
+  const availability = backendAvailability(adapter, mode);
+  if (!availability.available) return availability;
+  if (mode === "live" && !model.allowed) return { available: false, reason: "Not allowed for live use" };
+  return { available: true };
+}
+
+/** One option's text: the model, then the adapter it needs. The provider is chosen beside it. */
+export function modelLabel(model: ClassificationModelInfo, backends: Backends): string {
+  return `${model.model} · ${adapterName(model.backend, backends)}`;
+}
+
+/** Changes the choice, clearing what the change makes stale: another orchestrator or provider resets the model. */
+export function choose<T extends ClassificationChoice>(current: T, change: Partial<ClassificationChoice>): T {
+  const next = { ...current, ...change };
+  if ("orchestrator" in change && change.orchestrator !== current.orchestrator) next.model = "";
+  if ("provider" in change && change.provider !== current.provider) next.model = "";
+  return next;
+}
+
+/** The models a live request may choose for classification: the deployment's classification allowlist. */
+export function classificationAllowlist(backends: Backends): string[] {
+  return backends.allowed_classification_models ?? backends.allowed_models;
+}
+
+/** The models a live request may choose for translation: the deployment's translation allowlist. */
+export function translationAllowlist(backends: Backends): string[] {
+  return backends.allowed_translation_models ?? backends.allowed_models;
+}
+
+/** Whether a replay set is named for this adapter, by its own name or an earlier one, as deployments name them. */
+export function isNamedFor(setName: string, backend: BackendInfo): boolean {
+  return setName === backend.id || (backend.legacy_ids ?? []).includes(setName);
+}
+
+/** Replay sets in which this backend has recorded answers. Presence, not coverage of these receipts. */
+export function replaySetsFor(backend: BackendInfo) {
+  return backend.replay.sets.filter((set) => set.present);
+}
+
+/** The set named after the backend when it has one, as the deployment ships them; else the first present. */
+export function defaultReplaySet(backend: BackendInfo): string {
+  const sets = replaySetsFor(backend);
+  return (sets.find((set) => isNamedFor(set.name, backend)) ?? sets[0])?.name ?? "";
+}
+
+// --- The request ---
+
+export function configIssues(config: ValidationConfig, backends: Backends | undefined, rulesets: readonly RulesetSummary[]): string[] {
+  const issues: string[] = [];
+  const ruleset = rulesets.find((item) => item.ruleset_id === config.rulesetId);
+  if (!ruleset) issues.push("Choose a ruleset version.");
+  else if (!isEligibleRuleset(ruleset)) issues.push("The chosen ruleset is not published for production.");
+  if (!backends) return [...issues, "Backend discovery has not loaded."];
+  const mode = modeAvailability(backends, config.mode);
+  if (!mode.available) issues.push(mode.reason ?? "This execution mode is not available.");
+  if (config.mode !== "deterministic") {
+    const resolved = backendIdFor(config, backends);
+    const backend = backends.backends.find((item) => item.id === resolved.id);
+    if (!backend) issues.push(resolved.reason ?? "Choose how lines are classified.");
+    else {
+      const availability = backendAvailability(backend, config.mode);
+      if (!availability.available) issues.push(`${backend.kind === "orchestrator" ? "LangGraph" : adapterName(backend.id, backends)}: ${availability.reason ?? "unavailable"}.`);
+      // authorize_classification: a live request may name only a model in the deployment's classification allowlist.
+      const model = config.model.trim();
+      const allowed = classificationAllowlist(backends);
+      if (config.mode === "live" && model && !allowed.includes(model)) {
+        issues.push(
+          allowed.length
+            ? `Live mode allows only these classification models: ${allowed.join(", ")}.`
+            : "Live mode allows no chosen classification model here: leave the model empty to use the default.",
+        );
+      }
+    }
+  }
+  if (config.mode === "live" && !config.liveConfirmed) issues.push("Confirm that live validation may incur provider charges.");
+  return issues;
+}
+
+/** schemas/validation.py ClassificationSelection, with only what the user chose. Deterministic mode sends none. */
+export function classificationFor(config: ValidationConfig, backends: Backends): ValidationClassification | undefined {
+  if (config.mode === "deterministic") return undefined;
+  const id = backendIdFor(config, backends).id;
+  const backend = backends.backends.find((item) => item.id === id);
+  // The adapter the chosen model needs, as discovery reports it: requests and records keep naming it as the backend.
+  const classification: ValidationClassification = { backend: id };
+  if (backend && takesSingleModel(backend) && config.model.trim()) classification.model = config.model.trim();
+  if (config.mode === "replay" && config.replaySet) classification.replay_set = config.replaySet;
+  return classification;
+}
+
+/**
+ * The POST /v1/validate body (schemas/validation.py ValidationRequest), serialized so that every receipt
+ * value, numbers included, is sent exactly as it was read.
+ */
+export function buildValidationBody(input: {
+  rulesetId: string;
+  receipts: JsonObject[];
+  config: ValidationConfig;
+  backends: Backends;
+}): string {
+  const body: JsonObject = Object.create(null);
+  body.ruleset_id = input.rulesetId;
+  body.receipts = input.receipts as JsonValue[];
+  body.context_complete = input.config.contextComplete;
+  body.execution_mode = input.config.mode;
+  const classification = classificationFor(input.config, input.backends);
+  if (classification) {
+    const selection: JsonObject = Object.create(null);
+    for (const [key, value] of Object.entries(classification)) if (value != null) selection[key] = value;
+    body.classification = selection;
+  }
+  return stringifyJson(body);
+}

@@ -1,0 +1,8 @@
+{
+  "policy_doc": "transaction-pattern-rules.md",
+  "document_sha256": "1e6613b0fe7c719098e5798bc6a652ca067d6023557b9f31749d70e616b6ad84",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "simulation",
+  "origin": "authored stand-in for a model reading, written once at authoring time: not model output",
+  "response": "{\"rules\": [{\"rule_id\": \"TIME-01\", \"title\": \"Overnight transactions\", \"section\": null, \"severities\": [], \"review_signal\": true, \"thresholds\": [{\"value\": \"0\", \"unit\": \"hour\"}, {\"value\": \"5\", \"unit\": \"hour\"}], \"references\": [], \"quote\": \"A transaction timed from 00:00 up\"}, {\"rule_id\": \"TIME-02\", \"title\": \"No associated trip\", \"section\": null, \"severities\": [], \"review_signal\": true, \"thresholds\": [], \"references\": [], \"quote\": \"An individual travel expense — declared\"}, {\"rule_id\": \"TIME-03\", \"title\": \"Split transactions\", \"section\": null, \"severities\": [\"high\"], \"review_signal\": false, \"thresholds\": [{\"value\": \"2\", \"unit\": \"count\"}, {\"value\": \"75\", \"unit\": \"usd\"}, {\"value\": \"50\", \"unit\": \"usd\"}], \"references\": [\"DOC-01\", \"MEAL-01\", \"REG-02\", \"REG-03\", \"GIFT-01\"], \"quote\": \"Two or more receipts by the\"}, {\"rule_id\": \"TIME-04\", \"title\": \"Weekend spend on a weekday trip\", \"section\": null, \"severities\": [], \"review_signal\": true, \"thresholds\": [], \"references\": [\"TIME-02\"], \"quote\": \"A transaction dated on a weekend\"}]}"
+}

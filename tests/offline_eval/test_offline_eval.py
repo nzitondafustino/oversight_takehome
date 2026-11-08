@@ -2,6 +2,9 @@
 
 import ast
 import json
+import os
+import subprocess
+import sys
 from decimal import Decimal
 from pathlib import Path
 
@@ -15,13 +18,12 @@ from expense_validator.engine import evaluation as engine_evaluation
 from expense_validator.engine.inputs import allowed_values
 from expense_validator.engine.models import Receipt
 from expense_validator.ingestion import IngestionError
-from expense_validator.offline_eval import metrics, runner
-from expense_validator.offline_eval.__main__ import main, smoke_predictions
-from expense_validator.offline_eval.dataset import load_dataset
-from expense_validator.offline_eval.predictions import LinePrediction, PredictionSet, Source, load_predictions
-from expense_validator.offline_eval.report import baseline_comparison
-from expense_validator.offline_eval.runner import evaluate_predictions
-from expense_validator.offline_eval.scenarios import built_in_scenarios, load_oracle_recipients
+from expense_validator.evaluation import metrics, policy_outputs
+from expense_validator.evaluation.cli.policy import main
+from expense_validator.evaluation.dataset import load_dataset
+from expense_validator.evaluation.predictions import LinePrediction, PredictionSet, Source, load_predictions
+from expense_validator.evaluation.policy_outputs import baseline_comparison, evaluate_predictions, evaluate_scenarios
+from expense_validator.evaluation.scenarios import Scenario, built_in_scenarios, load_oracle_recipients, smoke_predictions
 from expense_validator.policy.schema import RuleSet
 
 PATHS = load_config().paths
@@ -31,7 +33,7 @@ DATA = ROOT / "data" / "receipts.jsonl"
 SMOKE = ROOT / "evaluation" / "synthetic" / "proof_smoke.jsonl"
 RECIPIENTS = load_oracle_recipients(ROOT / "evaluation" / "oracle_recipients.yaml")
 CATEGORIES = sorted(allowed_values(FIELDS, "item.category"))
-DATASET = load_dataset(DATA, "northwind")
+DATASET = load_dataset(DATA)
 SCENARIOS = {item.key: item for item in built_in_scenarios(DATASET, RECIPIENTS, CATEGORIES)}
 
 
@@ -149,16 +151,25 @@ def run_of(key):
     return evaluate_predictions(DATASET, scenario.predictions, RULESET, FIELDS, complete=scenario.complete)
 
 
-def prediction_set(predictions, kind="synthetic", customer="northwind", model=None):
-    return PredictionSet(customer_id=customer, source=Source(kind=kind, name="T", description="test", model=model), predictions=tuple(predictions))
+def prediction_set(predictions, kind="synthetic", model=None):
+    return PredictionSet(source=Source(kind=kind, name="T", description="test", model=model), predictions=tuple(predictions))
 
 
-BASELINE = yaml.safe_load((ROOT / "evaluation" / "baseline_10_6.yaml").read_text())["scenarios"]
+RECORDED = yaml.safe_load((ROOT / "evaluation" / "baseline_10_6.yaml").read_text())["scenarios"]
+# The 10.6 figures stay as recorded. Only what the later engine corrections changed is applied over them.
+CORRECTIONS = yaml.safe_load((ROOT / "evaluation" / "engine_corrections.yaml").read_text())["baseline_10_6"]
+BASELINE = {key: {**figures, **CORRECTIONS.get(key, {})} for key, figures in RECORDED.items()}
 
 
 @pytest.mark.parametrize("key", sorted(BASELINE))
 def test_the_frozen_benchmarks_are_reproduced_on_every_figure(key):
     assert baseline_comparison({key: run_of(key)}, {key: BASELINE[key]})[key]["differs"] == {}
+
+
+def test_a_correction_names_only_figures_the_record_has():
+    for key, figures in CORRECTIONS.items():
+        assert set(figures) <= set(RECORDED[key]), key
+        assert all(RECORDED[key][name] != value for name, value in figures.items()), key
 
 
 @pytest.mark.parametrize("key", sorted(SCENARIOS))
@@ -175,7 +186,7 @@ def test_a_file_of_actual_predictions_is_measured_and_calibrated(tmp_path):
     made = [{"line_id": item.line_id, "category": item.category, "confidence": "0.9"} for answer in DATASET.answers.values() for item in answer.lines]
     made[0]["category"] = "tobacco"
     path = tmp_path / "run.json"
-    path.write_text(json.dumps({"customer_id": "northwind", "source": {"kind": "actual", "name": "real", "description": "d", "model": "m"}, "predictions": made}))
+    path.write_text(json.dumps({"source": {"kind": "actual", "name": "real", "description": "d", "model": "m"}, "predictions": made}))
     run = evaluate_predictions(DATASET, load_predictions(path), RULESET, FIELDS)
     assert run["measured_classifier_performance"] is True
     assert run["calibration"]["status"] == "evaluated"
@@ -201,13 +212,8 @@ def test_missing_predictions_stay_uncertain_and_are_counted():
 
 
 def test_a_prediction_for_a_line_not_in_the_dataset_is_refused():
-    with pytest.raises(ValueError, match="not in this customer's receipts"):
+    with pytest.raises(ValueError, match="not in these receipts"):
         evaluate_predictions(DATASET, prediction_set([LinePrediction(line_id="NOPE-L1", category="other")]), RULESET, FIELDS)
-
-
-def test_another_customers_predictions_are_refused():
-    with pytest.raises(ValueError, match="predictions are for acme"):
-        evaluate_predictions(DATASET, prediction_set([], customer="acme"), RULESET, FIELDS)
 
 
 def test_mixed_confidence_leaves_out_only_the_low_lines():
@@ -237,10 +243,10 @@ def test_secondary_fields_reach_the_engine_and_their_uncertainty_is_broken_down(
     row["baggage_delay_ref"] = "BAG-1"
     path = tmp_path / "one.jsonl"
     path.write_text(json.dumps(row) + "\n")
-    dataset = load_dataset(path, "c")
+    dataset = load_dataset(path)
     line_id = row["line_items"][0]["line_id"]
     given = {"recipient_type": "client", "venue_type": "made_up", "item_kind": "made_up"}
-    predictions = prediction_set([LinePrediction(line_id=line_id, category="personal_care", confidence="0.9", **given)], customer="c")
+    predictions = prediction_set([LinePrediction(line_id=line_id, category="personal_care", confidence="0.9", **given)])
     found = evaluate_predictions(dataset, predictions, RULESET, FIELDS)["breakdowns"]["missing_field"]
     assert set(found) == {"essential_toiletry:missing", "item_kind:unknown", "venue_type:unknown"}
 
@@ -249,7 +255,7 @@ def test_secondary_fields_reach_the_engine_and_their_uncertainty_is_broken_down(
 
 
 def smoke_run():
-    data = load_dataset(SMOKE, "synthetic-smoke")
+    data = load_dataset(SMOKE)
     return evaluate_predictions(data, smoke_predictions(data), RULESET, FIELDS)
 
 
@@ -294,12 +300,12 @@ def test_the_answers_never_reach_the_engine(monkeypatch):
     seen = []
     real = engine_evaluation.evaluate_receipts
 
-    def spy(customer_id, receipts, *args, **kwargs):
+    def spy(receipts, *args, **kwargs):
         receipts = list(receipts)
         seen.extend(receipts)
-        return real(customer_id, receipts, *args, **kwargs)
+        return real(receipts, *args, **kwargs)
 
-    monkeypatch.setattr(runner, "evaluate_receipts", spy)
+    monkeypatch.setattr(policy_outputs, "evaluate_receipts", spy)
     run_of("E")
     assert len(seen) == 32
     for receipt in seen:
@@ -308,14 +314,22 @@ def test_the_answers_never_reach_the_engine(monkeypatch):
         assert all("labels" not in line and line["category"] is None for line in dumped["line_items"])
 
 
-def test_customers_with_one_receipt_id_are_scored_apart():
-    first = load_dataset(SMOKE, "one")
-    second = load_dataset(SMOKE, "two")
+def test_a_prediction_file_written_with_a_customer_still_loads(tmp_path):
+    """Files written before customer_id was removed carry it. It decided nothing, so it is left out on reading."""
+    path = tmp_path / "old.json"
+    path.write_text(json.dumps({"customer_id": "northwind", "source": {"kind": "none", "name": "old", "description": "d"}, "predictions": []}))
+    assert load_predictions(path) == PredictionSet(source=Source(kind="none", name="old", description="d"))
+    for committed in sorted((ROOT / "evaluation").rglob("predictions.json")):
+        load_predictions(committed)
+
+
+def test_one_dataset_scored_twice_gives_the_same_result_whatever_ran_between():
+    first = load_dataset(SMOKE)
+    second = load_dataset(SMOKE)
     alone = evaluate_predictions(first, smoke_predictions(first), RULESET, FIELDS)
     evaluate_predictions(second, smoke_predictions(second), RULESET, FIELDS)
     again = evaluate_predictions(first, smoke_predictions(first), RULESET, FIELDS)
     assert json.dumps(alone, sort_keys=True, default=str) == json.dumps(again, sort_keys=True, default=str)
-    assert alone["customer_id"] == "one"
 
 
 def test_the_source_files_are_left_as_they_were(tmp_path):
@@ -342,7 +356,7 @@ def test_a_dataset_is_held_to_the_ingestion_contract(tmp_path):
     path = tmp_path / "one.jsonl"
     path.write_text(json.dumps(row) + "\n")
     with pytest.raises(IngestionError, match=f"{path}:1: .*may not carry classifier fields"):
-        load_dataset(path, "c")
+        load_dataset(path)
 
 
 def test_a_dataset_keeps_numbers_exact_and_its_answers_out_of_its_inputs(tmp_path):
@@ -351,7 +365,7 @@ def test_a_dataset_keeps_numbers_exact_and_its_answers_out_of_its_inputs(tmp_pat
     text = json.dumps(row)
     path = tmp_path / "one.jsonl"
     path.write_text(text[:-1] + ', "baggage_delay_hours": 48.200000000000000001}\n')
-    dataset = load_dataset(path, "c")
+    dataset = load_dataset(path)
     assert dataset.inputs[0].baggage_delay_hours == Decimal("48.200000000000000001")
     assert isinstance(dataset.inputs[0], Receipt)
     assert all(line.category is None for line in dataset.inputs[0].line_items)
@@ -362,7 +376,7 @@ def test_scores_do_not_depend_on_dataset_order(tmp_path):
     rows = DATA.read_text().splitlines()
     path = tmp_path / "reversed.jsonl"
     path.write_text("\n".join(reversed(rows)) + "\n")
-    flipped = load_dataset(path, "northwind")
+    flipped = load_dataset(path)
     scenario = SCENARIOS["H0"]
     first = evaluate_predictions(DATASET, scenario.predictions, RULESET, FIELDS)
     second = evaluate_predictions(flipped, scenario.predictions, RULESET, FIELDS)
@@ -405,23 +419,61 @@ def test_a_report_with_actual_predictions_says_so(tmp_path):
     made = [{"line_id": item.line_id, "category": item.category, "confidence": "0.9"} for answer in DATASET.answers.values() for item in answer.lines]
     made[0]["category"] = "tobacco"
     path = tmp_path / "run.json"
-    path.write_text(json.dumps({"customer_id": "northwind", "source": {"kind": "actual", "name": "real", "description": "d", "model": "m"}, "predictions": made}))
+    path.write_text(json.dumps({"source": {"kind": "actual", "name": "real", "description": "d", "model": "m"}, "predictions": made}))
     out = tmp_path / "out"
     assert main(["--only", "A", "--predictions", str(path), "--out", str(out)]) == 0
     assert "remains unmeasured" not in (out / "report.md").read_text()
     assert json.loads((out / "metrics.json").read_text())["real_classifier_measured"] is True
 
 
+POLICY_OUTPUT_MODULES = ("dataset.py", "predictions.py", "metrics.py", "scenarios.py", "policy_outputs.py", "report.py", "texts.py", "cli/policy.py")
+
+
 def test_the_harness_imports_nothing_that_could_call_out():
     allowed_roots = {"argparse", "collections", "dataclasses", "decimal", "hashlib", "json", "math", "pathlib", "pydantic", "sys", "typing", "yaml", "expense_validator"}
     package = Path(metrics.__file__).parent
-    for path in package.glob("*.py"):
-        for node in ast.walk(ast.parse(path.read_text())):
+    for module in POLICY_OUTPUT_MODULES:
+        for node in ast.walk(ast.parse((package / module).read_text())):
             names = [item.name for item in node.names] if isinstance(node, ast.Import) else [node.module] if isinstance(node, ast.ImportFrom) else []
             for name in names:
-                assert name.split(".")[0] in allowed_roots, (path.name, name)
+                assert name.split(".")[0] in allowed_roots, (module, name)
+                # Nor through the project: no classifier, translator or compiler call.
+                assert not name.startswith(("expense_validator.classification", "expense_validator.normalization", "expense_validator.compiler.llm_extract")), (module, name)
             if isinstance(node, ast.ImportFrom):
                 assert "agreement" not in (node.module or "")
+
+
+# --- Called from Python ---
+
+
+def test_loading_the_policy_output_evaluation_loads_no_classifier_and_no_client():
+    code = "import sys; import expense_validator.evaluation.policy_outputs, expense_validator.evaluation.report; print([m for m in sys.modules if m.startswith(('expense_validator.classification', 'expense_validator.normalization', 'openrouter', 'httpx'))])"
+    loaded = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True, env={**os.environ, "PYTHONPATH": str(ROOT / "src")}).stdout
+    assert loaded.strip() == "[]"
+
+
+def test_the_command_writes_what_the_functions_return(tmp_path):
+    """A caller gets from evaluate_scenarios what the command line writes, with no argument parsing or files."""
+    runs = evaluate_scenarios(DATASET, [SCENARIOS["A"], SCENARIOS["H0"]], RULESET, FIELDS)
+    assert list(runs) == ["A", "H0"]
+    assert main(["--only", "A", "H0", "--out", str(tmp_path)]) == 0
+    written = json.loads((tmp_path / "metrics.json").read_text())["scenarios"]
+    for key, run in runs.items():
+        assert json.loads(json.dumps({name: value for name, value in run.items() if name != "receipts"}, sort_keys=True, default=str)) == written[key]
+        assert [json.loads(line) for line in (tmp_path / "receipts" / f"{key}.jsonl").read_text().splitlines()] == json.loads(json.dumps(run["receipts"], default=str))
+
+
+def test_two_scenarios_with_one_name_are_refused():
+    again = Scenario("A", SCENARIOS["B"].predictions)
+    with pytest.raises(ValueError, match="the name A is already a scenario"):
+        evaluate_scenarios(DATASET, [SCENARIOS["A"], again], RULESET, FIELDS)
+
+
+def test_a_prediction_file_named_as_a_scenario_is_refused(tmp_path):
+    path = tmp_path / "run.json"
+    path.write_text(SCENARIOS["A"].predictions.model_dump_json())
+    with pytest.raises(ValueError, match=r"run\.json: the name A is already a scenario"):
+        main(["--only", "A", "--predictions", str(path), "--out", str(tmp_path / "out")])
 
 
 def test_the_oracle_recipients_are_the_ones_the_engine_tests_use():

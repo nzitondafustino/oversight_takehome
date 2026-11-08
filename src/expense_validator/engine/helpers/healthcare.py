@@ -1,7 +1,4 @@
-"""HEALTH-01: prescription medication is not reimbursable, and OTC medication has a cap per trip.
-
-These are plain functions over a job: one helper reads them, and they hold no state of their own.
-"""
+"""HEALTH-01: prescription medication, and the OTC cap per trip."""
 
 from decimal import Decimal
 
@@ -17,14 +14,12 @@ def _is_otc(line: LineItem) -> bool:
 
 
 def _could_be_medication(job: HelperJob, line: LineItem) -> bool:
-    """For a line not known to be medication. Prescription medication is outside the cap either way."""
     if line.item_kind == "prescription_medication":
         return False
     return not job.category_known(line) or (line.item_kind is not None and not job.known("item.item_kind", line.item_kind))
 
 
 def _sort_lines(job: HelperJob) -> tuple[list[LineItem], list[LineItem], list[Undetermined]]:
-    """This receipt's prescription purchases, its OTC medication, and the lines that may be either."""
     prescriptions, medication, undetermined = [], [], []
     for line in job.receipt.line_items:
         if line.item_kind == "prescription_medication":
@@ -40,10 +35,7 @@ def _sort_lines(job: HelperJob) -> tuple[list[LineItem], list[LineItem], list[Un
 
 
 def _trip_standing(job: HelperJob) -> tuple[bool, str, bool]:
-    """Whether the trip's OTC total is over the cap, why that is said, and whether anything in it is unclear.
-
-    Each employee has their own allowance on a trip, a project decision. Trip IDs need not be unique to one.
-    """
+    """Return the trip's OTC standing. Each employee has their own allowance, a project decision."""
     lines = [
         line
         for other in job.same_employee()

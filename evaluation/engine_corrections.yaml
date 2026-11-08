@@ -1,0 +1,22 @@
+# What the policy-engine corrections of 2026-11-07 changed in frozen records, which stay as written.
+#
+# Those corrections: a rule that known facts rule out is settled whatever an unknown category is
+# (checks.py); MEAL-01 ignores the dates of receipts known not to be meals; TIME-03 is a split of the
+# qualifying receipts, each at or below the threshold, is tried only where a receipt could qualify, and
+# takes the meal cap from the whole day; and a receipt with open questions alone is a provisional pass
+# (decided false), as EXC-01 gives no review for them.
+#
+# Tests compare the harness with each record after these changes, and with nothing else changed.
+
+# baseline_10_6.yaml. Only F, the oracle with complete=False, moves. RCP-020 and RCP-021 are a split
+# whatever receipts are missing, so they flag, and receipts with only open questions are passes: every
+# disposition now matches the answers. A to E, with every receipt, do not move.
+baseline_10_6:
+  F: {flag: 18, review: 5, pass: 9, accuracy: 32, decided: 15}
+
+# jev/runs/first-run/receipts.jsonl. Rules no longer open on a receipt because known facts rule them
+# out whatever the unknown category is: GIFT-03 needs an employee recipient, LAUNDRY-01 a trip under
+# four nights, and TECH-02 a unit price above $200.
+jev_first_run:
+  RCP-017:
+    settled: [GIFT-03, LAUNDRY-01, TECH-02]

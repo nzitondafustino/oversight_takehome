@@ -1,8 +1,4 @@
-"""Runtime configuration checks, independent of policy documents and compilation.
-
-PolicyEngine supplies an immutable snapshot; these functions validate compatibility without
-admitting receipts or retaining any customer state.
-"""
+"""Validate runtime ruleset and catalog compatibility, without receipts or policy documents."""
 
 from collections.abc import Mapping
 from typing import get_args
@@ -26,7 +22,7 @@ def _strings(value: object, name: str) -> tuple[str, ...]:
 
 
 def validate_catalog(fields: Mapping[str, Mapping]) -> None:
-    """Check the catalog shapes consumed by admission and helpers, without reading any receipts."""
+    """Validate the field catalog shapes admission and helpers read."""
     for name, field in fields.items():
         if not isinstance(field, Mapping):
             raise ValueError(f"{name} must be a field catalog mapping")
@@ -65,7 +61,7 @@ def validate_catalog(fields: Mapping[str, Mapping]) -> None:
 
 
 def validate_rules(ruleset: RuleSet, fields: Mapping[str, Mapping]) -> None:
-    """Check runtime contracts, not policy-source agreement or compiler heuristics."""
+    """Validate the ruleset's runtime contracts against the catalog."""
     evaluation.disposition_directive(ruleset)
     active = [rule for rule in ruleset.rules if rule.status == "active"]
     directives = {}

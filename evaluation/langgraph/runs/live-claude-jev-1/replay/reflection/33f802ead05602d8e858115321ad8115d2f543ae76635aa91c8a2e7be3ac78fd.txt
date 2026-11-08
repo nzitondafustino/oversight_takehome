@@ -1,0 +1,1 @@
+{"verdict":"accept","reason":"The line states a lunch entree at a restaurant, which is a meal and fits food_beverage; the recipient attributes are not part of the category judgment and the line supports the meal classification.","suggested_category":null,"feedback":null}

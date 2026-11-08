@@ -1,0 +1,8 @@
+{
+  "policy_doc": "severity_conflict.md",
+  "document_sha256": "07fac90fa13c7982a88faa13f7d487ef3d1b6df185080cb598d252f147cc7665",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "simulation",
+  "origin": "hand-written scenario response",
+  "response": "{\"rules\": [{\"rule_id\": \"ZZ-01\", \"title\": \"Peripheral cap\", \"section\": \"Limits\", \"severities\": [\"high\"], \"review_signal\": false, \"thresholds\": [{\"value\": \"200\", \"unit\": \"usd\"}], \"references\": [\"EXC-02\"], \"quote\": \"capped at $200 per item\"}]}"
+}

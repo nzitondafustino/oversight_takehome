@@ -1,7 +1,4 @@
-"""DOC-03 and REG-04: what a receipt must declare or record. Plain functions over a job.
-
-The table below comes from the policy text, as the rule schema has no place for it.
-"""
+"""DOC-03 and REG-04 helpers."""
 
 from expense_validator.engine.helpers.common import HelperOutcome
 from expense_validator.engine.helpers.context import HelperJob
@@ -37,7 +34,7 @@ def _expense_type_mismatch(job: HelperJob) -> HelperOutcome:
 
 
 def _vat_threshold(job: HelperJob) -> HelperOutcome:
-    """The data holds no VAT number, and REG-04 says to treat that as missing, so only the amount decides."""
+    """REG-04: the data holds no VAT number, which the rule treats as missing."""
     receipt = job.receipt
     above = job.param("above_eur")
     if receipt.currency == "EUR":

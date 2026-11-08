@@ -1,0 +1,136 @@
+{
+ "items": [
+  {
+   "extraction_id": "ext_6aef74c512548bd292ef54c7",
+   "status": "review_required",
+   "documents": [
+    {
+     "document_id": "doc_6aef74c512548bd292ef54be",
+     "revision": 1,
+     "filename": "approval-and-exception-handling.md",
+     "content_sha256": "94de7aed26ad781ce50f80560bb0e54c81b0df6598e2ea1b676bc044ec2d858c",
+     "reading_error": null
+    },
+    {
+     "document_id": "doc_6aef74c512548bd292ef54bf",
+     "revision": 1,
+     "filename": "gifts-and-awards-policy.md",
+     "content_sha256": "cf97894bcae77330a374d43fea16703cc3ccd0ac30b9b40a1b8fc1668b9657f9",
+     "reading_error": null
+    },
+    {
+     "document_id": "doc_6aef74c512548bd292ef54c0",
+     "revision": 1,
+     "filename": "meals-and-entertainment-policy.md",
+     "content_sha256": "8f6713be91c1ae6d8848e66e36aae4fac4a742bafbc2a4547d25ce4ae68fffc1",
+     "reading_error": null
+    },
+    {
+     "document_id": "doc_6aef74c512548bd292ef54c1",
+     "revision": 1,
+     "filename": "merchant-category-risk.md",
+     "content_sha256": "3d30b0928fe8e548f07e7e0f6ed37c49c541a115b95f8f9dd7086c45618b7a14",
+     "reading_error": null
+    },
+    {
+     "document_id": "doc_6aef74c512548bd292ef54c2",
+     "revision": 1,
+     "filename": "non-reimbursable-items.md",
+     "content_sha256": "57bc63c1b27ad4e9a3129b97f0162250542ea857f98e33f44002bfbaed7e735b",
+     "reading_error": null
+    },
+    {
+     "document_id": "doc_6aef74c512548bd292ef54c3",
+     "revision": 1,
+     "filename": "receipt-documentation-requirements.md",
+     "content_sha256": "2db168ba4b1a6a7006ed9f71b4f710fa0bbf311e9236f85315b4f79432f597bb",
+     "reading_error": null
+    },
+    {
+     "document_id": "doc_6aef74c512548bd292ef54c4",
+     "revision": 1,
+     "filename": "regional-addendum.md",
+     "content_sha256": "6a5c61b3f7e366be98d9fe0ec143c3d161fa42e40894819c2b580972a6d541aa",
+     "reading_error": null
+    },
+    {
+     "document_id": "doc_6aef74c512548bd292ef54c5",
+     "revision": 1,
+     "filename": "technology-and-equipment-policy.md",
+     "content_sha256": "9d09346fa6b4008d6d561cb7d9d55595d71d56a8fa1d2ce6f953b6454721003d",
+     "reading_error": null
+    },
+    {
+     "document_id": "doc_6aef74c512548bd292ef54c6",
+     "revision": 1,
+     "filename": "transaction-pattern-rules.md",
+     "content_sha256": "1e6613b0fe7c719098e5798bc6a652ca067d6023557b9f31749d70e616b6ad84",
+     "reading_error": null
+    }
+   ],
+   "provenance": {
+    "execution_mode": "replay",
+    "recording_set": "live",
+    "recorded_with": null,
+    "reading_kind": "model",
+    "extraction_model": null,
+    "temperature": null,
+    "timeout_seconds": null,
+    "overrides": [],
+    "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690"
+   },
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "output_sha256": "f6af5ff7c4ead5ec187f5811956741498cb4d8862bc81f8b0150a921c21fddf0",
+   "candidate_ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+   "result_sha256": "be7f72d8091f277876882e07684c5a5ed60b69133804d2d608a9637383e9f994",
+   "ready_for_approval": false,
+   "blockers": [
+    "unresolved: merchant-category-risk.md MCC-03 thresholds is unconfirmed",
+    "unresolved: regional-addendum.md REG-01 thresholds is unconfirmed",
+    "unresolved: technology-and-equipment-policy.md TECH-01 quote is disagree",
+    "unresolved: transaction-pattern-rules.md TIME-03 thresholds is disagree"
+   ],
+   "agreement_summary": {
+    "documents": 9,
+    "rules": 41,
+    "rules_agreed": 37,
+    "rules_resolved": 0,
+    "rules_needing_review": 4,
+    "fields": {
+     "agreed": 283,
+     "disagree": 2,
+     "unconfirmed": 2,
+     "only_regex": 0,
+     "only_llm": 0
+    },
+    "resolution_errors": [],
+    "reading_errors": 0
+   },
+   "comparison_count": 287,
+   "reviews": [
+    {
+     "review_id": "rev_6aef74c612548bd292ef54c8",
+     "review_sha256": "fc9e79ba85ffb2d4c1574fe0ef34420652c5118a7776542fa981c3229e37618f",
+     "policy": "exceptions_only",
+     "ready_for_approval": false,
+     "remaining": 3,
+     "error_issues": 0,
+     "created_at": "2026-11-07T18:58:14.102000Z"
+    },
+    {
+     "review_id": "rev_6aef74c612548bd292ef54c9",
+     "review_sha256": "3d80d11d1b0725c5fc7e357c081153a2074c87d8e3a9744fc479df37004c0bcd",
+     "policy": "exceptions_only",
+     "ready_for_approval": true,
+     "remaining": 0,
+     "error_issues": 0,
+     "created_at": "2026-11-07T18:58:14.199000Z"
+    }
+   ],
+   "created_at": "2026-11-07T18:58:13.990000Z"
+  }
+ ],
+ "total": 1,
+ "limit": 20,
+ "offset": 0
+}

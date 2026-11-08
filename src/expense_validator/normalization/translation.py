@@ -1,8 +1,4 @@
-"""Optional English translation behind a small interface, so a provider can be swapped or left out.
-
-Whichever translator is used, what it returns is checked here. A translation that fails the
-checks is recorded as failed, and the normalized text stays available to whoever reads it.
-"""
+"""Optional English translation behind a small interface, with each result checked."""
 
 import re
 import unicodedata
@@ -18,6 +14,7 @@ from openrouter.utils import BackoffStrategy, RetryConfig
 
 from expense_validator.compiler.llm_extract import cached
 from expense_validator.config import Config
+from expense_validator.exceptions import NOT_RECORDED, TranslationError
 from expense_validator.normalization.text import normalize_text
 
 # not_requested: translation is off. skipped: nothing to do, as the text is English or empty.
@@ -32,18 +29,14 @@ Note that you should only output the translated result without any additional ex
 RETRIES = RetryConfig("backoff", BackoffStrategy(500, 5_000, 1.5, 30_000), True)
 
 
-class TranslationError(Exception):
-    """An expected failure to translate. Any other exception from a translator is a bug, and is raised."""
-
-
 class Translator(Protocol):
     def translate(self, text: str, source_language: str) -> str:
-        """English for this text, or TranslationError."""
+        """Return English text, or raise TranslationError."""
         ...
 
 
 class NoOpTranslator:
-    """Translation switched off. It has no text to give, so nothing can pass for a translation."""
+    """Translation switched off."""
 
     def translate(self, text: str, source_language: str) -> str:
         raise TranslationError("translation is switched off")
@@ -51,7 +44,7 @@ class NoOpTranslator:
 
 @dataclass(frozen=True)
 class LlmTranslator:
-    """Translates through a `complete` function, so tests need no network and any model can be used."""
+    """Translate through a completion function."""
 
     complete: Callable[[str, str], str]
 
@@ -62,7 +55,7 @@ class LlmTranslator:
 
 
 def openrouter_completion(client: OpenRouter, model: str, temperature: float) -> Callable[[str, str], str]:
-    """A `complete` function for one model, through the OpenRouter SDK. This sends the text to OpenRouter."""
+    """Return a translation completion function through the OpenRouter SDK."""
 
     def complete(prompt: str, text: str) -> str:
         try:
@@ -83,7 +76,7 @@ def openrouter_completion(client: OpenRouter, model: str, temperature: float) ->
 
 
 def response_facts(result: ChatResult, content: object) -> str:
-    """What a provider said about a response with no text. Quotes no text. The generation ID finds the provider."""
+    """Describe a response with no text, without quoting any text."""
     usage = result.usage
     return (
         f"content_type={type(content).__name__} finish_reason={result.choices[0].finish_reason} "
@@ -92,11 +85,33 @@ def response_facts(result: ChatResult, content: object) -> str:
     )
 
 
-def build_translator(config: Config) -> Translator:
-    """The translator these settings ask for. Asking for one that cannot work is refused, not ignored."""
+def replay_only(missing: list[str], error: type[Exception]) -> Callable[[str, str], str]:
+    """Return a completion function that records each request as missing and fails."""
+
+    def refuse(prompt: str, text: str) -> str:
+        missing.append(text)
+        raise error(NOT_RECORDED)
+
+    return refuse
+
+
+def build_translator(config: Config, *, replay: list[str] | None = None) -> Translator:
+    """Return the translator the settings ask for.
+
+    Args:
+        config: Project configuration.
+        replay: If given, answer only from the cache and record each miss here.
+
+    Raises:
+        ValueError: If translation is enabled but cannot run.
+    """
     settings = config.translation
     if not settings.enabled:
         return NoOpTranslator()
+    if replay is not None:
+        if not settings.model:
+            raise ValueError("translation is enabled, so set translation.model in config.yaml")
+        return LlmTranslator(cached(replay_only(replay, TranslationError), settings.model, config.paths.llm_cache))
     if config.openrouter_api_key is None or not settings.model:
         raise ValueError("translation is enabled, so set OPENROUTER_API_KEY in .env and translation.model in config.yaml")
     client = OpenRouter(
@@ -115,7 +130,7 @@ class TranslationOutcome(NamedTuple):
 
 
 def translate_description(text: str, language: str, translator: Translator) -> TranslationOutcome:
-    """What became of translating one normalized description. A failure is an outcome, not an exception."""
+    """Translate one normalized description. A failure is an outcome, not an exception."""
     if isinstance(translator, NoOpTranslator):
         return TranslationOutcome("not_requested")
     if not text or _is_english(language):
@@ -135,7 +150,7 @@ def _is_english(language: str) -> bool:
 
 
 def _problem_with(text: str, result: object) -> str | None:
-    """What can be checked without knowing the language. These messages quote no text."""
+    """Return why a translation fails language-independent checks, or None."""
     if not isinstance(result, str):
         return f"translator returned {type(result).__name__}, not text"
     if not normalize_text(result):
@@ -148,5 +163,5 @@ def _problem_with(text: str, result: object) -> str | None:
 
 
 def _numbers(text: str) -> list[str]:
-    """Each run of digits, so 0,2l and 0.2 l agree, and so do full-width and plain digits."""
+    """Return the digit runs in text, comparing full-width and plain digits alike."""
     return sorted(re.findall(r"\d+", unicodedata.normalize("NFKC", text)))

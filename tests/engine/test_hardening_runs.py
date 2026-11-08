@@ -9,4 +9,4 @@ from expense_validator.engine.inputs import admit_receipt
 
 def unclassified_run():
     receipts = [admit_receipt(without_answers(row), FIELDS) for row in ROWS]
-    return evaluate_receipts("northwind", receipts, RULESET, FIELDS, complete=False)
+    return evaluate_receipts(receipts, RULESET, FIELDS, complete=False)

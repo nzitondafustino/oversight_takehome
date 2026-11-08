@@ -236,16 +236,17 @@ cases:
       - {<<: *gifts, receipt_id: R2, line_items: [*client_30]}
     expected:
       R1: {disposition: flag, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: {rule_ids: [GIFT-03, GIFT-04, TIME-03], readings: 3}}
-      R2: {disposition: review, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: null}
-  # The same, but TIME-03 cannot be decided on a partial context, so the client reading proves nothing.
-  - id: the same split is no proof in an incomplete context
+      R2: {disposition: pass, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: null}
+  # The same on a partial context. A receipt not seen can only add to the recipient's total, never take
+  # either of these out of the split, so the client reading still flags and the proof stands.
+  - id: the same split is a proof in an incomplete context too, as no receipt not seen can undo it
     complete: false
     receipts:
       - {<<: *gifts, line_items: [{<<: *gift_40, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
       - {<<: *gifts, receipt_id: R2, line_items: [*client_30]}
     expected:
-      R1: {disposition: review, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: null}
-      R2: {disposition: review, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: null}
+      R1: {disposition: flag, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: {rule_ids: [GIFT-03, GIFT-04, TIME-03], readings: 3}}
+      R2: {disposition: pass, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: null}
   - id: two unknown receipts at one merchant have a compliant reading on each if they are not split
     complete: true
     receipts:
@@ -255,11 +256,12 @@ cases:
       R1: {disposition: review, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: null}
       R2: {disposition: review, decided: false, active: [], rules: {TIME-03: undetermined}, inevitable: null}
   # MEAL-01 is over in every way TIME-03 resolves, but no recipient type decides that, so nothing is read.
+  # The unknown $40 line could be meal spend, taking R2 to $80 and out of a split, or not, leaving $40 in one.
   - id: a day breach TIME-03 could replace is no proof, as no reading of a recipient type decides it
     complete: true
     receipts:
       - {<<: *meal, line_items: [{<<: *line, line_id: L1, category: food_beverage, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
-      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, line_id: L2, category: food_beverage, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *line, line_id: L3, category: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+      - {<<: *meal, receipt_id: R2, line_items: [{<<: *line, line_id: L2, category: food_beverage, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *line, line_id: L3, category: null, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
     expected:
       R1: {disposition: review, decided: false, active: [], unresolved: [MEAL-01], inevitable: null}
       R2: {disposition: review, decided: false, active: [], unresolved: [MEAL-01], inevitable: null}

@@ -136,7 +136,6 @@ def test_every_answer_in_the_data_fits_a_result(row):
     ]
     built = EvaluationResult(
         receipt_id=row["receipt_id"],
-        customer_id="northwind",
         ruleset_version="v1",
         disposition=labels["disposition"],
         findings=findings,

@@ -1,0 +1,1535 @@
+{
+ "evaluation_id": "eval_6aef704a71782376b05ced5a",
+ "status": "completed",
+ "provisional": false,
+ "schema_version": "evaluation-metrics/1",
+ "result_context": "dataset",
+ "context_complete": true,
+ "classification": {
+  "available": true,
+  "lines": 79,
+  "outcomes": {
+   "correct": 79,
+   "incorrect": 0,
+   "missing": 0,
+   "classification_error": 0,
+   "execution_error": 0
+  },
+  "accuracy": {
+   "numerator": 79,
+   "denominator": 79,
+   "value": 1.0,
+   "wilson_95": [
+    0.953629,
+    1.0
+   ]
+  },
+  "accuracy_when_predicted": {
+   "numerator": 79,
+   "denominator": 79,
+   "value": 1.0,
+   "wilson_95": [
+    0.953629,
+    1.0
+   ]
+  },
+  "coverage": {
+   "numerator": 79,
+   "denominator": 79,
+   "value": 1.0,
+   "wilson_95": [
+    0.953629,
+    1.0
+   ]
+  },
+  "macro": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "per_category": {
+   "alcohol": {
+    "tp": 7,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 7
+   },
+   "clothing": {
+    "tp": 2,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 2
+   },
+   "computer_accessory": {
+    "tp": 4,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 4
+   },
+   "food_beverage": {
+    "tp": 32,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 32
+   },
+   "gift": {
+    "tp": 2,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 2
+   },
+   "gift_card": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 1
+   },
+   "ground_transport": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 1
+   },
+   "health_otc": {
+    "tp": 2,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 2
+   },
+   "household_goods": {
+    "tp": 3,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 3
+   },
+   "jewelry": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 1
+   },
+   "laundry_service": {
+    "tp": 2,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 2
+   },
+   "lodging": {
+    "tp": 2,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 2
+   },
+   "office_supplies": {
+    "tp": 2,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 2
+   },
+   "other": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 1
+   },
+   "personal_care": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 1
+   },
+   "personal_electronics": {
+    "tp": 3,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 3
+   },
+   "service_fee": {
+    "tp": 11,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 11
+   },
+   "software_subscription": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 1
+   },
+   "tobacco": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 1
+   }
+  },
+  "confusion_matrix": {
+   "rows": [
+    "alcohol",
+    "clothing",
+    "computer_accessory",
+    "food_beverage",
+    "gift",
+    "gift_card",
+    "ground_transport",
+    "health_otc",
+    "household_goods",
+    "jewelry",
+    "laundry_service",
+    "lodging",
+    "office_supplies",
+    "other",
+    "personal_care",
+    "personal_electronics",
+    "service_fee",
+    "software_subscription",
+    "tobacco"
+   ],
+   "columns": [
+    "alcohol",
+    "clothing",
+    "computer_accessory",
+    "food_beverage",
+    "gift",
+    "gift_card",
+    "ground_transport",
+    "health_otc",
+    "household_goods",
+    "jewelry",
+    "laundry_service",
+    "lodging",
+    "office_supplies",
+    "other",
+    "personal_care",
+    "personal_electronics",
+    "service_fee",
+    "software_subscription",
+    "tobacco"
+   ],
+   "counts": {
+    "alcohol": {
+     "alcohol": 7,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "clothing": {
+     "alcohol": 0,
+     "clothing": 2,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "computer_accessory": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 4,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "food_beverage": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 32,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "gift": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 2,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "gift_card": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 1,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "ground_transport": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 1,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "health_otc": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 2,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "household_goods": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 3,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "jewelry": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 1,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "laundry_service": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 2,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "lodging": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 2,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "office_supplies": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 2,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "other": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 1,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "personal_care": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 1,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "personal_electronics": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 3,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "service_fee": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 11,
+     "software_subscription": 0,
+     "tobacco": 0
+    },
+    "software_subscription": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 1,
+     "tobacco": 0
+    },
+    "tobacco": {
+     "alcohol": 0,
+     "clothing": 0,
+     "computer_accessory": 0,
+     "food_beverage": 0,
+     "gift": 0,
+     "gift_card": 0,
+     "ground_transport": 0,
+     "health_otc": 0,
+     "household_goods": 0,
+     "jewelry": 0,
+     "laundry_service": 0,
+     "lodging": 0,
+     "office_supplies": 0,
+     "other": 0,
+     "personal_care": 0,
+     "personal_electronics": 0,
+     "service_fee": 0,
+     "software_subscription": 0,
+     "tobacco": 1
+    }
+   }
+  },
+  "restricted": {
+   "tp": 21,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0,
+   "lines": 79
+  }
+ },
+ "disposition": {
+  "available": true,
+  "receipts": 32,
+  "evaluated": 32,
+  "execution_errors": 0,
+  "accuracy": {
+   "numerator": 32,
+   "denominator": 32,
+   "value": 1.0,
+   "wilson_95": [
+    0.892821,
+    1.0
+   ]
+  },
+  "accuracy_when_evaluated": {
+   "numerator": 32,
+   "denominator": 32,
+   "value": 1.0,
+   "wilson_95": [
+    0.892821,
+    1.0
+   ]
+  },
+  "per_disposition": {
+   "flag": {
+    "tp": 18,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 18
+   },
+   "review": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 5
+   },
+   "pass": {
+    "tp": 9,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 9
+   }
+  },
+  "matrix_gold_by_predicted": {
+   "flag": {
+    "flag": 18,
+    "review": 0,
+    "pass": 0
+   },
+   "review": {
+    "flag": 0,
+    "review": 5,
+    "pass": 0
+   },
+   "pass": {
+    "flag": 0,
+    "review": 0,
+    "pass": 9
+   }
+  },
+  "execution_errors_by_gold": {
+   "flag": 0,
+   "review": 0,
+   "pass": 0
+  },
+  "undetermined": {
+   "numerator": 1,
+   "denominator": 32,
+   "value": 0.03125,
+   "wilson_95": [
+    0.005538,
+    0.157443
+   ]
+  },
+  "false_pass": {
+   "numerator": 0,
+   "denominator": 23,
+   "value": 0.0,
+   "wilson_95": [
+    0.0,
+    0.143117
+   ]
+  },
+  "missed_flag_passed": {
+   "numerator": 0,
+   "denominator": 18,
+   "value": 0.0,
+   "wilson_95": [
+    0.0,
+    0.175879
+   ]
+  },
+  "missed_flag_any": {
+   "numerator": 0,
+   "denominator": 18,
+   "value": 0.0,
+   "wilson_95": [
+    0.0,
+    0.175879
+   ]
+  },
+  "false_flag": {
+   "numerator": 0,
+   "denominator": 14,
+   "value": 0.0,
+   "wilson_95": [
+    0.0,
+    0.215311
+   ]
+  },
+  "review": {
+   "numerator": 5,
+   "denominator": 32,
+   "value": 0.15625,
+   "wilson_95": [
+    0.068644,
+    0.317541
+   ]
+  },
+  "abstention": {
+   "numerator": 0,
+   "denominator": 32,
+   "value": 0.0,
+   "wilson_95": [
+    0.0,
+    0.107179
+   ]
+  },
+  "flagged_undecided": {
+   "numerator": 1,
+   "denominator": 18,
+   "value": 0.055556,
+   "wilson_95": [
+    0.009875,
+    0.257573
+   ]
+  }
+ },
+ "findings": {
+  "available": true,
+  "receipts": 32,
+  "evaluated": 32,
+  "execution_errors": 0,
+  "micro": {
+   "tp": 37,
+   "fp": 1,
+   "fn": 0,
+   "precision": 0.973684,
+   "recall": 1.0,
+   "f1": 0.986667
+  },
+  "micro_without_uncertainty_signals": {
+   "tp": 37,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0
+  },
+  "evidence_exact": {
+   "numerator": 28,
+   "denominator": 28,
+   "value": 1.0,
+   "wilson_95": [
+    0.879357,
+    1.0
+   ]
+  },
+  "per_rule": {
+   "ALC-01": {
+    "tp": 2,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 2,
+     "denominator": 2,
+     "value": 1.0,
+     "wilson_95": [
+      0.34238,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 2,
+     "denominator": 2,
+     "value": 1.0,
+     "wilson_95": [
+      0.34238,
+      1.0
+     ]
+    }
+   },
+   "ALC-02": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "ALC-03": {
+    "tp": 2,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 2,
+     "denominator": 2,
+     "value": 1.0,
+     "wilson_95": [
+      0.34238,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 2,
+     "denominator": 2,
+     "value": 1.0,
+     "wilson_95": [
+      0.34238,
+      1.0
+     ]
+    }
+   },
+   "DOC-01": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "DOC-03": {
+    "tp": 3,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 3,
+     "denominator": 3,
+     "value": 1.0,
+     "wilson_95": [
+      0.438503,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 3,
+     "denominator": 3,
+     "value": 1.0,
+     "wilson_95": [
+      0.438503,
+      1.0
+     ]
+    }
+   },
+   "EXC-03": {
+    "tp": 0,
+    "fp": 1,
+    "fn": 0,
+    "precision": 0.0,
+    "recall": null,
+    "f1": 0.0,
+    "evidence_exact": {
+     "numerator": 0,
+     "denominator": 0,
+     "value": null,
+     "wilson_95": null
+    },
+    "severity_exact": {
+     "numerator": 0,
+     "denominator": 0,
+     "value": null,
+     "wilson_95": null
+    }
+   },
+   "GIFT-01": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "GIFT-02": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "GIFT-04": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "HOUSE-01": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "LAUNDRY-01": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "MCC-01": {
+    "tp": 3,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 3,
+     "denominator": 3,
+     "value": 1.0,
+     "wilson_95": [
+      0.438503,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 3,
+     "denominator": 3,
+     "value": 1.0,
+     "wilson_95": [
+      0.438503,
+      1.0
+     ]
+    }
+   },
+   "MCC-02": {
+    "tp": 7,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 0,
+     "denominator": 0,
+     "value": null,
+     "wilson_95": null
+    },
+    "severity_exact": {
+     "numerator": 0,
+     "denominator": 0,
+     "value": null,
+     "wilson_95": null
+    }
+   },
+   "MEAL-01": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "PERS-01": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "PERS-02": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "PERS-03": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "REG-01": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "TECH-01": {
+    "tp": 2,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 2,
+     "denominator": 2,
+     "value": 1.0,
+     "wilson_95": [
+      0.34238,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 2,
+     "denominator": 2,
+     "value": 1.0,
+     "wilson_95": [
+      0.34238,
+      1.0
+     ]
+    }
+   },
+   "TECH-02": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "TECH-04": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 1,
+     "denominator": 1,
+     "value": 1.0,
+     "wilson_95": [
+      0.206549,
+      1.0
+     ]
+    }
+   },
+   "TIME-01": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 0,
+     "denominator": 0,
+     "value": null,
+     "wilson_95": null
+    },
+    "severity_exact": {
+     "numerator": 0,
+     "denominator": 0,
+     "value": null,
+     "wilson_95": null
+    }
+   },
+   "TIME-02": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 0,
+     "denominator": 0,
+     "value": null,
+     "wilson_95": null
+    },
+    "severity_exact": {
+     "numerator": 0,
+     "denominator": 0,
+     "value": null,
+     "wilson_95": null
+    }
+   },
+   "TIME-03": {
+    "tp": 2,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "evidence_exact": {
+     "numerator": 2,
+     "denominator": 2,
+     "value": 1.0,
+     "wilson_95": [
+      0.34238,
+      1.0
+     ]
+    },
+    "severity_exact": {
+     "numerator": 2,
+     "denominator": 2,
+     "value": 1.0,
+     "wilson_95": [
+      0.34238,
+      1.0
+     ]
+    }
+   }
+  }
+ },
+ "operational": {
+  "receipts": 32,
+  "not_run": 0,
+  "run": 32,
+  "evaluated": 32,
+  "execution_errors": {
+   "numerator": 0,
+   "denominator": 32,
+   "value": 0.0,
+   "wilson_95": [
+    0.0,
+    0.107179
+   ]
+  },
+  "execution_error_codes": {},
+  "lines": 79,
+  "coverage": {
+   "numerator": 79,
+   "denominator": 79,
+   "value": 1.0,
+   "wilson_95": [
+    0.953629,
+    1.0
+   ]
+  },
+  "classification_errors": {
+   "numerator": 0,
+   "denominator": 79,
+   "value": 0.0,
+   "wilson_95": [
+    0.0,
+    0.046371
+   ]
+  },
+  "uncertainty": {
+   "receipts": {
+    "numerator": 1,
+    "denominator": 32,
+    "value": 0.03125,
+    "wilson_95": [
+     0.005538,
+     0.157443
+    ]
+   },
+   "lines": {
+    "numerator": 2,
+    "denominator": 79,
+    "value": 0.025316,
+    "wilson_95": [
+     0.00697,
+     0.087686
+    ]
+   },
+   "by_reason": {
+    "recipient_type:secondary_field_uncertain": 2
+   }
+  },
+  "undetermined_receipts": {
+   "numerator": 1,
+   "denominator": 32,
+   "value": 0.03125,
+   "wilson_95": [
+    0.005538,
+    0.157443
+   ]
+  },
+  "dispositions": {
+   "flag": 18,
+   "review": 5,
+   "pass": 9
+  },
+  "latency": {
+   "receipts_timed": 32,
+   "total_ms": 67,
+   "mean_per_receipt_ms": 2
+  }
+ }
+}

@@ -53,20 +53,18 @@ templates:
     outcome: exception
     scope: item
     severity: low
-  # Every real rule that reads a category and applies to a US receipt from a restaurant, on one line.
+  # Every real rule that reads a category and could still catch one line of a US restaurant receipt.
+  # Known facts settle the rest whatever the category is: GIFT-03 needs an employee recipient,
+  # LAUNDRY-01 a trip under four nights, TECH-02 a unit price above $200, and MEAL-02 a total above $150.
   uncertain: &uncertain
     - {rule_id: ALC-01, line_id: L1}
     - {rule_id: ENT-02, line_id: L1}
     - {rule_id: GIFT-02, line_id: L1}
-    - {rule_id: GIFT-03, line_id: L1}
     - {rule_id: HOUSE-01, line_id: L1}
-    - {rule_id: LAUNDRY-01, line_id: L1}
-    - {rule_id: MEAL-02, line_id: null}
     - {rule_id: PERS-01, line_id: L1}
     - {rule_id: PERS-02, line_id: L1}
     - {rule_id: PERS-03, line_id: L1}
     - {rule_id: TECH-01, line_id: L1}
-    - {rule_id: TECH-02, line_id: L1}
     - {rule_id: TECH-04, line_id: L1}
 
 findings:
@@ -179,10 +177,34 @@ findings:
     expected: {findings: [], undetermined: *uncertain, complete: false}
   - id: an unknown category does not make a large meal a confirmed non-meal
     receipt: {<<: *receipt, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, category: foood, unit_price: "186.00", amount: "186.00", amount_usd: "186.00"}]}
-    expected: {findings: [], undetermined: *uncertain}
+    expected:
+      findings: []
+      undetermined:
+        - {rule_id: ALC-01, line_id: L1}
+        - {rule_id: ENT-02, line_id: L1}
+        - {rule_id: GIFT-02, line_id: L1}
+        - {rule_id: HOUSE-01, line_id: L1}
+        - {rule_id: MEAL-02, line_id: null}
+        - {rule_id: PERS-01, line_id: L1}
+        - {rule_id: PERS-02, line_id: L1}
+        - {rule_id: PERS-03, line_id: L1}
+        - {rule_id: TECH-01, line_id: L1}
+        - {rule_id: TECH-04, line_id: L1}
   - id: a not on no category gives no false GIFT-03
     receipt: {<<: *receipt, line_items: [{<<: *line, category: null, recipient_type: employee}]}
-    expected: {findings: [], undetermined: *uncertain}
+    expected:
+      findings: []
+      undetermined:
+        - {rule_id: ALC-01, line_id: L1}
+        - {rule_id: ENT-02, line_id: L1}
+        - {rule_id: GIFT-02, line_id: L1}
+        - {rule_id: GIFT-03, line_id: L1}
+        - {rule_id: HOUSE-01, line_id: L1}
+        - {rule_id: PERS-01, line_id: L1}
+        - {rule_id: PERS-02, line_id: L1}
+        - {rule_id: PERS-03, line_id: L1}
+        - {rule_id: TECH-01, line_id: L1}
+        - {rule_id: TECH-04, line_id: L1}
   - id: a rule that does not read the category still runs on a line with none
     receipt: {<<: *receipt, line_items: [{<<: *line, category: null, venue_type: golf}]}
     expected: {findings: [{rule_id: ENT-01, severity: medium, scope: item, line_ids: [L1]}], undetermined: *uncertain}
@@ -194,15 +216,11 @@ findings:
         - {rule_id: ALC-03, line_id: L1}
         - {rule_id: ENT-02, line_id: L1}
         - {rule_id: GIFT-02, line_id: L1}
-        - {rule_id: GIFT-03, line_id: L1}
         - {rule_id: HOUSE-01, line_id: L1}
-        - {rule_id: LAUNDRY-01, line_id: L1}
-        - {rule_id: MEAL-02, line_id: null}
         - {rule_id: PERS-01, line_id: L1}
         - {rule_id: PERS-02, line_id: L1}
         - {rule_id: PERS-03, line_id: L1}
         - {rule_id: TECH-01, line_id: L1}
-        - {rule_id: TECH-02, line_id: L1}
         - {rule_id: TECH-04, line_id: L1}
   - id: only the uncertain line is undetermined, and a known line is still caught
     receipt: {<<: *receipt, line_items: [{<<: *line, line_id: L1, category: tobacco}, {<<: *line, line_id: L2, category: null}]}
@@ -212,15 +230,11 @@ findings:
         - {rule_id: ALC-01, line_id: L2}
         - {rule_id: ENT-02, line_id: L2}
         - {rule_id: GIFT-02, line_id: L2}
-        - {rule_id: GIFT-03, line_id: L2}
         - {rule_id: HOUSE-01, line_id: L2}
-        - {rule_id: LAUNDRY-01, line_id: L2}
-        - {rule_id: MEAL-02, line_id: null}
         - {rule_id: PERS-01, line_id: L2}
         - {rule_id: PERS-02, line_id: L2}
         - {rule_id: PERS-03, line_id: L2}
         - {rule_id: TECH-01, line_id: L2}
-        - {rule_id: TECH-02, line_id: L2}
         - {rule_id: TECH-04, line_id: L2}
   - id: food on another line settles the meal though one line is unknown
     receipt: {<<: *receipt, total_amount: "186.00", total_amount_usd: "186.00", line_items: [{<<: *line, line_id: L1, category: food_beverage}, {<<: *line, line_id: L2, category: foood}]}
@@ -230,14 +244,11 @@ findings:
         - {rule_id: ALC-01, line_id: L2}
         - {rule_id: ENT-02, line_id: L2}
         - {rule_id: GIFT-02, line_id: L2}
-        - {rule_id: GIFT-03, line_id: L2}
         - {rule_id: HOUSE-01, line_id: L2}
-        - {rule_id: LAUNDRY-01, line_id: L2}
         - {rule_id: PERS-01, line_id: L2}
         - {rule_id: PERS-02, line_id: L2}
         - {rule_id: PERS-03, line_id: L2}
         - {rule_id: TECH-01, line_id: L2}
-        - {rule_id: TECH-02, line_id: L2}
         - {rule_id: TECH-04, line_id: L2}
   - id: a missing secondary field is quiet, and not undetermined here
     receipt: {<<: *receipt, line_items: [{<<: *line, category: other, venue_type: null, item_kind: null, recipient_type: null}]}

@@ -35,12 +35,12 @@ def summary(result):
 @pytest.mark.parametrize("case", load_cases("evaluation", "cases"))
 def test_both_interfaces_return_identical_results_and_serialization(case):
     engine = PolicyEngine(ruleset=RULESET, fields=FIELDS)
-    expected = evaluation.evaluate_receipts("northwind", case["receipts"], RULESET, FIELDS, complete=case["complete"])
+    expected = evaluation.evaluate_receipts(case["receipts"], RULESET, FIELDS, complete=case["complete"])
     before = deepcopy(case["receipts"])
-    result = engine.evaluate("northwind", iter(case["receipts"]), complete=case["complete"])
+    result = engine.evaluate(iter(case["receipts"]), complete=case["complete"])
     assert result == expected
     assert result.model_dump_json() == expected.model_dump_json()
-    assert engine.evaluate("northwind", reversed(case["receipts"]), complete=case["complete"]) == result
+    assert engine.evaluate(reversed(case["receipts"]), complete=case["complete"]) == result
     assert exact(case["receipts"]) == exact(before)
 
 
@@ -48,15 +48,15 @@ def test_both_interfaces_return_identical_results_and_serialization(case):
 def test_the_class_preserves_admission_errors_and_remains_reusable(case):
     engine = PolicyEngine(ruleset=RULESET, fields=FIELDS)
     with pytest.raises(ValueError, match=case["expected"]) as original:
-        evaluation.evaluate_receipts(case["customer_id"], case["receipts"], RULESET, FIELDS, complete=True)
+        evaluation.evaluate_receipts(case["receipts"], RULESET, FIELDS, complete=True)
     with pytest.raises(type(original.value)) as wrapped:
-        engine.evaluate(case["customer_id"], case["receipts"], complete=True)
+        engine.evaluate(case["receipts"], complete=True)
     assert str(wrapped.value) == str(original.value)
-    assert engine.evaluate("after-error", [], complete=True) == evaluation.evaluate_receipts("after-error", [], RULESET, FIELDS, complete=True)
+    assert engine.evaluate([], complete=True) == evaluation.evaluate_receipts([], RULESET, FIELDS, complete=True)
 
 
 @pytest.mark.parametrize("case", load_cases("policy_engine", "isolation"))
-def test_each_call_uses_a_fresh_context_without_customer_or_completeness_leakage(case, monkeypatch):
+def test_each_call_uses_a_fresh_context_without_completeness_leakage(case, monkeypatch):
     engine = PolicyEngine(ruleset=RULESET, fields=FIELDS)
     contexts = []
     build_context = evaluation.build_context
@@ -72,9 +72,7 @@ def test_each_call_uses_a_fresh_context_without_customer_or_completeness_leakage
     assert len({id(context) for context in contexts}) == len(runs)
     assert [[summary(result) for result in run.results] for run in runs] == case["expected"]["runs"]
     for request, run in zip(case["evaluations"], runs, strict=True):
-        assert run.customer_id == request["customer_id"]
         assert run.context_complete is request["complete"]
-        assert all(result.customer_id == request["customer_id"] for result in run.results)
         assert engine.evaluate(**request).model_dump_json() == run.model_dump_json()
 
 
@@ -82,7 +80,7 @@ def test_each_call_uses_a_fresh_context_without_customer_or_completeness_leakage
 def test_the_catalog_is_an_immutable_snapshot_at_every_container_depth(case):
     fields = deepcopy(FIELDS)
     engine = PolicyEngine(ruleset=RULESET, fields=fields)
-    before = engine.evaluate("c", case["receipts"], complete=True)
+    before = engine.evaluate(case["receipts"], complete=True)
     original, frozen = fields, engine.fields
     for key in case["path"][:-1]:
         original, frozen = original[key], frozen[key]
@@ -90,7 +88,7 @@ def test_the_catalog_is_an_immutable_snapshot_at_every_container_depth(case):
     original[key] = case["value"]
     with pytest.raises(TypeError):
         frozen[key] = case["value"]
-    assert engine.evaluate("c", case["receipts"], complete=True) == before
+    assert engine.evaluate(case["receipts"], complete=True) == before
     assert selected(summary(before.results[0]), case["expected"]) == case["expected"]
 
 
@@ -200,24 +198,23 @@ def test_snapshot_preserves_the_callers_rule_order():
     assert tuple(rule.rule_id for rule in engine.ruleset.rules) == tuple(rule.rule_id for rule in reordered.rules)
 
 
-def test_complete_must_still_be_supplied_as_a_boolean():
+def test_complete_defaults_to_true_and_must_be_a_boolean():
     engine = PolicyEngine(ruleset=RULESET, fields=FIELDS)
+    assert engine.evaluate([]).context_complete is True
     with pytest.raises(TypeError, match="complete"):
-        engine.evaluate("c", [])
-    with pytest.raises(TypeError, match="complete"):
-        engine.evaluate("c", [], complete=1)
+        engine.evaluate([], complete=1)
 
 
 def test_evaluate_delegates_to_the_existing_authoritative_pipeline(monkeypatch):
     engine = PolicyEngine(ruleset=RULESET, fields=FIELDS)
-    result = evaluation.evaluate_receipts("c", [], RULESET, FIELDS, complete=True)
+    result = evaluation.evaluate_receipts([], RULESET, FIELDS, complete=True)
     calls = []
 
-    def pipeline(customer_id, receipts, ruleset, fields, *, complete):
-        calls.append((customer_id, receipts, ruleset, fields, complete))
+    def pipeline(receipts, ruleset, fields, *, complete):
+        calls.append((receipts, ruleset, fields, complete))
         return result
 
     monkeypatch.setattr(evaluation, "evaluate_receipts", pipeline)
     receipts = iter(())
-    assert engine.evaluate("c", receipts, complete=True) is result
-    assert calls == [("c", receipts, engine.ruleset, engine.fields, True)]
+    assert engine.evaluate(receipts, complete=True) is result
+    assert calls == [(receipts, engine.ruleset, engine.fields, True)]

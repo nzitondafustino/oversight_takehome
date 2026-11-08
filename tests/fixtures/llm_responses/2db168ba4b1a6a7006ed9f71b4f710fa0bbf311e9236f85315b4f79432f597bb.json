@@ -1,0 +1,8 @@
+{
+  "policy_doc": "receipt-documentation-requirements.md",
+  "document_sha256": "2db168ba4b1a6a7006ed9f71b4f710fa0bbf311e9236f85315b4f79432f597bb",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "simulation",
+  "origin": "authored stand-in for a model reading, written once at authoring time: not model output",
+  "response": "{\"rules\": [{\"rule_id\": \"DOC-01\", \"title\": \"Itemization threshold\", \"section\": null, \"severities\": [\"medium\"], \"review_signal\": false, \"thresholds\": [{\"value\": \"75\", \"unit\": \"usd\"}], \"references\": [], \"quote\": \"Any receipt with a total above\"}, {\"rule_id\": \"DOC-02\", \"title\": \"Legibility\", \"section\": null, \"severities\": [\"medium\"], \"review_signal\": false, \"thresholds\": [], \"references\": [], \"quote\": \"A receipt must show the merchant\"}, {\"rule_id\": \"DOC-03\", \"title\": \"Expense type must match the contents\", \"section\": null, \"severities\": [\"medium\"], \"review_signal\": false, \"thresholds\": [], \"references\": [\"TECH-01\"], \"quote\": \"A receipt is misclassified when none\"}, {\"rule_id\": \"DOC-04\", \"title\": \"Foreign currency\", \"section\": null, \"severities\": [\"medium\"], \"review_signal\": false, \"thresholds\": [], \"references\": [], \"quote\": \"Receipts in a currency other than\"}]}"
+}

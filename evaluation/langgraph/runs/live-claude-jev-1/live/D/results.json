@@ -1,0 +1,1764 @@
+{
+  "golden": {
+    "wall_ms": 8680,
+    "results": [
+      {
+        "receipt_id": "RCP-011",
+        "disposition": "flag",
+        "line_items": [
+          {
+            "line_id": "RCP-011-L1",
+            "description_raw": "Vino tinto Rioja Reserva 750ml",
+            "category": "alcohol",
+            "restricted": true,
+            "confidence": 1.0,
+            "english_translation": "Rioja Reserva Red Wine 750ml",
+            "attributes": null,
+            "classification_error": null,
+            "classification_details": {
+              "backend": "typesafe-jev",
+              "requested_model": "typesafe/jev-1.14",
+              "model": "typesafe/jev-1.14-20261014",
+              "answers": {
+                "category": {
+                  "choice": "alcohol",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "airfare": 0.0,
+                    "alcohol": 1.0,
+                    "clothing": 0.0,
+                    "computer_accessory": 0.0,
+                    "food_beverage": 0.0,
+                    "gambling": 0.0,
+                    "gift": 0.0,
+                    "gift_card": 0.0,
+                    "ground_transport": 0.0,
+                    "health_otc": 0.0,
+                    "household_goods": 0.0,
+                    "jewelry": 0.0,
+                    "laundry_service": 0.0,
+                    "lodging": 0.0,
+                    "office_supplies": 0.0,
+                    "other": 0.0,
+                    "personal_care": 0.0,
+                    "personal_electronics": 0.0,
+                    "service_fee": 0.0,
+                    "software_subscription": 0.0,
+                    "tobacco": 0.0
+                  }
+                },
+                "recipient_type": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "client": 0.0,
+                    "employee": 0.0,
+                    "government_official": 0.0,
+                    "not_stated": 1.0
+                  }
+                },
+                "venue_type": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "concert": 0.0,
+                    "golf": 0.0,
+                    "not_stated": 1.0,
+                    "other_venue": 0.0,
+                    "sporting_event": 0.0,
+                    "theatre": 0.0
+                  }
+                },
+                "item_kind": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "mobile_phone": 0.0,
+                    "not_stated": 1.0,
+                    "otc_medication": 0.0,
+                    "prescription_medication": 0.0
+                  }
+                },
+                "essential_toiletry": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "essential": 0.0,
+                    "not_essential": 0.0,
+                    "not_stated": 1.0
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1619,
+                "output_tokens": 424,
+                "cost": 6.7998e-05
+              },
+              "attribute_thresholds": {
+                "recipient_type": 0.5,
+                "venue_type": 0.5,
+                "item_kind": 0.5,
+                "essential_toiletry": 0.5
+              },
+              "orchestration": {
+                "answered_by": "jev",
+                "fallback": false,
+                "result": "accepted",
+                "attempts": [
+                  {
+                    "name": "jev",
+                    "backend": "jev",
+                    "model": "typesafe/jev-1.14",
+                    "outcome": "accepted",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 1.0,
+                    "error": null
+                  }
+                ],
+                "reflection": {
+                  "calls": 2,
+                  "revisions": 0,
+                  "reviews": [
+                    {
+                      "of": "jev",
+                      "revision": 0,
+                      "reviewer": "openrouter",
+                      "model": "anthropic/claude-haiku-5.5",
+                      "outcome": "verdict",
+                      "answered": true,
+                      "verdict": "accept",
+                      "reason": "The original description 'Vino tinto Rioja Reserva 750ml' and its translation both identify a bottled red wine, which is squarely alcohol.",
+                      "suggested_category": null,
+                      "feedback": null,
+                      "error": null
+                    }
+                  ],
+                  "fallbacks": [],
+                  "unresolved": false
+                }
+              }
+            }
+          },
+          {
+            "line_id": "RCP-011-L2",
+            "description_raw": "Sparkling water 6-pack",
+            "category": "food_beverage",
+            "restricted": false,
+            "confidence": 1.0,
+            "english_translation": null,
+            "attributes": null,
+            "classification_error": null,
+            "classification_details": {
+              "backend": "typesafe-jev",
+              "requested_model": "typesafe/jev-1.14",
+              "model": "typesafe/jev-1.14-20261014",
+              "answers": {
+                "category": {
+                  "choice": "food_beverage",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "airfare": 0.0,
+                    "alcohol": 0.0,
+                    "clothing": 0.0,
+                    "computer_accessory": 0.0,
+                    "food_beverage": 1.0,
+                    "gambling": 0.0,
+                    "gift": 0.0,
+                    "gift_card": 0.0,
+                    "ground_transport": 0.0,
+                    "health_otc": 0.0,
+                    "household_goods": 0.0,
+                    "jewelry": 0.0,
+                    "laundry_service": 0.0,
+                    "lodging": 0.0,
+                    "office_supplies": 0.0,
+                    "other": 0.0,
+                    "personal_care": 0.0,
+                    "personal_electronics": 0.0,
+                    "service_fee": 0.0,
+                    "software_subscription": 0.0,
+                    "tobacco": 0.0
+                  }
+                },
+                "recipient_type": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "client": 0.0,
+                    "employee": 0.0,
+                    "government_official": 0.0,
+                    "not_stated": 1.0
+                  }
+                },
+                "venue_type": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "concert": 0.0,
+                    "golf": 0.0,
+                    "not_stated": 1.0,
+                    "other_venue": 0.0,
+                    "sporting_event": 0.0,
+                    "theatre": 0.0
+                  }
+                },
+                "item_kind": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "mobile_phone": 0.0,
+                    "not_stated": 1.0,
+                    "otc_medication": 0.0,
+                    "prescription_medication": 0.0
+                  }
+                },
+                "essential_toiletry": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "essential": 0.0,
+                    "not_essential": 0.0,
+                    "not_stated": 1.0
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1595,
+                "output_tokens": 425,
+                "cost": 6.699e-05
+              },
+              "attribute_thresholds": {
+                "recipient_type": 0.5,
+                "venue_type": 0.5,
+                "item_kind": 0.5,
+                "essential_toiletry": 0.5
+              },
+              "orchestration": {
+                "answered_by": "jev",
+                "fallback": false,
+                "result": "accepted",
+                "attempts": [
+                  {
+                    "name": "jev",
+                    "backend": "jev",
+                    "model": "typesafe/jev-1.14",
+                    "outcome": "accepted",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 1.0,
+                    "error": null
+                  }
+                ],
+                "reflection": {
+                  "calls": 2,
+                  "revisions": 0,
+                  "reviews": [
+                    {
+                      "of": "jev",
+                      "revision": 0,
+                      "reviewer": "openrouter",
+                      "model": "anthropic/claude-haiku-5.5",
+                      "outcome": "verdict",
+                      "answered": true,
+                      "verdict": "accept",
+                      "reason": "The line states sparkling water, a non-alcoholic drink, so food_beverage fits; the wine merchant category does not change what the item is.",
+                      "suggested_category": null,
+                      "feedback": null,
+                      "error": null
+                    }
+                  ],
+                  "fallbacks": [],
+                  "unresolved": false
+                }
+              }
+            }
+          }
+        ],
+        "exceptions": [
+          {
+            "rule_id": "ALC-03",
+            "policy_doc": "meals-and-entertainment-policy.md",
+            "severity": "high",
+            "line_ids": [
+              "RCP-011-L1"
+            ],
+            "evidence": "Alcohol purchased from a package store, liquor store, or any other merchant that is not a restaurant, bar or hotel is never reimbursable, regardless of business context.",
+            "source_quote": "is **never** reimbursable, regardless of business context",
+            "explanation": "Retail alcohol: Vino tinto Rioja Reserva 750ml"
+          },
+          {
+            "rule_id": "MCC-01",
+            "policy_doc": "merchant-category-risk.md",
+            "severity": "high",
+            "line_ids": [],
+            "evidence": "A transaction at a high-risk MCC raises a high exception on its own, whatever the line items say.",
+            "source_quote": "raises a **high** exception on its own",
+            "explanation": "High-risk merchant category"
+          }
+        ],
+        "review_signals": [],
+        "decided": true,
+        "disposition_reasons": [
+          {
+            "code": "exception_flags",
+            "basis": "EXC-01",
+            "rule_ids": [
+              "ALC-03",
+              "MCC-01"
+            ]
+          }
+        ],
+        "open_questions": [],
+        "uncertainty": [],
+        "metadata": {
+          "model": "jev=jev:typesafe/jev-1.14, claude=openrouter:anthropic/claude-haiku-5.5",
+          "translation_model": "tencent/hy-mt2-30b-a3b",
+          "retriever": "none",
+          "prompt_sha256": "6e6f46b87f070539ed23701992710e4302466d92048ad35b20b171cd5182a5a1",
+          "ruleset_version": "v1",
+          "replayed": false,
+          "latency_ms": 2197
+        },
+        "provenance": {
+          "customer_id": "northwind",
+          "mode": "live",
+          "context_complete": true,
+          "receipts_in_context": 5,
+          "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+          "model_overrides": [
+            "langgraph"
+          ],
+          "classification_backend": "langgraph"
+        }
+      },
+      {
+        "receipt_id": "RCP-017",
+        "disposition": "flag",
+        "line_items": [
+          {
+            "line_id": "RCP-017-L1",
+            "description_raw": "60-minute deep tissue massage",
+            "category": "personal_care",
+            "restricted": true,
+            "confidence": 0.99,
+            "english_translation": null,
+            "attributes": {
+              "essential_toiletry": false
+            },
+            "classification_error": null,
+            "classification_details": {
+              "backend": "typesafe-jev",
+              "requested_model": "typesafe/jev-1.14",
+              "model": "typesafe/jev-1.14-20261014",
+              "answers": {
+                "category": {
+                  "choice": "personal_care",
+                  "confidence": 0.99,
+                  "probabilities": {
+                    "airfare": 0.0,
+                    "alcohol": 0.0,
+                    "clothing": 0.0,
+                    "computer_accessory": 0.0,
+                    "food_beverage": 0.0,
+                    "gambling": 0.0,
+                    "gift": 0.0,
+                    "gift_card": 0.0,
+                    "ground_transport": 0.0,
+                    "health_otc": 0.0,
+                    "household_goods": 0.0,
+                    "jewelry": 0.0,
+                    "laundry_service": 0.0,
+                    "lodging": 0.0,
+                    "office_supplies": 0.0,
+                    "other": 0.01,
+                    "personal_care": 0.99,
+                    "personal_electronics": 0.0,
+                    "service_fee": 0.0,
+                    "software_subscription": 0.0,
+                    "tobacco": 0.0
+                  }
+                },
+                "recipient_type": {
+                  "choice": "not_stated",
+                  "confidence": 0.99,
+                  "probabilities": {
+                    "client": 0.01,
+                    "employee": 0.0,
+                    "government_official": 0.0,
+                    "not_stated": 0.99
+                  }
+                },
+                "venue_type": {
+                  "choice": "not_stated",
+                  "confidence": 0.99,
+                  "probabilities": {
+                    "concert": 0.0,
+                    "golf": 0.0,
+                    "not_stated": 0.99,
+                    "other_venue": 0.01,
+                    "sporting_event": 0.0,
+                    "theatre": 0.0
+                  }
+                },
+                "item_kind": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "mobile_phone": 0.0,
+                    "not_stated": 1.0,
+                    "otc_medication": 0.0,
+                    "prescription_medication": 0.0
+                  }
+                },
+                "essential_toiletry": {
+                  "choice": "not_essential",
+                  "confidence": 0.98,
+                  "probabilities": {
+                    "essential": 0.0,
+                    "not_essential": 0.99,
+                    "not_stated": 0.01
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1594,
+                "output_tokens": 426,
+                "cost": 6.6948e-05
+              },
+              "attribute_thresholds": {
+                "recipient_type": 0.5,
+                "venue_type": 0.5,
+                "item_kind": 0.5,
+                "essential_toiletry": 0.5
+              },
+              "orchestration": {
+                "answered_by": "jev",
+                "fallback": false,
+                "result": "accepted",
+                "attempts": [
+                  {
+                    "name": "jev",
+                    "backend": "jev",
+                    "model": "typesafe/jev-1.14",
+                    "outcome": "accepted",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 0.99,
+                    "error": null
+                  }
+                ],
+                "reflection": {
+                  "calls": 2,
+                  "revisions": 0,
+                  "reviews": [
+                    {
+                      "of": "jev",
+                      "revision": 0,
+                      "reviewer": "openrouter",
+                      "model": "anthropic/claude-haiku-5.5",
+                      "outcome": "verdict",
+                      "answered": true,
+                      "verdict": "accept",
+                      "reason": "The line is a 60-minute deep tissue massage, which the personal_care category explicitly covers as spa and massage, and the merchant context agrees.",
+                      "suggested_category": null,
+                      "feedback": null,
+                      "error": null
+                    }
+                  ],
+                  "fallbacks": [],
+                  "unresolved": false
+                }
+              }
+            }
+          },
+          {
+            "line_id": "RCP-017-L2",
+            "description_raw": "Gratuity",
+            "category": "service_fee",
+            "restricted": false,
+            "confidence": 0.9,
+            "english_translation": null,
+            "attributes": null,
+            "classification_error": null,
+            "classification_details": {
+              "orchestration": {
+                "answered_by": "claude",
+                "fallback": true,
+                "result": "accepted",
+                "attempts": [
+                  {
+                    "name": "jev",
+                    "backend": "jev",
+                    "model": "typesafe/jev-1.14",
+                    "outcome": "error",
+                    "routed_on": true,
+                    "answered": true,
+                    "confidence": null,
+                    "error": "essential_toiletry contradicts category service_fee"
+                  },
+                  {
+                    "name": "claude",
+                    "backend": "openrouter",
+                    "model": "anthropic/claude-haiku-5.5",
+                    "outcome": "accepted",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 0.9,
+                    "error": null
+                  }
+                ],
+                "reflection": {
+                  "calls": 3,
+                  "revisions": 0,
+                  "reviews": [
+                    {
+                      "of": "claude",
+                      "revision": 0,
+                      "reviewer": "openrouter",
+                      "model": "anthropic/claude-haiku-5.5",
+                      "outcome": "verdict",
+                      "answered": true,
+                      "verdict": "accept",
+                      "reason": "The line is a gratuity charge, which is a service charge, so service_fee fits the item itself regardless of the spa merchant.",
+                      "suggested_category": null,
+                      "feedback": null,
+                      "error": null
+                    }
+                  ],
+                  "fallbacks": [],
+                  "unresolved": false
+                }
+              }
+            }
+          }
+        ],
+        "exceptions": [
+          {
+            "rule_id": "DOC-03",
+            "policy_doc": "receipt-documentation-requirements.md",
+            "severity": "medium",
+            "line_ids": [],
+            "evidence": "A misclassification is a medium exception, reported in addition to any exception raised by the items themselves, not instead of it.",
+            "source_quote": "A misclassification is a **medium** exception",
+            "explanation": "Expense type must match the contents: declared as Lodging"
+          },
+          {
+            "rule_id": "MCC-01",
+            "policy_doc": "merchant-category-risk.md",
+            "severity": "high",
+            "line_ids": [],
+            "evidence": "A transaction at a high-risk MCC raises a high exception on its own, whatever the line items say.",
+            "source_quote": "raises a **high** exception on its own",
+            "explanation": "High-risk merchant category"
+          },
+          {
+            "rule_id": "PERS-01",
+            "policy_doc": "non-reimbursable-items.md",
+            "severity": "medium",
+            "line_ids": [
+              "RCP-017-L1"
+            ],
+            "evidence": "Toiletries, cosmetics, razors, haircuts, salon services, spa treatments, and massage are not reimbursable.",
+            "source_quote": "massage are not reimbursable",
+            "explanation": "Personal care and grooming: 60-minute deep tissue massage"
+          }
+        ],
+        "review_signals": [],
+        "decided": true,
+        "disposition_reasons": [
+          {
+            "code": "exception_flags",
+            "basis": "EXC-01",
+            "rule_ids": [
+              "DOC-03",
+              "MCC-01",
+              "PERS-01"
+            ]
+          }
+        ],
+        "open_questions": [],
+        "uncertainty": [],
+        "metadata": {
+          "model": "jev=jev:typesafe/jev-1.14, claude=openrouter:anthropic/claude-haiku-5.5",
+          "translation_model": "tencent/hy-mt2-30b-a3b",
+          "retriever": "none",
+          "prompt_sha256": "6e6f46b87f070539ed23701992710e4302466d92048ad35b20b171cd5182a5a1",
+          "ruleset_version": "v1",
+          "replayed": false,
+          "latency_ms": 3901
+        },
+        "provenance": {
+          "customer_id": "northwind",
+          "mode": "live",
+          "context_complete": true,
+          "receipts_in_context": 5,
+          "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+          "model_overrides": [
+            "langgraph"
+          ],
+          "classification_backend": "langgraph"
+        }
+      },
+      {
+        "receipt_id": "RCP-022",
+        "disposition": "flag",
+        "line_items": [
+          {
+            "line_id": "RCP-022-L1",
+            "description_raw": "Lunch entree — guest R. Delgado, City Procurement Office",
+            "category": "food_beverage",
+            "restricted": false,
+            "confidence": 0.99,
+            "english_translation": null,
+            "attributes": {
+              "recipient_name": "R. Delgado",
+              "recipient_type": "government_official"
+            },
+            "classification_error": null,
+            "classification_details": {
+              "backend": "typesafe-jev",
+              "requested_model": "typesafe/jev-1.14",
+              "model": "typesafe/jev-1.14-20261014",
+              "answers": {
+                "category": {
+                  "choice": "food_beverage",
+                  "confidence": 0.99,
+                  "probabilities": {
+                    "airfare": 0.0,
+                    "alcohol": 0.0,
+                    "clothing": 0.0,
+                    "computer_accessory": 0.0,
+                    "food_beverage": 0.99,
+                    "gambling": 0.0,
+                    "gift": 0.0,
+                    "gift_card": 0.0,
+                    "ground_transport": 0.0,
+                    "health_otc": 0.0,
+                    "household_goods": 0.0,
+                    "jewelry": 0.0,
+                    "laundry_service": 0.0,
+                    "lodging": 0.0,
+                    "office_supplies": 0.0,
+                    "other": 0.01,
+                    "personal_care": 0.0,
+                    "personal_electronics": 0.0,
+                    "service_fee": 0.0,
+                    "software_subscription": 0.0,
+                    "tobacco": 0.0
+                  }
+                },
+                "recipient_type": {
+                  "choice": "government_official",
+                  "confidence": 0.89,
+                  "probabilities": {
+                    "client": 0.02,
+                    "employee": 0.04,
+                    "government_official": 0.92,
+                    "not_stated": 0.02
+                  }
+                },
+                "venue_type": {
+                  "choice": "not_stated",
+                  "confidence": 0.99,
+                  "probabilities": {
+                    "concert": 0.0,
+                    "golf": 0.0,
+                    "not_stated": 0.99,
+                    "other_venue": 0.01,
+                    "sporting_event": 0.0,
+                    "theatre": 0.0
+                  }
+                },
+                "item_kind": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "mobile_phone": 0.0,
+                    "not_stated": 1.0,
+                    "otc_medication": 0.0,
+                    "prescription_medication": 0.0
+                  }
+                },
+                "essential_toiletry": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "essential": 0.0,
+                    "not_essential": 0.0,
+                    "not_stated": 1.0
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1602,
+                "output_tokens": 425,
+                "cost": 6.7284e-05
+              },
+              "attribute_thresholds": {
+                "recipient_type": 0.5,
+                "venue_type": 0.5,
+                "item_kind": 0.5,
+                "essential_toiletry": 0.5
+              },
+              "orchestration": {
+                "answered_by": "jev",
+                "fallback": false,
+                "result": "accepted",
+                "attempts": [
+                  {
+                    "name": "jev",
+                    "backend": "jev",
+                    "model": "typesafe/jev-1.14",
+                    "outcome": "accepted",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 0.99,
+                    "error": null
+                  }
+                ],
+                "reflection": {
+                  "calls": 2,
+                  "revisions": 0,
+                  "reviews": [
+                    {
+                      "of": "jev",
+                      "revision": 0,
+                      "reviewer": "openrouter",
+                      "model": "anthropic/claude-haiku-5.5",
+                      "outcome": "verdict",
+                      "answered": true,
+                      "verdict": "accept",
+                      "reason": "The line states a lunch entree at a restaurant, which is a meal and fits food_beverage; the recipient attributes are not part of the category judgment and the line supports the meal classification.",
+                      "suggested_category": null,
+                      "feedback": null,
+                      "error": null
+                    }
+                  ],
+                  "fallbacks": [],
+                  "unresolved": false
+                }
+              }
+            }
+          },
+          {
+            "line_id": "RCP-022-L2",
+            "description_raw": "Gift basket for R. Delgado, City Procurement Office",
+            "category": "gift",
+            "restricted": true,
+            "confidence": 1.0,
+            "english_translation": null,
+            "attributes": {
+              "recipient_name": "R. Delgado",
+              "recipient_type": "government_official"
+            },
+            "classification_error": null,
+            "classification_details": {
+              "backend": "typesafe-jev",
+              "requested_model": "typesafe/jev-1.14",
+              "model": "typesafe/jev-1.14-20261014",
+              "answers": {
+                "category": {
+                  "choice": "gift",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "airfare": 0.0,
+                    "alcohol": 0.0,
+                    "clothing": 0.0,
+                    "computer_accessory": 0.0,
+                    "food_beverage": 0.0,
+                    "gambling": 0.0,
+                    "gift": 1.0,
+                    "gift_card": 0.0,
+                    "ground_transport": 0.0,
+                    "health_otc": 0.0,
+                    "household_goods": 0.0,
+                    "jewelry": 0.0,
+                    "laundry_service": 0.0,
+                    "lodging": 0.0,
+                    "office_supplies": 0.0,
+                    "other": 0.0,
+                    "personal_care": 0.0,
+                    "personal_electronics": 0.0,
+                    "service_fee": 0.0,
+                    "software_subscription": 0.0,
+                    "tobacco": 0.0
+                  }
+                },
+                "recipient_type": {
+                  "choice": "government_official",
+                  "confidence": 0.85,
+                  "probabilities": {
+                    "client": 0.02,
+                    "employee": 0.05,
+                    "government_official": 0.89,
+                    "not_stated": 0.04
+                  }
+                },
+                "venue_type": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "concert": 0.0,
+                    "golf": 0.0,
+                    "not_stated": 1.0,
+                    "other_venue": 0.0,
+                    "sporting_event": 0.0,
+                    "theatre": 0.0
+                  }
+                },
+                "item_kind": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "mobile_phone": 0.0,
+                    "not_stated": 1.0,
+                    "otc_medication": 0.0,
+                    "prescription_medication": 0.0
+                  }
+                },
+                "essential_toiletry": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "essential": 0.0,
+                    "not_essential": 0.0,
+                    "not_stated": 1.0
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1599,
+                "output_tokens": 422,
+                "cost": 6.7158e-05
+              },
+              "attribute_thresholds": {
+                "recipient_type": 0.5,
+                "venue_type": 0.5,
+                "item_kind": 0.5,
+                "essential_toiletry": 0.5
+              },
+              "orchestration": {
+                "answered_by": "jev",
+                "fallback": false,
+                "result": "accepted",
+                "attempts": [
+                  {
+                    "name": "jev",
+                    "backend": "jev",
+                    "model": "typesafe/jev-1.14",
+                    "outcome": "accepted",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 1.0,
+                    "error": null
+                  }
+                ],
+                "reflection": {
+                  "calls": 2,
+                  "revisions": 0,
+                  "reviews": [
+                    {
+                      "of": "jev",
+                      "revision": 0,
+                      "reviewer": "openrouter",
+                      "model": "anthropic/claude-haiku-5.5",
+                      "outcome": "verdict",
+                      "answered": true,
+                      "verdict": "accept",
+                      "reason": "The line states a gift basket, which is an item made to be given and maps to the gift category; the recipient attributes are taken from the line text itself.",
+                      "suggested_category": null,
+                      "feedback": null,
+                      "error": null
+                    }
+                  ],
+                  "fallbacks": [],
+                  "unresolved": false
+                }
+              }
+            }
+          }
+        ],
+        "exceptions": [
+          {
+            "rule_id": "GIFT-04",
+            "policy_doc": "gifts-and-awards-policy.md",
+            "severity": "critical",
+            "line_ids": [
+              "RCP-022-L1",
+              "RCP-022-L2"
+            ],
+            "evidence": "replaces GIFT-01 for those lines",
+            "source_quote": "replaces GIFT-01 for those lines",
+            "explanation": "Government officials: Lunch entree — guest R. Delgado, City Procurement Office: provided to a government official; Government officials: Gift basket for R. Delgado, City Procurement Office: provided to a government official"
+          }
+        ],
+        "review_signals": [],
+        "decided": true,
+        "disposition_reasons": [
+          {
+            "code": "exception_flags",
+            "basis": "EXC-01",
+            "rule_ids": [
+              "GIFT-04"
+            ]
+          }
+        ],
+        "open_questions": [],
+        "uncertainty": [],
+        "metadata": {
+          "model": "jev=jev:typesafe/jev-1.14, claude=openrouter:anthropic/claude-haiku-5.5",
+          "translation_model": "tencent/hy-mt2-30b-a3b",
+          "retriever": "none",
+          "prompt_sha256": "6e6f46b87f070539ed23701992710e4302466d92048ad35b20b171cd5182a5a1",
+          "ruleset_version": "v1",
+          "replayed": false,
+          "latency_ms": null
+        },
+        "provenance": {
+          "customer_id": "northwind",
+          "mode": "live",
+          "context_complete": true,
+          "receipts_in_context": 5,
+          "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+          "model_overrides": [
+            "langgraph"
+          ],
+          "classification_backend": "langgraph"
+        }
+      },
+      {
+        "receipt_id": "RCP-023",
+        "disposition": "flag",
+        "line_items": [
+          {
+            "line_id": "RCP-023-L1",
+            "description_raw": "Restaurant charge - no itemization provided",
+            "category": "other",
+            "restricted": false,
+            "confidence": 0.1,
+            "english_translation": null,
+            "attributes": null,
+            "classification_error": null,
+            "classification_details": {
+              "orchestration": {
+                "answered_by": "claude",
+                "fallback": true,
+                "result": "exhausted",
+                "attempts": [
+                  {
+                    "name": "jev",
+                    "backend": "jev",
+                    "model": "typesafe/jev-1.14",
+                    "outcome": "low_confidence",
+                    "routed_on": true,
+                    "answered": true,
+                    "confidence": 0.89,
+                    "error": null
+                  },
+                  {
+                    "name": "claude",
+                    "backend": "openrouter",
+                    "model": "anthropic/claude-haiku-5.5",
+                    "outcome": "low_confidence",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 0.1,
+                    "error": null
+                  }
+                ],
+                "reflection": {
+                  "calls": 2,
+                  "revisions": 0,
+                  "reviews": [],
+                  "fallbacks": [],
+                  "unresolved": false
+                }
+              }
+            }
+          }
+        ],
+        "exceptions": [
+          {
+            "rule_id": "DOC-01",
+            "policy_doc": "receipt-documentation-requirements.md",
+            "severity": "medium",
+            "line_ids": [],
+            "evidence": "Any receipt with a total above $75 (in USD) must be itemized.",
+            "source_quote": "must be itemized",
+            "explanation": "Itemization threshold"
+          }
+        ],
+        "review_signals": [],
+        "decided": true,
+        "disposition_reasons": [
+          {
+            "code": "exception_flags",
+            "basis": "EXC-01",
+            "rule_ids": [
+              "DOC-01"
+            ]
+          }
+        ],
+        "open_questions": [],
+        "uncertainty": [],
+        "metadata": {
+          "model": "jev=jev:typesafe/jev-1.14, claude=openrouter:anthropic/claude-haiku-5.5",
+          "translation_model": "tencent/hy-mt2-30b-a3b",
+          "retriever": "none",
+          "prompt_sha256": "6e6f46b87f070539ed23701992710e4302466d92048ad35b20b171cd5182a5a1",
+          "ruleset_version": "v1",
+          "replayed": false,
+          "latency_ms": null
+        },
+        "provenance": {
+          "customer_id": "northwind",
+          "mode": "live",
+          "context_complete": true,
+          "receipts_in_context": 5,
+          "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+          "model_overrides": [
+            "langgraph"
+          ],
+          "classification_backend": "langgraph"
+        }
+      },
+      {
+        "receipt_id": "RCP-028",
+        "disposition": "review",
+        "line_items": [
+          {
+            "line_id": "RCP-028-L1",
+            "description_raw": "Ibuprofen 200mg 24ct",
+            "category": "health_otc",
+            "restricted": false,
+            "confidence": 1.0,
+            "english_translation": null,
+            "attributes": {
+              "item_kind": "otc_medication"
+            },
+            "classification_error": null,
+            "classification_details": {
+              "backend": "typesafe-jev",
+              "requested_model": "typesafe/jev-1.14",
+              "model": "typesafe/jev-1.14-20261014",
+              "answers": {
+                "category": {
+                  "choice": "health_otc",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "airfare": 0.0,
+                    "alcohol": 0.0,
+                    "clothing": 0.0,
+                    "computer_accessory": 0.0,
+                    "food_beverage": 0.0,
+                    "gambling": 0.0,
+                    "gift": 0.0,
+                    "gift_card": 0.0,
+                    "ground_transport": 0.0,
+                    "health_otc": 1.0,
+                    "household_goods": 0.0,
+                    "jewelry": 0.0,
+                    "laundry_service": 0.0,
+                    "lodging": 0.0,
+                    "office_supplies": 0.0,
+                    "other": 0.0,
+                    "personal_care": 0.0,
+                    "personal_electronics": 0.0,
+                    "service_fee": 0.0,
+                    "software_subscription": 0.0,
+                    "tobacco": 0.0
+                  }
+                },
+                "recipient_type": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "client": 0.0,
+                    "employee": 0.0,
+                    "government_official": 0.0,
+                    "not_stated": 1.0
+                  }
+                },
+                "venue_type": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "concert": 0.0,
+                    "golf": 0.0,
+                    "not_stated": 1.0,
+                    "other_venue": 0.0,
+                    "sporting_event": 0.0,
+                    "theatre": 0.0
+                  }
+                },
+                "item_kind": {
+                  "choice": "otc_medication",
+                  "confidence": 0.99,
+                  "probabilities": {
+                    "mobile_phone": 0.0,
+                    "not_stated": 0.01,
+                    "otc_medication": 0.99,
+                    "prescription_medication": 0.0
+                  }
+                },
+                "essential_toiletry": {
+                  "choice": "not_stated",
+                  "confidence": 0.98,
+                  "probabilities": {
+                    "essential": 0.0,
+                    "not_essential": 0.01,
+                    "not_stated": 0.99
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1599,
+                "output_tokens": 426,
+                "cost": 6.7158e-05
+              },
+              "attribute_thresholds": {
+                "recipient_type": 0.5,
+                "venue_type": 0.5,
+                "item_kind": 0.5,
+                "essential_toiletry": 0.5
+              },
+              "orchestration": {
+                "answered_by": "jev",
+                "fallback": false,
+                "result": "accepted",
+                "attempts": [
+                  {
+                    "name": "jev",
+                    "backend": "jev",
+                    "model": "typesafe/jev-1.14",
+                    "outcome": "accepted",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 1.0,
+                    "error": null
+                  }
+                ],
+                "reflection": {
+                  "calls": 2,
+                  "revisions": 0,
+                  "reviews": [
+                    {
+                      "of": "jev",
+                      "revision": 0,
+                      "reviewer": "openrouter",
+                      "model": "anthropic/claude-haiku-5.5",
+                      "outcome": "verdict",
+                      "answered": true,
+                      "verdict": "accept",
+                      "reason": "The line states Ibuprofen 200mg tablets from a pharmacy, which is an over-the-counter medication matching health_otc, and the item_kind otc_medication fits that.",
+                      "suggested_category": null,
+                      "feedback": null,
+                      "error": null
+                    }
+                  ],
+                  "fallbacks": [],
+                  "unresolved": false
+                }
+              }
+            }
+          },
+          {
+            "line_id": "RCP-028-L2",
+            "description_raw": "Throat lozenges",
+            "category": "health_otc",
+            "restricted": false,
+            "confidence": 1.0,
+            "english_translation": null,
+            "attributes": {
+              "item_kind": "otc_medication"
+            },
+            "classification_error": null,
+            "classification_details": {
+              "backend": "typesafe-jev",
+              "requested_model": "typesafe/jev-1.14",
+              "model": "typesafe/jev-1.14-20261014",
+              "answers": {
+                "category": {
+                  "choice": "health_otc",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "airfare": 0.0,
+                    "alcohol": 0.0,
+                    "clothing": 0.0,
+                    "computer_accessory": 0.0,
+                    "food_beverage": 0.0,
+                    "gambling": 0.0,
+                    "gift": 0.0,
+                    "gift_card": 0.0,
+                    "ground_transport": 0.0,
+                    "health_otc": 1.0,
+                    "household_goods": 0.0,
+                    "jewelry": 0.0,
+                    "laundry_service": 0.0,
+                    "lodging": 0.0,
+                    "office_supplies": 0.0,
+                    "other": 0.0,
+                    "personal_care": 0.0,
+                    "personal_electronics": 0.0,
+                    "service_fee": 0.0,
+                    "software_subscription": 0.0,
+                    "tobacco": 0.0
+                  }
+                },
+                "recipient_type": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "client": 0.0,
+                    "employee": 0.0,
+                    "government_official": 0.0,
+                    "not_stated": 1.0
+                  }
+                },
+                "venue_type": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "concert": 0.0,
+                    "golf": 0.0,
+                    "not_stated": 1.0,
+                    "other_venue": 0.0,
+                    "sporting_event": 0.0,
+                    "theatre": 0.0
+                  }
+                },
+                "item_kind": {
+                  "choice": "otc_medication",
+                  "confidence": 0.91,
+                  "probabilities": {
+                    "mobile_phone": 0.0,
+                    "not_stated": 0.07,
+                    "otc_medication": 0.93,
+                    "prescription_medication": 0.0
+                  }
+                },
+                "essential_toiletry": {
+                  "choice": "not_stated",
+                  "confidence": 0.74,
+                  "probabilities": {
+                    "essential": 0.04,
+                    "not_essential": 0.13,
+                    "not_stated": 0.83
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1592,
+                "output_tokens": 426,
+                "cost": 6.6864e-05
+              },
+              "attribute_thresholds": {
+                "recipient_type": 0.5,
+                "venue_type": 0.5,
+                "item_kind": 0.5,
+                "essential_toiletry": 0.5
+              },
+              "orchestration": {
+                "answered_by": "jev",
+                "fallback": false,
+                "result": "accepted",
+                "attempts": [
+                  {
+                    "name": "jev",
+                    "backend": "jev",
+                    "model": "typesafe/jev-1.14",
+                    "outcome": "accepted",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 1.0,
+                    "error": null
+                  }
+                ],
+                "reflection": {
+                  "calls": 2,
+                  "revisions": 0,
+                  "reviews": [
+                    {
+                      "of": "jev",
+                      "revision": 0,
+                      "reviewer": "openrouter",
+                      "model": "anthropic/claude-haiku-5.5",
+                      "outcome": "verdict",
+                      "answered": true,
+                      "verdict": "accept",
+                      "reason": "The line states throat lozenges from a pharmacy, which is an over-the-counter medication matching the health_otc category.",
+                      "suggested_category": null,
+                      "feedback": null,
+                      "error": null
+                    }
+                  ],
+                  "fallbacks": [],
+                  "unresolved": false
+                }
+              }
+            }
+          }
+        ],
+        "exceptions": [],
+        "review_signals": [
+          {
+            "rule_id": "MCC-02",
+            "reason": "Medium-risk merchant category"
+          }
+        ],
+        "decided": true,
+        "disposition_reasons": [
+          {
+            "code": "review_signal",
+            "basis": "EXC-01",
+            "rule_ids": [
+              "MCC-02"
+            ]
+          }
+        ],
+        "open_questions": [],
+        "uncertainty": [],
+        "metadata": {
+          "model": "jev=jev:typesafe/jev-1.14, claude=openrouter:anthropic/claude-haiku-5.5",
+          "translation_model": "tencent/hy-mt2-30b-a3b",
+          "retriever": "none",
+          "prompt_sha256": "6e6f46b87f070539ed23701992710e4302466d92048ad35b20b171cd5182a5a1",
+          "ruleset_version": "v1",
+          "replayed": false,
+          "latency_ms": 2555
+        },
+        "provenance": {
+          "customer_id": "northwind",
+          "mode": "live",
+          "context_complete": true,
+          "receipts_in_context": 5,
+          "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+          "model_overrides": [
+            "langgraph"
+          ],
+          "classification_backend": "langgraph"
+        }
+      }
+    ]
+  },
+  "robust": {
+    "wall_ms": 7870,
+    "results": [
+      {
+        "receipt_id": "RBX-001",
+        "disposition": "pass",
+        "line_items": [
+          {
+            "line_id": "RBX-001-L1",
+            "description_raw": "Guinness 0.0 pint draught",
+            "category": "food_beverage",
+            "restricted": false,
+            "confidence": 0.9,
+            "english_translation": null,
+            "attributes": null,
+            "classification_error": null,
+            "classification_details": {
+              "orchestration": {
+                "answered_by": "claude",
+                "fallback": false,
+                "result": "accepted",
+                "attempts": [
+                  {
+                    "name": "jev",
+                    "backend": "jev",
+                    "model": "typesafe/jev-1.14",
+                    "outcome": "accepted",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 0.95,
+                    "error": null
+                  },
+                  {
+                    "name": "claude",
+                    "backend": "openrouter",
+                    "model": "anthropic/claude-haiku-5.5",
+                    "outcome": "accepted",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 0.9,
+                    "error": null,
+                    "revision": 1
+                  }
+                ],
+                "reflection": {
+                  "calls": 4,
+                  "revisions": 1,
+                  "reviews": [
+                    {
+                      "of": "jev",
+                      "revision": 0,
+                      "reviewer": "openrouter",
+                      "model": "anthropic/claude-haiku-5.5",
+                      "outcome": "verdict",
+                      "answered": true,
+                      "verdict": "revise",
+                      "reason": "Guinness 0.0 is a non-alcoholic stout, so the line contradicts the alcohol category.",
+                      "suggested_category": "food_beverage",
+                      "feedback": "Guinness 0.0 is an alcohol-free beer; the 0.0 designation states it is non-alcoholic, so reconsider alcohol and classify as a non-alcoholic drink instead.",
+                      "error": null
+                    },
+                    {
+                      "of": "claude",
+                      "revision": 1,
+                      "reviewer": "openrouter",
+                      "model": "anthropic/claude-haiku-5.5",
+                      "outcome": "verdict",
+                      "answered": true,
+                      "verdict": "accept",
+                      "reason": "Guinness 0.0 is a non-alcoholic stout, so the line supports food_beverage as a non-alcoholic drink, not alcohol.",
+                      "suggested_category": null,
+                      "feedback": null,
+                      "error": null
+                    }
+                  ],
+                  "fallbacks": [],
+                  "unresolved": false
+                }
+              }
+            }
+          },
+          {
+            "line_id": "RBX-001-L2",
+            "description_raw": "Fish pie",
+            "category": "food_beverage",
+            "restricted": false,
+            "confidence": 1.0,
+            "english_translation": null,
+            "attributes": null,
+            "classification_error": null,
+            "classification_details": {
+              "backend": "typesafe-jev",
+              "requested_model": "typesafe/jev-1.14",
+              "model": "typesafe/jev-1.14-20261014",
+              "answers": {
+                "category": {
+                  "choice": "food_beverage",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "airfare": 0.0,
+                    "alcohol": 0.0,
+                    "clothing": 0.0,
+                    "computer_accessory": 0.0,
+                    "food_beverage": 1.0,
+                    "gambling": 0.0,
+                    "gift": 0.0,
+                    "gift_card": 0.0,
+                    "ground_transport": 0.0,
+                    "health_otc": 0.0,
+                    "household_goods": 0.0,
+                    "jewelry": 0.0,
+                    "laundry_service": 0.0,
+                    "lodging": 0.0,
+                    "office_supplies": 0.0,
+                    "other": 0.0,
+                    "personal_care": 0.0,
+                    "personal_electronics": 0.0,
+                    "service_fee": 0.0,
+                    "software_subscription": 0.0,
+                    "tobacco": 0.0
+                  }
+                },
+                "recipient_type": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "client": 0.0,
+                    "employee": 0.0,
+                    "government_official": 0.0,
+                    "not_stated": 1.0
+                  }
+                },
+                "venue_type": {
+                  "choice": "not_stated",
+                  "confidence": 0.99,
+                  "probabilities": {
+                    "concert": 0.0,
+                    "golf": 0.0,
+                    "not_stated": 0.99,
+                    "other_venue": 0.01,
+                    "sporting_event": 0.0,
+                    "theatre": 0.0
+                  }
+                },
+                "item_kind": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "mobile_phone": 0.0,
+                    "not_stated": 1.0,
+                    "otc_medication": 0.0,
+                    "prescription_medication": 0.0
+                  }
+                },
+                "essential_toiletry": {
+                  "choice": "not_stated",
+                  "confidence": 1.0,
+                  "probabilities": {
+                    "essential": 0.0,
+                    "not_essential": 0.0,
+                    "not_stated": 1.0
+                  }
+                }
+              },
+              "usage": {
+                "input_tokens": 1587,
+                "output_tokens": 425,
+                "cost": 6.6654e-05
+              },
+              "attribute_thresholds": {
+                "recipient_type": 0.5,
+                "venue_type": 0.5,
+                "item_kind": 0.5,
+                "essential_toiletry": 0.5
+              },
+              "orchestration": {
+                "answered_by": "jev",
+                "fallback": false,
+                "result": "accepted",
+                "attempts": [
+                  {
+                    "name": "jev",
+                    "backend": "jev",
+                    "model": "typesafe/jev-1.14",
+                    "outcome": "accepted",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 1.0,
+                    "error": null
+                  }
+                ],
+                "reflection": {
+                  "calls": 2,
+                  "revisions": 0,
+                  "reviews": [
+                    {
+                      "of": "jev",
+                      "revision": 0,
+                      "reviewer": "openrouter",
+                      "model": "anthropic/claude-haiku-5.5",
+                      "outcome": "verdict",
+                      "answered": true,
+                      "verdict": "accept",
+                      "reason": "Fish pie is a meal item from a restaurant on an itemized receipt, which matches food_beverage.",
+                      "suggested_category": null,
+                      "feedback": null,
+                      "error": null
+                    }
+                  ],
+                  "fallbacks": [],
+                  "unresolved": false
+                }
+              }
+            }
+          }
+        ],
+        "exceptions": [],
+        "review_signals": [],
+        "decided": true,
+        "disposition_reasons": [
+          {
+            "code": "nothing_found",
+            "basis": "EXC-01",
+            "rule_ids": []
+          }
+        ],
+        "open_questions": [],
+        "uncertainty": [],
+        "metadata": {
+          "model": "jev=jev:typesafe/jev-1.14, claude=openrouter:anthropic/claude-haiku-5.5",
+          "translation_model": "tencent/hy-mt2-30b-a3b",
+          "retriever": "none",
+          "prompt_sha256": "6e6f46b87f070539ed23701992710e4302466d92048ad35b20b171cd5182a5a1",
+          "ruleset_version": "v1",
+          "replayed": false,
+          "latency_ms": 5471
+        },
+        "provenance": {
+          "customer_id": "robustness",
+          "mode": "live",
+          "context_complete": true,
+          "receipts_in_context": 2,
+          "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+          "model_overrides": [
+            "langgraph"
+          ],
+          "classification_backend": "langgraph"
+        }
+      },
+      {
+        "receipt_id": "RBX-009",
+        "disposition": "flag",
+        "line_items": [
+          {
+            "line_id": "RBX-009-L1",
+            "description_raw": "Stadium suite tickets x4",
+            "category": "other",
+            "restricted": false,
+            "confidence": 0.9,
+            "english_translation": null,
+            "attributes": {
+              "venue_type": "sporting_event"
+            },
+            "classification_error": null,
+            "classification_details": {
+              "orchestration": {
+                "answered_by": "claude",
+                "fallback": true,
+                "result": "accepted",
+                "attempts": [
+                  {
+                    "name": "jev",
+                    "backend": "jev",
+                    "model": "typesafe/jev-1.14",
+                    "outcome": "error",
+                    "routed_on": true,
+                    "answered": true,
+                    "confidence": null,
+                    "error": "venue_type contradicts category airfare"
+                  },
+                  {
+                    "name": "claude",
+                    "backend": "openrouter",
+                    "model": "anthropic/claude-haiku-5.5",
+                    "outcome": "accepted",
+                    "routed_on": false,
+                    "answered": true,
+                    "confidence": 0.9,
+                    "error": null
+                  }
+                ],
+                "reflection": {
+                  "calls": 3,
+                  "revisions": 0,
+                  "reviews": [
+                    {
+                      "of": "claude",
+                      "revision": 0,
+                      "reviewer": "openrouter",
+                      "model": "anthropic/claude-haiku-5.5",
+                      "outcome": "verdict",
+                      "answered": true,
+                      "verdict": "accept",
+                      "reason": "Stadium suite tickets for a sporting event fit no listed category, so other is correct, and the venue_type of sporting_event is supported by the description and merchant category.",
+                      "suggested_category": null,
+                      "feedback": null,
+                      "error": null
+                    }
+                  ],
+                  "fallbacks": [],
+                  "unresolved": false
+                }
+              }
+            }
+          }
+        ],
+        "exceptions": [
+          {
+            "rule_id": "ENT-01",
+            "policy_doc": "meals-and-entertainment-policy.md",
+            "severity": "medium",
+            "line_ids": [
+              "RBX-009-L1"
+            ],
+            "evidence": "Golf, sporting events, theatre, concerts, and similar venue spend requires prior VP approval, recorded as an approval reference (see EXC-02).",
+            "source_quote": "requires prior VP approval",
+            "explanation": "Entertainment venues: Stadium suite tickets x4"
+          }
+        ],
+        "review_signals": [],
+        "decided": true,
+        "disposition_reasons": [
+          {
+            "code": "exception_flags",
+            "basis": "EXC-01",
+            "rule_ids": [
+              "ENT-01"
+            ]
+          }
+        ],
+        "open_questions": [],
+        "uncertainty": [],
+        "metadata": {
+          "model": "jev=jev:typesafe/jev-1.14, claude=openrouter:anthropic/claude-haiku-5.5",
+          "translation_model": "tencent/hy-mt2-30b-a3b",
+          "retriever": "none",
+          "prompt_sha256": "6e6f46b87f070539ed23701992710e4302466d92048ad35b20b171cd5182a5a1",
+          "ruleset_version": "v1",
+          "replayed": false,
+          "latency_ms": 2388
+        },
+        "provenance": {
+          "customer_id": "robustness",
+          "mode": "live",
+          "context_complete": true,
+          "receipts_in_context": 2,
+          "ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+          "model_overrides": [
+            "langgraph"
+          ],
+          "classification_backend": "langgraph"
+        }
+      }
+    ]
+  },
+  "isolated": {
+    "RB-002": {
+      "wall_ms": 1,
+      "line": {
+        "line_id": "RB-002",
+        "category": "food_beverage",
+        "restricted": false,
+        "confidence": "0.7",
+        "recipient_name": null,
+        "recipient_type": null,
+        "venue_type": null,
+        "item_kind": null,
+        "essential_toiletry": null,
+        "error": null,
+        "details": {
+          "orchestration": {
+            "answered_by": "claude",
+            "fallback": true,
+            "result": "exhausted",
+            "attempts": [
+              {
+                "name": "jev",
+                "backend": "jev",
+                "model": "typesafe/jev-1.14",
+                "outcome": "low_confidence",
+                "routed_on": true,
+                "answered": true,
+                "confidence": 0.83,
+                "error": null
+              },
+              {
+                "name": "claude",
+                "backend": "openrouter",
+                "model": "anthropic/claude-haiku-5.5",
+                "outcome": "low_confidence",
+                "routed_on": false,
+                "answered": true,
+                "confidence": 0.7,
+                "error": null
+              }
+            ],
+            "reflection": {
+              "calls": 2,
+              "revisions": 0,
+              "reviews": [],
+              "fallbacks": [],
+              "unresolved": false
+            }
+          }
+        }
+      },
+      "missing": []
+    }
+  }
+}

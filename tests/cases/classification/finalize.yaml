@@ -1,0 +1,57 @@
+suite: classification
+
+recipient_extractions:
+  - {id: RCP-018 name, text: 'Sterling silver bracelet - client gift for A. Moreau, Halcyon Partners', translation: null, expected: {names: [A. Moreau]}}
+  - {id: RCP-022 lunch, text: 'Lunch entree — guest R. Delgado, City Procurement Office', translation: null, expected: {names: [R. Delgado]}}
+  - {id: RCP-022 basket, text: 'Gift basket for R. Delgado, City Procurement Office', translation: null, expected: {names: [R. Delgado]}}
+  - {id: full name, text: 'Guest: Maria Lopez', translation: null, expected: {names: [Maria Lopez]}}
+  - {id: Spanish title, text: Cena con invitado Sr. Ruiz, translation: null, expected: {names: [Sr. Ruiz]}}
+  - {id: German name, text: Abendessen mit Gast Anna Weber, translation: null, expected: {names: [Anna Weber]}}
+  - {id: Japanese name, text: 田中様 お土産, translation: null, expected: {names: [田中]}}
+  - {id: French name, text: Déjeuner avec M. Dubois, translation: null, expected: {names: [M. Dubois]}}
+  - {id: conflicting translation, text: Flowers for A. Moreau, translation: Flowers for R. Delgado, expected: {names: [A. Moreau, R. Delgado]}}
+  - {id: soft drink, text: Coffee for Dr. Pepper fans, translation: null, expected: {names: []}}
+  - {id: winery, text: Wine for J. Lohr tasting, translation: null, expected: {names: []}}
+  - {id: product, text: Case for Apple Watch, translation: null, expected: {names: []}}
+  - {id: room, text: Guest Room Service, translation: null, expected: {names: []}}
+  - {id: no name, text: Gift for an employee, translation: null, expected: {names: []}}
+  - {id: missing description, text: '', translation: null, expected: {names: []}}
+  - {id: multiple recipients are ambiguous, text: Flowers for A. Moreau and R. Delgado, translation: null, expected: {names: [A. Moreau, R. Delgado]}}
+  - {id: organization is not another recipient, text: Lunch with M. Lee of City National Bank, translation: null, expected: {names: [M. Lee]}}
+
+# finalize runs on a classified line for RCP-001's first line: food_beverage, not restricted, confidence 0.9,
+# changed by `line`. `description` replaces the line's normalized description; null keeps it. An expected
+# error is a pattern; null means the line has none. conflict says whether the details keep a recipient conflict.
+finalize:
+  - {id: a clean line is kept as it is, description: null, line: {}, expected: {error: null, category: food_beverage, confidence: "0.9", recipient_name: null, recipient_type: null, conflict: false}}
+  - {id: a missing confidence is kept for the engine to judge, description: null, line: {confidence: null}, expected: {error: null, category: food_beverage, confidence: null}}
+  - {id: an abstention is kept, description: null, line: {category: null, restricted: null, confidence: null}, expected: {error: null, category: null}}
+  - {id: a failed line keeps only its error, description: null, line: {error: request failed}, expected: {error: request failed, category: null, confidence: null}}
+  - {id: a category outside the taxonomy, description: null, line: {category: invented}, expected: {error: category is not in taxonomy, category: null}}
+  - {id: a restricted flag that is not the taxonomy's, description: null, line: {restricted: true}, expected: {error: restricted is not taxonomy-derived}}
+  - {id: a confidence above 1, description: null, line: {confidence: "1.5"}, expected: {error: invalid category confidence}}
+  - {id: a recipient type outside the catalog, description: null, line: {recipient_type: stranger}, expected: {error: invalid recipient_type}}
+  - {id: an attribute that contradicts the category, description: null, line: {item_kind: mobile_phone}, expected: {error: item_kind mobile_phone contradicts category food_beverage}}
+  - {id: a recipient name the line never states, description: null, line: {recipient_name: Invented Person}, expected: {error: recipient name has no source evidence}}
+  - {id: a recipient name that is not text, description: null, line: {recipient_name: false}, expected: {error: recipient name is not text}}
+  - {id: a soft drink brand is never a recipient, description: Dr. Pepper 12oz, line: {recipient_name: Dr. Pepper}, expected: {error: recipient name is a known product or brand}}
+  - {id: a soft drink brand marks no recipient, description: Dr. Pepper 12oz, line: {}, expected: {error: null, recipient_name: null, recipient_type: null}}
+  - {id: a single name in the words is taken, description: Flowers for A. Moreau, line: {category: gift, restricted: true}, expected: {error: null, recipient_name: A. Moreau, recipient_type: unidentified, conflict: false}}
+  - {id: a predicted name keeps the original spelling, description: Flowers for A. Moreau, line: {category: gift, restricted: true, recipient_name: a. moreau, recipient_type: client}, expected: {error: null, recipient_name: A. Moreau, recipient_type: client, conflict: false}}
+  - {id: two names in the words are a conflict, description: Flowers for A. Moreau and R. Delgado, line: {category: gift, restricted: true, recipient_type: client}, expected: {error: null, recipient_name: null, recipient_type: unidentified, conflict: true}}
+  - {id: a predicted name the words contradict is a conflict, description: Flowers for A. Moreau, line: {category: gift, restricted: true, recipient_name: Flowers}, expected: {error: null, recipient_name: null, recipient_type: unidentified, conflict: true}}
+  - {id: a named gratuity is left alone, description: Gratuity for guest T. Nguyen, line: {category: service_fee}, expected: {error: null, recipient_name: null, recipient_type: null}}
+
+jev_thresholds:
+  - {id: negative threshold, thresholds: {recipient_type: -0.1}, expected: {refused: true}}
+  - {id: excessive threshold, thresholds: {item_kind: 1.1}, expected: {refused: true}}
+  - {id: boolean threshold, thresholds: {venue_type: true}, expected: {refused: true}}
+  - {id: string threshold, thresholds: {essential_toiletry: '0.8'}, expected: {refused: true}}
+  - {id: unknown threshold field, thresholds: {category: 0.7}, expected: {refused: true}}
+  - {id: NaN threshold, thresholds: {item_kind: .nan}, expected: {refused: true}}
+  - {id: per-field threshold, thresholds: {recipient_type: 0.8}, expected: {refused: false}}
+
+# A Jev category probability reaches the engine as the line's confidence, which EXC-03 judges.
+jev_uncertainty:
+  - {id: a clear Jev category passes the engine, probability: 0.9, expected: {review: false}}
+  - {id: an ambiguous Jev category goes to review, probability: 0.4, expected: {review: true}}

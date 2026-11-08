@@ -1,0 +1,29 @@
+{
+ "review_id": "rev_6aef74c612548bd292ef54c8",
+ "extraction_id": "ext_6aef74c512548bd292ef54c7",
+ "actor": {
+  "claimed": "r.eviewer",
+  "verified": false
+ },
+ "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+ "review_sha256": "fc9e79ba85ffb2d4c1574fe0ef34420652c5118a7776542fa981c3229e37618f",
+ "candidate_ruleset_sha256": "83c9d13dd26c915fbb1f0abf7827dbf5aa9760f965fbe0c022d90f54e75edc39",
+ "policy": "exceptions_only",
+ "decisions": [
+  {
+   "comparison_id": "cmp-4f9766c93a09b7d56985df0ffc850555",
+   "extraction_sha256": "9c930324189c71bb1b74dbba936d7d8f9b92db1205c1c4ea5b165d9c8dd48522",
+   "reviewer": "r.eviewer",
+   "action": "accept_regex"
+  }
+ ],
+ "ready_for_approval": false,
+ "complete": false,
+ "remaining": [
+  "cmp-341734e64f87a13cae8784a83a0f37d4",
+  "cmp-e79828288e025d0dbbcc1db374aae43e",
+  "cmp-8d1da12b8fd61ed8898b442807dc62d4"
+ ],
+ "issues": [],
+ "created_at": "2026-11-07T18:58:14.102000Z"
+}

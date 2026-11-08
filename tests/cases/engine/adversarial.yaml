@@ -99,8 +99,9 @@ scenarios:
       R3: *r3_stands
 
   # 3. A partial context. Unseen receipts could raise R1's cap to $100, the international one, and
-  # its known $100 does not exceed that, so nothing is proved. R2 and R3 stand on their own lines,
-  # with TIME-03 open on all three. Neither of theirs is a rule TIME-03 can replace.
+  # its known $100 does not exceed that, so nothing is proved, and TIME-03 stays open on it. R2 and R3
+  # stand on their own lines. Neither is a meal, a gift or non-itemized, so neither can be part of a
+  # split whatever receipts are missing, and both are decided.
   - id: a partial context
     complete: false
     receipts: [*r1, *r2, *r3]
@@ -112,8 +113,8 @@ scenarios:
         unresolved: []
         uncertainty: [{line_id: R1-L2, field: category, state: low_confidence}]
         open_includes: [ALC-01, MEAL-01, TIME-03]
-      R2: {disposition: flag, decided: false, active: [TECH-02], unresolved: [], open_includes: [TIME-03]}
-      R3: {disposition: flag, decided: false, active: [DOC-03, PERS-03], unresolved: [], open_includes: [TIME-03]}
+      R2: {disposition: flag, decided: true, active: [TECH-02], unresolved: [], open_excludes: [TIME-03]}
+      R3: {disposition: flag, decided: true, active: [DOC-03, PERS-03], unresolved: [], open_excludes: [TIME-03]}
 
   # 4. A second receipt at one merchant is not a split: each must be at or below the cap
   - id: a second receipt at the merchant with every line known is no split
@@ -137,7 +138,9 @@ scenarios:
       R2: *r2_stands
       R3: *r3_stands
       R4: {disposition: flag, decided: true, active: [TIME-03], audit: [{rule_id: MEAL-01, resolution: replaced}]}
-  - id: two uncertain receipts that could be a split stay open
+  # The wine's $30 is uncertain, so R1's meal spend is $40 or $70: at or below $75 either way, and with
+  # R4's $40 above it. The split holds whatever the wine is, so TIME-03 is raised, not left open.
+  - id: an uncertain line that cannot take a receipt over the cap leaves the split established
     complete: true
     receipts:
       - {<<: *r1, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *ribeye, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *wine, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
@@ -145,10 +148,10 @@ scenarios:
       - *r3
       - {<<: *r4, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *coffee, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
     expected:
-      R1: {disposition: review, decided: false, active: [], open_includes: [TIME-03]}
+      R1: {disposition: flag, decided: false, active: [TIME-03], open_excludes: [TIME-03], audit: [{rule_id: MEAL-01, resolution: replaced}]}
       R2: *r2_stands
       R3: *r3_stands
-      R4: {disposition: review, decided: false, active: [], open_includes: [TIME-03]}
+      R4: {disposition: flag, decided: true, active: [TIME-03], open_excludes: [TIME-03], audit: [{rule_id: MEAL-01, resolution: replaced}]}
 
   # 5. An approval reaches only the rule that accepts its kind, on its own receipt
   - id: a pre-approval on R2
@@ -283,7 +286,7 @@ scenarios:
     receipts:
       - {<<: *r1, total_amount: "80.00", total_amount_usd: "80.00", line_items: [{<<: *eighty, line_id: R1-L1}]}
       - {<<: *r4, merchant_name: Other, total_amount: "0.00", total_amount_usd: "0.00", line_items: [{<<: *coupon, line_id: R4-L1}]}
-    expected: {R1: {disposition: review, decided: false, active: [], open_includes: [MEAL-01]}, R4: {disposition: review, decided: false, active: []}}
+    expected: {R1: {disposition: pass, decided: false, active: [], open_includes: [MEAL-01]}, R4: {disposition: review, decided: false, active: []}}
 
   # A receipt only possibly a meal may count for nothing
   - id: a gratuity on a receipt only possibly a meal does not prove a breach on another
@@ -291,14 +294,15 @@ scenarios:
     receipts:
       - {<<: *r1, merchant_name: Morning, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *ribeye, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
       - {<<: *r4, merchant_name: Evening, total_amount: "45.00", total_amount_usd: "45.00", line_items: [{<<: *gratuity, line_id: R4-L1, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *wine, line_id: R4-L2, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
-    expected: {R1: {disposition: review, decided: false, active: [], open_includes: [MEAL-01]}, R4: {disposition: review, decided: false, active: []}}
+    expected: {R1: {disposition: pass, decided: false, active: [], open_includes: [MEAL-01]}, R4: {disposition: review, decided: false, active: []}}
 
   # Two receipts at one merchant
+  # The unknown $40 line could be meal spend, taking R4 to $80 and out of a split, or not, leaving $40 in one.
   - id: two receipts that could still be a split stay open, with the day breach unresolved
     complete: true
     receipts:
       - {<<: *r1, total_amount: "40.00", total_amount_usd: "40.00", line_items: [{<<: *ribeye, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
-      - {<<: *r4, total_amount: "45.00", total_amount_usd: "45.00", line_items: [{<<: *coffee, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *wine, line_id: R4-L2, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+      - {<<: *r4, total_amount: "80.00", total_amount_usd: "80.00", line_items: [{<<: *coffee, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}, {<<: *wine, line_id: R4-L2, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}]}
     expected:
       R1: {disposition: review, decided: false, active: [], unresolved: [MEAL-01], open_includes: [TIME-03]}
       R4: {disposition: review, decided: false, active: [], unresolved: [MEAL-01], open_includes: [TIME-03]}
@@ -308,17 +312,19 @@ scenarios:
       - {<<: *r1, total_amount: "5.00", total_amount_usd: "5.00", line_items: [{<<: *ribeye, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
       - {<<: *r4, total_amount: "8.00", total_amount_usd: "8.00", line_items: [{<<: *coffee}, {<<: *wine, line_id: R4-L2, unit_price: "3.00", amount: "3.00", amount_usd: "3.00"}]}
     expected:
-      R1: {disposition: review, decided: false, active: [], unresolved: [], open_excludes: [TIME-03], open_includes: [MEAL-01]}
+      R1: {disposition: pass, decided: false, active: [], unresolved: [], open_excludes: [TIME-03], open_includes: [MEAL-01]}
       R4: {disposition: review, decided: false, active: [], unresolved: [], open_excludes: [TIME-03]}
   - id: a partial context stays open even with a receipt over the cap
     complete: false
     receipts: [*r1, *r4]
     expected:
       R1: {disposition: review, decided: false, active: [], open_includes: [TIME-03]}
-      R4: {disposition: review, decided: false, active: [], open_includes: [TIME-03]}
+      R4: {disposition: pass, decided: false, active: [], open_includes: [TIME-03]}
+  # R1's known $110 is above the highest cap there is, $100, so no split can include it: each receipt
+  # in one must be at or below the cap. R4's $5 could still be split with a receipt not seen.
   - id: above every possible cap in a partial context is still open, as a receipt not seen could lower the day
     complete: false
     receipts: [{<<: *r1, total_amount: "120.00", total_amount_usd: "120.00", line_items: [{<<: *ribeye, unit_price: "110.00", amount: "110.00", amount_usd: "110.00"}, *wine]}, *r4]
     expected:
-      R1: {disposition: review, decided: false, active: [], unresolved: [], open_includes: [MEAL-01, TIME-03]}
-      R4: {disposition: review, decided: false, active: [], unresolved: [], open_includes: [MEAL-01, TIME-03]}
+      R1: {disposition: review, decided: false, active: [], unresolved: [], open_includes: [MEAL-01], open_excludes: [TIME-03]}
+      R4: {disposition: pass, decided: false, active: [], unresolved: [], open_includes: [MEAL-01, TIME-03]}

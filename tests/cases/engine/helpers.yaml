@@ -508,13 +508,24 @@ outcomes:
       - {<<: *meal, line_items: [{<<: *line, line_id: L1, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
       - {<<: *meal, receipt_id: R2, currency: EUR, fx_rate_to_usd: null, line_items: [{<<: *line, amount_usd: null}]}
     expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
-  - id: a possible meal that could be international does not rule out a split by the lower cap
+  # If R2 is a meal, the day is international and the cap $100, which $80 and at most $5 do not exceed.
+  # If not, the cap is $75, R1's $80 is above it and cannot be in a split. No split either way.
+  - id: a possible meal that could be international leaves no split under either cap
     rule_id: TIME-03
     receipt_id: R1
     complete: true
     receipts:
       - {<<: *meal, line_items: [{<<: *line, unit_price: "80.00", amount: "80.00", amount_usd: "80.00"}]}
       - {<<: *meal, receipt_id: R2, currency: EUR, line_items: [{<<: *line, category: null, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {findings: [], undetermined: []}
+  # As above, but R2's unknown $30 could take the international day over $100 with R1's $80.
+  - id: a possible meal that could be international keeps a split by the higher cap open
+    rule_id: TIME-03
+    receipt_id: R1
+    complete: true
+    receipts:
+      - {<<: *meal, line_items: [{<<: *line, unit_price: "80.00", amount: "80.00", amount_usd: "80.00"}]}
+      - {<<: *meal, receipt_id: R2, currency: EUR, line_items: [{<<: *line, category: null, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
     expected: {findings: [], undetermined: [{rule_id: TIME-03, line_id: null}]}
   - id: one non-itemized total over the threshold rules out a split, though another is unknown
     rule_id: TIME-03
@@ -797,6 +808,27 @@ outcomes:
       - {<<: *meal, receipt_id: R2, employee_id: E-9, currency: EUR, fx_rate_to_usd: "1.08", total_amount: "37.04", line_items: [{<<: *line, unit_price: "37.04", amount: "37.04"}]}
     expected: {findings: [], undetermined: []}
 
+  # TIME-03 applies to the receipts in the split. One at the merchant that day with no gift to the
+  # recipient whose cap was split adds nothing to their total, so it is not part of that split.
+  - id: a receipt at the merchant with no gift to the split recipient is not in that split
+    rule_id: TIME-03
+    receipt_id: R3
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "20.01", amount: "20.01", amount_usd: "20.01"}]}
+      - {<<: *gifts, receipt_id: R3, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: B. Silva, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {findings: [], undetermined: []}
+  - id: the receipts in a gift split each carry it, citing the gift lines
+    rule_id: TIME-03
+    receipt_id: R2
+    complete: true
+    receipts:
+      - {<<: *gifts, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
+      - {<<: *gifts, receipt_id: R2, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "20.01", amount: "20.01", amount_usd: "20.01"}]}
+      - {<<: *gifts, receipt_id: R3, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: B. Silva, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
+    expected: {findings: [{rule_id: TIME-03, severity: high, scope: receipt, receipt_id: R2, line_ids: []}], undetermined: []}
+
 details:
   - id: provenance comes from the rule
     rule_id: MEAL-01
@@ -876,15 +908,6 @@ details:
     expected:
       replaces: [{rule_id: DOC-01, line_ids: []}, {rule_id: MEAL-01, line_ids: []}]
       evidence.1.value: DOC-01, MEAL-01
-  - id: a receipt in a gift split with no gift to that recipient names no target
-    rule_id: TIME-03
-    receipt_id: R3
-    complete: true
-    receipts:
-      - {<<: *gifts, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "30.00", amount: "30.00", amount_usd: "30.00"}]}
-      - {<<: *gifts, receipt_id: R2, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: A. Moreau, unit_price: "20.01", amount: "20.01", amount_usd: "20.01"}]}
-      - {<<: *gifts, receipt_id: R3, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_name: B. Silva, unit_price: "5.00", amount: "5.00", amount_usd: "5.00"}]}
-    expected: {replaces: [], evidence.1.value: null}
   - id: an item finding cites its line
     rule_id: GIFT-04
     receipt_id: R1
@@ -1020,17 +1043,16 @@ baggage:
     expected: {line_ids: [L1], total_usd: "10.00", within: null}
 
 contexts:
-  - {id: receipts are held in id order, customer_id: northwind, complete: true, receipts: [{<<: *meal, receipt_id: R2}, {<<: *meal, receipt_id: R1}], expected: {receipt_ids: [R1, R2], complete: true}}
-  - {id: a repeat counts once, customer_id: northwind, complete: true, receipts: [*meal, *meal], expected: {receipt_ids: [R1], complete: true}}
-  - {id: a partial context says so, customer_id: northwind, complete: false, receipts: [*meal], expected: {receipt_ids: [R1], complete: false}}
-  - {id: an empty context is allowed, customer_id: northwind, complete: true, receipts: [], expected: {receipt_ids: [], complete: true}}
-  - {id: an entity is derived on the way in, customer_id: northwind, complete: true, receipts: [{<<: *meal, employee_country: IN}], expected: {receipt_ids: [R1], complete: true}}
+  - {id: receipts are held in id order, complete: true, receipts: [{<<: *meal, receipt_id: R2}, {<<: *meal, receipt_id: R1}], expected: {receipt_ids: [R1, R2], complete: true}}
+  - {id: a repeat counts once, complete: true, receipts: [*meal, *meal], expected: {receipt_ids: [R1], complete: true}}
+  - {id: a partial context says so, complete: false, receipts: [*meal], expected: {receipt_ids: [R1], complete: false}}
+  - {id: an empty context is allowed, complete: true, receipts: [], expected: {receipt_ids: [], complete: true}}
+  - {id: an entity is derived on the way in, complete: true, receipts: [{<<: *meal, employee_country: IN}], expected: {receipt_ids: [R1], complete: true}}
 
 refused:
-  - {id: one id with different contents, customer_id: northwind, complete: true, receipts: [*meal, {<<: *meal, total_amount: "41.00", total_amount_usd: "41.00"}], expected: "R1: appears twice with different contents"}
-  - {id: a receipt that fails admission, customer_id: northwind, complete: true, receipts: [{<<: *meal, employee_country: IN, entity: GLOBAL}], expected: "entity 'GLOBAL' contradicts employee_country 'IN'"}
-  - {id: a date with no time, customer_id: northwind, complete: true, receipts: [{<<: *meal, transaction_datetime: "2026-04-14"}], expected: needs a time}
-  - {id: no customer, customer_id: "  ", complete: true, receipts: [*meal], expected: a receipt context needs a customer_id}
+  - {id: one id with different contents, complete: true, receipts: [*meal, {<<: *meal, total_amount: "41.00", total_amount_usd: "41.00"}], expected: "R1: appears twice with different contents"}
+  - {id: a receipt that fails admission, complete: true, receipts: [{<<: *meal, employee_country: IN, entity: GLOBAL}], expected: "entity 'GLOBAL' contradicts employee_country 'IN'"}
+  - {id: a date with no time, complete: true, receipts: [{<<: *meal, transaction_datetime: "2026-04-14"}], expected: needs a time}
 
 recipients:
   - {id: RCP-018-L1, line_id: RCP-018-L1, expected: {recipient_name: A. Moreau, recipient_type: client}}

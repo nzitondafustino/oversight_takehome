@@ -1,0 +1,123 @@
+suite: classification
+
+# The safeguard for recipients a line names: a deterministic detector in the classifier, and GIFT-04's
+# recipient question in the engine. Answers are the model's, given here, so no model is called.
+templates:
+  answer: &answer {category: food_beverage, confidence: 0.9, recipient_name: null, recipient_type: null, venue_type: null, item_kind: null, essential_toiletry: null}
+  line: &line {line_id: L1, description_raw: Lunch entree - guest Deputy Mayor T. Nguyen, language: en, quantity: 1, unit_price: "40.00", amount: "40.00", amount_usd: "40.00"}
+  fee: &fee {line_id: L2, description_raw: Service charge, language: en, quantity: 1, unit_price: "8.00", amount: "8.00", amount_usd: "8.00"}
+  # RBX-005: a client lunch for a deputy mayor, with its service charge.
+  rbx005: &rbx005
+    receipt_id: R1
+    employee_id: E-1
+    employee_country: US
+    entity: GLOBAL
+    submitted_expense_type: Client Entertainment
+    merchant_name: Harbor Grill
+    mcc: "5812"
+    mcc_description: Eating places and restaurants
+    transaction_datetime: "2026-06-06T13:00:00"
+    currency: USD
+    fx_rate_to_usd: "1"
+    total_amount: $lines
+    total_amount_usd: $lines
+    attendee_count: 2
+    itemized: true
+    line_items: [*line, *fee]
+  solo: &solo
+    <<: *rbx005
+    submitted_expense_type: Meals - Individual
+    attendee_count: null
+    trip_id: T-1
+    trip_nights: 2
+    line_items: [{<<: *line, description_raw: Grilled salmon}]
+  fee_answer: &fee_answer {L2: {<<: *answer, category: service_fee}}
+  passed: &passed {disposition: pass, decided: true, exceptions: [], open: [], uncertainty: []}
+  reviewed: &reviewed {disposition: review, decided: false, exceptions: [], open: [GIFT-04]}
+
+recipient_cues:
+  # Named recipients, in each form the detector reads.
+  - {id: an initial and surname after guest, text: Lunch entree — guest R. Delgado, expected: {named: true}}
+  - {id: an initial and surname after for, text: Flowers for S. Ito, expected: {named: true}}
+  - {id: a role word between the cue and the name, text: Watch award for employee P. Singh, expected: {named: true}}
+  - {id: a title and an initial, text: Lunch entree - guest Deputy Mayor T. Nguyen, expected: {named: true}}
+  - {id: a full name after a lower-case guest cue, text: Dinner - guest Maria Lopez, expected: {named: true}}
+  - {id: a full name after a guest cue and a colon, text: "Guest: Maria Lopez", expected: {named: true}}
+  - {id: Spanish, text: Cena con invitado Sr. Ruiz, expected: {named: true}}
+  - {id: French, text: Déjeuner avec M. Dubois, expected: {named: true}}
+  - {id: German, text: Abendessen mit Gast Anna Weber, expected: {named: true}}
+  - {id: Japanese, text: 田中様 お土産, expected: {named: true}}
+  # No person, though the words look like one.
+  - {id: a title-case menu item after Guest, text: Guest Room Service, expected: {named: false}}
+  - {id: a title-case menu item after Client, text: Client Appreciation Dinner, expected: {named: false}}
+  - {id: a hotel room, text: Guest room charge, expected: {named: false}}
+  - {id: a product after for, text: Case for Apple Watch, expected: {named: false}}
+  - {id: software after for, text: Charger for Microsoft Surface, expected: {named: false}}
+  - {id: a soft drink with a title, text: Dr. Pepper 12oz, expected: {named: false}}
+  - {id: a soft drink after for, text: Coffee for Dr. Pepper fans, expected: {named: false}}
+  - {id: a winery with an initial, text: Wine for J. Lohr tasting, expected: {named: false}}
+  - {id: a cleaning product, text: Mr. Clean magic eraser, expected: {named: false}}
+  - {id: a place with an initial, text: St. Louis BBQ ribs, expected: {named: false}}
+  - {id: a role with no name, text: Lunch with the CEO, expected: {named: false}}
+  - {id: a group with no name, text: Coffee for the team, expected: {named: false}}
+  # A known limit: a title with no name is not read as a person.
+  - {id: a title with no name is not detected, text: Lunch - guest the mayor, expected: {named: false}}
+
+recipient_answers:
+  - {id: a named line the model read nothing on is marked unidentified and keeps its category, description: Lunch entree - guest Deputy Mayor T. Nguyen, answer: *answer, expected: {category: food_beverage, confidence: "0.9", recipient_name: T. Nguyen, recipient_type: unidentified}}
+  - {id: a full-name guest read as nothing is unidentified, description: Dinner - guest Maria Lopez, answer: *answer, expected: {recipient_type: unidentified}}
+  - {id: a Spanish guest read as nothing is unidentified, description: Cena con invitado Sr. Ruiz, answer: *answer, expected: {recipient_type: unidentified}}
+  - {id: a name the model read leaves the type to the engine, description: Lunch entree - guest Deputy Mayor T. Nguyen, answer: {<<: *answer, recipient_name: T. Nguyen}, expected: {recipient_name: T. Nguyen, recipient_type: null}}
+  - {id: a type the model read without a name is kept, description: Lunch entree - guest Deputy Mayor T. Nguyen, answer: {<<: *answer, recipient_type: government_official}, expected: {recipient_name: T. Nguyen, recipient_type: government_official}}
+  - {id: an official read in full is kept, description: Lunch entree - guest Deputy Mayor T. Nguyen, answer: {<<: *answer, recipient_name: T. Nguyen, recipient_type: government_official}, expected: {recipient_type: government_official}}
+  - {id: a named gratuity is left alone, description: Gratuity for guest T. Nguyen, answer: {<<: *answer, category: service_fee}, expected: {category: service_fee, recipient_type: null}}
+  - {id: a product with a title is no recipient, description: Dr. Pepper 12oz, answer: *answer, expected: {recipient_type: null}}
+  - {id: an ordinary dish is no recipient, description: Grilled salmon, answer: *answer, expected: {recipient_type: null}}
+  - {id: an alcohol line keeps its category with its recipient unread, description: Beer for guest J. Park, answer: {<<: *answer, category: alcohol}, expected: {category: alcohol, restricted: true, recipient_type: unidentified}}
+
+# The whole path: model answers by line ID, through the classifier and the unchanged evaluate_receipts.
+policy_paths:
+  - id: RBX-005 with no recipient fields goes to review, with GIFT-04 open and no GIFT-04 flag
+    receipt: *rbx005
+    answers: {L1: *answer, <<: *fee_answer}
+    expected: {<<: *reviewed, uncertainty: [[L1, recipient_type, unknown]]}
+  - id: RBX-005 with only a name goes to review, with GIFT-04 open and no GIFT-04 flag
+    receipt: *rbx005
+    answers: {L1: {<<: *answer, recipient_name: T. Nguyen}, <<: *fee_answer}
+    expected: {<<: *reviewed, uncertainty: [[L1, recipient_type, missing]]}
+  - id: RBX-005 with an official is a critical flag, citing the lunch and not the service charge
+    receipt: *rbx005
+    answers: {L1: {<<: *answer, recipient_name: T. Nguyen, recipient_type: government_official}, <<: *fee_answer}
+    expected: {disposition: flag, decided: true, exceptions: [GIFT-04], open: [], uncertainty: [], cited: {GIFT-04: [L1]}}
+  - id: RBX-005 with a known client passes
+    receipt: *rbx005
+    answers: {L1: {<<: *answer, recipient_name: T. Nguyen, recipient_type: client}, <<: *fee_answer}
+    expected: *passed
+  - id: a full-name guest read as nothing goes to review
+    receipt: {<<: *rbx005, line_items: [{<<: *line, description_raw: Dinner - guest Maria Lopez}, *fee]}
+    answers: {L1: *answer, <<: *fee_answer}
+    expected: {<<: *reviewed, uncertainty: [[L1, recipient_type, unknown]]}
+  - id: an ambiguous named guest goes to review and is never made an official
+    receipt: {<<: *rbx005, line_items: [{<<: *line, description_raw: Lunch with M. Lee of City National Bank}, *fee]}
+    answers: {L1: {<<: *answer, recipient_name: M. Lee}, <<: *fee_answer}
+    expected: {<<: *reviewed, uncertainty: [[L1, recipient_type, missing]]}
+  - id: a Spanish guest read as nothing goes to review
+    receipt: {<<: *rbx005, line_items: [{<<: *line, description_raw: Cena con invitado Sr. Ruiz, language: es}, *fee]}
+    answers: {L1: *answer, <<: *fee_answer}
+    expected: {<<: *reviewed, uncertainty: [[L1, recipient_type, unknown]]}
+  - id: a product with a title passes as before
+    receipt: {<<: *rbx005, line_items: [{<<: *line, description_raw: Dr. Pepper 12oz}, *fee]}
+    answers: {L1: *answer, <<: *fee_answer}
+    expected: *passed
+  - id: a solo meal with no recipient passes as before
+    receipt: *solo
+    answers: {L1: *answer}
+    expected: *passed
+  - id: a named gratuity raises no recipient question
+    receipt: {<<: *rbx005, line_items: [{<<: *line, description_raw: Lunch entree}, {<<: *fee, description_raw: Gratuity for guest T. Nguyen}]}
+    answers: {L1: *answer, <<: *fee_answer}
+    expected: *passed
+  - id: alcohol for an unread guest keeps ALC-01, adds review, and makes no GIFT-04 flag
+    receipt: {<<: *solo, line_items: [{<<: *line, description_raw: Beer for guest J. Park, unit_price: "9.00", amount: "9.00", amount_usd: "9.00"}]}
+    answers: {L1: {<<: *answer, category: alcohol}}
+    expected: {disposition: flag, decided: false, exceptions: [ALC-01], open: [GIFT-04], uncertainty: [[L1, recipient_type, unknown]], cited: {ALC-01: [L1]}}

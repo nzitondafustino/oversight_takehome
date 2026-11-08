@@ -1,22 +1,6 @@
-"""The named helpers: policy logic that conditions cannot express.
+"""Named helpers for policy logic conditions cannot express.
 
-Each helper reads its clause's thresholds from its rule's params and gives one of three results:
-candidate findings, nothing, or undetermined when something it needs is not known. Replacements,
-waivers and carve-outs come later, so a helper reports what it catches regardless: MEAL-01 still fires
-on a receipt in a TIME-03 split.
-
-Import from this package, not from its modules, outside it. The tables in the domain modules come from
-the policy text, as the rule schema has no place for them.
-
-    common.py         what helpers produce, and the lowest a total could be
-    context.py        ReceiptContext, and HelperJob: one rule on one receipt
-    meals.py          MEAL-01, REG-02, REG-03, ALC-02
-    gifts.py          GIFT-01, GIFT-04
-    healthcare.py     HEALTH-01
-    travel.py         PERS.BAGGAGE, for the carve-out step
-    documentation.py  DOC-03, REG-04
-    splits.py         TIME-03, which reads meals and gifts
-    registry.py       the rule's helper name to its function
+Each helper returns candidate findings, nothing, or undetermined. Import from this package, not its modules.
 """
 
 from dataclasses import dataclass
@@ -70,10 +54,7 @@ __all__ = [
 
 @dataclass(frozen=True)
 class _Job(HelperJob):
-    """HelperJob under its earlier name, with the domain questions it used to answer itself.
-
-    Kept for the callers that build one to read a bound directly. New code uses HelperJob and MealPolicy.
-    """
+    """Deprecated alias of HelperJob with its former domain methods."""
 
     def is_meal(self, receipt: Receipt) -> bool | None:
         return MealPolicy(self).is_meal(receipt)

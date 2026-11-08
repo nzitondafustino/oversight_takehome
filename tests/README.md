@@ -13,17 +13,28 @@ Add cases to an existing file, or create any `.yaml` or `.yml` file anywhere
 under `cases/`. Files are discovered recursively in sorted order. No Python
 changes are needed for new cases in the supported suites.
 
-Every file declares `suite: rules`, `suite: rulesets`, `suite: extraction`, `suite: agreement`, `suite: build_rules`, `suite: validate`, `suite: semantics`, `suite: models`, `suite: admission`, `suite: facts`, `suite: checks`, `suite: helpers`, `suite: replacements`, `suite: approvals`, `suite: carveouts`, `suite: uncertainty`, `suite: report`, `suite: evaluation`, `suite: hardening`, `suite: adversarial`, `suite: adversarial_policy`, `suite: policy_decisions`, `suite: completeness`, `suite: inevitable`, `suite: offline_eval`, `suite: ingestion`, `suite: normalization`, `suite: classification`, `suite: robustness`, or `suite: submission_integrity`.
+Every file declares `suite: policy_compiler`, `suite: rules`, `suite: rulesets`, `suite: extraction`, `suite: agreement`, `suite: build_rules`, `suite: validate`, `suite: semantics`, `suite: models`, `suite: admission`, `suite: facts`, `suite: checks`, `suite: helpers`, `suite: replacements`, `suite: approvals`, `suite: carveouts`, `suite: uncertainty`, `suite: report`, `suite: evaluation`, `suite: hardening`, `suite: adversarial`, `suite: adversarial_policy`, `suite: policy_decisions`, `suite: completeness`, `suite: inevitable`, `suite: offline_eval`, `suite: ingestion`, `suite: normalization`, `suite: classification`, `suite: robustness`, `suite: evidence`, or `suite: submission_integrity`.
 The `policy_engine` suite covers reuse and immutable configuration of the class API.
 Optional `templates` can hold YAML anchors; anchors are local to a file.
 
 | Suite | Sections | Input keys | Expected result |
 | --- | --- | --- | --- |
+| classification | adapters | model | `backends`: the registered backends (execution adapters) whose own check accepts this model ID, in registry order; each one's provider is OpenRouter. |
+| classification | recipient_extractions | text, translation | Exact names and source spans; ambiguity retained. |
+| classification | finalize | description, line | `finalize` on a classified line: error pattern or none, recipient name and type, and whether a recipient conflict is kept. |
+| classification | jev_thresholds | thresholds | `refused`: whether these per-attribute Jev thresholds are rejected. |
+| classification | jev_uncertainty | probability | `review`: whether the engine's EXC-03 reviews a Jev category with this probability. |
 | policy_engine | isolation | evaluations | Ordered `runs` summaries from repeated evaluations using one engine. |
 | policy_engine | configuration | path, value, receipts | Original receipt outcome after attempted caller-side and engine-side catalog mutations. |
 | policy_engine | configuration_refused | field_changes, rule_changes, remove_rules | Error regex: incompatible configuration must fail at construction, before evaluating receipts. Null field changes remove an entry. |
 | policy_engine | catalog_values | values | `values`: exact scalar values retained in a frozen catalog sequence. |
 | policy_engine | missing_references | rule_changes | Explicit validator error and constructor error for dangling replacement/carve-out targets, including rulesets built around validation. |
+| policy_compiler | documents_refused | documents | Error regex: `PolicyCompiler.extract` refuses these documents, and the message holds no `SECRET` text from them. |
+| policy_compiler | resolutions_refused | resolutions | Error regex: `extract` refuses these resolutions, given with the real policy documents. |
+| policy_compiler | settings_refused | mode, changes, completion | Error regex: `PolicyCompiler` refuses settings from config.yaml in `mode` with `changes`, and an injected completion if `completion`. |
+| policy_compiler | overrides_refused | mode, overrides | Error regex: `from_config` and `extract` both refuse these generation overrides in `mode`, before any request. |
+| policy_compiler | recording_keys | changes | `same`: whether a live recording's key is unchanged when `changes` replace the base text, prompt, url, model or temperature. |
+| policy_compiler | review_decisions | rule_id, field, decision | `outcome`, the sorted issue `codes` and `ready`, from `PolicyCompiler.review` of the real documents with this one decision added to sign-offs of their two open fields. `decision` holds `action` and any `value` and `rationale`. |
 | submission_integrity | exploits | receipts, reason | `error`: the exact error that refuses it, and it can get no result at all. |
 | submission_integrity | refused | receipt | Error regex: these amounts contradict each other. |
 | submission_integrity | admitted | receipt | Values in its JSON form, as admitted and unchanged. |
@@ -41,6 +52,9 @@ Optional `templates` can hold YAML anchors; anchors are local to a file.
 | extraction | refused | text | Error regex. |
 | agreement | cases | text, response | Each rule with the fields that did not agree, by status; `{}` means all agreed. |
 | agreement | refused | response | Error regex. |
+| agreement | recorded | scenario | A document in `fixtures/policy_scenarios`, read by the regex and its recorded response: `rules` as for `cases`, and `counts` by status. |
+| agreement | recorded_refused | scenario | Error regex: no usable recorded reading. |
+| agreement | resolutions | scenario, resolutions | `resolved` and `unresolved` as `rule_id field`, and a regex for each refused resolution in `errors`. |
 | build_rules | accepted | text, logic | Fields the built rule must have. |
 | build_rules | refused | text, logic | Error regex. |
 | validate | cases | text, logic | Exact ordered list of issues. |
@@ -82,8 +96,8 @@ Optional `templates` can hold YAML anchors; anchors are local to a file.
 | helpers | details | rule_id, receipt_id, complete, receipts | Values on the first finding, in its JSON form. |
 | helpers | runs | rule_ids, receipt_id, complete, receipts, with_context | Any of `findings`, `pending_helpers`, `undetermined` and `complete` from `run_checks` on those rules. |
 | helpers | baggage | receipt_id, complete, receipts | `line_ids`, `total_usd` and `within` from `baggage_allowance`. |
-| helpers | contexts | customer_id, complete, receipts | `receipt_ids` held, in order, and `complete`. |
-| helpers | refused | customer_id, complete, receipts | Error regex: this context cannot be built. |
+| helpers | contexts | complete, receipts | `receipt_ids` held, in order, and `complete`. |
+| helpers | refused | complete, receipts | Error regex: this context cannot be built. |
 | helpers | recipients | line_id | `recipient_name` and `recipient_type` a classifier would read from that real line. Evaluation only. |
 | helpers | dispatch | helper | `module` and `function` behind that name in the registry. |
 | helpers | names | name | `module` the name comes from, importable from `expense_validator.engine.helpers`. |
@@ -104,13 +118,13 @@ Optional `templates` can hold YAML anchors; anchors are local to a file.
 | report | made_up | rules, receipt_id, complete, receipts | As in real, from these rules. |
 | report | refused | rules, receipt_id, complete, receipts | Error regex: this report cannot be made. |
 | evaluation | cases | receipt_id, complete, receipts | Any of `disposition`, `decided`, `reasons`, `exceptions`, `signals`, `uncertainty`, `open`, `unresolved` and `audit`, from `evaluate_receipts`. |
-| evaluation | refused | customer_id, receipts | Error regex: this run cannot go ahead. |
+| evaluation | refused | receipts | Error regex: this run cannot go ahead. |
 | adversarial | scenarios | receipts, complete | By receipt ID, any of `disposition`, `decided`, `active`, `severities`, `unresolved`, `uncertainty`, `audit`, `open_includes` and `open_excludes`. Also holds in every receipt order. |
 | adversarial_policy | bounds | bound, receipts, complete | By receipt ID, any of `disposition`, `decided`, `active`, `severities`, `cited`, `rules`, `unresolved`, `uncertainty`, `audit`, `replaced`, `waived`, `evidence`, `cites_include` and `explains`. `bound` is checked against the rule's param and worked through on its own. |
 | adversarial_policy | replacement | receipts, complete | As in bounds, and every group's citation and provenance must be its rule's. |
 | adversarial_policy | isolation | receipts, complete | As in bounds. |
 | adversarial_policy | conflicts_refused | receipts | Error regex. |
-| adversarial_policy | separate_runs | runs | By customer, then as in bounds, with the runs made in either order. |
+| adversarial_policy | separate_runs | runs | Runs by a name of no meaning, then as in bounds, with the runs made in either order. |
 | adversarial_policy | ladders | rule, vary, amounts, receipts, complete | `statuses`: the rule's status at each amount, and the status may only move one way as the amount does. |
 | adversarial_policy | spend_bounds | vary, amounts, receipts | `least` and `most` meal spend per person at each amount. |
 | adversarial_policy | unrelated | receipts, other | `rules`, and the first receipt's result is the same with and without `other`. |
@@ -143,12 +157,21 @@ Optional `templates` can hold YAML anchors; anchors are local to a file.
 | normalization | provider_refused | status, body | Error regex: this HTTP response is a translation error, through the real SDK. |
 | classification | answers | answer, description | Values on the classified line, for this answer on a line with this text. An answer is sent as written if text, and as JSON if a mapping. |
 | classification | answers_refused | answer, description | Error regex: this answer fails the line, leaving nothing else on it. |
+| classification | jev_answers | answers | Values on the line Jev classifies from a valid Decisions response, where `answers` gives `[choice, probability]` by question and every other question answers not_stated. |
+| classification | jev_answers_refused | answers, edit | Error regex: the line fails. `edit` changes the built response: `raw` replaces its text, `drop` removes answers, and `set` sets dotted paths. |
+| classification | jev_responses | edit | `model` and `usage` kept in the details from this valid response envelope. |
+| classification | jev_provider_failures | failure | `error`: pattern on every line when the network under the real OpenRouter SDK fails this way; one request per line, never retried. |
 | classification | thresholds | confidence | `state`: what the engine's EXC-03 makes of this confidence, at the ruleset's threshold. |
 | classification | provider | status, body | `category` and `restricted` read through the real SDK from this HTTP response, with the network mocked. |
 | classification | provider_refused | status, body | Error regex: this HTTP response fails the line through the real SDK, and is not cached. |
 | classification | line_inputs | receipt, translations | `fields`: for each line, exactly what the model reads. `translations` maps text to the answer, or to `{raises: message}`; null means no translator. |
 | classification | receipt_languages | languages | `language`: the receipt language for lines in these languages, or null. |
+| classification | recipient_cues | text | `named`: whether the detector reads a person in this text. |
+| classification | recipient_answers | answer, description | Values on the classified line: an unread named recipient is `unidentified`, and the rest of the answer is kept. |
+| classification | policy_paths | receipt, answers | Model answers by line ID, through the classifier and `evaluate_receipts`: any of `disposition`, `decided`, `exceptions`, `open`, `uncertainty` as `[line_id, field, state]`, and `cited` lines by rule. |
 | classification | scores | lines | `category_right`, `restricted_right`, `failures` and `total` over these scored lines. |
+| evidence | cases | text, rule_id, quote | `text`: the evidence for this rule in this policy, and whether it was `expanded` beyond the quote. |
+| evidence | refused | text, rule_id, quote | Error regex: the clause or quote could not be verified. |
 | robustness | thresholds | rows, threshold | What this threshold accepts and sets aside. A row is a short form the runner fills in. |
 | robustness | levels | rows | Right and total at each confidence level. |
 | robustness | separation | rows | Counts of right and wrong, with mean confidence, or null where there is none. |

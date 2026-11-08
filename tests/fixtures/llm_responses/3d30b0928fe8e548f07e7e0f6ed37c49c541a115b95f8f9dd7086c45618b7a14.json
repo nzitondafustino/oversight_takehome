@@ -1,0 +1,8 @@
+{
+  "policy_doc": "merchant-category-risk.md",
+  "document_sha256": "3d30b0928fe8e548f07e7e0f6ed37c49c541a115b95f8f9dd7086c45618b7a14",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "simulation",
+  "origin": "authored stand-in for a model reading, written once at authoring time: not model output",
+  "response": "{\"rules\": [{\"rule_id\": \"MCC-01\", \"title\": \"High-risk merchant category\", \"section\": null, \"severities\": [\"high\"], \"review_signal\": false, \"thresholds\": [], \"references\": [], \"quote\": \"A transaction at a high-risk MCC\"}, {\"rule_id\": \"MCC-02\", \"title\": \"Medium-risk merchant category\", \"section\": null, \"severities\": [], \"review_signal\": true, \"thresholds\": [], \"references\": [], \"quote\": \"A medium-risk MCC raises a review\"}, {\"rule_id\": \"MCC-03\", \"title\": \"Bars and taverns\", \"section\": null, \"severities\": [], \"review_signal\": false, \"thresholds\": [], \"references\": [\"ALC-01\", \"ALC-02\", \"ALC-03\"], \"quote\": \"A bar (MCC 5813) serves alcohol\"}]}"
+}

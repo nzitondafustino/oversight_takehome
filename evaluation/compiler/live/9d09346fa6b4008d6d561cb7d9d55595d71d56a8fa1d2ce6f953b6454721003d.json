@@ -1,0 +1,8 @@
+{
+  "policy_doc": "technology-and-equipment-policy.md",
+  "document_sha256": "9d09346fa6b4008d6d561cb7d9d55595d71d56a8fa1d2ce6f953b6454721003d",
+  "prompt_sha256": "12a5faa24016027f7e3e0fdd142ec0c1b5f317609733e5386eb0f88d5f005690",
+  "kind": "model",
+  "origin": "{\"provider\": \"openrouter\", \"url\": \"https://openrouter.ai/api/v1/chat/completions\", \"model\": \"anthropic/claude-haiku-5.5\", \"temperature\": 0.0, \"recorded_at\": \"2026-11-06T06:13:57+00:00\"}",
+  "response": "{\"rules\": [{\"rule_id\": \"TECH-01\", \"title\": \"Personal electronics are not reimbursable\", \"section\": \"Personal electronics\", \"severities\": [\"high\"], \"review_signal\": false, \"thresholds\": [], \"references\": [], \"quote\": \"Personal electronics are not reimbursable.\"}, {\"rule_id\": \"TECH-02\", \"title\": \"Peripherals under $200\", \"section\": \"Accessories and peripherals\", \"severities\": [\"medium\"], \"review_signal\": false, \"thresholds\": [{\"value\": \"200\", \"unit\": \"usd\"}], \"references\": [\"EXC-02\"], \"quote\": \"reimbursable up to\"}, {\"rule_id\": \"TECH-03\", \"title\": \"Mobile handsets\", \"section\": \"Phones and software\", \"severities\": [\"high\"], \"review_signal\": false, \"thresholds\": [], \"references\": [], \"quote\": \"never reimbursable on an expense report\"}, {\"rule_id\": \"TECH-04\", \"title\": \"Software subscriptions\", \"section\": \"Phones and software\", \"severities\": [\"low\"], \"review_signal\": false, \"thresholds\": [], \"references\": [\"EXC-02\"], \"quote\": \"requires a manager approval reference\"}]}"
+}

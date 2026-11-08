@@ -1,38 +1,7 @@
-"""The authoritative evaluation pipeline, also used by PolicyEngine.evaluate.
+"""The authoritative evaluation pipeline.
 
-evaluate_receipts takes receipts and nothing already worked out, so no caller can skip a step:
-
-    admit -> one customer's context -> assess uncertainty -> checks and helpers on the view
-          -> replacements -> approvals -> carve-outs -> EXC-04 report -> disposition
-
-The stage functions in the other modules stay importable for unit tests. Only this produces a final
-result. An error in any step is raised, never turned into an outcome, and it stops the whole run.
-
-customer_id scopes a run: it names the customer, and keeps one customer's receipts from being added
-up with another's across runs. It does not authenticate anything. Receipts carry no owner, so nothing
-here can tell whether the receipts passed in belong to that customer, and establishing that is the
-caller's job.
-
-The disposition follows EXC-01, reading its severities from the rule:
-
-    any exception of a flag severity                         flag
-    otherwise, any exception of a review severity            review
-    otherwise, any review signal or EXC-03 signal            review
-    otherwise, not fully decided                             review   (a project decision, not EXC-01)
-    otherwise                                                pass
-
-A receipt with no such exception also flags if every reading of its unresolved recipient types flags
-it: see inevitable.py. That is a project decision too, the only flag with no active exception, and it
-adds no finding, so the rules stay unresolved and the receipt stays undecided.
-
-EXC-01 says nothing of incomplete evidence. Sending it to review is this project's decision, so that
-missing information never reads as compliance. A flagged receipt can still be undecided: decided
-says so, whatever the disposition is. Unresolved, replaced, waived, excused and uncitable groups are
-not active exceptions and never flag a receipt.
-
-The severities come only from the ruleset, and its directive must map each one exactly once. Before
-a run is returned, check_run confirms it holds together. That only checks its structure: it works out
-no disposition of its own, and a failure raises.
+admit -> one context -> uncertainty -> checks and helpers -> replacements -> approvals -> carve-outs ->
+report -> disposition.
 """
 
 from collections.abc import Iterable, Mapping
@@ -65,6 +34,8 @@ ReasonCode = Literal[
     "uncertainty",
     "incomplete_evidence",
     "lines_do_not_account_for_total",
+    "unresolved_exception",
+    "unverified_amount",
     "nothing_found",
 ]
 
@@ -74,7 +45,7 @@ class _Strict(BaseModel):
 
 
 class DispositionReason(_Strict):
-    """One reason behind a disposition, and where the reason comes from."""
+    """One reason behind a disposition, and its basis."""
 
     code: ReasonCode
     basis: str  # the rule that says so, or project_decision
@@ -82,7 +53,6 @@ class DispositionReason(_Strict):
 
 
 class ReceiptEvaluation(_Strict):
-    customer_id: str
     ruleset_version: str
     receipt_id: str
     disposition: Disposition
@@ -117,7 +87,6 @@ class ReceiptEvaluation(_Strict):
 
 
 class EvaluationRun(_Strict):
-    customer_id: str
     ruleset_version: str
     context_complete: bool
     results: tuple[ReceiptEvaluation, ...]  # in receipt ID order
@@ -130,22 +99,28 @@ class EvaluationRun(_Strict):
 
 
 def evaluate_receipts(
-    customer_id: str,
     receipts: Iterable[Receipt | Mapping[str, object]],
     ruleset: RuleSet,
     fields: Mapping[str, dict],
     *,
-    complete: bool,
+    complete: bool = True,
 ) -> EvaluationRun:
-    """All one customer's receipts to consider. complete says whether any that matter may be missing.
+    """Evaluate receipts together in one context.
 
-    Every receipt is admitted here, including a Receipt already built. Pass each customer separately:
-    receipts carry no customer, so this cannot tell if another's have been mixed in.
+    Args:
+        receipts: Receipts to admit and evaluate together.
+        ruleset: Policy rules.
+        fields: Field catalog.
+        complete: Whether every receipt that could matter is included. True by default, as the caller is
+            expected to include the employee's earlier receipts.
+
+    Returns:
+        One result per receipt, in receipt ID order.
     """
     if not isinstance(complete, bool):
         raise TypeError(f"complete must be True or False, not {complete!r}")
     directive = disposition_directive(ruleset)
-    context = build_context(customer_id, receipts, fields, complete=complete)
+    context = build_context(receipts, fields, complete=complete)
     assessed = assess_context(context, ruleset, fields)
 
     def flagging_rules(reading: ReceiptContext, receipt_id: str) -> tuple[str, ...]:
@@ -165,7 +140,6 @@ def evaluate_receipts(
             reasons = (*reasons, DispositionReason(code="inevitable_violation", basis=PROJECT_DECISION, rule_ids=inevitable.rule_ids))
         results.append(
             ReceiptEvaluation(
-                customer_id=customer_id,
                 ruleset_version=ruleset.ruleset_version,
                 receipt_id=assessment.receipt_id,
                 disposition=disposition,
@@ -176,7 +150,6 @@ def evaluate_receipts(
             )
         )
     run = EvaluationRun(
-        customer_id=customer_id,
         ruleset_version=ruleset.ruleset_version,
         context_complete=complete,
         results=tuple(results),
@@ -195,7 +168,7 @@ def _report_for(assessed: AssessedContext, receipt_id: str, ruleset: RuleSet, fi
 
 
 def decide_disposition(report: ReceiptReport, directive: ProcessRule) -> tuple[Disposition, tuple[DispositionReason, ...]]:
-    """Computed, not judged: the same report always gives the same disposition and reasons."""
+    """Compute the disposition and its reasons from a report (EXC-01)."""
     flags = set(directive.params["flag_severities"].values)
     reviews = set(directive.params["review_severities"].values)
     for group in report.exceptions:
@@ -215,21 +188,35 @@ def decide_disposition(report: ReceiptReport, directive: ProcessRule) -> tuple[D
         reasons.append(DispositionReason(code="uncertainty", basis=report.uncertainty.rule_id, rule_ids=(report.uncertainty.rule_id,)))
     if not report.monetary.lines_account_for_total:
         reasons.append(DispositionReason(code="lines_do_not_account_for_total", basis=PROJECT_DECISION))
+    # A breach was found, and only whether a replacement or carve-out takes it out of play is not known.
+    unresolved = tuple(sorted({group.rule_id for group in report.of("exception", "unresolved")}))
+    if unresolved:
+        reasons.append(DispositionReason(code="unresolved_exception", basis=PROJECT_DECISION, rule_ids=unresolved))
+    # A pass cannot rest on an amount that could not be verified, so with nothing else against it, review.
+    if not reasons and _rests_on_unverified_amount(report):
+        reasons.append(DispositionReason(code="unverified_amount", basis=PROJECT_DECISION))
+    # What sends a receipt to review. Open questions alone do not: they are not exceptions or signals.
+    against = bool(reasons)
     if not report.decided:
-        unresolved = {group.rule_id for group in report.of("exception", "unresolved")}
-        still_open = sorted(unresolved | {item.rule_id for item in report.open_questions})
-        # Signals, or lines that leave out part of the total, already explain a receipt that is not decided.
-        if still_open or (report.uncertainty is None and report.monetary.lines_account_for_total):
+        still_open = sorted({item.rule_id for item in report.open_questions})
+        # Signals, lines that leave out part of the total, or an unresolved breach already explain it.
+        if still_open or not against:
             reasons.append(DispositionReason(code="incomplete_evidence", basis=PROJECT_DECISION, rule_ids=tuple(still_open)))
     if flagged:
         return "flag", tuple(reasons)
-    if reasons:
+    if against:
         return "review", tuple(reasons)
-    return "pass", (DispositionReason(code="nothing_found", basis=directive.rule_id),)
+    # EXC-01: nothing found is a pass. Not decided, it is provisional, and says what is still open.
+    return "pass", (DispositionReason(code="nothing_found", basis=directive.rule_id), *reasons)
+
+
+def _rests_on_unverified_amount(report: ReceiptReport) -> bool:
+    monetary = report.monetary
+    return "unverified" in (monetary.fx_rate, monetary.line_conversion, monetary.total_conversion, monetary.line_sum)
 
 
 def disposition_directive(ruleset: RuleSet) -> ProcessRule:
-    """The one active disposition directive, once it is known to map every severity exactly once."""
+    """Return the active disposition directive, checked to map every severity once."""
     active = [
         rule
         for rule in ruleset.rules
@@ -261,7 +248,7 @@ def disposition_directive(ruleset: RuleSet) -> ProcessRule:
 
 
 def check_run(run: EvaluationRun, receipt_ids: Iterable[str], directive: ProcessRule, ruleset: RuleSet) -> None:
-    """Confirms a run holds together, raising if not. This works out no disposition of its own."""
+    """Raise if a run does not hold together. Decides no disposition."""
     expected = sorted(receipt_ids)
     found = sorted(result.receipt_id for result in run.results)
     if found != expected:
@@ -275,16 +262,16 @@ def check_run(run: EvaluationRun, receipt_ids: Iterable[str], directive: Process
 
 def _check_identity(result: ReceiptEvaluation, run: EvaluationRun) -> None:
     name = result.receipt_id
-    if result.customer_id != run.customer_id or result.ruleset_version != run.ruleset_version:
-        raise ValueError(f"{name}: its customer or ruleset version is not the run's")
+    if result.ruleset_version != run.ruleset_version:
+        raise ValueError(f"{name}: its ruleset version is not the run's")
     report = result.report
-    if (report.customer_id, report.receipt_id, report.ruleset_version) != (result.customer_id, name, result.ruleset_version):
-        raise ValueError(f"{name}: its report is for another customer, receipt or ruleset version")
+    if (report.receipt_id, report.ruleset_version) != (name, result.ruleset_version):
+        raise ValueError(f"{name}: its report is for another receipt or ruleset version")
     if result.decided != report.decided:
         raise ValueError(f"{name}: decided does not agree with its report")
     for group in report.groups:
-        if (group.customer_id, group.receipt_id) != (result.customer_id, name):
-            raise ValueError(f"{name}: group {group.group_id} is for another customer or receipt")
+        if group.receipt_id != name:
+            raise ValueError(f"{name}: group {group.group_id} is for another receipt")
         if any(finding.receipt_id != name for finding in group.sources):
             raise ValueError(f"{name}: group {group.group_id} holds a finding for another receipt")
 
@@ -294,10 +281,15 @@ def _check_outcome(result: ReceiptEvaluation, directive: ProcessRule) -> None:
     flags = set(directive.params["flag_severities"].values)
     flagging = [group.rule_id for group in result.active_exceptions if group.severity in flags]
     if result.disposition == "pass":
-        if not result.decided:
-            raise ValueError(f"{name}: a pass needs a fully decided report")
         if result.active_exceptions or result.review_signals or result.uncertainty is not None:
             raise ValueError(f"{name}: a pass cannot have an active exception, review signal or uncertainty")
+        if result.unresolved:
+            raise ValueError(f"{name}: a pass cannot have an exception still in question")
+        # A provisional pass: nothing found, with what is still open said, never a clearance.
+        if not result.decided and not any(reason.code == "incomplete_evidence" for reason in result.reasons):
+            raise ValueError(f"{name}: a pass that is not decided needs its incomplete evidence")
+        if result.decided and len(result.reasons) != 1:
+            raise ValueError(f"{name}: a decided pass rests on nothing found alone")
     elif result.disposition == "flag" and not flagging and result.inevitable is None:
         raise ValueError(f"{name}: a flag needs an active exception of a flag severity, or a proof one is inevitable")
     elif result.disposition == "review" and flagging:
@@ -336,6 +328,8 @@ def _check_reasons(result: ReceiptEvaluation, directive: ProcessRule, known_rule
         "uncertainty": uncertainty,
         "incomplete_evidence": PROJECT_DECISION,
         "lines_do_not_account_for_total": PROJECT_DECISION,
+        "unresolved_exception": PROJECT_DECISION,
+        "unverified_amount": PROJECT_DECISION,
         "nothing_found": directive.rule_id,
     }
     for reason in result.reasons:

@@ -56,7 +56,7 @@ def assert_summary(result, expected):
 
 
 def real_result(data):
-    context = build_context("northwind", [data], FIELDS, complete=True)
+    context = build_context([data], FIELDS, complete=True)
     receipt = context.receipts[0]
     replacements = resolve_replacements(receipt, run_checks(receipt, RULESET, FIELDS, context), RULESET, FIELDS)
     return receipt, replacements, resolve_approvals(receipt, replacements, RULESET)

@@ -1,8 +1,4 @@
-"""PERS.BAGGAGE: where lines stand against the baggage-delay allowance.
-
-The carve-out step calls this directly. It is not dispatched by the registry, as it runs on a
-carve-out rule, and it excuses nothing by itself.
-"""
+"""PERS.BAGGAGE allowance, called directly by the carve-out step."""
 
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -17,10 +13,10 @@ from expense_validator.policy.schema import CarveOutRule
 
 @dataclass(frozen=True)
 class BaggageAllowance:
-    """Where lines stand against the baggage-delay allowance. This excuses nothing by itself.
+    """Where lines stand against the baggage-delay allowance. Excuses nothing by itself.
 
-    within is None when it is not known. Whether the delay passed the rule's hours is left to the
-    carve-out step: the data does not hold it.
+    Attributes:
+        within: Whether the lines are within the allowance, or None if not known.
     """
 
     line_ids: tuple[str, ...]
@@ -29,7 +25,7 @@ class BaggageAllowance:
 
 
 def counts_toward_baggage_allowance(line: LineItem) -> bool | None:
-    """Clothing does, and of personal care only essential toiletries. None if that is not known."""
+    """Return whether a line counts: clothing, and essential toiletries only."""
     if line.category == "clothing":
         return True
     return line.essential_toiletry if line.category == "personal_care" else False
@@ -38,10 +34,7 @@ def counts_toward_baggage_allowance(line: LineItem) -> bool | None:
 def baggage_allowance(
     rule: CarveOutRule, receipt: Receipt, context: ReceiptContext, fields: Mapping[str, dict]
 ) -> BaggageAllowance:
-    """One allowance per delay, shared across the employee's receipts that record the same reference.
-
-    A carve-out needs evidence, so with no reference on file the lines are not within it.
-    """
+    """Return one allowance per delay reference, shared across the employee's receipts."""
     require_in_context(receipt, context)
     mine = tuple(line.line_id for line in receipt.line_items if counts_toward_baggage_allowance(line) is not False)
     reference = receipt.baggage_delay_ref

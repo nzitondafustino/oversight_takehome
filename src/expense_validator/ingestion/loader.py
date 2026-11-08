@@ -1,9 +1,6 @@
-"""Turns raw receipt records into a validated Receipt and, in evaluation, separate answers.
+"""Validate raw receipts and separate evaluation answers.
 
-This only checks shape. The engine still admits every receipt it is given, and classification
-comes later. Ingestion is stricter than admission in one way: entity is required here, as Receipt
-requires it, while admit_receipt derives a missing one from the country. Deriving it needs the
-catalog, which belongs to admission.
+Ingestion checks shape and requires entity; engine admission validates semantics.
 """
 
 import json
@@ -21,7 +18,7 @@ LINE_ANSWER_FIELDS = frozenset({"labels"})
 
 
 def iter_jsonl(path: str | Path, mode: IngestionMode) -> Iterator[IngestedReceipt]:
-    """Streams a JSONL file one receipt at a time. See iter_jsonl_lines for what stops it."""
+    """Stream receipts from a JSONL file."""
     with Path(path).open("rb") as file:
         yield from iter_jsonl_lines(file, mode, source=str(path))
 
@@ -29,10 +26,10 @@ def iter_jsonl(path: str | Path, mode: IngestionMode) -> Iterator[IngestedReceip
 def iter_jsonl_lines(
     lines: Iterable[str | bytes], mode: IngestionMode, *, source: str = "<lines>"
 ) -> Iterator[IngestedReceipt]:
-    """Streams receipts from JSONL lines, stopping at the first record it has to refuse.
+    """Stream receipts from JSONL lines, stopping at the first refused record.
 
-    The IngestionError names the source and line. A blank line is no record. A receipt ID and a
-    line ID may each appear only once in a stream, as predictions and answers are keyed by them.
+    Raises:
+        IngestionError: Naming the source and line, for a refused record or a repeated receipt or line ID.
     """
     first_seen: dict[str, int] = {}
     line_first_seen: dict[str, int] = {}
@@ -56,7 +53,11 @@ def iter_jsonl_lines(
 
 
 def ingest_record(record: Mapping[str, object], mode: IngestionMode) -> IngestedReceipt:
-    """One validated receipt from one raw record, which is left as it was."""
+    """Validate one raw record without modifying it.
+
+    Raises:
+        IngestionError: If the record is malformed, holds answers in production, or carries classifier fields.
+    """
     mode = IngestionMode(mode)
     if not isinstance(record, Mapping):
         raise IngestionError(f"expected a JSON object, got {type(record).__name__}")
@@ -90,7 +91,7 @@ def ingest_record(record: Mapping[str, object], mode: IngestionMode) -> Ingested
 
 
 def _parse_line(line: str | bytes) -> object:
-    """Numbers stay exact as Decimal. What JSON leaves ambiguous or disallows is refused."""
+    """Parse JSON with exact decimals, refusing ambiguous constructs."""
     try:
         text = line.decode("utf-8") if isinstance(line, bytes) else line
         return json.loads(text, parse_float=Decimal, parse_constant=_refuse_constant, object_pairs_hook=_refuse_repeats)
@@ -103,7 +104,7 @@ def _refuse_constant(name: str) -> None:
 
 
 def _refuse_repeats(pairs: list[tuple[str, object]]) -> dict[str, object]:
-    """json.loads would keep the last of a repeated key and silently drop the others."""
+    """Refuse a repeated key, which json.loads would silently collapse."""
     names = [name for name, _ in pairs]
     repeated = sorted({name for name in names if names.count(name) > 1})
     if repeated:
@@ -120,7 +121,6 @@ def _without(data: Mapping[str, object], names: Collection[str]) -> dict[str, ob
 
 
 def _sanitized(record: Mapping[str, object]) -> dict[str, object]:
-    """A new record with no answers in it."""
     kept = _without(record, ANSWER_FIELDS)
     if "line_items" in kept:
         kept["line_items"] = [_without(line, LINE_ANSWER_FIELDS) for line in kept["line_items"]]
@@ -128,7 +128,6 @@ def _sanitized(record: Mapping[str, object]) -> dict[str, object]:
 
 
 def _ground_truth(record: Mapping[str, object], receipt: Receipt) -> GroundTruth:
-    """Built after the receipt, so its checks have already refused any repeated line ID."""
     labels = record.get("labels")
     if not isinstance(labels, Mapping):
         raise IngestionError("evaluation requires receipt-level labels", receipt_id=receipt.receipt_id)
@@ -154,10 +153,7 @@ def _ground_truth(record: Mapping[str, object], receipt: Receipt) -> GroundTruth
 
 
 def _summary(error: ValidationError) -> str:
-    """Field paths and messages only: pydantic's own text would quote the values it was given.
-
-    So a validator on these models must not put a value in its message either.
-    """
+    """Summarize validation errors by field path only, never quoting values."""
     problems = []
     for problem in error.errors():
         path = ".".join(str(part) for part in problem["loc"])

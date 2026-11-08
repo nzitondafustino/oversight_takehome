@@ -8,19 +8,21 @@ import yaml
 from yaml_cases import exact, load_cases
 
 from expense_validator.classification import load_vocabulary
-from expense_validator.classification import robustness as module
-from expense_validator.classification.classifier import build_prompt
-from expense_validator.classification.evaluate import ATTRIBUTES, score_lines
+from expense_validator.evaluation import robustness as module
+from expense_validator.evaluation.cli import robustness as cli
+from expense_validator.classification.backends.llm import build_prompt
+from expense_validator.evaluation.classification import ATTRIBUTES, score_lines
 from expense_validator.config import ROOT, load_config
 from expense_validator.ingestion import IngestionMode, iter_jsonl
-from expense_validator.classification.classifier import classify_receipt
+from expense_validator.classification.backends.llm import classify_receipt
 from expense_validator.compiler.llm_extract import cached
 from expense_validator.normalization import NoOpTranslator, normalize_receipt
-from expense_validator.offline_eval.dataset import load_dataset
+from expense_validator.evaluation.dataset import load_dataset
+from expense_validator.evaluation.predictions import Source
 
 CONFIG = load_config()
 VOCABULARY = load_vocabulary(CONFIG.paths.taxonomy, CONFIG.paths.rule_fields)
-CASES = yaml.safe_load(module.LINES.read_text())["cases"]
+CASES = yaml.safe_load(cli.LINES.read_text())["cases"]
 ANSWER = '{"category": "other", "confidence": 0.1, "recipient_name": null, "recipient_type": null, "venue_type": null, "item_kind": null, "essential_toiletry": null}'
 
 
@@ -104,7 +106,7 @@ def test_a_failed_line_is_wrong_on_every_headline_score():
 
 
 def test_the_labels_agree_with_the_taxonomy_and_the_engine():
-    assert module.check_gold(CONFIG, VOCABULARY) == []
+    assert cli.check_gold(CONFIG, VOCABULARY) == []
 
 
 def test_the_set_is_the_agreed_size_with_unique_ids_and_a_reason_for_each_label():
@@ -167,7 +169,7 @@ def test_a_line_without_placeholders_has_its_own_cache_entry(tmp_path):
 
 
 def test_whole_receipts_still_send_their_real_amounts():
-    dataset = load_dataset(module.RECEIPTS, module.CUSTOMER)
+    dataset = load_dataset(cli.RECEIPTS)
     seen = []
     classify_receipt(normalize_receipt(dataset.inputs[0]), lambda prompt, text: seen.append(json.loads(text)) or ANSWER, VOCABULARY)
     printed = dataset.inputs[0].line_items[0]
@@ -192,21 +194,43 @@ def test_a_line_receipt_is_built_from_the_input_alone():
 
 def test_a_run_is_never_overwritten(tmp_path, monkeypatch):
     (tmp_path / "runs" / "first-run").mkdir(parents=True)
-    monkeypatch.setattr(module, "FOLDER", tmp_path)
-    monkeypatch.setattr(module, "key_spend", lambda config: pytest.fail("a run that cannot be written must not spend or read usage"))
+    monkeypatch.setattr(cli, "FOLDER", tmp_path)
+    monkeypatch.setattr(cli, "key_spend", lambda config: pytest.fail("a run that cannot be written must not spend or read usage"))
     with pytest.raises(SystemExit, match="never overwritten"):
-        module.run("first-run", CONFIG, VOCABULARY)
+        cli.run("first-run", CONFIG, VOCABULARY)
 
 
-@pytest.mark.parametrize("spend", [module.SPENDING_STOP_USD, module.SPENDING_STOP_USD + 1])
+@pytest.mark.parametrize("spend", [cli.SPENDING_STOP_USD, cli.SPENDING_STOP_USD + 1])
 def test_a_run_stops_at_the_spending_limit_before_any_request(tmp_path, monkeypatch, spend):
-    monkeypatch.setattr(module, "FOLDER", tmp_path)
-    monkeypatch.setattr(module, "key_spend", lambda config: spend)
-    monkeypatch.setattr(module, "build_classifier", lambda config, vocabulary: pytest.fail("no classifier may be built past the limit"))
+    monkeypatch.setattr(cli, "FOLDER", tmp_path)
+    monkeypatch.setattr(cli, "key_spend", lambda config: spend)
+    monkeypatch.setattr(cli, "build_classifier", lambda config, vocabulary: pytest.fail("no classifier may be built past the limit"))
     with pytest.raises(SystemExit, match="not running"):
-        module.run("new", CONFIG, VOCABULARY)
+        cli.run("new", CONFIG, VOCABULARY)
     assert not (tmp_path / "runs").exists()
 
 
 def test_the_stop_is_inside_the_brief_budget():
-    assert module.SPENDING_STOP_USD < 5
+    assert cli.SPENDING_STOP_USD < 5
+
+
+# --- Called from Python ---
+
+RULESET, FIELDS = cli._rules(CONFIG)
+
+
+def test_the_labels_are_checked_from_explicit_inputs():
+    dataset = load_dataset(cli.RECEIPTS)
+    wrong = {**CASES[0], "gold": {**CASES[0]["gold"], "category": "not_a_category"}}
+    found = module.check_labels([wrong], dataset, cli.load_receipt_attributes(), VOCABULARY, RULESET, FIELDS)
+    assert found == [f"{wrong['id']}: not_a_category is not in the taxonomy"]
+
+
+def test_whole_receipts_are_scored_from_explicit_inputs():
+    dataset = load_dataset(cli.RECEIPTS)
+    classified = module.classify_receipts(dataset, NoOpTranslator(), lambda prompt, text: ANSWER, VOCABULARY)
+    source = Source(kind="synthetic", name="stand-in", description="Every line other, at confidence 0.1")
+    summary, predictions = module.score_receipts(dataset, classified, cli.load_receipt_attributes(), RULESET, FIELDS, source)
+    assert summary["failed"] == [] and len(predictions.predictions) == len(classified)
+    assert summary["classification_accuracy"]["denominator"] == len(classified)
+    assert {receipt["receipt_id"] for receipt in summary["receipts"]} == set(dataset.answers)

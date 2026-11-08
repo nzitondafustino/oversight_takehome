@@ -1,29 +1,8 @@
-"""EXC-03: which lines cannot be relied on, and what the rules may read while they cannot.
+"""EXC-03: which lines cannot be relied on, and the view of each receipt the rules read.
 
-Category uncertainty is the policy's. A line whose category is missing, outside the catalog, below
-the EXC-03 threshold, or has no confidence behind it raises a signal, and its category is not used.
-The threshold is a project decision, not a source-policy figure. A non-itemized `other` line is
-exempt, as the policy says it is not an uncertain category.
-
-Secondary-field uncertainty is a documented project extension, and the line stays in ordinary rules.
-A missing secondary field means nothing by itself, as most lines have no venue or recipient, so it
-raises a signal only where structured facts say a rule may need it:
-
-    recipient_type       a gift-related category, a line on a Client Gifts receipt, or a named line
-                         GIFT-01 could not place
-    venue_type           a line in `other` on a Client Entertainment receipt, as ENT-01's venues have
-                         no category and the taxonomy sends such items to `other`
-    item_kind            a line in `other` on an expense type DOC-03 says covers medication or
-                         technology, as the taxonomy sends phones and prescriptions to `other`
-    essential_toiletry   a personal care line on a receipt claiming a baggage delay
-
-A value outside the catalog always raises one, as the classifier did answer. Nothing is inferred
-from descriptions, merchant codes or references.
-
-The admitted receipt stays the record. The rules read a view of it: the same lines and totals, with
-each uncertain line's category blanked, and any USD value nothing supports blanked too, which every
-later step already treats as not known. So one decision here governs checks, helpers and carve-outs, on
-every receipt in a context.
+A missing, unknown or low-confidence category raises a signal and is blanked in the view. A secondary
+field raises one only where structured facts say a rule may need it, a project extension. Nothing is
+inferred from descriptions, merchant codes or references.
 """
 
 from collections.abc import Mapping
@@ -47,7 +26,7 @@ Reason = Literal["category_uncertain", "secondary_field_uncertain"]
 
 @dataclass(frozen=True)
 class UncertaintySignal:
-    """finding is the EXC-03 review signal for one line, with the rule's provenance."""
+    """The EXC-03 review signal for one line."""
 
     finding: Finding
     reason: Reason
@@ -78,7 +57,7 @@ class UncertaintyAssessment:
 
 @dataclass(frozen=True)
 class AssessedContext:
-    """evaluation is original with every receipt swapped for its view, so helpers read one decision."""
+    """The context with every receipt replaced by its evaluation view."""
 
     original: ReceiptContext
     evaluation: ReceiptContext
@@ -94,7 +73,7 @@ class AssessedContext:
 def assess_context(context: ReceiptContext, ruleset: RuleSet, fields: Mapping[str, dict]) -> AssessedContext:
     assessments = tuple(assess_uncertainty(receipt, ruleset, fields) for receipt in context.receipts)
     views = tuple(item.evaluation_receipt for item in assessments)
-    return AssessedContext(context, ReceiptContext(context.customer_id, views, context.complete), assessments)
+    return AssessedContext(context, ReceiptContext(views, context.complete), assessments)
 
 
 def assess_uncertainty(receipt: Receipt, ruleset: RuleSet, fields: Mapping[str, dict]) -> UncertaintyAssessment:
@@ -122,7 +101,7 @@ def assess_uncertainty(receipt: Receipt, ruleset: RuleSet, fields: Mapping[str, 
 
 
 def fully_decided(assessment: UncertaintyAssessment, step_complete: bool) -> bool:
-    """A later step's complete, along with this: a line a signal is raised on is not settled."""
+    """Return whether a step's result is complete and no line is uncertain."""
     return step_complete and not assessment.signals
 
 

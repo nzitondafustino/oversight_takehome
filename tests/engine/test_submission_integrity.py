@@ -32,7 +32,7 @@ def values(found, wanted):
 
 
 def run_one(receipt):
-    return evaluate_receipts("c", [receipt], RULESET, FIELDS, complete=True).results[0]
+    return evaluate_receipts([receipt], RULESET, FIELDS, complete=True).results[0]
 
 
 def assert_evaluation(result, wanted):
@@ -50,7 +50,7 @@ def assert_evaluation(result, wanted):
 @pytest.mark.parametrize("case", load_cases("submission_integrity", "exploits"))
 def test_an_exploit_is_refused_with_this_exact_error_and_gets_no_result(case):
     with pytest.raises(ValueError) as caught:
-        evaluate_receipts("attack", case["receipts"], RULESET, FIELDS, complete=True)
+        evaluate_receipts(case["receipts"], RULESET, FIELDS, complete=True)
     assert str(caught.value) == case["expected"]["error"]
 
 
@@ -147,7 +147,7 @@ def test_the_record_keeps_a_submitted_usd_value_though_rules_do_not_read_it():
     from expense_validator.engine.helpers import build_context
     from expense_validator.engine.uncertainty import assess_context
 
-    context = build_context("c", [no_rate_case()], FIELDS, complete=True)
+    context = build_context([no_rate_case()], FIELDS, complete=True)
     assessment = assess_context(context, RULESET, FIELDS).assessments[0]
     assert assessment.receipt.total_amount_usd == Decimal("1.00")
     assert assessment.receipt.line_items[0].amount_usd == Decimal("1.00")
@@ -253,7 +253,7 @@ def with_usd(receipts, value):
 
 
 def evaluated(receipts, complete=True):
-    return evaluate_receipts("c", receipts, RULESET, FIELDS, complete=complete)
+    return evaluate_receipts(receipts, RULESET, FIELDS, complete=complete)
 
 
 def without_states(run):
@@ -361,7 +361,7 @@ def test_a_printed_total_with_no_usd_total_is_never_reconciled():
 
 
 def real_run(receipt):
-    return evaluate_receipts("c", [receipt], RULESET, FIELDS, complete=True)
+    return evaluate_receipts([receipt], RULESET, FIELDS, complete=True)
 
 
 def checked(run):

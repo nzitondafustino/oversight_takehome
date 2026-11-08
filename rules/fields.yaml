@@ -9,7 +9,7 @@
 #   APAC and EMEA are from the regional addendum. No document lists GLOBAL: US is the only
 #   country the data has for it, so this is a project decision to widen as countries are confirmed.
 
-# The monetary input contract: see engine/money.py and design/monetary_contract.md. Change the version
+# The monetary input contract: see engine/money.py and design/expense_validation.md#monetary-input-contract. Change the version
 # with any change here. The currencies are those of data/README.md and home_currency below, from ISO 4217.
 input_contract:
   version: 1

@@ -1,15 +1,7 @@
-"""The boundary a receipt crosses before facts.py: its values against rules/fields.yaml.
+"""Admit receipts against rules/fields.yaml before facts are built.
 
-A submitted value outside the catalog is refused, because rules comparing it would otherwise
-be skipped or misfire with no trace: a misspelt entity skips the regional rules. The entity is
-derived from employee_country, so a contradicting one is refused for the same reason, and a
-country the catalog does not list is refused rather than taken to be GLOBAL. A classified
-value is different: it is kept as written and never corrected, and classification_state says
-what it is. No such state is a clean result by itself, and nothing here acts on one.
-
-Being built is not being admitted: a Receipt can be made or copied around these checks, so
-one passed in goes through them like any other input. Input that would keep rules quiet with
-nothing to report is refused too. A missing value some rule reports stays admissible.
+Submitted values outside the catalog are refused, as rules would otherwise skip them silently. Classified
+values are kept as written, and classification_state reports what they amount to.
 """
 
 from collections.abc import Mapping
@@ -29,10 +21,10 @@ ClassificationState = Literal["valid", "missing", "unknown", "no_confidence", "l
 
 
 def admit_receipt(data: Receipt | Mapping[str, object], fields: Mapping[str, dict]) -> Receipt:
-    """A receipt built from this input, if its submitted values are ones the catalog allows.
+    """Admit a receipt whose submitted values the catalog allows.
 
-    An entity left out or null is derived from the country. These fields are required, so
-    the model has already refused anything else that is missing.
+    Raises:
+        ValueError: If a value is outside the catalog or would silence the rules.
     """
     if isinstance(data, Receipt):
         data = data.model_dump(warnings=False)
@@ -95,12 +87,9 @@ def _refuse_what_keeps_rules_quiet(receipt: Receipt) -> None:
 def classification_state(
     item: LineItem, name: ClassifiedField, fields: Mapping[str, dict], min_confidence: Decimal
 ) -> ClassificationState:
-    """What one classified field on a line amounts to. The threshold is the caller's to supply.
+    """Return the state of one classified field on a line.
 
-    A line's confidence is in its category alone, so it says nothing about the other fields.
-    Missing does not mean the same for every field: most lines have no venue or recipient at
-    all, so it is for the caller to decide when a missing value is uncertain. Neither missing
-    nor unknown shows that the rule reading the field does not apply.
+    Confidence applies to the category only. Whether a missing secondary field is uncertain is the caller's call.
     """
     allowed = allowed_values(fields, f"item.{name}")
     value = getattr(item, name)

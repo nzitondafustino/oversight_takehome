@@ -1,0 +1,494 @@
+{
+  "customer_id": "northwind",
+  "source": {
+    "kind": "actual",
+    "name": "direct-llm",
+    "description": "direct-llm, replayed from recordings at routing threshold 0.90",
+    "model": "anthropic/claude-haiku-5.5"
+  },
+  "predictions": [
+    {
+      "line_id": "RCP-001-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-001-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-001-L3",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-001-L4",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-002-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-002-L2",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-002-L3",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-003-L1",
+      "category": "computer_accessory",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-003-L2",
+      "category": "office_supplies",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-003-L3",
+      "category": "office_supplies",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-004-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-004-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.7"
+    },
+    {
+      "line_id": "RCP-004-L3",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-004-L4",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-005-L1",
+      "category": "lodging",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-005-L2",
+      "category": "lodging",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-005-L3",
+      "category": "ground_transport",
+      "restricted": false,
+      "confidence": "0.7"
+    },
+    {
+      "line_id": "RCP-006-L1",
+      "category": "computer_accessory",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-007-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-007-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-007-L3",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-008-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-008-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-008-L3",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-009-L1",
+      "category": "laundry_service",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-010-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-010-L2",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-010-L3",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-011-L1",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-011-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-012-L1",
+      "category": "personal_electronics",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-013-L1",
+      "category": "gift_card",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-013-L2",
+      "category": "gift",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-014-L1",
+      "category": "household_goods",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-014-L2",
+      "category": "household_goods",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-014-L3",
+      "category": "household_goods",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-014-L4",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-015-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-015-L2",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-015-L3",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-016-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-016-L2",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-016-L3",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-017-L1",
+      "category": "personal_care",
+      "restricted": true,
+      "confidence": "0.9",
+      "essential_toiletry": false
+    },
+    {
+      "line_id": "RCP-017-L2",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-018-L1",
+      "category": "jewelry",
+      "restricted": true,
+      "confidence": "0.9",
+      "recipient_name": "A. Moreau",
+      "recipient_type": "client"
+    },
+    {
+      "line_id": "RCP-019-L1",
+      "category": "personal_electronics",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-019-L2",
+      "category": "personal_electronics",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-020-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-020-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-020-L3",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-020-L4",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-021-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-021-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-021-L3",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-021-L4",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-022-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9",
+      "recipient_name": "R. Delgado",
+      "recipient_type": "government_official"
+    },
+    {
+      "line_id": "RCP-022-L2",
+      "category": "gift",
+      "restricted": true,
+      "confidence": "0.9",
+      "recipient_name": "R. Delgado",
+      "recipient_type": "government_official"
+    },
+    {
+      "line_id": "RCP-023-L1",
+      "category": "other",
+      "restricted": false,
+      "confidence": "0.1"
+    },
+    {
+      "line_id": "RCP-024-L1",
+      "category": "tobacco",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-024-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-024-L3",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-025-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-025-L2",
+      "category": "alcohol",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-025-L3",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-026-L1",
+      "category": "computer_accessory",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-026-L2",
+      "category": "computer_accessory",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-027-L1",
+      "category": "clothing",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-027-L2",
+      "category": "clothing",
+      "restricted": true,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-028-L1",
+      "category": "health_otc",
+      "restricted": false,
+      "confidence": "0.9",
+      "item_kind": "otc_medication"
+    },
+    {
+      "line_id": "RCP-028-L2",
+      "category": "health_otc",
+      "restricted": false,
+      "confidence": "0.9",
+      "item_kind": "otc_medication"
+    },
+    {
+      "line_id": "RCP-029-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-029-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-029-L3",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-030-L1",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-030-L2",
+      "category": "food_beverage",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-030-L3",
+      "category": "service_fee",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-031-L1",
+      "category": "laundry_service",
+      "restricted": false,
+      "confidence": "0.9"
+    },
+    {
+      "line_id": "RCP-032-L1",
+      "category": "software_subscription",
+      "restricted": false,
+      "confidence": "0.9"
+    }
+  ]
+}

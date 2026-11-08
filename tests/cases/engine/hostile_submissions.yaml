@@ -103,7 +103,7 @@ cases:
     receipt_id: R1
     complete: false
     receipts: [*meal]
-    expected: {disposition: review, decided: false, open_includes_time: true}
+    expected: {disposition: pass, decided: false, open_includes_time: true}
   - id: resending the exact same receipt does not invent a split
     receipt_id: R1
     complete: true
@@ -129,50 +129,38 @@ cases:
 
 refused:
   - id: booleans cannot inflate the quantity
-    customer_id: attack
     receipts: [{<<: *gear, line_items: [{<<: *line, quantity: true}]}]
     expected: quantity
   - id: negative quantities cannot flip the per-item calculation
-    customer_id: attack
     receipts: [{<<: *gear, line_items: [{<<: *line, quantity: -1}]}]
     expected: quantity
   - id: zero quantity cannot divide the cap away
-    customer_id: attack
     receipts: [{<<: *gear, line_items: [{<<: *line, quantity: 0}]}]
     expected: quantity
   - id: infinite line amounts are not money
-    customer_id: attack
     receipts: [{<<: *gear, line_items: [{<<: *line, amount_usd: Infinity}]}]
     expected: finite
   - id: NaN receipt totals are not money
-    customer_id: attack
     receipts: [{<<: *gear, total_amount_usd: NaN}]
     expected: finite
   - id: missing merchant code cannot skip alcohol or merchant rules
-    customer_id: attack
     receipts: [{<<: *meal, mcc: null}]
     expected: has no mcc
   - id: an empty itemized receipt cannot conceal its contents
-    customer_id: attack
     receipts: [{<<: *gear, line_items: []}]
     expected: lists no line items
   - id: duplicate line IDs cannot hide the second item
-    customer_id: attack
     receipts: [{<<: *gear, line_items: [*line, *line]}]
     expected: duplicate line ids
   - id: blank preapproval does not count as a supplied reference
-    customer_id: attack
     receipts: [{<<: *gear, pre_approval_ref: "   "}]
     expected: pre_approval_ref
   - id: submitted disposition cannot override evaluation
-    customer_id: attack
     receipts: [{<<: *gear, disposition: pass}]
     expected: disposition
   - id: line labels cannot supply the answer to the engine
-    customer_id: attack
     receipts: [{<<: *gear, line_items: [{<<: *line, labels: {category: office_supplies}}]}]
     expected: labels
   - id: APAC employee cannot supply GLOBAL to escape regional policy
-    customer_id: attack
     receipts: [{<<: *meal, employee_country: IN, entity: GLOBAL}]
     expected: contradicts

@@ -1,0 +1,19 @@
+# Each case compiles a version from the live recordings, takes it through steps, then tries one more step and
+# expects it refused. Steps: submit, accept (a review with the reviewer's decisions), reject, approve, publish.
+# Nothing about the version may change when a step is refused.
+cases:
+  - {name: a draft cannot be reviewed, steps: [], step: accept, expect: {status: 409, code: invalid_transition}}
+  - {name: a draft cannot be approved, steps: [], step: approve, expect: {status: 409, code: invalid_transition}}
+  - {name: a draft cannot be published, steps: [], step: publish, expect: {status: 409, code: invalid_transition}}
+  - {name: a version in review cannot be submitted again, steps: [submit], step: submit, expect: {status: 409, code: invalid_transition}}
+  - {name: approval needs an accepted review, steps: [submit], step: approve, expect: {status: 409, code: review_required}}
+  - {name: publication needs an approval, steps: [submit], step: publish, expect: {status: 409, code: invalid_transition}}
+  - {name: an accepted review cannot be published before approval, steps: [submit, accept], step: publish, expect: {status: 409, code: invalid_transition}}
+  - {name: one review decision per submission, steps: [submit, accept], step: reject, expect: {status: 409, code: already_reviewed}}
+  - {name: a rejected version is a draft again, steps: [submit, reject], step: approve, expect: {status: 409, code: invalid_transition}}
+  - {name: an approved version cannot be reviewed again, steps: [submit, accept, approve], step: reject, expect: {status: 409, code: invalid_transition}}
+  - {name: an approved version cannot be approved twice, steps: [submit, accept, approve], step: approve, expect: {status: 409, code: invalid_transition}}
+  - {name: an approved version cannot go back to review, steps: [submit, accept, approve], step: submit, expect: {status: 409, code: invalid_transition}}
+  - {name: a published version cannot be submitted, steps: [submit, accept, approve, publish], step: submit, expect: {status: 409, code: invalid_transition}}
+  - {name: a published version cannot be rejected, steps: [submit, accept, approve, publish], step: reject, expect: {status: 409, code: invalid_transition}}
+  - {name: a published version cannot be approved again, steps: [submit, accept, approve, publish], step: approve, expect: {status: 409, code: invalid_transition}}

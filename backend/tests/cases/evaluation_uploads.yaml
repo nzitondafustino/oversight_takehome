@@ -1,0 +1,165 @@
+# POST /v1/evaluations/datasets refusals. Nothing is stored for any of them.
+#   filename: the uploaded file's name, which decides its format
+#   content: the file's text, sent as it is; or
+#   receipts: cases built from data/receipts.jsonl, serialized in the file's format by the runner:
+#     id: the golden receipt; receipt / line: fields replacing the receipt's or its first line's;
+#     remove: receipt fields to delete; labels: replaces the receipt's labels
+#   document: top-level JSON or YAML fields beside "receipts"
+#   form: form fields; a null removes the default name
+#   settings: deployment settings for this case
+#   encoding: how content is encoded, utf-8 unless given
+#   expect: status, code, and optionally location and message, each a substring of the first problem's
+cases:
+  # Formats and files
+  - name: an unsupported extension
+    filename: receipts.csv
+    content: "receipt_id\nRCP-001\n"
+    expect: {status: 415, code: unsupported_dataset_format}
+  - name: a file with no extension
+    filename: receipts
+    content: "{}"
+    expect: {status: 415, code: unsupported_dataset_format}
+  - name: a file over the size limit
+    filename: golden.jsonl
+    receipts: [{id: RCP-001}]
+    settings: {max_dataset_bytes: 100}
+    expect: {status: 413, code: dataset_too_large}
+  - name: more receipts than the limit
+    filename: golden.jsonl
+    receipts: [{id: RCP-001}, {id: RCP-002}]
+    settings: {max_dataset_receipts: 1}
+    expect: {status: 422, code: invalid_dataset, location: receipts, message: at most 1 receipts}
+  - name: an empty file
+    filename: golden.jsonl
+    content: "\n\n"
+    expect: {status: 422, code: invalid_dataset, location: receipts, message: at least one receipt}
+  - name: bytes that are not UTF-8
+    filename: golden.jsonl
+    content: "{\"receipt_id\": \"café\"}\n"
+    encoding: latin-1
+    expect: {status: 422, code: invalid_dataset, location: line 1, message: not UTF-8}
+
+  # JSON Lines: one complete case per line, reported by line number
+  - name: malformed JSON names its line and column
+    filename: golden.jsonl
+    content: "{\"receipt_id\": \"RCP-001\"}\n{\"receipt_id\": \n"
+    expect: {status: 422, code: invalid_dataset, location: "line 2, column"}
+  - name: NaN is not a JSON number
+    filename: golden.jsonl
+    content: "{\"total_amount\": NaN}\n"
+    expect: {status: 422, code: invalid_dataset, location: line 1, message: invalid JSON}
+  - name: a repeated key would collapse silently, so it is refused
+    filename: golden.jsonl
+    content: "{\"receipt_id\": \"A\", \"receipt_id\": \"B\"}\n"
+    expect: {status: 422, code: invalid_dataset, location: line 1, message: repeated keys}
+  - name: a JSONL dataset needs a name from the form
+    filename: golden.jsonl
+    receipts: [{id: RCP-001}]
+    form: {name: null}
+    expect: {status: 422, code: invalid_dataset, location: name}
+  - name: a dataset name with a path in it
+    filename: golden.jsonl
+    receipts: [{id: RCP-001}]
+    form: {name: ../golden}
+    expect: {status: 422, code: invalid_dataset, location: name}
+  - name: a receipt ID given twice
+    filename: golden.jsonl
+    receipts: [{id: RCP-001}, {id: RCP-001}]
+    expect: {status: 422, code: invalid_dataset, location: line 2, message: receipt_id repeats, first at line 1}
+
+  # JSON and YAML: one object with its cases under receipts
+  - name: a JSON list instead of an object
+    filename: golden.json
+    content: "[]"
+    expect: {status: 422, code: invalid_dataset, location: document}
+  - name: a JSON object without receipts
+    filename: golden.json
+    content: "{\"name\": \"golden\"}"
+    expect: {status: 422, code: invalid_dataset, location: receipts}
+  - name: an unknown top-level key
+    filename: golden.json
+    receipts: [{id: RCP-001}]
+    document: {name: golden, owner: someone}
+    expect: {status: 422, code: invalid_dataset, message: unknown keys}
+  - name: the form and the file disagree on the name
+    filename: golden.json
+    receipts: [{id: RCP-001}]
+    document: {name: golden}
+    form: {name: other}
+    expect: {status: 422, code: invalid_dataset, location: name}
+  - name: malformed JSON names its line
+    filename: golden.json
+    content: "{\n  \"name\": \"golden\",\n  \"receipts\": [,]\n}"
+    expect: {status: 422, code: invalid_dataset, location: line 3}
+
+  # YAML is read safely: no tags beyond JSON's values, no aliases, no repeated keys
+  - name: a Python tag is never constructed
+    filename: golden.yaml
+    content: "name: golden\nreceipts: !!python/object/apply:os.system [\"echo hacked\"]\n"
+    expect: {status: 422, code: invalid_dataset, location: line 2, message: invalid YAML}
+  - name: an alias is refused, so no document can expand
+    filename: golden.yaml
+    content: "name: golden\nbase: &base {receipt_id: RCP-001}\nreceipts: [*base]\n"
+    expect: {status: 422, code: invalid_dataset, location: line 3, message: aliases are not allowed}
+  - name: a repeated key is refused
+    filename: golden.yaml
+    content: "name: golden\nname: other\nreceipts: []\n"
+    expect: {status: 422, code: invalid_dataset, location: line 2, message: repeated key}
+  - name: an explicit timestamp is not a JSON value
+    filename: golden.yaml
+    content: "name: golden\nreceipts:\n  - {receipt_id: RCP-001, transaction_datetime: !!timestamp 2026-04-14T19:22:00}\n"
+    expect: {status: 422, code: invalid_dataset, message: datetime is not a JSON value}
+  - name: YAML 1.1's yes is text, not a boolean, so the core refuses it
+    filename: golden.yaml
+    receipts: [{id: RCP-001, receipt: {itemized: "yes"}}]
+    document: {name: golden}
+    yaml_unquote: ["'yes'"]
+    expect: {status: 422, code: invalid_dataset, location: "receipts[0] (line 3)", message: itemized}
+  - name: an infinite number is refused
+    filename: golden.yaml
+    content: "name: golden\nreceipts:\n  - {receipt_id: RCP-001, total_amount: !!float .inf}\n"
+    expect: {status: 422, code: invalid_dataset, message: not a finite number}
+
+  # Receipts, checked by the core's own ingestion
+  - name: an amount that contradicts quantity times unit price is refused, not repaired
+    filename: golden.jsonl
+    receipts: [{id: RCP-001, line: {amount: 99.0}}]
+    expect: {status: 422, code: invalid_dataset, location: line 1}
+  - name: a receipt may not carry a classification, as the model would accept it
+    filename: golden.jsonl
+    receipts: [{id: RCP-001, line: {category: food_beverage}}]
+    expect: {status: 422, code: invalid_dataset, location: line 1, message: classifier fields}
+  - name: a missing receipt field is named by its path
+    filename: golden.jsonl
+    receipts: [{id: RCP-001, remove: [receipt_id]}]
+    expect: {status: 422, code: invalid_dataset, location: line 1, message: receipt_id}
+  - name: an employee country the field catalog does not list is refused by admission
+    filename: golden.jsonl
+    receipts: [{id: RCP-001, receipt: {employee_country: XX}}]
+    expect: {status: 422, code: invalid_dataset, location: line 1, message: unsupported employee_country}
+
+  # Answers: optional, but checked when given
+  - name: an expected category outside the taxonomy
+    filename: golden.jsonl
+    receipts: [{id: RCP-001, line: {labels: {category: snacks, restricted: false}}}]
+    expect: {status: 422, code: invalid_dataset, location: "line 1: line_items[0].labels.category"}
+  - name: an unknown disposition
+    filename: golden.jsonl
+    receipts: [{id: RCP-001, labels: {disposition: approve}}]
+    expect: {status: 422, code: invalid_dataset, location: "line 1: labels.disposition"}
+  - name: findings are labelled as a whole, exceptions with signals
+    filename: golden.jsonl
+    receipts: [{id: RCP-001, labels: {disposition: pass, expected_exceptions: []}}]
+    expect: {status: 422, code: invalid_dataset, location: "line 1: labels", message: together}
+  - name: an expected exception may cite only the receipt's own lines
+    filename: golden.jsonl
+    receipts: [{id: RCP-001, labels: {expected_exceptions: [{rule_id: MEAL-01, severity: medium, line_ids: [RCP-999-L1]}], review_signals: []}}]
+    expect: {status: 422, code: invalid_dataset, location: "labels.expected_exceptions[0].line_ids"}
+  - name: an unknown key in the answers
+    filename: golden.jsonl
+    receipts: [{id: RCP-001, labels: {disposition: pass, verdict: fine}}]
+    expect: {status: 422, code: invalid_dataset, location: "line 1: labels.verdict"}
+  - name: one entry per rule, listing all its lines
+    filename: golden.jsonl
+    receipts: [{id: RCP-001, labels: {expected_exceptions: [{rule_id: MEAL-01, severity: medium, line_ids: [RCP-001-L1]}, {rule_id: MEAL-01, severity: medium, line_ids: [RCP-001-L2]}], review_signals: []}}]
+    expect: {status: 422, code: invalid_dataset, message: one entry per rule}

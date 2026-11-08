@@ -1,0 +1,21 @@
+# Read by BuildKit for backend/Dockerfile, with the repository root as the context. Everything is excluded
+# except what the image needs, so .env, .venv, .git, caches and the receipts with their answers stay out.
+*
+!pyproject.toml
+!MANIFEST.in
+!docs/API.md
+!src/expense_validator/
+!config.yaml
+!rules/fields.yaml
+!rules/rule_logic.yaml
+!data/category-taxonomy.md
+!data/policy-docs/
+!evaluation/final/replay/
+!evaluation/jev/runs/first-run/replay/
+!evaluation/langgraph/runs/live-claude-jev-1/replay/
+!evaluation/compiler/live/
+!backend/pyproject.toml
+!backend/src/
+**/__pycache__
+**/*.pyc
+**/*.egg-info

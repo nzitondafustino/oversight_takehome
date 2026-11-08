@@ -1,0 +1,55 @@
+# Each case changes rules/ruleset.json, posts it, and expects it refused with the stages that found it.
+# A ruleset is refused, never corrected. Changes:
+#   remove: top-level keys to delete        set: top-level keys to replace
+#   drop_rule: a rule ID to delete          duplicate_rule: a rule ID to add twice
+#   rule: {rule_id, set: {field: value}}    param: {rule_id, name, set: {field: value}}
+cases:
+  - name: rules are required
+    remove: [rules]
+    stages: [schema]
+
+  - name: an unknown top-level field is refused, not dropped
+    set: {published: true}
+    stages: [schema]
+
+  - name: only schema version 1 exists
+    set: {schema_version: "2"}
+    stages: [schema]
+
+  - name: a rule ID may appear once
+    duplicate_rule: ALC-01
+    stages: [schema]
+
+  - name: an unknown rule kind is refused
+    rule: {rule_id: ALC-01, set: {kind: suggestion}}
+    stages: [schema]
+
+  - name: a threshold must be a number
+    param: {rule_id: ALC-02, name: cap_usd, set: {value: thirty}}
+    stages: [schema]
+
+  - name: a threshold needs a known unit
+    param: {rule_id: ALC-02, name: cap_usd, set: {unit: dollars}}
+    stages: [schema]
+
+  - name: the engine needs exactly one uncertainty directive
+    drop_rule: EXC-03
+    stages: [runtime]
+
+  - name: the uncertainty threshold must be a ratio from 0 to 1
+    param: {rule_id: EXC-03, name: min_confidence, set: {value: "1.5"}}
+    stages: [runtime]
+
+  - name: a rule may read only catalog fields
+    rule: {rule_id: TECH-03, set: {select: {op: eq, field: item.colour, value: red}}}
+    stages: [runtime]
+
+  - name: an exception rule must quote its policy clause
+    rule: {rule_id: ALC-01, set: {source_quote: "alcohol is always reimbursable"}}
+    stages: [evidence]
+    rule_ids: [ALC-01]
+
+  - name: an exception rule must cite a deployed policy document
+    rule: {rule_id: MEAL-01, set: {policy_doc: unknown-policy.md}}
+    stages: [evidence]
+    rule_ids: [MEAL-01]

@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: expense-policy-validator-api
+Version: 0.1.0
+Summary: REST API around the Expense Policy Validator: rulesets, synchronous validation and persisted runs.
+Requires-Python: >=3.12
+Requires-Dist: expense-policy-validator[langgraph]==0.1.0
+Requires-Dist: fastapi<1,>=0.115
+Requires-Dist: pydantic<3,>=2.9
+Requires-Dist: pydantic-settings<3,>=2.4
+Requires-Dist: pymongo<5,>=4.9
+Requires-Dist: uvicorn<1,>=0.30
+Provides-Extra: dev
+Requires-Dist: pytest<9,>=8; extra == "dev"
+Requires-Dist: httpx<1,>=0.28; extra == "dev"
+Requires-Dist: mongomock<5,>=4.3; extra == "dev"

@@ -1,0 +1,120 @@
+# Metrics from stored per-receipt rows, worked out by hand. The runner fills in the rest of each core result.
+#   rows: one per receipt run, in dataset order
+#     lines: [line_id, predicted category or null, classification error or null]
+#     labels: expected category per line_id (lines left out are unlabelled)
+#     disposition / expected_disposition, decided (true by default), reasons: disposition reason codes
+#     exceptions: [rule_id, [line_ids], severity] raised; expected_exceptions likewise; signals / expected_signals: rule IDs
+#     findings_labelled: false leaves the receipt's findings unlabelled (labelled by default when expected_* given)
+#     uncertainty: [line_id, field, reason]
+#     error: the receipt could not be evaluated, with this code
+#   receipts: the dataset's receipts, the rows' count by default
+#   expect: dotted paths into the metrics and their values
+cases:
+  - name: the confusion matrix counts every labelled line once, with no category in its own column
+    rows:
+      - {lines: [[L1, food_beverage, null], [L2, alcohol, null], [L3, alcohol, null], [L4, null, null]],
+         labels: {L1: food_beverage, L2: food_beverage, L3: alcohol, L4: alcohol}}
+    expect:
+      classification.lines: 4
+      classification.outcomes: {correct: 2, incorrect: 1, missing: 1, classification_error: 0, execution_error: 0}
+      classification.accuracy.numerator: 2
+      classification.accuracy.denominator: 4
+      classification.accuracy_when_predicted.value: 0.666667
+      classification.coverage.value: 0.75
+      classification.confusion_matrix.rows: [alcohol, food_beverage]
+      classification.confusion_matrix.columns: [alcohol, food_beverage, (none)]
+      classification.confusion_matrix.counts: {alcohol: {alcohol: 1, food_beverage: 0, (none): 1}, food_beverage: {alcohol: 1, food_beverage: 1, (none): 0}}
+      classification.per_category.alcohol: {tp: 1, fp: 1, fn: 1, precision: 0.5, recall: 0.5, f1: 0.5, support: 2}
+      classification.per_category.food_beverage: {tp: 1, fp: 0, fn: 1, precision: 1.0, recall: 0.5, f1: 0.666667, support: 2}
+      classification.macro: {precision: 0.75, recall: 0.5, f1: 0.583333}
+
+  - name: classifier and execution errors are never correct, and count in every denominator
+    rows:
+      - {lines: [[L1, food_beverage, null], [L2, null, "jev request failed"]], labels: {L1: food_beverage, L2: alcohol}}
+      - {error: replay_recording_missing, labels: {L3: food_beverage}, expected_disposition: pass}
+    expect:
+      classification.outcomes: {correct: 1, incorrect: 0, missing: 0, classification_error: 1, execution_error: 1}
+      classification.accuracy.value: 0.333333
+      classification.confusion_matrix.counts.food_beverage: {food_beverage: 1, (none): 1}
+      operational.execution_errors: {numerator: 1, denominator: 2, value: 0.5, wilson_95: [0.094531, 0.905469]}
+      operational.execution_error_codes: {replay_recording_missing: 1}
+      operational.classification_errors.value: 0.5
+      operational.coverage.value: 0.5
+      disposition.accuracy: {numerator: 0, denominator: 1, value: 0.0, wilson_95: [0.0, 0.793451]}
+      disposition.accuracy_when_evaluated.denominator: 0
+      disposition.accuracy_when_evaluated.value: null
+
+  - name: a dataset without answers has no accuracy, only what needs none
+    rows:
+      - {lines: [[L1, food_beverage, null], [L2, alcohol, null]], uncertainty: [[L2, category, low_confidence]]}
+    expect:
+      classification: {available: false, reason: no line has an expected category}
+      disposition: {available: false, reason: no receipt has an expected disposition}
+      findings.available: false
+      operational.coverage.value: 1.0
+      operational.uncertainty.receipts.value: 1.0
+      operational.uncertainty.lines.numerator: 1
+      operational.uncertainty.by_reason: {category:low_confidence: 1}
+
+  - name: partial labels score only the labelled lines and receipts
+    rows:
+      - {lines: [[L1, food_beverage, null], [L2, gift, null]], labels: {L1: food_beverage}, expected_disposition: pass, disposition: pass}
+      - {lines: [[L3, alcohol, null]]}
+    expect:
+      classification.lines: 1
+      classification.accuracy.value: 1.0
+      disposition.receipts: 1
+      disposition.accuracy.value: 1.0
+      operational.lines: 3
+
+  - name: dispositions are scored per expected disposition, a failed receipt counting as a miss
+    rows:
+      - {lines: [[L1, alcohol, null]], expected_disposition: flag, disposition: flag}
+      - {lines: [[L2, food_beverage, null]], expected_disposition: pass, disposition: review, decided: false, reasons: [incomplete_evidence]}
+      - {error: invalid_receipt, expected_disposition: review}
+    expect:
+      disposition.receipts: 3
+      disposition.evaluated: 2
+      disposition.execution_errors: 1
+      disposition.accuracy.value: 0.333333
+      disposition.accuracy_when_evaluated.value: 0.5
+      disposition.per_disposition.flag: {tp: 1, fp: 0, fn: 0, precision: 1.0, recall: 1.0, f1: 1.0, support: 1}
+      disposition.per_disposition.pass: {tp: 0, fp: 0, fn: 1, precision: null, recall: 0.0, f1: 0.0, support: 1}
+      disposition.per_disposition.review: {tp: 0, fp: 1, fn: 1, precision: 0.0, recall: 0.0, f1: 0.0, support: 1}
+      disposition.undetermined.value: 0.5
+      disposition.abstention.value: 0.5
+      disposition.false_pass.value: 0.0
+      disposition.execution_errors_by_gold: {flag: 0, review: 1, pass: 0}
+
+  - name: findings are scored only where labelled, and an uncertainty signal counts against the strict score
+    rows:
+      - {lines: [[L1, alcohol, null]], exceptions: [[ALC-01, [L1], high]], expected_exceptions: [[ALC-01, [L1], high]], expected_signals: []}
+      - {lines: [[L2, food_beverage, null]], exceptions: [[MEAL-01, [L2], medium]], expected_exceptions: [], signals: [EXC-03], expected_signals: [],
+         uncertainty: [[L2, category, low_confidence]]}
+      - {lines: [[L3, food_beverage, null]], exceptions: [[MEAL-01, [L3], medium]]}
+    expect:
+      findings.receipts: 2
+      findings.micro: {tp: 1, fp: 2, fn: 0, precision: 0.333333, recall: 1.0, f1: 0.5}
+      findings.micro_without_uncertainty_signals: {tp: 1, fp: 1, fn: 0, precision: 0.5, recall: 1.0, f1: 0.666667}
+      findings.evidence_exact.value: 1.0
+      findings.per_rule.ALC-01.tp: 1
+      findings.per_rule.MEAL-01.fp: 1
+
+  - name: an expected exception the run did not raise is a miss, and the wrong lines are not exact
+    rows:
+      - {lines: [[L1, alcohol, null], [L2, alcohol, null]], exceptions: [[ALC-01, [L1], high]], expected_exceptions: [[ALC-01, [L1, L2], high], [DOC-04, [], low]], expected_signals: [ENT-01], signals: [ENT-01]}
+    expect:
+      findings.micro: {tp: 2, fp: 0, fn: 1, precision: 1.0, recall: 0.666667, f1: 0.8}
+      findings.evidence_exact: {numerator: 0, denominator: 1, value: 0.0, wilson_95: [0.0, 0.793451]}
+      findings.per_rule.DOC-04: {tp: 0, fp: 0, fn: 1, precision: null, recall: 0.0, f1: 0.0, evidence_exact: {numerator: 0, denominator: 0, value: null, wilson_95: null}, severity_exact: {numerator: 0, denominator: 0, value: null, wilson_95: null}}
+
+  - name: receipts a stopped run never reached are not run, not errors
+    rows:
+      - {lines: [[L1, food_beverage, null]], labels: {L1: food_beverage}, expected_disposition: pass, disposition: pass}
+    receipts: 3
+    expect:
+      operational.receipts: 3
+      operational.run: 1
+      operational.not_run: 2
+      operational.execution_errors.value: 0.0
+      disposition.receipts: 1

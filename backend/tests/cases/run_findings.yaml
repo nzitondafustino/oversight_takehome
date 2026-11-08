@@ -1,0 +1,48 @@
+# GET /v1/runs/{run_id}/findings for one run of RCP-013, RCP-014 and RCP-001 (openrouter replay). What the core
+# found, in the fixed order (receipt, then exception, review_signal, open_question, uncertainty):
+#   RCP-013  flag   exception GIFT-02 (high); review signals MCC-02, EXC-03; open question GIFT-04;
+#                   uncertainty on L1 and L2 (recipient_type)
+#   RCP-014  flag   exceptions ALC-03 (high), DOC-03 (medium, receipt level), HOUSE-01 (medium); review signal MCC-02
+#   RCP-001  pass   nothing
+cases:
+  - name: everything, in order
+    params: {}
+    expect: ["RCP-013:exception:0", "RCP-013:review_signal:0", "RCP-013:review_signal:1", "RCP-013:open_question:0", "RCP-013:uncertainty:0", "RCP-013:uncertainty:1",
+             "RCP-014:exception:0", "RCP-014:exception:1", "RCP-014:exception:2", "RCP-014:review_signal:0"]
+  - name: one receipt keeps each rule's finding apart
+    params: {receipt_id: RCP-014}
+    expect: ["RCP-014:exception:0", "RCP-014:exception:1", "RCP-014:exception:2", "RCP-014:review_signal:0"]
+  - name: by severity, which only exceptions have
+    params: {severity: high}
+    expect: ["RCP-013:exception:0", "RCP-014:exception:0"]
+  - name: several severities
+    params: {severity: [medium, high]}
+    expect: ["RCP-013:exception:0", "RCP-014:exception:0", "RCP-014:exception:1", "RCP-014:exception:2"]
+  - name: one rule on two receipts is two findings
+    params: {rule_id: MCC-02}
+    expect: ["RCP-013:review_signal:0", "RCP-014:review_signal:0"]
+  - name: uncertainty only, which names no rule
+    params: {kind: uncertainty}
+    expect: ["RCP-013:uncertainty:0", "RCP-013:uncertainty:1"]
+  - name: the uncertainty signal and its details
+    params: {kind: [review_signal, uncertainty], receipt_id: RCP-013}
+    expect: ["RCP-013:review_signal:0", "RCP-013:review_signal:1", "RCP-013:uncertainty:0", "RCP-013:uncertainty:1"]
+  - name: open questions are not violations, and are asked for apart
+    params: {kind: open_question}
+    expect: ["RCP-013:open_question:0"]
+  - name: by the receipt's disposition
+    params: {disposition: pass}
+    expect: []
+  - name: filters combine
+    params: {kind: exception, receipt_id: RCP-014, severity: medium}
+    expect: ["RCP-014:exception:1", "RCP-014:exception:2"]
+  - name: a page
+    params: {limit: 3, offset: 3}
+    expect: ["RCP-013:open_question:0", "RCP-013:uncertainty:0", "RCP-013:uncertainty:1"]
+    total: 10
+
+invalid:
+  - {name: an unknown kind, params: {kind: violation}, code: invalid_request}
+  - {name: an unknown disposition, params: {disposition: reject}, code: invalid_filter}
+  - {name: a page too large, params: {limit: 101}, code: invalid_request}
+  - {name: a negative offset, params: {offset: -1}, code: invalid_request}

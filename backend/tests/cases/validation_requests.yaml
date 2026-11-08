@@ -1,0 +1,121 @@
+# Each case changes a valid POST /v1/validate body (its stored ruleset, RCP-001, context_complete true)
+# and expects one error. Nothing is persisted for any of them. Changes:
+#   request: fields replacing the body's          remove: body fields to delete
+#   receipt: fields replacing RCP-001's            line: fields replacing RCP-001-L1's
+#   body: raw text sent instead of the body
+# expect: the status and error code, and the error's details when `details` is given.
+cases:
+  # The body itself
+  - name: context completeness must be a boolean, not text that looks like one
+    request: {context_complete: "true"}
+    expect: {status: 422, code: invalid_request}
+  - name: a credential field is refused rather than ignored
+    request: {openrouter_api_key: sk-secret}
+    expect: {status: 422, code: invalid_request}
+  - name: a credential inside the classification is refused too
+    request: {classification: {api_key: sk-secret}}
+    expect: {status: 422, code: invalid_request}
+  - name: at least one receipt
+    request: {receipts: []}
+    expect: {status: 422, code: invalid_request}
+  - name: an unknown execution mode
+    request: {execution_mode: turbo}
+    expect: {status: 422, code: invalid_request}
+  - name: a customer_id is no longer part of the contract, so it is refused as an unknown field
+    request: {customer_id: acme}
+    expect: {status: 422, code: invalid_request}
+  - name: a body that is not JSON
+    body: "receipts=RCP-001"
+    expect: {status: 422, code: invalid_request}
+  - name: NaN is not a JSON number
+    body: '{"ruleset_id": "x", "receipts": [{"total_amount": NaN}], "context_complete": true}'
+    expect: {status: 422, code: invalid_request}
+  - name: a repeated key would silently collapse, so it is refused
+    body: '{"ruleset_id": "x", "ruleset_id": "y", "receipts": [{}], "context_complete": true}'
+    expect: {status: 422, code: invalid_request}
+
+  # Receipts, refused by the core's ingestion and admission
+  - name: answers never reach the validator
+    receipt: {labels: {disposition: pass}}
+    expect: {status: 422, code: invalid_receipts}
+  - name: a raw receipt may not carry a classification
+    line: {category: food_beverage}
+    expect: {status: 422, code: invalid_receipts}
+  - name: an amount that contradicts quantity times unit price is refused, not repaired
+    line: {amount: 99.0}
+    expect: {status: 422, code: invalid_receipts}
+  - name: a bare date is not a transaction time
+    receipt: {transaction_datetime: "2026-04-14"}
+    expect: {status: 422, code: invalid_receipts}
+
+  # The ruleset
+  - name: an unknown ruleset
+    request: {ruleset_id: rs_000000000000000000000000}
+    expect: {status: 404, code: ruleset_not_found}
+
+  # Classification choices
+  - name: a backend the deployment does not offer
+    request: {classification: {backend: acme}}
+    expect: {status: 422, code: backend_not_allowed}
+  - name: a backend inside a langgraph order is checked too
+    request: {classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: acme, model: acme/one}]}}}
+    expect: {status: 422, code: backend_not_allowed}
+  - name: choosing jev needs a jev model
+    request: {classification: {backend: jev}}
+    expect: {status: 422, code: unsupported_configuration}
+  # A named model must be one its adapter runs: refused before anything runs, and never moved to another adapter.
+  - name: a chat model on the Jev Decisions adapter
+    request: {classification: {backend: jev, model: anthropic/claude-haiku-5.5}}
+    expect: {status: 422, code: model_adapter_mismatch, details: {mismatches: [{model: anthropic/claude-haiku-5.5, backend: decisions, node: null, compatible: [chat_completions]}]}}
+  - name: a Jev model on the chat completions adapter
+    request: {classification: {backend: openrouter, model: typesafe/jev-1.14}}
+    expect: {status: 422, code: model_adapter_mismatch, details: {mismatches: [{model: typesafe/jev-1.14, backend: chat_completions, node: null, compatible: [decisions]}]}}
+  - name: a Jev model with no backend named is checked against config.yaml's default, never rerouted to jev
+    request: {classification: {model: typesafe/jev-1.14}}
+    expect: {status: 422, code: model_adapter_mismatch, details: {mismatches: [{model: typesafe/jev-1.14, backend: chat_completions, node: null, compatible: [decisions]}]}}
+  - name: a model no registered adapter runs
+    request: {classification: {backend: jev, model: ~typesafe/jev-latest}}
+    expect: {status: 422, code: model_adapter_mismatch, details: {mismatches: [{model: ~typesafe/jev-latest, backend: decisions, node: null, compatible: []}]}}
+  - name: each LangGraph node's model is checked against that node's adapter
+    request: {classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: openrouter, model: typesafe/jev-1.14}, {name: fallback, backend: openrouter, model: anthropic/claude-haiku-5.5}]}}}
+    expect: {status: 422, code: model_adapter_mismatch, details: {mismatches: [{model: typesafe/jev-1.14, backend: chat_completions, node: primary, compatible: [decisions]}]}}
+  - name: every mismatched LangGraph node is reported
+    request: {classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: openrouter, model: typesafe/jev-1.14}, {name: fallback, backend: jev, model: anthropic/claude-haiku-5.5}]}}}
+    expect: {status: 422, code: model_adapter_mismatch, details: {mismatches: [{model: typesafe/jev-1.14, backend: chat_completions, node: primary, compatible: [decisions]}, {model: anthropic/claude-haiku-5.5, backend: decisions, node: fallback, compatible: [chat_completions]}]}}
+  - name: a langgraph configuration needs the langgraph backend
+    request: {classification: {langgraph: {routing: {min_confidence: 0.8}}}}
+    expect: {status: 422, code: unsupported_configuration}
+  - name: a routing threshold above 1
+    request: {classification: {backend: langgraph, langgraph: {routing: {min_confidence: 2}}}}
+    expect: {status: 422, code: unsupported_configuration}
+  - name: an unknown langgraph field
+    request: {classification: {backend: langgraph, langgraph: {retries: 3}}}
+    expect: {status: 422, code: unsupported_configuration}
+  - name: reflection needs a reviewer that can review
+    request: {classification: {backend: langgraph, langgraph: {reflection: {enabled: true, reviewer: {backend: jev, model: typesafe/jev-1.14}}}}}
+    expect: {status: 422, code: unsupported_configuration}
+  - name: deterministic mode runs no model, so it takes no model choice
+    request: {execution_mode: deterministic, classification: {model: anthropic/claude-haiku-5.5}}
+    expect: {status: 422, code: unsupported_configuration}
+
+  # Replay
+  - name: an unknown replay set
+    request: {classification: {replay_set: nightly}}
+    expect: {status: 422, code: unknown_replay_set}
+  - name: a replay set means nothing outside replay
+    request: {execution_mode: deterministic, classification: {replay_set: openrouter}}
+    expect: {status: 422, code: replay_set_not_applicable}
+  - name: a line with no recorded answer is a replay miss, never a live call
+    line: {description_raw: Grilled salmon entree with a side nobody recorded}
+    expect: {status: 409, code: replay_recording_missing}
+  - name: a model with no recordings is a replay miss, never a live call
+    request: {classification: {model: anthropic/claude-opus-5.5}}
+    expect: {status: 409, code: replay_recording_missing}
+  - name: a langgraph order with no recordings for this receipt is a replay miss
+    request: {classification: {backend: langgraph, replay_set: langgraph}}
+    expect: {status: 409, code: replay_recording_missing}
+
+  # Live
+  - name: live inference is off unless the deployment allows it
+    request: {execution_mode: live}
+    expect: {status: 403, code: live_inference_disabled}

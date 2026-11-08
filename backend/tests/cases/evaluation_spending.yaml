@@ -1,0 +1,204 @@
+# Live evaluations against FakeOpenRouter, which answers the core's real requests with the usage given here.
+# The dataset is RCP-001 (four English lines) then RCP-008 (three French lines), so a whole run makes 7
+# classification calls and 3 translation calls: the core translates a receipt's lines before classifying them.
+#   usage: per model, what each response reports (OpenRouter's usage fields); models not given report
+#          100 prompt tokens, 20 completion tokens and a cost of 0.0001
+#   fail: models whose requests raise a connection error
+#   pricing: per model, [input, output] USD per million tokens, in a versioned table
+#   budget: replaces the default $1, 100 calls, 10 receipts; any limit left out is no limit of that kind
+#   uncapped: true for a confirmed run with no limit at all (no budget)
+#   classification: the request's classification selection
+#   expect: the job's status, stop_reason, processed receipts and result_context, and its spend
+cases:
+  - name: provider-reported costs are actual spend, added exactly
+    usage:
+      anthropic/claude-haiku-5.5: {prompt_tokens: 300, completion_tokens: 40, cost: 0.0001}
+      tencent/hy-mt2-30b-a3b: {prompt_tokens: 30, completion_tokens: 8, cost: 0.00001}
+    expect:
+      status: completed
+      stop_reason: null
+      processed: 2
+      result_context: dataset
+      spend: {live: 10, failed: 0, new_spend_usd: "0.00073", actual_cost_usd: "0.00073", estimated_cost_usd: "0", cost_completeness: complete, unpriced_calls: 0}
+      purposes: {classification: 7, translation: 3}
+      by_model_new_spend: {anthropic/claude-haiku-5.5: "0.0007", tencent/hy-mt2-30b-a3b: "0.00003"}
+
+  - name: tokens without a reported cost are estimated from the pricing table, and kept apart from actual cost
+    usage:
+      anthropic/claude-haiku-5.5: {prompt_tokens: 300, completion_tokens: 40, cost: 0.0001}
+      tencent/hy-mt2-30b-a3b: {prompt_tokens: 50, completion_tokens: 10}
+    pricing: {tencent/hy-mt2-30b-a3b: ["0.10", "0.20"]}
+    expect:
+      status: completed
+      stop_reason: null
+      processed: 2
+      result_context: dataset
+      spend: {live: 10, failed: 0, new_spend_usd: "0.000721", actual_cost_usd: "0.0007", estimated_cost_usd: "0.000021", cost_completeness: complete, unpriced_calls: 0}
+      pricing_versions: [test-2026-11]
+
+  - name: a call with no cost and no price leaves the budget unverifiable, so the next call is refused
+    usage:
+      anthropic/claude-haiku-5.5: {prompt_tokens: 300, completion_tokens: 40, cost: 0.0001}
+      tencent/hy-mt2-30b-a3b: {prompt_tokens: 50, completion_tokens: 10}
+    expect:
+      status: budget_exhausted
+      stop_reason: budget_unverifiable
+      processed: 1
+      result_context: isolated_receipts
+      spend: {live: 5, failed: 0, new_spend_usd: "0.0004", actual_cost_usd: "0.0004", estimated_cost_usd: "0", cost_completeness: incomplete, unpriced_calls: 1}
+
+  - name: the spending limit stops the next call once reached, overshooting by at most one call
+    usage:
+      anthropic/claude-haiku-5.5: {prompt_tokens: 300, completion_tokens: 40, cost: 0.0001}
+    budget: {max_spend_usd: "0.00025", max_provider_calls: 100, max_receipts: 10}
+    expect:
+      status: budget_exhausted
+      stop_reason: max_spend_usd
+      processed: 0
+      result_context: isolated_receipts
+      spend: {live: 3, failed: 0, new_spend_usd: "0.0003", actual_cost_usd: "0.0003", estimated_cost_usd: "0", cost_completeness: complete, unpriced_calls: 0}
+
+  - name: the call limit stops the next call once reached
+    budget: {max_spend_usd: "1", max_provider_calls: 2, max_receipts: 10}
+    expect:
+      status: budget_exhausted
+      stop_reason: max_provider_calls
+      processed: 0
+      result_context: isolated_receipts
+      spend: {live: 2, failed: 0, new_spend_usd: "0.0002", actual_cost_usd: "0.0002", estimated_cost_usd: "0", cost_completeness: complete, unpriced_calls: 0}
+
+  - name: a call limit alone stops the next call once reached
+    budget: {max_provider_calls: 2}
+    expect:
+      status: budget_exhausted
+      stop_reason: max_provider_calls
+      processed: 0
+      result_context: isolated_receipts
+      spend: {live: 2, failed: 0, new_spend_usd: "0.0002", actual_cost_usd: "0.0002", estimated_cost_usd: "0", cost_completeness: complete, unpriced_calls: 0}
+
+  - name: without a spending limit, a call with no known cost does not stop the run, and the spend is a lower bound
+    usage:
+      anthropic/claude-haiku-5.5: {prompt_tokens: 300, completion_tokens: 40, cost: 0.0001}
+      tencent/hy-mt2-30b-a3b: {prompt_tokens: 50, completion_tokens: 10}
+    budget: {max_provider_calls: 100}
+    expect:
+      status: completed
+      stop_reason: null
+      processed: 2
+      result_context: dataset
+      spend: {live: 10, failed: 0, new_spend_usd: "0.0007", actual_cost_usd: "0.0007", estimated_cost_usd: "0", cost_completeness: incomplete, unpriced_calls: 3}
+
+  - name: an uncapped run stops for no limit, and still meters every call
+    usage:
+      anthropic/claude-haiku-5.5: {prompt_tokens: 300, completion_tokens: 40, cost: 0.0001}
+      tencent/hy-mt2-30b-a3b: {prompt_tokens: 50, completion_tokens: 10}
+    uncapped: true
+    expect:
+      status: completed
+      stop_reason: null
+      processed: 2
+      result_context: dataset
+      spend: {live: 10, failed: 0, new_spend_usd: "0.0007", actual_cost_usd: "0.0007", estimated_cost_usd: "0", cost_completeness: incomplete, unpriced_calls: 3}
+
+  - name: a failed request may still be billed, so its cost is unknown and the run stops
+    fail: [anthropic/claude-haiku-5.5]
+    expect:
+      status: budget_exhausted
+      stop_reason: budget_unverifiable
+      processed: 0
+      result_context: isolated_receipts
+      spend: {live: 1, failed: 1, new_spend_usd: "0", actual_cost_usd: "0", estimated_cost_usd: "0", cost_completeness: incomplete, unpriced_calls: 1}
+
+  - name: with one's own provider key (BYOK), OpenRouter's cost is not the provider's bill, so it is unpriced
+    usage:
+      anthropic/claude-haiku-5.5: {prompt_tokens: 300, completion_tokens: 40, cost: 0.0001, is_byok: true}
+    expect:
+      status: budget_exhausted
+      stop_reason: budget_unverifiable
+      processed: 0
+      result_context: isolated_receipts
+      spend: {live: 1, failed: 0, new_spend_usd: "0", actual_cost_usd: "0", estimated_cost_usd: "0", cost_completeness: incomplete, unpriced_calls: 1}
+
+  - name: Jev's Decisions calls are metered as chat calls are
+    classification: {backend: jev, model: typesafe/jev-1.14}
+    usage:
+      typesafe/jev-1.14: {input_tokens: 1500, output_tokens: 400, cost: 0.00007}
+    expect:
+      status: completed
+      stop_reason: null
+      processed: 2
+      result_context: dataset
+      spend: {live: 10, failed: 0, new_spend_usd: "0.00079", actual_cost_usd: "0.00079", estimated_cost_usd: "0", cost_completeness: complete, unpriced_calls: 0}
+      by_model_new_spend: {typesafe/jev-1.14: "0.00049", tencent/hy-mt2-30b-a3b: "0.0003"}
+      by_backend_live: {decisions: 7, chat_completions: 3}
+
+  # Live LangGraph: every node, reviewer and reviser call goes through the meter, under its own adapter and purpose.
+  - name: a one-node LangGraph order is metered as a direct run is
+    classification: {backend: langgraph, langgraph: {backends: [{name: only, backend: decisions, model: typesafe/jev-1.14}]}}
+    usage:
+      typesafe/jev-1.14: {input_tokens: 1500, output_tokens: 400, cost: 0.00007}
+    expect:
+      status: completed
+      stop_reason: null
+      processed: 2
+      result_context: dataset
+      spend: {live: 10, failed: 0, new_spend_usd: "0.00079", actual_cost_usd: "0.00079", estimated_cost_usd: "0", cost_completeness: complete, unpriced_calls: 0}
+      purposes: {classification: 7, translation: 3}
+      by_backend_live: {decisions: 7, chat_completions: 3}
+
+  - name: every node LangGraph routes a line to is metered under its own adapter
+    # The LLM's 0.9 is below this threshold, so every line goes on to Jev: two classification calls a line.
+    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: chat_completions, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: decisions, model: typesafe/jev-1.14}], routing: {min_confidence: 0.95}}}
+    expect:
+      status: completed
+      stop_reason: null
+      processed: 2
+      result_context: dataset
+      spend: {live: 17, failed: 0, new_spend_usd: "0.0017", actual_cost_usd: "0.0017", estimated_cost_usd: "0", cost_completeness: complete, unpriced_calls: 0}
+      purposes: {classification: 14, translation: 3}
+      by_backend_live: {chat_completions: 10, decisions: 7}
+
+  - name: a limit reached inside a LangGraph order stops the run, never routing past the refused call
+    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: chat_completions, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: decisions, model: typesafe/jev-1.14}], routing: {min_confidence: 0.95}}}
+    budget: {max_spend_usd: "1", max_provider_calls: 4, max_receipts: 10}
+    expect:
+      status: budget_exhausted
+      stop_reason: max_provider_calls
+      processed: 0
+      result_context: isolated_receipts
+      spend: {live: 4, failed: 0, new_spend_usd: "0.0004", actual_cost_usd: "0.0004", estimated_cost_usd: "0", cost_completeness: complete, unpriced_calls: 0}
+
+  - name: an order written with the adapters' earlier names is metered and capped under their own names
+    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: openrouter, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: jev, model: typesafe/jev-1.14}], routing: {min_confidence: 0.95}}}
+    budget: {max_spend_usd: "1", max_provider_calls: 4, max_receipts: 10}
+    expect:
+      status: budget_exhausted
+      stop_reason: max_provider_calls
+      processed: 0
+      result_context: isolated_receipts
+      spend: {live: 4, failed: 0, new_spend_usd: "0.0004", actual_cost_usd: "0.0004", estimated_cost_usd: "0", cost_completeness: complete, unpriced_calls: 0}
+      # The primary node answers a receipt's lines first, then the fallback takes those it must: RCP-001's four lines
+      # are the first four calls, all to the primary, the chat completions adapter.
+      by_backend_live: {chat_completions: 4}
+
+  - name: uncapped by calls, an order written with earlier names makes the same calls as one written with the adapters' own
+    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: openrouter, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: jev, model: typesafe/jev-1.14}], routing: {min_confidence: 0.95}}}
+    expect:
+      status: completed
+      stop_reason: null
+      processed: 2
+      result_context: dataset
+      spend: {live: 17, failed: 0, new_spend_usd: "0.0017", actual_cost_usd: "0.0017", estimated_cost_usd: "0", cost_completeness: complete, unpriced_calls: 0}
+      purposes: {classification: 14, translation: 3}
+      by_backend_live: {chat_completions: 10, decisions: 7}
+
+  - name: a spending limit stops a LangGraph order written with earlier names
+    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: openrouter, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: jev, model: typesafe/jev-1.14}], routing: {min_confidence: 0.95}}}
+    budget: {max_spend_usd: "0.00025", max_provider_calls: 100, max_receipts: 10}
+    expect:
+      status: budget_exhausted
+      stop_reason: max_spend_usd
+      processed: 0
+      result_context: isolated_receipts
+      spend: {live: 3, failed: 0, new_spend_usd: "0.0003", actual_cost_usd: "0.0003", estimated_cost_usd: "0", cost_completeness: complete, unpriced_calls: 0}
+

@@ -1,0 +1,86 @@
+# GET /v1/runs over four runs, made in this order (so newest first is D, C, B, A):
+#   A  ruleset default v1   openrouter replay      RCP-001
+#   B  ruleset default v1   jev replay             RCP-001
+#   C  ruleset default v2   openrouter replay      RCP-014
+#   D  ruleset default v1   deterministic          RCP-001 (classified)
+# params name rulesets by label (v1, v2) and times by run (from_run, to_run: that run's created_at).
+cases:
+  - name: newest first
+    params: {}
+    expect: [D, C, B, A]
+  - name: by exact ruleset version ID
+    params: {ruleset_id: v2}
+    expect: [C]
+  - name: by ruleset name and version number
+    params: {ruleset_name: default, ruleset_version: 1}
+    expect: [D, B, A]
+  - name: by the backend the receipts report
+    params: {classification_backend: jev}
+    expect: [B]
+  - name: a deterministic run reports no backend, so no backend filter finds it
+    params: {classification_backend: openrouter}
+    expect: [C, A]
+  - name: by execution mode
+    params: {execution_mode: deterministic}
+    expect: [D]
+  - name: filters combine
+    params: {ruleset_id: v1, execution_mode: replay}
+    expect: [B, A]
+  - name: from a time, inclusive
+    params: {from_run: C}
+    expect: [D, C]
+  - name: until a time, exclusive
+    params: {to_run: C}
+    expect: [B, A]
+  - name: a page
+    params: {limit: 2, offset: 1}
+    expect: [C, B]
+    total: 4
+
+invalid:
+  - {name: a page of nothing, params: {limit: 0}, code: invalid_request}
+  - {name: a page too large, params: {limit: 101}, code: invalid_request}
+  - {name: a negative offset, params: {offset: -1}, code: invalid_request}
+  - {name: an unknown execution mode, params: {execution_mode: turbo}, code: invalid_request}
+  - {name: a time with no time zone, params: {created_from: "2026-11-06T10:00:00"}, code: invalid_request}
+  - {name: a range that ends before it starts, params: {created_from: "2026-11-06T10:00:00Z", created_to: "2026-11-05T10:00:00Z"}, code: invalid_filter}
+  - {name: a version number names no ruleset alone, params: {ruleset_version: 1}, code: invalid_filter}
+  - {name: a malformed backend, params: {classification_backend: "Jev!"}, code: invalid_request}
+
+# Each run's classification in the list and in its detail, worked out when read from what it recorded: orchestrator,
+# provider, the adapter its model needed (backend, as recorded), and the model. B was requested as jev, the decisions
+# adapter's earlier name.
+setups:
+  - run: A
+    expect: {orchestrator: direct, provider: openrouter, backend: chat_completions, protocol: chat_completions, adapter: chat_completions, model: anthropic/claude-haiku-5.5, nodes: null}
+  - run: B
+    expect: {orchestrator: direct, provider: openrouter, backend: decisions, protocol: decisions, adapter: decisions, model: typesafe/jev-1.14, nodes: null}
+  - run: D
+    expect: {orchestrator: null, provider: null, backend: null, protocol: null, adapter: null, model: null, nodes: null}
+
+# The core's metadata.model for a LangGraph run, read into its nodes; anything else is not recorded, never half-read.
+langgraph_labels:
+  - name: the configured order
+    label: primary=decisions:typesafe/jev-1.14, fallback=chat_completions:anthropic/claude-haiku-5.5
+    expect:
+      - {name: primary, backend: decisions, model: typesafe/jev-1.14, provider: openrouter, protocol: decisions, adapter: decisions}
+      - {name: fallback, backend: chat_completions, model: anthropic/claude-haiku-5.5, provider: openrouter, protocol: chat_completions, adapter: chat_completions}
+  - name: an order recorded before the adapters were renamed keeps its names, read as the same adapters
+    label: primary=jev:typesafe/jev-1.14, fallback=openrouter:anthropic/claude-haiku-5.5
+    expect:
+      - {name: primary, backend: jev, model: typesafe/jev-1.14, provider: openrouter, protocol: decisions, adapter: decisions}
+      - {name: fallback, backend: openrouter, model: anthropic/claude-haiku-5.5, provider: openrouter, protocol: chat_completions, adapter: chat_completions}
+  - name: a model ID with a colon keeps it
+    label: only=chat_completions:vendor/model:free
+    expect:
+      - {name: only, backend: chat_completions, model: "vendor/model:free", provider: openrouter, protocol: chat_completions, adapter: chat_completions}
+  - name: a node whose backend the core does not register has no provider
+    label: only=acme:acme/one
+    expect:
+      - {name: only, backend: acme, model: acme/one, provider: null, protocol: null, adapter: null}
+  - name: not the core's label
+    label: typesafe/jev-1.14
+    expect: null
+  - name: no label
+    label: null
+    expect: null

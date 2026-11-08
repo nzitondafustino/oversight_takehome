@@ -1,0 +1,270 @@
+# An evaluation dataset in YAML: one object, with its cases under receipts.
+# Each case is a receipt in the core's raw format (data/README.md), with its answers inline as data/receipts.jsonl
+# holds them. Every answer is optional: receipt-level labels (disposition; expected_exceptions with review_signals)
+# and line-level labels (category, restricted). The answers are split off at upload and never reach the validator.
+# context_complete is false: these five receipts are not all of this employee's, so totals spanning receipts stay open.
+# Read with a restricted loader: JSON's scalars only, exact decimals, no tags, aliases or repeated keys.
+name: langgraph-golden-5
+description: The five golden receipts the LangGraph replay set covers, with their answers. Generated from data/receipts.jsonl.
+context_complete: false
+receipts:
+- receipt_id: RCP-011
+  employee_id: E-1128
+  employee_country: US
+  entity: GLOBAL
+  submitted_expense_type: Client Entertainment
+  merchant_name: Cellar Door Fine Wines
+  mcc: '5921'
+  mcc_description: Package stores - beer, wine, liquor
+  transaction_datetime: '2026-04-19T17:40:00'
+  currency: USD
+  fx_rate_to_usd: 1.0
+  total_amount: 79.0
+  total_amount_usd: 79.0
+  attendee_count: 6
+  trip_id: null
+  trip_nights: null
+  pre_approval_ref: PA-2026-0431
+  itemized: true
+  line_items:
+  - line_id: RCP-011-L1
+    description_raw: Vino tinto Rioja Reserva 750ml
+    language: es
+    quantity: 3
+    unit_price: 24.0
+    amount: 72.0
+    amount_usd: 72.0
+    labels:
+      category: alcohol
+      restricted: true
+  - line_id: RCP-011-L2
+    description_raw: Sparkling water 6-pack
+    language: en
+    quantity: 1
+    unit_price: 7.0
+    amount: 7.0
+    amount_usd: 7.0
+    labels:
+      category: food_beverage
+      restricted: false
+  labels:
+    expected_exceptions:
+    - rule_id: MCC-01
+      policy_doc: merchant-category-risk.md
+      severity: high
+      line_ids: []
+      reason: Transaction at MCC 5921, a high-risk merchant category, raises an exception on its own.
+    - rule_id: ALC-03
+      policy_doc: meals-and-entertainment-policy.md
+      severity: high
+      line_ids:
+      - RCP-011-L1
+      reason: Retail alcohol from an off-premise store is never reimbursable, regardless of business context.
+    review_signals: []
+    disposition: flag
+  notes: 'Two independent high exceptions. The attendee count and pre-approval reference are present and deliberately do not
+    help: ALC-03 has no entertainment carve-out and EXC-02 states that a pre-approval waives only the rule that requires it.'
+- receipt_id: RCP-017
+  employee_id: E-1042
+  employee_country: US
+  entity: GLOBAL
+  submitted_expense_type: Lodging
+  merchant_name: Serenity Spa at Grand Hotel
+  mcc: '7297'
+  mcc_description: Massage parlors
+  transaction_datetime: '2026-04-18T16:00:00'
+  currency: USD
+  fx_rate_to_usd: 1.0
+  total_amount: 140.0
+  total_amount_usd: 140.0
+  attendee_count: null
+  trip_id: TRIP-0122
+  trip_nights: 5
+  pre_approval_ref: null
+  itemized: true
+  line_items:
+  - line_id: RCP-017-L1
+    description_raw: 60-minute deep tissue massage
+    language: en
+    quantity: 1
+    unit_price: 120.0
+    amount: 120.0
+    amount_usd: 120.0
+    labels:
+      category: personal_care
+      restricted: true
+  - line_id: RCP-017-L2
+    description_raw: Gratuity
+    language: en
+    quantity: 1
+    unit_price: 20.0
+    amount: 20.0
+    amount_usd: 20.0
+    labels:
+      category: service_fee
+      restricted: false
+  labels:
+    expected_exceptions:
+    - rule_id: MCC-01
+      policy_doc: merchant-category-risk.md
+      severity: high
+      line_ids: []
+      reason: Transaction at MCC 7297, a high-risk merchant category.
+    - rule_id: PERS-01
+      policy_doc: non-reimbursable-items.md
+      severity: medium
+      line_ids:
+      - RCP-017-L1
+      reason: Spa and massage services are personal care and are not reimbursable.
+    - rule_id: DOC-03
+      policy_doc: receipt-documentation-requirements.md
+      severity: medium
+      line_ids: []
+      reason: Submitted as Lodging; the contents are personal care services.
+    review_signals: []
+    disposition: flag
+  notes: A spa charge folded into a hotel stay. Tests that the MCC signal and the item signal are reported as separate exceptions
+    rather than collapsed into one.
+- receipt_id: RCP-022
+  employee_id: E-1156
+  employee_country: US
+  entity: GLOBAL
+  submitted_expense_type: Client Entertainment
+  merchant_name: Harbor View Restaurant
+  mcc: '5812'
+  mcc_description: Eating places and restaurants
+  transaction_datetime: '2026-04-28T12:45:00'
+  currency: USD
+  fx_rate_to_usd: 1.0
+  total_amount: 113.0
+  total_amount_usd: 113.0
+  attendee_count: 2
+  trip_id: null
+  trip_nights: null
+  pre_approval_ref: null
+  itemized: true
+  line_items:
+  - line_id: RCP-022-L1
+    description_raw: Lunch entree — guest R. Delgado, City Procurement Office
+    language: en
+    quantity: 2
+    unit_price: 34.0
+    amount: 68.0
+    amount_usd: 68.0
+    labels:
+      category: food_beverage
+      restricted: false
+  - line_id: RCP-022-L2
+    description_raw: Gift basket for R. Delgado, City Procurement Office
+    language: en
+    quantity: 1
+    unit_price: 45.0
+    amount: 45.0
+    amount_usd: 45.0
+    labels:
+      category: gift
+      restricted: true
+  labels:
+    expected_exceptions:
+    - rule_id: GIFT-04
+      policy_doc: gifts-and-awards-policy.md
+      severity: critical
+      line_ids:
+      - RCP-022-L1
+      - RCP-022-L2
+      reason: A lunch and a gift basket provided to a municipal procurement official are prohibited under the anti-corruption
+        policy, at any amount.
+    review_signals: []
+    disposition: flag
+  notes: 'The only critical exception in the set, and it routes to Compliance rather than the audit queue. The amount is $45,
+    below the GIFT-01 $50 cap, so the cap is deliberately not breached: what makes this critical is who received it — the
+    lunch as well as the gift, since GIFT-04 covers meals too. A system driven only by thresholds sees nothing here.'
+- receipt_id: RCP-023
+  employee_id: E-1103
+  employee_country: US
+  entity: GLOBAL
+  submitted_expense_type: Meals - Team
+  merchant_name: Lakeside Grill
+  mcc: '5812'
+  mcc_description: Eating places and restaurants
+  transaction_datetime: '2026-04-29T20:00:00'
+  currency: USD
+  fx_rate_to_usd: 1.0
+  total_amount: 186.0
+  total_amount_usd: 186.0
+  attendee_count: 3
+  trip_id: TRIP-0131
+  trip_nights: 2
+  pre_approval_ref: null
+  itemized: false
+  line_items:
+  - line_id: RCP-023-L1
+    description_raw: Restaurant charge - no itemization provided
+    language: en
+    quantity: 1
+    unit_price: 186.0
+    amount: 186.0
+    amount_usd: 186.0
+    labels:
+      category: other
+      restricted: false
+  labels:
+    expected_exceptions:
+    - rule_id: DOC-01
+      policy_doc: receipt-documentation-requirements.md
+      severity: medium
+      line_ids: []
+      reason: Receipt total of $186 exceeds the $75 itemization threshold and no itemization was provided.
+    review_signals: []
+    disposition: flag
+  notes: Non-itemized receipt. The per-person figure of $62 is within the cap and the attendee count satisfies MEAL-02, so
+    DOC-01 is the only exception. The correct behaviour is to flag the absence of evidence, not to speculate about what was
+    bought.
+- receipt_id: RCP-028
+  employee_id: E-1042
+  employee_country: US
+  entity: GLOBAL
+  submitted_expense_type: Travel - Other
+  merchant_name: Cornerhealth Pharmacy
+  mcc: '5912'
+  mcc_description: Drug stores and pharmacies
+  transaction_datetime: '2026-05-06T09:15:00'
+  currency: USD
+  fx_rate_to_usd: 1.0
+  total_amount: 14.48
+  total_amount_usd: 14.48
+  attendee_count: null
+  trip_id: TRIP-0248
+  trip_nights: 4
+  pre_approval_ref: null
+  itemized: true
+  line_items:
+  - line_id: RCP-028-L1
+    description_raw: Ibuprofen 200mg 24ct
+    language: en
+    quantity: 1
+    unit_price: 8.99
+    amount: 8.99
+    amount_usd: 8.99
+    labels:
+      category: health_otc
+      restricted: false
+  - line_id: RCP-028-L2
+    description_raw: Throat lozenges
+    language: en
+    quantity: 1
+    unit_price: 5.49
+    amount: 5.49
+    amount_usd: 5.49
+    labels:
+      category: health_otc
+      restricted: false
+  labels:
+    expected_exceptions: []
+    review_signals:
+    - rule_id: MCC-02
+      policy_doc: merchant-category-risk.md
+      reason: MCC 5912 is medium risk and raises a review signal only.
+    disposition: review
+  notes: 'Nothing is wrong here: $14.48 of OTC medication on a trip, against the $25 HEALTH-01 allowance. The medium-risk
+    MCC alone moves it to review, and reporting MCC-02 as an exception would be a false positive.'

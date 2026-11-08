@@ -1,0 +1,34 @@
+# GET /v1/evaluations filters, over the runs of test_evaluation_api.runs: "openrouter" and "jev" replay the
+# 32-receipt golden dataset, "small" replays a two-receipt dataset with openrouter, and "queued" waits.
+#   params: query parameters; @golden and @small name those datasets' IDs
+#   expect: the labels of the runs returned, newest first
+cases:
+  - name: every run, newest first
+    expect: [queued, small, jev, openrouter]
+  - name: by backend
+    params: {backend: jev}
+    expect: [jev]
+  - name: by any model a run may call, its translator's included
+    params: {model: tencent/hy-mt2-30b-a3b}
+    expect: [queued, small, jev, openrouter]
+  - name: by a classification model
+    params: {model: typesafe/jev-1.14}
+    expect: [jev]
+  - name: by status
+    params: {status: queued}
+    expect: [queued]
+  - name: by dataset
+    params: {dataset_id: "@small"}
+    expect: [small]
+  - name: by the other dataset
+    params: {dataset_id: "@golden"}
+    expect: [queued, jev, openrouter]
+  - name: by execution mode
+    params: {execution_mode: live}
+    expect: []
+  - name: by an unknown ruleset
+    params: {ruleset_id: rs_unknown}
+    expect: []
+  - name: filters combine
+    params: {backend: openrouter, status: completed, dataset_id: "@golden"}
+    expect: [openrouter]

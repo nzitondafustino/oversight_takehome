@@ -1,0 +1,27 @@
+# How a request body decodes. Numbers with a fraction or exponent become exact Decimals, whole numbers stay ints
+# (the core's counts are strict ints), and what plain JSON decoding would silently accept or collapse is refused.
+cases:
+  - name: trailing zeros are kept
+    body: '{"value": 12.10}'
+    decimal: "12.10"
+  - name: more digits than a float holds are kept
+    body: '{"value": 0.1000000000000000055511151231257827}'
+    decimal: "0.1000000000000000055511151231257827"
+  - name: an exponent is exact
+    body: '{"value": 1.5e-7}'
+    decimal: "1.5E-7"
+  - name: a whole number stays an int
+    body: '{"value": 7}'
+    integer: 7
+  - name: NaN is refused
+    body: '{"value": NaN}'
+    refused: true
+  - name: Infinity is refused
+    body: '{"value": Infinity}'
+    refused: true
+  - name: a repeated key is refused
+    body: '{"value": 1, "value": 2}'
+    refused: true
+  - name: a repeated key in a nested object is refused
+    body: '{"receipts": [{"amount": 1.0, "amount": 2.0}]}'
+    refused: true

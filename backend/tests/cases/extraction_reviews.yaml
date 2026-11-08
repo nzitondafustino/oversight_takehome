@@ -1,0 +1,28 @@
+# Each case changes the reviewer's decisions for an extraction of the nine policy documents (review_decisions.yaml,
+# live set) and states what the core's review makes of them. Every review is stored, ready or not.
+#   drop: rule IDs whose decision is left out      change: {rule_id: fields replacing that decision}
+#   add_agreed: a confirm decision for one agreed field of this rule      policy: the review policy
+cases:
+  - name: every awaited field decided
+    expect: {ready: true, remaining: 0, issues: []}
+  - name: confirming an agreed field is allowed besides
+    add_agreed: ALC-01
+    expect: {ready: true, remaining: 0, issues: []}
+  - name: an undecided field remains
+    drop: [MCC-03]
+    expect: {ready: false, remaining: 1, issues: []}
+  - name: a rejected field blocks approval
+    change: {MCC-03: {action: reject, rationale: the thresholds are not what the policy says}}
+    expect: {ready: false, remaining: 0, issues: [rejected]}
+  - name: accepting a reading that does not exist
+    change: {TECH-01: {action: accept_regex, value: null, rationale: null}}  # null removes a field
+    expect: {ready: false, remaining: 1, issues: [no_source_value]}  # an invalid decision decides nothing
+  - name: an override needs a rationale
+    change: {TECH-01: {rationale: null}}
+    expect: {ready: false, remaining: 1, issues: [rationale_required]}
+  - name: a quote the clause does not hold
+    change: {TECH-01: {value: "electronics are fine"}}
+    expect: {ready: false, remaining: 0, issues: [unsupported_value]}
+  - name: all fields policy needs a decision for every field
+    policy: all_fields
+    expect: {ready: false, remaining: 283, issues: []}

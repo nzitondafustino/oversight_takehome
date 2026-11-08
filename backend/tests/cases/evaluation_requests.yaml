@@ -1,0 +1,218 @@
+# POST /v1/evaluations refusals. No job is persisted and no provider is reached for any of them.
+# The default body evaluates acme's two-receipt dataset (RCP-001, RCP-002) against acme's uploaded draft ruleset,
+# as a preview, in replay.
+#   request: fields replacing the body's      settings: deployment settings for this case
+#   key: true to set OPENROUTER_API_KEY       live: shorthand for a confirmed live request with a $1 budget
+#   expect: status and code, and the error's details when `details` is given
+cases:
+  # Live execution needs the deployment's switch, the request's confirmation, a budget and listed models
+  - name: live is refused where the deployment does not allow it
+    live: true
+    key: true
+    expect: {status: 403, code: live_inference_disabled}
+  - name: live must be confirmed
+    live: true
+    key: true
+    request: {confirm_live: false}
+    settings: {allow_live: true}
+    expect: {status: 422, code: live_confirmation_required}
+  - name: live needs a limit, or an explicit confirmation that it has none
+    live: true
+    key: true
+    request: {budget: null}
+    settings: {allow_live: true}
+    expect: {status: 422, code: budget_required}
+  - name: a budget with no limit in it is no limit
+    live: true
+    key: true
+    request: {budget: {}}
+    settings: {allow_live: true}
+    expect: {status: 422, code: budget_required}
+  - name: limits and an uncapped confirmation contradict each other
+    live: true
+    key: true
+    request: {confirm_uncapped: true}
+    settings: {allow_live: true}
+    expect: {status: 422, code: uncapped_with_caps}
+  - name: a zero spending limit never starts a live run, whatever other limits it has
+    live: true
+    key: true
+    request: {budget: {max_spend_usd: "0"}}
+    settings: {allow_live: true}
+    expect: {status: 422, code: budget_zero}
+  - name: a receipt limit alone still refuses a larger dataset
+    live: true
+    key: true
+    request: {budget: {max_receipts: 1}}
+    settings: {allow_live: true}
+    expect: {status: 422, code: receipt_limit_exceeded}
+  - name: an uncapped live run is refused unless the deployment allows uncapped evaluations
+    live: true
+    key: true
+    request: {budget: null, confirm_uncapped: true}
+    settings: {allow_live: true}
+    expect: {status: 403, code: uncapped_disabled}
+  - name: an uncapped confirmation applies only to live runs
+    request: {confirm_uncapped: true}
+    expect: {status: 422, code: live_only_field}
+  - name: a zero budget never starts a live run
+    live: true
+    key: true
+    request: {budget: {max_spend_usd: "0", max_provider_calls: 10, max_receipts: 10}}
+    settings: {allow_live: true}
+    expect: {status: 422, code: budget_zero}
+  - name: a dataset larger than the budget's receipt limit
+    live: true
+    key: true
+    request: {budget: {max_spend_usd: "1", max_provider_calls: 10, max_receipts: 1}}
+    settings: {allow_live: true}
+    expect: {status: 422, code: receipt_limit_exceeded}
+  - name: a live LangGraph run may call only allowed models, every node's included
+    live: true
+    key: true
+    request: {classification: {backend: langgraph}}
+    settings: {allow_live: true, allowed_classification_models: [anthropic/claude-haiku-5.5], allowed_translation_models: [tencent/hy-mt2-30b-a3b]}
+    expect: {status: 422, code: model_not_allowed, details: {role: classification, allowed: [anthropic/claude-haiku-5.5]}}
+  - name: every model a live run may call must be listed, including config.yaml's defaults
+    live: true
+    key: true
+    settings: {allow_live: true, allowed_models: [anthropic/claude-haiku-5.5]}
+    expect: {status: 422, code: model_not_allowed}
+  - name: a live model the request chooses must be listed
+    live: true
+    key: true
+    request: {classification: {model: anthropic/claude-opus-5.5}}
+    settings: {allow_live: true, allowed_models: [anthropic/claude-haiku-5.5, tencent/hy-mt2-30b-a3b]}
+    expect: {status: 422, code: model_not_allowed}
+  - name: a translation model must answer chat completions, as the translator sends them
+    live: true
+    key: true
+    request: {classification: {translation_model: typesafe/jev-1.14}}
+    settings: {allow_live: true, allowed_models: [typesafe/jev-1.14, anthropic/claude-haiku-5.5, tencent/hy-mt2-30b-a3b]}
+    expect: {status: 422, code: translation_model_unsupported}
+  - name: a translation model the request chooses must be listed
+    live: true
+    key: true
+    request: {classification: {translation_model: anthropic/claude-sonnet-5.5}}
+    settings: {allow_live: true, allowed_models: [anthropic/claude-haiku-5.5, tencent/hy-mt2-30b-a3b]}
+    expect: {status: 422, code: model_not_allowed}
+  - name: config.yaml's translator is among the models a live run may call, so it must be listed too
+    live: true
+    key: true
+    request: {classification: {backend: jev, model: typesafe/jev-1.14}}
+    settings: {allow_live: true, allowed_models: [typesafe/jev-1.14, anthropic/claude-haiku-5.5]}
+    expect: {status: 422, code: model_not_allowed}
+  - name: live without a provider key is unavailable
+    live: true
+    settings: {allow_live: true, allowed_models: [anthropic/claude-haiku-5.5, tencent/hy-mt2-30b-a3b]}
+    expect: {status: 503, code: live_inference_unavailable}
+  - name: live without a folder for the run's answers is unavailable
+    live: true
+    key: true
+    settings: {allow_live: true, allowed_models: [anthropic/claude-haiku-5.5, tencent/hy-mt2-30b-a3b], live_cache_dir: null}
+    expect: {status: 503, code: live_inference_unavailable}
+  - name: a budget applies only to live runs
+    request: {budget: {max_spend_usd: "1", max_provider_calls: 10, max_receipts: 10}}
+    expect: {status: 422, code: live_only_field}
+  - name: a confirmation applies only to live runs
+    request: {confirm_live: true}
+    expect: {status: 422, code: live_only_field}
+  - name: a negative budget is not a budget
+    live: true
+    request: {budget: {max_spend_usd: "-1", max_provider_calls: 10, max_receipts: 10}}
+    settings: {allow_live: true}
+    expect: {status: 422, code: invalid_request}
+  - name: a budget's call limit is a whole number
+    live: true
+    request: {budget: {max_spend_usd: "1", max_provider_calls: "10", max_receipts: 10}}
+    settings: {allow_live: true}
+    expect: {status: 422, code: invalid_request}
+
+  # Replay
+  - name: an unknown replay set
+    request: {classification: {replay_set: elsewhere}}
+    expect: {status: 422, code: unknown_replay_set}
+  - name: a replay set is named, never given as a path
+    request: {classification: {replay_set: ../../evaluation/final/replay}}
+    expect: {status: 422, code: invalid_request}
+  - name: deterministic mode classifies nothing, so it is not an evaluation
+    request: {execution_mode: deterministic}
+    expect: {status: 422, code: invalid_request}
+
+  # The ruleset: an exact version published for production, or an allowed preview
+  - name: a draft needs an explicit preview
+    request: {preview: false}
+    expect: {status: 409, code: ruleset_not_published}
+  - name: a preview only where the deployment allows previews
+    settings: {allow_preview_validation: false}
+    expect: {status: 403, code: preview_disabled}
+  - name: an unknown ruleset
+    request: {ruleset_id: rs_unknown}
+    expect: {status: 404, code: ruleset_not_found}
+
+  # The dataset
+  - name: an unknown dataset
+    request: {dataset_id: dataset_unknown}
+    expect: {status: 404, code: dataset_not_found}
+
+  # The classification, checked by the deployment and then by the core itself
+  - name: a backend the deployment does not allow
+    request: {classification: {backend: jev, model: typesafe/jev-1.14, replay_set: jev}}
+    settings: {allowed_backends: [openrouter]}
+    expect: {status: 422, code: backend_not_allowed}
+  # Classification and translation have their own allowlists: neither model is accepted in the other's role.
+  - name: the translator is not a classification model
+    request: {classification: {model: tencent/hy-mt2-30b-a3b}}
+    settings: {allowed_classification_models: [anthropic/claude-haiku-5.5, typesafe/jev-1.14], allowed_translation_models: [tencent/hy-mt2-30b-a3b]}
+    expect: {status: 422, code: model_not_allowed, details: {role: classification, allowed: [anthropic/claude-haiku-5.5, typesafe/jev-1.14]}}
+  - name: a classification model is not a translator
+    request: {classification: {translation_model: anthropic/claude-haiku-5.5}}
+    live: true
+    key: true
+    settings: {allow_live: true, allowed_classification_models: [anthropic/claude-haiku-5.5, typesafe/jev-1.14], allowed_translation_models: [tencent/hy-mt2-30b-a3b]}
+    expect: {status: 422, code: model_not_allowed, details: {role: translation, allowed: [tencent/hy-mt2-30b-a3b]}}
+  - name: a LangGraph node's model is a classification model
+    request: {classification: {backend: langgraph, replay_set: langgraph, langgraph: {backends: [{name: only, backend: chat_completions, model: tencent/hy-mt2-30b-a3b}]}}}
+    settings: {allowed_classification_models: [anthropic/claude-haiku-5.5, typesafe/jev-1.14], allowed_translation_models: [tencent/hy-mt2-30b-a3b]}
+    expect: {status: 422, code: model_not_allowed, details: {role: classification, allowed: [anthropic/claude-haiku-5.5, typesafe/jev-1.14]}}
+  - name: a live run's configured translator must be allowed for translation, not only for classification
+    live: true
+    key: true
+    settings: {allow_live: true, allowed_classification_models: [anthropic/claude-haiku-5.5, tencent/hy-mt2-30b-a3b], allowed_translation_models: [anthropic/claude-haiku-5.5]}
+    expect: {status: 422, code: model_not_allowed, details: {role: translation, allowed: [anthropic/claude-haiku-5.5]}}
+  - name: a listed set of models also bounds replay
+    request: {classification: {model: anthropic/claude-opus-5.5}}
+    settings: {allowed_models: [anthropic/claude-haiku-5.5]}
+    expect: {status: 422, code: model_not_allowed}
+  - name: the jev backend needs a model for it, as the core requires
+    request: {classification: {backend: jev, replay_set: jev}}
+    expect: {status: 422, code: unsupported_configuration}
+  - name: a chat model on the jev adapter is refused before the core is asked
+    request: {classification: {backend: jev, model: anthropic/claude-haiku-5.5, replay_set: jev}}
+    expect: {status: 422, code: model_adapter_mismatch, details: {mismatches: [{model: anthropic/claude-haiku-5.5, backend: decisions, node: null, compatible: [chat_completions]}]}}
+  - name: a Jev model on the chat completions adapter is refused, never rerouted
+    request: {classification: {backend: openrouter, model: typesafe/jev-1.14, replay_set: jev}}
+    expect: {status: 422, code: model_adapter_mismatch}
+  - name: a LangGraph node whose model its adapter does not run
+    request: {classification: {backend: langgraph, replay_set: langgraph, langgraph: {backends: [{name: primary, backend: jev, model: anthropic/claude-haiku-5.5}]}}}
+    expect: {status: 422, code: model_adapter_mismatch, details: {mismatches: [{model: anthropic/claude-haiku-5.5, backend: decisions, node: primary, compatible: [chat_completions]}]}}
+  - name: a mismatch is refused before the live allowlist is consulted
+    request: {classification: {backend: jev, model: anthropic/claude-haiku-5.5}}
+    live: true
+    key: true
+    settings: {allow_live: true, allowed_models: [anthropic/claude-haiku-5.5, tencent/hy-mt2-30b-a3b]}
+    expect: {status: 422, code: model_adapter_mismatch}
+  - name: one model cannot override every LangGraph backend, as the core requires
+    request: {classification: {backend: langgraph, model: anthropic/claude-haiku-5.5, replay_set: langgraph}}
+    expect: {status: 422, code: unsupported_configuration}
+  - name: an invalid LangGraph order is refused by the core
+    request: {classification: {backend: langgraph, replay_set: langgraph, langgraph: {routing: {min_confidence: 2}}}}
+    expect: {status: 422, code: unsupported_configuration}
+
+  # The body itself
+  - name: a credential field is refused rather than ignored
+    request: {openrouter_api_key: sk-secret}
+    expect: {status: 422, code: invalid_request}
+  - name: an idempotency key with a path in it
+    request: {idempotency_key: "../x"}
+    expect: {status: 422, code: invalid_request}

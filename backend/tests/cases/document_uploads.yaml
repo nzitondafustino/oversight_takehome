@@ -1,0 +1,38 @@
+# Each case changes a valid POST /v1/documents body (meals-and-entertainment-policy.md and its text)
+# and expects it refused, with nothing stored. Changes:
+#   request: fields replacing the body's      filename_length: a filename of that many characters
+#   content_bytes: content of that many bytes  body: raw JSON text        latin1: raw text sent as Latin-1 bytes
+cases:
+  - name: content is required
+    request: {content: ""}
+    expect: {status: 422, code: invalid_document}
+  - name: whitespace is not a document
+    request: {content: "  \n\t\n"}
+    expect: {status: 422, code: invalid_document}
+  - name: only Markdown files
+    request: {filename: meals-policy.pdf}
+    expect: {status: 422, code: invalid_request}
+  - name: a filename has no folder
+    request: {filename: ../meals-policy.md}
+    expect: {status: 422, code: invalid_request}
+  - name: a filename starts with a letter or digit
+    request: {filename: .hidden.md}
+    expect: {status: 422, code: invalid_request}
+  - name: a filename has a reasonable length
+    filename_length: 121
+    expect: {status: 422, code: invalid_request}
+  - name: a document has a maximum size
+    content_bytes: 524289
+    expect: {status: 413, code: document_too_large}
+  - name: a lone surrogate is not UTF-8 text
+    body: '{"filename": "meals.md", "content": "Meals \ud800 policy"}'
+    expect: {status: 422, code: invalid_document}
+  - name: a body that is not UTF-8
+    latin1: '{"filename": "meals.md", "content": "Repas d''affaires: café"}'
+    expect: {status: 422, code: invalid_request}
+  - name: a customer_id is no longer part of the contract, so it is refused as an unknown field
+    request: {customer_id: acme}
+    expect: {status: 422, code: invalid_request}
+  - name: an unknown field is refused, not ignored
+    request: {revision: 7}
+    expect: {status: 422, code: invalid_request}

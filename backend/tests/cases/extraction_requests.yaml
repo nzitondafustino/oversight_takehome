@@ -1,0 +1,37 @@
+# Each case changes a valid POST /v1/documents/extractions body (acme's nine stored policy documents, revision 1,
+# replayed from the live recording set) and expects it refused, with nothing stored. Changes:
+#   request: fields replacing the body's      select: replace the selection: first, repeat_first, unknown, revision_2
+cases:
+  - name: at least one document
+    request: {documents: []}
+    expect: {status: 422, code: invalid_request}
+  - name: replay needs a recording set
+    request: {recording_set: null}
+    expect: {status: 422, code: invalid_request}
+  - name: an unknown recording set
+    request: {recording_set: nightly}
+    expect: {status: 422, code: unknown_recording_set}
+  - name: replay takes no generation settings
+    request: {extraction_model: anthropic/claude-haiku-5.5}
+    expect: {status: 422, code: invalid_request}
+  - name: live takes no recording set
+    request: {execution_mode: live, extraction_model: anthropic/claude-haiku-5.5}
+    expect: {status: 422, code: invalid_request}
+  - name: live needs a model
+    request: {execution_mode: live, recording_set: null}
+    expect: {status: 422, code: invalid_request}
+  - name: live is off unless the deployment allows it
+    request: {execution_mode: live, recording_set: null, extraction_model: anthropic/claude-haiku-5.5}
+    expect: {status: 403, code: live_inference_disabled}
+  - name: one revision of each document
+    select: repeat_first
+    expect: {status: 422, code: repeated_document}
+  - name: an unknown document
+    select: unknown
+    expect: {status: 404, code: document_not_found}
+  - name: a revision that does not exist
+    select: revision_2
+    expect: {status: 404, code: document_not_found}
+  - name: readings recorded with other settings are never used
+    request: {recorded_with: {extraction_model: vendor/other, temperature: 0.0}}
+    expect: {status: 409, code: recordings_unusable}

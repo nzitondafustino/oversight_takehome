@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "expense-policy-validator-api"  # the import name is expense_api
+version = "0.1.0"
+description = "REST API around the Expense Policy Validator: rulesets, synchronous validation and persisted runs."
+requires-python = ">=3.12"
+dependencies = [
+    # The core library, installed from the parent folder in the same pip command (see README.md). It is not
+    # published to an index, so never let pip resolve this name from one.
+    "expense-policy-validator[langgraph]==0.1.0",
+    "fastapi>=0.115,<1",
+    "pydantic>=2.9,<3",
+    "pydantic-settings>=2.4,<3",
+    "pymongo>=4.9,<5",
+    "python-multipart>=0.0.9,<1",  # multipart uploads of evaluation datasets
+    "pyyaml>=6,<7",  # YAML datasets, read with a restricted safe loader
+    "uvicorn>=0.30,<1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9", "httpx>=0.28,<1", "mongomock>=4.3,<5"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["expense_api*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "tests"]
+testpaths = ["tests"]

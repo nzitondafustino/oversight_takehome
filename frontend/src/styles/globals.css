@@ -7,42 +7,43 @@
  */
 :root {
   /* Brand palette */
-  --navy: #111d35;
-  --navy-hover: #1b2a4a;
-  --navy-active: #22345a;
-  --navy-border: #24365a;
-  --navy-muted: #94a3b8;
-  --royal: #2563eb;
-  --royal-hover: #1d4ed8;
-  --royal-soft: #eff6ff;
+  --navy: #0b1f33;
+  --navy-hover: #12333f;
+  --navy-active: #16434b;
+  --navy-border: #24434e;
+  --navy-muted: #a3b9bf;
+  --brand-teal: #007f78;
+  --brand-teal-hover: #006b65;
+  --brand-teal-soft: #e5f6f4;
+  --brand-lime: #b4bd00;
   --slate: #475569;
-  --canvas: #f8fafc;
+  --canvas: #f6faf9;
   --white: #ffffff;
-  --teal: #0d9488;
-  --teal-soft: #f0fdfa;
+  --teal: #00a79d;
+  --teal-soft: #e5f6f4;
 
   /* Semantic */
   --background: var(--canvas);
-  --foreground: #0f172a;
+  --foreground: #0b1f33;
   --card: var(--white);
-  --card-foreground: #0f172a;
+  --card-foreground: #0b1f33;
   --popover: var(--white);
-  --popover-foreground: #0f172a;
-  --primary: var(--royal);
-  --primary-hover: var(--royal-hover);
+  --popover-foreground: #0b1f33;
+  --primary: var(--brand-teal);
+  --primary-hover: var(--brand-teal-hover);
   --primary-foreground: var(--white);
-  --primary-soft: var(--royal-soft);
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
+  --primary-soft: var(--brand-teal-soft);
+  --secondary: #edf4f3;
+  --secondary-foreground: #0b1f33;
+  --muted: #edf4f3;
   --muted-foreground: var(--slate);
   --subtle-foreground: #64748b;
   --accent: var(--teal);
   --accent-soft: var(--teal-soft);
-  --accent-foreground: #0f766e;
-  --border: #e2e8f0;
-  --input: #cbd5e1;
-  --ring: var(--royal);
+  --accent-foreground: #007f78;
+  --border: #dce8e7;
+  --input: #bfd3d1;
+  --ring: var(--brand-teal);
 
   /* Status: pass, review, flag, and neutral. Each always appears with an icon and a label. */
   --status-pass: #15803d;
@@ -56,26 +57,27 @@
   --status-flag-text: #b91c1c;
   --status-flag-soft: #fef2f2;
   --status-flag-border: #fecaca;
-  --status-info: var(--royal);
-  --status-info-soft: var(--royal-soft);
-  --status-info-border: #bfdbfe;
+  --status-info: var(--brand-teal);
+  --status-info-soft: var(--brand-teal-soft);
+  --status-info-border: #bce6e1;
   --status-neutral: #64748b;
-  --status-neutral-soft: #f1f5f9;
-  --status-neutral-border: #e2e8f0;
+  --status-neutral-soft: #edf4f3;
+  --status-neutral-border: #dce8e7;
 
   /* Sidebar */
   --sidebar: var(--navy);
-  --sidebar-foreground: #e2e8f0;
+  --sidebar-foreground: #dce8e7;
   --sidebar-muted: var(--navy-muted);
   --sidebar-hover: var(--navy-hover);
   --sidebar-active: var(--navy-active);
   --sidebar-border: var(--navy-border);
-  --sidebar-accent: var(--royal);
+  --sidebar-accent: var(--teal);
 
   --radius: 0.5rem;
 }
 
 @theme inline {
+  --color-brand-lime: var(--brand-lime);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -162,4 +164,10 @@
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* The exercise workspace echoes the presentation's soft mint and warm lime wash. */
+.workspace-canvas {
+  background: radial-gradient(ellipse at 12% 0%, rgb(0 167 157 / 0.07), transparent 55%),
+    radial-gradient(ellipse at 100% 0%, rgb(180 189 0 / 0.04), transparent 45%), var(--background);
 }

@@ -2,6 +2,7 @@
 
 import os
 from collections.abc import Mapping
+from typing import Literal
 from pathlib import Path
 
 import yaml
@@ -127,6 +128,12 @@ class ReflectionConfig(BaseModel):
         max_retries: Maximum revisions per line, excluding the initial classification.
         max_total_calls_per_line: Limit covering classification, review, revision,
             failures, cache hits, and replay misses.
+        feedback_context: What each revision is sent. reviewer_feedback, the default, sends the
+            reviewer's feedback text alone, as every recording made before structured context did.
+            structured also sends the review's verdict, reason and suggested category, the previous
+            confidence, the relevant categories' definitions, the retry number and maximum, and a
+            failed revision's validation error, which it then retries. It is a new revision request,
+            so it replays only from recordings made with it.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
@@ -134,6 +141,7 @@ class ReflectionConfig(BaseModel):
     reviewer: ReflectionReviewerConfig | None = None
     max_retries: int = Field(default=2, ge=0, le=10)
     max_total_calls_per_line: int = Field(default=6, ge=1, le=50)
+    feedback_context: Literal["reviewer_feedback", "structured"] = "reviewer_feedback"
 
     @model_validator(mode="after")
     def _needs_a_reviewer(self):

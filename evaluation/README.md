@@ -29,6 +29,14 @@ Write its output to a JSON file, then pass it with `--predictions`. It is then r
 
 Each prediction may also hold `recipient_name`, `recipient_type`, `venue_type`, `item_kind` and `essential_toiletry`. Leave out what is not known: a line with no prediction stays visibly unclassified. Never send `labels` or `notes` to the classifier.
 
+## Part 3 report
+
+`PART3.md` holds the assignment's Part 3 evaluation: classification, restricted F1, per-rule exception detection, the disposition matrix, evidence correctness, the keyword baseline, error analysis, rule coverage and a reflection, each measured on stored API evaluations rescored with `evaluation-metrics/3`.
+
+## Predictions per model setup
+
+`generate_predictions.py` (repository root) runs the package over `data/receipts.jsonl` for Jev, Haiku and three LangGraph chains, and writes `predictions/receipts_<setup>.jsonl` in the input's own format, with `labels` holding the predictions, beside `predictions/receipts_original.jsonl`, the answers, for comparison. It replays saved answers only and skips a setup missing any; `--live` calls OpenRouter.
+
 ## Files here
 
 | File | What it is |

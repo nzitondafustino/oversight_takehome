@@ -164,6 +164,41 @@ cases:
         - {<<: *rule, section: null, severities: [], thresholds: [], quote: "See"}
     expected: {AA-01: {}}
 
+  - id: a count of the rules a clause replaces is not a limit
+    text: "**AA-01 — One.** For EU employees AA-01 replaces BB-01, BB-02 and BB-03: report AA-01 instead of those three.\n"
+    response:
+      rules:
+        - {<<: *rule, section: null, severities: [], thresholds: [], references: [BB-01, BB-02, BB-03], quote: "instead of those three"}
+    expected: {AA-01: {}}
+
+  - id: a count of rules the clause does not name is still unconfirmed
+    text: "**AA-01 — One.** See BB-02 and those three.\n"
+    response:
+      rules:
+        - {<<: *rule, section: null, severities: [], thresholds: [], quote: "See"}
+    expected: {AA-01: {unconfirmed: [thresholds]}}
+
+  - id: a count followed by what it counts is still unconfirmed
+    text: "**AA-01 — One.** Replaces BB-01, BB-02 and BB-03 for those three receipts.\n"
+    response:
+      rules:
+        - {<<: *rule, section: null, severities: [], thresholds: [], references: [BB-01, BB-02, BB-03], quote: "Replaces"}
+    expected: {AA-01: {unconfirmed: [thresholds]}}
+
+  - id: a merchant category code is not a limit
+    text: "**AA-01 — One.** A bar (MCC 5813) or a store (MCCs 5921 and 5993) is never retail.\n"
+    response:
+      rules:
+        - {<<: *rule, section: null, severities: [], thresholds: [], references: [], quote: "never retail"}
+    expected: {AA-01: {}}
+
+  - id: a quote of the rule's heading agrees
+    text: *text
+    response:
+      rules:
+        - {<<: *rule, quote: "One."}
+    expected: {AA-01: {}}
+
   - id: a response in a code fence is still read
     text: *text
     response: "```json\n{\"rules\": []}\n```"

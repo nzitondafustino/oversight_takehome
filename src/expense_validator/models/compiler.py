@@ -28,6 +28,7 @@ __all__ = [
     "PublishMode",
     "ReadingKind",
     "Resolution",
+    "RuleDiscrepancy",
     "ReviewAction",
     "ReviewDecision",
     "ReviewIssue",
@@ -149,7 +150,7 @@ class ReviewIssue(_Model):
     Attributes:
         code: unknown_comparison, duplicate_decision, stale_extraction, confirm_not_agreed,
             no_source_value, value_required, value_not_allowed, rationale_required, unsupported_value,
-            executable_conflict, rejected, reading_error, no_candidate or source_only.
+            interpretation_mismatch, executable_conflict, rejected, reading_error, no_candidate or source_only.
     """
 
     level: Literal["error", "note"]
@@ -199,6 +200,26 @@ class ReviewResult(_Model):
         return json.dumps(self.model_dump(mode="json"), sort_keys=True, ensure_ascii=False)
 
 
+class RuleDiscrepancy(_Model):
+    """A compiled rule that does not do what its clause states: a rule-logic discrepancy, not a reviewer's error.
+
+    Attributes:
+        field: thresholds, severities, review_signal, or source_quote: the rule cites words its clause no longer
+            has, which only a change to the rule logic itself corrects (a rule override never changes a quote); or
+            rule: the documents state a clause under its own rule ID that no rule implements (a rule addition writes it).
+        stated: What the clause states: limits as {value, unit}, severities, whether it is a review signal, or its text;
+            for rule, all of these with its title, as {title, text, severities, review_signal, thresholds}.
+        compiled: What the rule does: for thresholds, each policy param by name as {value, unit}; the quote it cites;
+            None for rule.
+    """
+
+    rule_id: str
+    policy_doc: str
+    field: Literal["thresholds", "severities", "review_signal", "source_quote", "rule"]
+    stated: Any
+    compiled: Any
+
+
 class CandidateRuleset(_Model):
     """A built and validated ruleset. Never active until published with an approval."""
 
@@ -233,6 +254,8 @@ class ExtractionResult(_Model):
     candidate: CandidateRuleset | None
     extraction_sha256: str  # the readings, documents and generation settings; review decisions bind it
     comparisons: tuple[FieldComparison, ...]  # every field, agreed or not, in a fixed order
+    # Rules whose compiled behaviour differs from their clause: why there is no candidate, and what a rule override must change.
+    discrepancies: tuple[RuleDiscrepancy, ...] = ()
 
 
 class PublicationResult(_Model):

@@ -211,7 +211,7 @@ review_decisions:
     rule_id: MEAL-01
     field: thresholds
     decision: {action: override, value: [{value: "100", unit: usd}], rationale: the cap is 100}
-    expected: {outcome: override, codes: [executable_conflict], ready: false}
+    expected: {outcome: override, codes: [interpretation_mismatch], ready: false}
   - id: a limit the clause does not state is refused
     rule_id: MEAL-01
     field: thresholds
@@ -227,21 +227,21 @@ review_decisions:
     field: thresholds
     decision: {action: override, value: [{value: "3", unit: hour}], rationale: probe}
     expected: {outcome: override, codes: [unsupported_value], ready: false}
-  - id: an unconfirmed field cannot be confirmed
+  - id: a disputed field cannot be confirmed
     rule_id: MCC-03
     field: thresholds
     decision: {action: confirm}
     expected: {outcome: undecided, codes: [confirm_not_agreed], ready: false}
-  - id: an unconfirmed field takes the regex reading explicitly
+  - id: a disputed field takes the regex reading explicitly
     rule_id: MCC-03
     field: thresholds
     decision: {action: accept_regex}
     expected: {outcome: regex, codes: [], ready: true}
-  - id: an unconfirmed field takes the LLM reading explicitly
+  - id: a count of rules taken as a limit is refused
     rule_id: REG-01
     field: thresholds
     decision: {action: accept_llm}
-    expected: {outcome: llm, codes: [], ready: true}
+    expected: {outcome: llm, codes: [unsupported_value], ready: false}
   - id: an agreed field takes the LLM reading
     rule_id: TECH-01
     field: severities
@@ -251,7 +251,7 @@ review_decisions:
     rule_id: TECH-01
     field: severities
     decision: {action: override, value: [], rationale: probe}
-    expected: {outcome: override, codes: [executable_conflict], ready: false}
+    expected: {outcome: override, codes: [interpretation_mismatch], ready: false}
   - id: a severity the clause does not state is refused
     rule_id: TECH-01
     field: severities

@@ -99,11 +99,14 @@ class _Request:
         configured = settings.langgraph.reflection
         reviewer = REVIEWERS[configured.reviewer.backend]
         review, _ = self._model_call(settings, reviewer, configured.reviewer.backend, configured.reviewer.model, vocabulary, "review")
+        structured = configured.feedback_context == "structured"
         revisers = []
         for child in settings.langgraph.backends:
             reviser = REVISERS.get(child.backend)
+            if structured and reviser is not None and reviser.structured_prompt is None:
+                reviser = None  # it takes the reviewer's feedback text alone, so it cannot revise with structured context
             revisers.append(None if reviser is None else ReviserLink(child.name, child.backend, child.model, reviser, self._model_call(settings, reviser, child.backend, child.model, vocabulary, "revision")[0]))
-        return Reflection(ReviewerLink(configured.reviewer.backend, configured.reviewer.model, reviewer, review), tuple(revisers), configured.max_retries, configured.max_total_calls_per_line)
+        return Reflection(ReviewerLink(configured.reviewer.backend, configured.reviewer.model, reviewer, review), tuple(revisers), configured.max_retries, configured.max_total_calls_per_line, structured)
 
     def _model_call(self, settings: ValidatorSettings, capability, backend_name: str, model: str, vocabulary, purpose: str):
         """Build a lazy, counted completion with capability-specific caching and replay.
@@ -376,12 +379,16 @@ class ExpenseValidator:
             reflection = settings.langgraph.reflection
             if reflection.enabled:  # left out when off, so that an order without reflection keeps its hash
                 dumped = reflection.model_dump()
+                structured = dumped.pop("feedback_context") == "structured"  # left out at its default, so earlier hashes stand
+                if structured:
+                    dumped["feedback_context"] = "structured"
                 if dumped.get("reviewer") is not None:
                     dumped["reviewer"] = {**dumped["reviewer"], "backend": named(dumped["reviewer"]["backend"])}
                 identity["reflection"] = {
                     **dumped,
                     "reviewer_prompt": REVIEWERS[reflection.reviewer.backend].prompt(self.vocabulary),
-                    "revision_prompts": {child.name: REVISERS[child.backend].prompt(self.vocabulary) for child in settings.langgraph.backends if child.backend in REVISERS},
+                    "revision_prompts": {child.name: (REVISERS[child.backend].structured_prompt if structured else REVISERS[child.backend].prompt)(self.vocabulary)
+                                         for child in settings.langgraph.backends if child.backend in REVISERS and not (structured and REVISERS[child.backend].structured_prompt is None)},
                 }
             return hashlib.sha256(json.dumps(identity, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
         return hashlib.sha256(BACKENDS[settings.classification_backend].prompt(self.vocabulary).encode()).hexdigest()

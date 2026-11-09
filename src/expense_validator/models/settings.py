@@ -191,6 +191,7 @@ class CompilerSettings(BaseModel):
 
     mode: CompilerMode
     rule_logic_path: Path
+    rule_logic_text: str | None = Field(default=None, min_length=1)  # immutable scoped logic snapshot, used instead of the file when supplied
     fields_path: Path
     ruleset_path: Path
     recordings_dir: Path | None = None

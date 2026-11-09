@@ -193,6 +193,9 @@ cases:
   - name: a Jev model on the chat completions adapter is refused, never rerouted
     request: {classification: {backend: openrouter, model: typesafe/jev-1.14, replay_set: jev}}
     expect: {status: 422, code: model_adapter_mismatch}
+  - name: an evaluation's reflection retries above the deployment's maximum
+    request: {classification: {backend: langgraph, replay_set: langgraph, langgraph: {reflection: {enabled: true, max_retries: 9}}}}
+    expect: {status: 422, code: reflection_limit_exceeded, details: {limits: {max_retries: 3, max_total_calls_per_line: 12}, requested: {max_retries: 9, max_total_calls_per_line: 6}}}
   - name: a LangGraph node whose model its adapter does not run
     request: {classification: {backend: langgraph, replay_set: langgraph, langgraph: {backends: [{name: primary, backend: jev, model: anthropic/claude-haiku-5.5}]}}}
     expect: {status: 422, code: model_adapter_mismatch, details: {mismatches: [{model: anthropic/claude-haiku-5.5, backend: decisions, node: primary, compatible: [chat_completions]}]}}

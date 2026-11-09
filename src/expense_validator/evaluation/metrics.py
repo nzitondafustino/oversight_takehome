@@ -188,8 +188,24 @@ def classification_scores(lines: Sequence[Mapping]) -> dict:
         "missing_restricted": rate(sum(1 for line in lines if line["restricted"] is None), len(lines)),
         "macro": macro,
         "per_category": per_category,
+        # Categories predicted that no answer has: each such line is a false positive of nothing in the macro mean,
+        # and already wrong in accuracy. Listed so they are never silently dropped.
+        "extra_predicted": dict(sorted(Counter(line["category"] for line in lines if line["category"] is not None and line["category"] not in golds).items())),
         "restricted": prf(restricted_tp, restricted_fp, restricted_fn),
+        "restricted_matrix": restricted_matrix(lines),
     }
+
+
+def restricted_matrix(lines: Sequence[Mapping]) -> dict:
+    """The restricted decision as a 2×3 matrix: answer (true, false) by prediction (true, false, none). Positive is
+    restricted = true. A line with no restricted value counts as not restricted in restricted F1, so a missed
+    restricted line is a false negative there; it is shown in its own column here."""
+    key = lambda value: "none" if value is None else str(value).lower()
+    matrix = {gold: {got: 0 for got in ("true", "false", "none")} for gold in ("true", "false")}
+    for line in lines:
+        if line["gold_restricted"] is not None:
+            matrix[key(line["gold_restricted"])][key(line["restricted"])] += 1
+    return {"rows_gold_columns_predicted": matrix, "tn": matrix["false"]["false"]}
 
 
 def confidence_bucket(confidence: Decimal | None, threshold: Decimal) -> str:

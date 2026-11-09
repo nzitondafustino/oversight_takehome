@@ -15,6 +15,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from expense_validator.compiler.approval import approve
+from expense_validator.compiler.overrides import RuleOverride, admit_overrides, apply_overrides
 from expense_validator.compiler.build_rules import Candidate, prepare_candidate_from_texts, publication_blockers
 from expense_validator.compiler.extract import extract_document
 from expense_validator.compiler.review import build_comparisons, check_extraction, extraction_identity, review_extraction, review_output
@@ -64,6 +65,7 @@ from expense_validator.models.settings import (
 
 Documents = Iterable[PolicyDocumentInput | Mapping[str, object]]
 Resolutions = Iterable[Resolution | Mapping[str, object]]
+RuleOverrides = Iterable[RuleOverride | Mapping[str, object]]
 Decisions = Iterable[ReviewDecision | Mapping[str, object]]
 
 
@@ -85,7 +87,7 @@ class PolicyCompiler:
         self._completion = completion
         self._check()
         try:
-            self._logic_text = settings.rule_logic_path.read_text()
+            self._logic_text = settings.rule_logic_text if settings.rule_logic_text is not None else settings.rule_logic_path.read_text()
             self._fields_text = settings.fields_path.read_text()
             read_fields(self._fields_text)
         except (OSError, ValueError) as error:
@@ -163,6 +165,7 @@ class PolicyCompiler:
         extraction_model: str | None = None,
         temperature: float | None = None,
         timeout_seconds: int | None = None,
+        rule_overrides: "RuleOverrides" = (),
     ) -> ExtractionResult:
         """Extract and validate policy documents without publication.
 
@@ -174,14 +177,16 @@ class PolicyCompiler:
             extraction_model: OpenRouter model ID for this request only, live mode only.
             temperature: For this request only, from 0 to 2, live mode only.
             timeout_seconds: For this request only, live mode only.
+            rule_overrides: Reviewed changes to the rule logic (compiler/overrides.py), applied before the build and
+                validated with it. The same overrides must be given to publish.
 
         Raises:
-            InvalidInputError: If an argument, document or resolution is invalid.
+            InvalidInputError: If an argument, document, resolution or rule override is invalid.
             ConfigurationError: If an override is invalid or cannot apply, or the recordings are inconsistent.
             ReplayAnswerMissing: If replay has no recording for a document; .missing lists the file names.
         """
         overrides = generation_overrides(extraction_model=extraction_model, temperature=temperature, timeout_seconds=timeout_seconds)
-        texts, ids, candidate, kind, generation = self._prepare(documents, resolutions, overrides)
+        texts, ids, candidate, kind, generation = self._prepare(documents, resolutions, overrides, rule_overrides)
         return _extraction_result(self.settings.mode, texts, ids, candidate, kind, generation)
 
     def review(self, extraction: ExtractionResult, decisions: Decisions, *, policy: ReviewPolicy, documents: Documents) -> ReviewResult:
@@ -248,6 +253,7 @@ class PolicyCompiler:
         temperature: float | None = None,
         timeout_seconds: int | None = None,
         replace: bool = False,
+        rule_overrides: "RuleOverrides" = (),
     ) -> PublicationResult:
         """Rebuild and publish a candidate only when its approval still holds.
 
@@ -266,6 +272,7 @@ class PolicyCompiler:
             temperature: Live temperature override, as in extract.
             timeout_seconds: Live timeout override, as in extract.
             replace: Whether to replace an existing output; disabled by default.
+            rule_overrides: The same reviewed logic changes the approved candidate was built with.
 
         Returns:
             Publication status and blockers, including approval or evidence failures.
@@ -290,7 +297,7 @@ class PolicyCompiler:
                 raise InvalidInputError(f"invalid approval: {_first_error(error)}") from None
         if decisions is not None and (tuple(resolutions) or review_policy is None):
             raise InvalidInputError("publishing a review takes its decisions and review_policy, and no resolutions")
-        texts, ids, candidate, kind, generation = self._prepare(documents, resolutions, overrides)
+        texts, ids, candidate, kind, generation = self._prepare(documents, resolutions, overrides, rule_overrides)
         if decisions is not None:
             extraction = _extraction_result(self.settings.mode, texts, ids, candidate, kind, generation)
             reviewed = self.review(extraction, decisions, policy=review_policy, documents=documents)
@@ -312,11 +319,15 @@ class PolicyCompiler:
             **generation,
         )
 
-    def _prepare(self, documents, resolutions, overrides) -> tuple[dict[str, str], dict[str, str], Candidate, str, dict]:
+    def _prepare(self, documents, resolutions, overrides, rule_overrides: "RuleOverrides" = ()) -> tuple[dict[str, str], dict[str, str], Candidate, str, dict]:
         texts, ids = _admit_documents(documents)
         admitted = _admit_resolutions(resolutions)
+        try:  # reviewed changes to the logic: applied before the build, so the compiler validates and hashes them
+            logic_text = apply_overrides(self._logic_text, admit_overrides(rule_overrides))
+        except ValueError as error:
+            raise InvalidInputError(f"invalid rule override: {error}") from None
         complete, kind, generation = self._reader(texts, overrides)
-        candidate = prepare_candidate_from_texts(texts, self._logic_text, self._fields_text, complete, admitted, kind)
+        candidate = prepare_candidate_from_texts(texts, logic_text, self._fields_text, complete, admitted, kind)
         return texts, ids, candidate, kind, generation
 
     def _reader(self, texts: dict[str, str], overrides: dict[str, object]) -> tuple[Complete, str, dict]:
@@ -522,6 +533,7 @@ def _extraction_result(mode, texts, ids, candidate: Candidate, kind, generation:
         output_sha256=output["output_sha256"],
         agreement=json.loads(json.dumps(output, default=str)),
         candidate=built,
+        discrepancies=candidate.discrepancies,
         **_comparisons(texts, ids, candidate, kind, generation, documents),
     )
 

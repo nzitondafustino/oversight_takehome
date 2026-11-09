@@ -54,7 +54,7 @@ function isErrorBody(body: unknown): body is ApiErrorBody {
 export interface RequestOptions {
   query?: Record<string, QueryValue>;
   signal?: AbortSignal;
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
   /** A JSON body. A JsonNumber in it is written exactly as it was read (toJsonText). */
   body?: unknown;
   /** A body already serialized, sent byte for byte: used where JSON.stringify would round exact decimals. */
@@ -111,7 +111,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 export async function downloadFile(url: string, fallbackName: string): Promise<void> {
   let response: Response;
   try {
-    response = await fetch(url, { headers: { Accept: "application/json, text/csv" } });
+    response = await fetch(url, { headers: { Accept: "application/json, text/csv, application/pdf" } });
   } catch {
     throw new ApiError(0, "network_error", `The API at ${API_BASE_URL || "this origin"} could not be reached.`);
   }

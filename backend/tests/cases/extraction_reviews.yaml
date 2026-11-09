@@ -9,20 +9,23 @@ cases:
     add_agreed: ALC-01
     expect: {ready: true, remaining: 0, issues: []}
   - name: an undecided field remains
-    drop: [MCC-03]
+    drop: [TIME-03]
     expect: {ready: false, remaining: 1, issues: []}
   - name: a rejected field blocks approval
-    change: {MCC-03: {action: reject, rationale: the thresholds are not what the policy says}}
+    change: {TIME-03: {action: reject, rationale: the thresholds are not what the policy says}}
     expect: {ready: false, remaining: 0, issues: [rejected]}
-  - name: accepting a reading that does not exist
-    change: {TECH-01: {action: accept_regex, value: null, rationale: null}}  # null removes a field
-    expect: {ready: false, remaining: 1, issues: [no_source_value]}  # an invalid decision decides nothing
+  - name: confirming a disputed field decides nothing
+    change: {TIME-03: {action: confirm}}
+    expect: {ready: false, remaining: 1, issues: [confirm_not_agreed]}  # an invalid decision decides nothing
+  - name: accepting a reading that leaves out a limit the executable rule holds
+    change: {TIME-03: {action: accept_llm}}  # the model's reading has no "two or more receipts"
+    expect: {ready: false, remaining: 0, issues: [interpretation_mismatch]}
   - name: an override needs a rationale
-    change: {TECH-01: {rationale: null}}
+    change: {TIME-03: {action: override, value: [{value: "2", unit: count}, {value: "50", unit: usd}, {value: "75", unit: usd}]}}
     expect: {ready: false, remaining: 1, issues: [rationale_required]}
-  - name: a quote the clause does not hold
-    change: {TECH-01: {value: "electronics are fine"}}
+  - name: a limit the clause does not state
+    change: {TIME-03: {action: override, value: [{value: "2", unit: count}, {value: "60", unit: usd}], rationale: the meal cap}}
     expect: {ready: false, remaining: 0, issues: [unsupported_value]}
   - name: all fields policy needs a decision for every field
     policy: all_fields
-    expect: {ready: false, remaining: 283, issues: []}
+    expect: {ready: false, remaining: 286, issues: []}

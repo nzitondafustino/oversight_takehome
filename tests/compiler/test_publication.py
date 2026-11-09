@@ -151,7 +151,7 @@ def _clause_hash(paths, policy_doc, rule_id):
 
 
 def _sign_offs(paths):
-    """The two fields the real policy leaves unconfirmed: a merchant code and the word three, neither a limit."""
+    """The two fields the stand-in readings get wrong: each takes a merchant code or the word three as a limit."""
     return [
         Resolution(policy_doc="merchant-category-risk.md", rule_id="MCC-03", field="thresholds", value=[], clause_hash=_clause_hash(paths, "merchant-category-risk.md", "MCC-03"), reviewer="test reviewer", rationale="5813 is a merchant code, not a limit"),
         Resolution(policy_doc="regional-addendum.md", rule_id="REG-01", field="thresholds", value=[], clause_hash=_clause_hash(paths, "regional-addendum.md", "REG-01"), reviewer="test reviewer", rationale="three counts rules, not a limit"),
@@ -193,12 +193,12 @@ def _blockers(publication):
     return [reason for reason in publication.reasons if reason != "no saved approval"]
 
 
-def test_the_real_policy_is_blocked_until_its_two_unconfirmed_fields_are_signed_off(tmp_path):
+def test_the_real_policy_is_blocked_until_its_two_disputed_fields_are_signed_off(tmp_path):
     paths, recordings, out = _workspace(tmp_path)
     publication = _publish(paths, recordings, [], out)
     assert not publication.published and _out_is_unwritten(out)
-    assert publication.report["counts"] == {"agreed": 285, "disagree": 0, "unconfirmed": 2, "only_regex": 0, "only_llm": 0}
-    assert sorted(_blockers(publication)) == ["unresolved: merchant-category-risk.md MCC-03 thresholds is unconfirmed", "unresolved: regional-addendum.md REG-01 thresholds is unconfirmed"]
+    assert publication.report["counts"] == {"agreed": 285, "disagree": 2, "unconfirmed": 0, "only_regex": 0, "only_llm": 0}
+    assert sorted(_blockers(publication)) == ["unresolved: merchant-category-risk.md MCC-03 thresholds is disagree", "unresolved: regional-addendum.md REG-01 thresholds is disagree"]
 
 
 def test_signed_off_and_approved_it_publishes_the_same_rules_with_every_condition_and_carve_out(tmp_path):

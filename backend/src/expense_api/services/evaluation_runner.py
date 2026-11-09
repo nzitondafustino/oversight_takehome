@@ -1,17 +1,12 @@
-"""Plan and run one evaluation job through the core's ExpenseValidator. The worker calls run_job; the API calls plan.
+"""Plan and run evaluation jobs through ExpenseValidator.
 
-A job runs in two passes over the same answers:
+The API calls plan; the worker calls run_job. Jobs first evaluate and store each
+receipt separately for progress, cancellation and spending. A second pass replays
+the same answers as one batch to evaluate rules spanning receipts, such as TIME-03.
+If that pass cannot run, result_context marks the results as isolated receipts.
 
-1. Receipt by receipt, each in its own validate_batch call. This is where models are called (live) or read
-   (replay), and what progress, cancellation, budgets and per-receipt spending follow. Each receipt's result is
-   stored as soon as it is known, so a job that stops still shows the work and spending it completed.
-2. The whole dataset in one validate_batch call, replayed from exactly the answers pass 1 used: the replay set,
-   or the live run's own answer cache. It calls no model, and gives what a normal batch run gives, including
-   rules that span receipts, such as TIME-03. Its results replace pass 1's. When it cannot run, the results stay
-   as evaluated alone, and the job says so in result_context.
-
-Live runs use only the backends whose live completions the core builds through public functions, so every call
-can be metered (see spending.py). LangGraph builds its clients inside the core, so live LangGraph is refused.
+Live calls use metered clients, including LangGraph nodes, reviewers and revisers
+injected through the core's client_factory.
 """
 
 import hashlib
@@ -28,6 +23,11 @@ from expense_validator import ConfigurationError, EvidenceError, ExpenseValidato
 from expense_validator.classification.backends import jev, llm
 from expense_validator.classification.core.common import load_vocabulary
 from expense_validator.compiler.llm_extract import cached
+from expense_validator.compiler.validate import read_fields
+from expense_validator.engine.inputs import admit_receipt
+from expense_validator.evaluation.classification import missing_recordings
+from expense_validator.evaluation.coverage import rule_coverage
+from expense_validator.policy.schema import RuleSet
 from expense_validator.config import CHAT_COMPLETIONS, DECISIONS, LANGGRAPH, PROMPT_IDENTITY_VERSION
 from expense_validator.normalization import LlmTranslator
 from expense_validator.normalization import translation
@@ -41,6 +41,8 @@ from expense_api.errors import ApiError
 from expense_api.repositories import DatasetRepository, ResultRepository, RulesetRepository, UsageRepository
 from expense_api.services.datasets import load_canonical
 from expense_api.services.evaluation_metrics import METRICS_SCHEMA_VERSION, compute, receipt_scoring, summary
+from expense_api.services.compilation_documents import CompilationDocuments
+from expense_api.services.document_store import DocumentStore
 from expense_api.services.rulesets import ArtifactStore, now, sha256
 from expense_api.services.spending import (
     BUDGET_REASONS,
@@ -270,6 +272,11 @@ def run_job(job: dict, *, settings: Settings, database: Database, lease: Lease, 
             cache_dir = live_cache(settings, job["_id"])
             cache_dir.mkdir(parents=True, exist_ok=True)
         core = from_snapshot(settings, mode, cache_dir, job["configuration"]["snapshot"], ruleset_path)
+        version = RulesetRepository(database["rulesets"]).get(job["ruleset"]["ruleset_id"])
+        documents = CompilationDocuments(lambda: DocumentStore(settings))
+        sources = ArtifactStore(settings.artifact_dir).policy_docs(version, documents)
+        if sources is not None:
+            core = core.model_copy(update={"policy_docs_path": sources})
         meter = None
         if mode == "live":
             meter = Meter(evaluation_id=job["_id"], attempt=job["attempts"], budget=job["budget"], pricing=pricing,
@@ -302,6 +309,11 @@ def run_job(job: dict, *, settings: Settings, database: Database, lease: Lease, 
         result, error = None, None
         try:
             result = validator.validate_batch([case["receipt"]], context_complete=False).results[0]
+            routed = missing_recordings([result]) if mode == "replay" else []
+            if routed:
+                # A LangGraph node with no recording let a later node answer in its place. Ordinary replay allows that;
+                # an evaluation never scores it, so the receipt fails exactly as a replay miss does.
+                result, error = None, {"code": "replay_recording_missing", "message": f"{len(routed)} model answers are not in the recordings"}
         except EvaluationStopped as stop:
             return Outcome(stop_reason=stop.reason)  # the receipt is left unstored; its calls are recorded
         except ReplayAnswerMissing as missing:
@@ -333,7 +345,7 @@ def run_job(job: dict, *, settings: Settings, database: Database, lease: Lease, 
 
 
 def _inputs(job: dict, settings: Settings, database: Database) -> tuple[list[dict], Path]:
-    record = DatasetRepository(database["evaluation_datasets"]).get(job["dataset"]["dataset_id"])
+    record = DatasetRepository(database["evaluation_datasets"]).get(job["dataset"]["dataset_id"], include_deleted=True)
     if record is None or record["canonical_sha256"] != job["dataset"]["canonical_sha256"]:
         raise JobFailed("dataset_changed", "the dataset version is missing or differs from the one the job was created with")
     try:
@@ -417,14 +429,48 @@ def _dataset_pass(job: dict, cases: list[dict], replayer: ExpenseValidator, resu
 # --- Finishing: metrics and spending from what was stored, then the job's terminal state ---
 
 
-def final_state(job: dict, outcome: Outcome, database: Database) -> dict:
+def scoring_inputs(job: dict, rows: list[dict], database: Database, settings: Settings | None) -> tuple[dict | None, dict | None]:
+    """What scoring needs beyond the stored results, from the job's exact dataset and ruleset versions: each line's
+    description and language, for the keyword baseline and error analysis, and rule coverage measured on the
+    evaluated receipts as admitted with their classified lines. Without settings, coverage is not measured."""
+    record = DatasetRepository(database["evaluation_datasets"]).get(job["dataset"]["dataset_id"], include_deleted=True)
+    if record is None or record["canonical_sha256"] != job["dataset"]["canonical_sha256"]:
+        return None, {"available": False, "reason": "the dataset version is missing or differs from the one the job ran"}
+    try:
+        cases = {case["receipt"]["receipt_id"]: case["receipt"] for case in load_canonical(record)["cases"]}
+    except ApiError as error:  # the stored dataset fails its hash: score without it rather than fail the finished job
+        return None, {"available": False, "reason": error.message}
+    inputs = {line["line_id"]: {"description": line.get("description_raw"), "language": line.get("language")} for receipt in cases.values() for line in receipt["line_items"]}
+    if settings is None:
+        return inputs, None
+    ruleset = RulesetRepository(database["rulesets"]).get(job["ruleset"]["ruleset_id"])
+    if ruleset is None or ruleset["artifact_sha256"] != job["ruleset"]["artifact_sha256"]:
+        return inputs, {"available": False, "reason": "the ruleset version is missing or differs from the one the job ran"}
+    fields = read_fields(ValidatorSettings.from_config(settings.core_config, mode="deterministic").fields_path.read_text())
+    admitted = []
+    for row in rows:
+        if row["result"] is None:
+            continue  # not evaluated: it exercised no rule
+        classified = {line["line_id"]: {name: value for name, value in {"category": line["category"], "restricted": line["restricted"], "confidence": line["confidence"], **(line.get("attributes") or {})}.items() if value is not None}
+                      for line in row["result"]["line_items"] if line.get("classification_error") is None}
+        try:
+            admitted.append(admit_receipt(cases[row["receipt_id"]], fields).with_classifications(classified))
+        except (KeyError, ValueError) as error:
+            return inputs, {"available": False, "reason": f"{row['receipt_id']} could not be admitted again to measure coverage: {type(error).__name__}"}
+    return inputs, rule_coverage(admitted, RuleSet.model_validate_json(ruleset["artifact_json"]), fields)
+
+
+def final_state(job: dict, outcome: Outcome, database: Database, settings: Settings | None = None) -> dict:
     """The fields a finished job sets, from its stored results and usage, whether it completed or not."""
-    rows = ResultRepository(database["evaluation_results"]).all(job["_id"])
+    rows = [{**row, "result": None if row["result_json"] is None else json.loads(row["result_json"])} for row in ResultRepository(database["evaluation_results"]).all(job["_id"])]
+    inputs, coverage = scoring_inputs(job, rows, database, settings)
     metrics = compute(
-        [{**row, "result": None if row["result_json"] is None else json.loads(row["result_json"])} for row in rows],
+        rows,
         result_context=outcome.result_context,
         context_complete=outcome.context_complete,
         dataset_receipts=job["progress"]["total_receipts"],
+        inputs=inputs,
+        coverage=coverage,
     )
     spend = spend_report(UsageRepository(database["evaluation_usage"]).all(job["_id"]))
     if outcome.error is not None:

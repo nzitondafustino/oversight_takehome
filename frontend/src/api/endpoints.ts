@@ -1,6 +1,17 @@
 /** One function per backend route the frontend reads. Paths and parameters are the FastAPI routes' own. */
 import { buildUrl, request } from "./client";
 import type {
+  Baseline,
+  VersionChanges,
+  FieldCatalog,
+  Readiness,
+  RuleEditBody,
+  ApprovalActionBody,
+  RevisionApproval,
+  SourceLocation,
+  ChangeRequest,
+  ChangeRequestCreate,
+  ProfileUpdate,
   Backends,
   DatasetDetail,
   DatasetSummary,
@@ -18,6 +29,7 @@ import type {
   EvaluationSummary,
   ExtractionComparisonPage,
   ExtractionCreate,
+  ExtractionJob,
   ExtractionListItem,
   ExtractionReviewCreate,
   ExtractionReviewDetail,
@@ -61,7 +73,7 @@ export function getEvaluation(evaluationId: string, { signal }: Signal = {}) {
 }
 
 /** GET /v1/rulesets: versions with their lifecycle state, newest first. */
-export function listRulesets(page: PageParams & { name?: string } = {}, { signal }: Signal = {}) {
+export function listRulesets(page: PageParams & { name?: string; include_superseded?: boolean } = {}, { signal }: Signal = {}) {
   return request<Page<RulesetSummary>>("/v1/rulesets", { signal, query: { ...page } });
 }
 
@@ -106,7 +118,7 @@ export function uploadDataset({ file, name, description, context_complete }: Dat
 }
 
 /** GET /v1/evaluations/datasets: versions, newest first, without their content. */
-export function listDatasets(params: PageParams & { name?: string } = {}, { signal }: Signal = {}) {
+export function listDatasets(params: PageParams & { name?: string; include_superseded?: boolean } = {}, { signal }: Signal = {}) {
   return request<Page<DatasetSummary>>("/v1/evaluations/datasets", { signal, query: { ...params } });
 }
 
@@ -127,8 +139,13 @@ export function cancelEvaluation(evaluationId: string) {
 }
 
 /** GET /v1/evaluations/{id}/metrics: stored once finished; provisional, never stored, while it runs. */
-export function getEvaluationMetrics(evaluationId: string, { signal }: Signal = {}) {
-  return request<EvaluationMetrics>(`/v1/evaluations/${encodeURIComponent(evaluationId)}/metrics`, { signal });
+export function getEvaluationMetrics(evaluationId: string, scoring: "latest" | "original" = "latest", { signal }: Signal = {}) {
+  return request<EvaluationMetrics>(`/v1/evaluations/${encodeURIComponent(evaluationId)}/metrics`, { signal, query: { scoring } });
+}
+
+/** POST /v1/evaluations/{id}/rescore: a finished run scored again with the current version, kept beside its original. */
+export function rescoreEvaluation(evaluationId: string) {
+  return request<EvaluationMetrics>(`/v1/evaluations/${encodeURIComponent(evaluationId)}/rescore`, { method: "POST" });
 }
 
 /** GET /v1/evaluations/{id}/results: each receipt's result with its answers, scoring and spend, in dataset order. */
@@ -161,6 +178,15 @@ export function createExtraction(body: ExtractionCreate) {
   return request<ExtractionSummary>("/v1/documents/extractions", { method: "POST", body });
 }
 
+/** POST /v1/documents/extraction-jobs: the extraction, started in the background after it is checked. */
+export function startExtractionJob(body: ExtractionCreate) {
+  return request<ExtractionJob>("/v1/documents/extraction-jobs", { method: "POST", body });
+}
+
+export function getExtractionJob(jobId: string, { signal }: Signal = {}) {
+  return request<ExtractionJob>(`/v1/documents/extraction-jobs/${encodeURIComponent(jobId)}`, { signal });
+}
+
 /** GET /v1/documents/extractions: newest first, each with its reviews, without the fields read from the core's result. */
 export function listExtractions(params: PageParams & { document_id?: string } = {}, { signal }: Signal = {}) {
   return request<Page<ExtractionListItem>>("/v1/documents/extractions", { signal, query: { ...params } });
@@ -170,6 +196,16 @@ export function getExtraction(extractionId: string, { signal }: Signal = {}) {
   return request<ExtractionSummary>(`/v1/documents/extractions/${encodeURIComponent(extractionId)}`, { signal });
 }
 
+/** GET /v1/rulesets/{id}/changes: what a version does differently from the version published before it. */
+export function getRulesetChanges(rulesetId: string, { signal }: Signal = {}) {
+  return request<VersionChanges>(`/v1/rulesets/${encodeURIComponent(rulesetId)}/changes`, { signal });
+}
+
+/** GET /v1/documents/extractions/{id}/baseline: the compilation beside the latest published version. Read only. */
+export function getExtractionBaseline(extractionId: string, { signal }: Signal = {}) {
+  return request<Baseline>(`/v1/documents/extractions/${encodeURIComponent(extractionId)}/baseline`, { signal });
+}
+
 export function listExtractionComparisons(extractionId: string, params: PageParams & { review_required?: boolean } = {}, { signal }: Signal = {}) {
   return request<ExtractionComparisonPage>(`/v1/documents/extractions/${encodeURIComponent(extractionId)}/comparisons`, { signal, query: { ...params } });
 }
@@ -177,6 +213,53 @@ export function listExtractionComparisons(extractionId: string, params: PagePara
 /** POST /v1/documents/extractions/{id}/review: stored whether ready or not; only a ready one makes a candidate. */
 export function reviewExtraction(extractionId: string, body: ExtractionReviewCreate) {
   return request<ExtractionReviewDetail>(`/v1/documents/extractions/${encodeURIComponent(extractionId)}/review`, { method: "POST", body });
+}
+
+export function updateDocumentProfile(documentId: string, body: ProfileUpdate) {
+  return request<DocumentSummary>(`/v1/documents/${encodeURIComponent(documentId)}/profile`, { method: "PATCH", body });
+}
+
+export function getExtractionReview(extractionId: string, reviewId: string, { signal }: Signal = {}) {
+  return request<ExtractionReviewDetail>(`/v1/documents/extractions/${encodeURIComponent(extractionId)}/reviews/${encodeURIComponent(reviewId)}`, { signal });
+}
+
+export function listChangeRequests(extractionId: string, { signal }: Signal = {}) {
+  return request<ChangeRequest[]>(`/v1/documents/extractions/${encodeURIComponent(extractionId)}/change-requests`, { signal });
+}
+
+export function createChangeRequest(extractionId: string, body: ChangeRequestCreate) {
+  return request<ChangeRequest>(`/v1/documents/extractions/${encodeURIComponent(extractionId)}/change-requests`, { method: "POST", body });
+}
+
+export function resolveChangeRequest(extractionId: string, changeRequestId: string, body: { actor: string; note: string }) {
+  return request<ChangeRequest>(`/v1/documents/extractions/${encodeURIComponent(extractionId)}/change-requests/${encodeURIComponent(changeRequestId)}/resolve`, { method: "POST", body });
+}
+
+export function getRevisionApproval(documentId: string, revision: number, { signal }: Signal = {}) {
+  return request<RevisionApproval>(`/v1/documents/${encodeURIComponent(documentId)}/revisions/${revision}/approval`, { signal });
+}
+
+export function actOnRevisionApproval(documentId: string, revision: number, body: ApprovalActionBody) {
+  return request<RevisionApproval>(`/v1/documents/${encodeURIComponent(documentId)}/revisions/${revision}/approval`, { method: "POST", body });
+}
+
+/** A compared field's verified source: from a compilation under review, or from a ruleset version's own snapshot. */
+export function getComparisonSource(owner: { extractionId: string } | { rulesetId: string }, comparisonId: string, { signal }: Signal = {}) {
+  const base = "extractionId" in owner ? `/v1/documents/extractions/${encodeURIComponent(owner.extractionId)}` : `/v1/rulesets/${encodeURIComponent(owner.rulesetId)}`;
+  return request<SourceLocation>(`${base}/comparisons/${encodeURIComponent(comparisonId)}/source`, { signal });
+}
+
+/** GET /v1/taxonomy: the field catalog rules may read, each field's type, and the values of controlled fields. */
+export function getFieldCatalog({ signal }: Signal = {}) {
+  return request<FieldCatalog>("/v1/taxonomy", { signal });
+}
+
+export function editRules(rulesetId: string, body: RuleEditBody) {
+  return request<RulesetDetail>(`/v1/rulesets/${encodeURIComponent(rulesetId)}/edits`, { method: "POST", body });
+}
+
+export function getReadiness(rulesetId: string, { signal }: Signal = {}) {
+  return request<Readiness>(`/v1/rulesets/${encodeURIComponent(rulesetId)}/readiness`, { signal });
 }
 
 // --- Ruleset versions and their lifecycle ---
@@ -201,10 +284,17 @@ export function transitionRuleset(rulesetId: string, { step, body }: RulesetTran
 }
 
 /** Export URLs: fetched by downloadFile, which reports API errors and saves the bytes under the API's filename. */
-export function runExportUrl(runId: string, format: "json" | "csv") {
+export function runExportUrl(runId: string, format: "json" | "csv" | "pdf") {
   return buildUrl(`/v1/runs/${encodeURIComponent(runId)}/export`, { format });
 }
 
-export function evaluationExportUrl(evaluationId: string, format: "json" | "csv") {
-  return buildUrl(`/v1/evaluations/${encodeURIComponent(evaluationId)}/export`, { format });
+export function evaluationExportUrl(evaluationId: string, format: "json" | "csv" | "pdf", scoring: "latest" | "original" = "latest") {
+  return buildUrl(`/v1/evaluations/${encodeURIComponent(evaluationId)}/export`, { format, ...(format === "pdf" ? { scoring } : {}) });
+}
+
+
+export function evaluationComparisonExportUrl(ids: readonly string[]) {
+  const params = new URLSearchParams();
+  ids.forEach(id => params.append("evaluation_ids", id));
+  return `${buildUrl("/v1/evaluations/compare/export")}?${params.toString()}`;
 }

@@ -1,11 +1,15 @@
 import { CircleDashed, Lock } from "lucide-react";
 import type { ReactNode } from "react";
-import type { Disposition, EvaluationMetrics, Prf, Unavailable } from "@/api/types";
+import { useRescoreEvaluation } from "@/api/queries";
+import type { ClassificationMetrics, Disposition, DispositionMetrics, EvaluationMetrics, EvidenceMetrics, FindingsMetrics, Prf, Unavailable } from "@/api/types";
+import { ErrorState } from "@/components/states/states";
+import { Button } from "@/components/ui/button";
 import { DISPOSITION_ORDER, DISPOSITIONS } from "@/components/status/badges";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatInteger, formatRate, formatScore, humanize } from "@/lib/format";
+import { formatDateTime, formatInteger, formatRate, formatScore, humanize } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { RateStat, Stat } from "./display";
+import { BaselineSection, CoverageSection, DetectionSection, Details, ErrorAnalysisSection, EvidenceSection, NotInVersion, Unscored } from "./QualitySections";
 
 function Block({ title, children, note }: { title: string; children: ReactNode; note?: ReactNode }) {
   return (
@@ -57,7 +61,7 @@ function PrfTable({ caption, label, rows }: { caption: string; label: string; ro
   );
 }
 
-function Matrix({ caption, rows, columns, counts }: { caption: string; rows: string[]; columns: string[]; counts: Record<string, Record<string, number>> }) {
+export function Matrix({ caption, rows, columns, counts }: { caption: string; rows: string[]; columns: string[]; counts: Record<string, Record<string, number>> }) {
   return (
     <div className="max-h-96 overflow-auto rounded-md border border-border">
       <table className="w-full text-xs">
@@ -115,7 +119,7 @@ function Provenance({ metrics }: { metrics: EvaluationMetrics }) {
     <div className="flex gap-2.5 rounded-md border border-border bg-muted/50 px-3 py-2 text-[13px]">
       <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
       <p>
-        <span className="font-semibold">Final metrics</span>, stored once when the job finished ({metrics.schema_version}) and never recomputed.{" "}
+        <span className="font-semibold">Final metrics</span>, from the results stored when the job finished; they are never recomputed on the fly, and the scoring version that made them is shown below.{" "}
         {metrics.result_context === "isolated_receipts"
           ? "The run did not finish its dataset pass, so each receipt was evaluated alone and rules spanning receipts were left undecided."
           : `Every receipt was evaluated together as one ${metrics.context_complete === false ? "incomplete" : "complete"} context.`}{" "}
@@ -136,13 +140,106 @@ const RATES: { key: "false_pass" | "missed_flag_passed" | "missed_flag_any" | "f
   { key: "flagged_undecided", label: "Flagged, undecided", hint: "Of flagged receipts" },
 ];
 
-export function MetricsView({ metrics }: { metrics: EvaluationMetrics }) {
+/** Which scoring made these numbers, and how to see them with the current one. Old scores are never shown as new. */
+function ScoringBanner({ metrics, scoring, onScoring, evaluationId }: { metrics: EvaluationMetrics; scoring: "latest" | "original"; onScoring?: (scoring: "latest" | "original") => void; evaluationId?: string }) {
+  const rescore = useRescoreEvaluation();
+  const scored = metrics.scored;
+  if (!scored || scored.kind === "provisional") return null;
+  const current = scored.current_schema_version;
+  const outdated = metrics.schema_version !== current;
+  return (
+    <div className={cn("flex flex-wrap items-center gap-2 rounded-md border px-3 py-2 text-[13px]", outdated ? "border-status-review-border bg-status-review-soft" : "border-border")} role="status">
+      <p className="flex-1">
+        {scored.kind === "rescored"
+          ? `Rescored with ${metrics.schema_version} on ${formatDateTime(scored.rescored_at ?? null)}, from the run's stored results. It finished scored with ${scored.original_schema_version}, which is kept.`
+          : outdated
+            ? `Scored with ${metrics.schema_version} when the run finished. The current scoring, ${current}, adds exception detection per rule, evidence, the keyword baseline, coverage and error analysis.`
+            : `Scored with ${metrics.schema_version} when the run finished.`}
+      </p>
+      {outdated && evaluationId && !scored.rescorings?.some((item) => item.schema_version === current) ? (
+        <Button size="sm" onClick={() => rescore.mutate(evaluationId, { onSuccess: () => onScoring?.("latest") })} disabled={rescore.isPending}>
+          Rescore with {current}
+        </Button>
+      ) : null}
+      {scored.rescorings?.length && onScoring ? (
+        <Button size="sm" variant="outline" onClick={() => onScoring(scoring === "latest" ? "original" : "latest")}>
+          {scoring === "latest" ? `Show as first scored (${scored.original_schema_version})` : "Show the latest scoring"}
+        </Button>
+      ) : null}
+      {rescore.isError ? <ErrorState error={rescore.error} /> : null}
+    </div>
+  );
+}
+
+function Headline({ metrics }: { metrics: EvaluationMetrics }) {
+  const { classification, disposition, findings, evidence } = metrics;
+  const value = (block: { available: boolean } | undefined, read: () => string) => (block?.available ? read() : "—");
+  return (
+    <dl className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6" aria-label="Headline">
+      <Stat label="Category accuracy" value={value(classification, () => formatRate((classification as ClassificationMetrics).accuracy.value))} hint="Q1 · per line" />
+      <Stat label="Macro F1" value={value(classification, () => formatScore((classification as ClassificationMetrics).macro.f1))} hint="Q1 · over expected categories" />
+      <Stat label="Restricted F1" value={value(classification, () => formatScore((classification as ClassificationMetrics).restricted.f1))} hint="Q2 · restricted = true" />
+      <Stat label="Disposition accuracy" value={value(disposition, () => formatRate((disposition as DispositionMetrics).accuracy.value))} hint="Q3 · per receipt" />
+      <Stat label="Finding F1" value={value(findings, () => formatScore((findings as FindingsMetrics).micro.f1))} hint="Q3 · per rule, micro" />
+      <Stat label="Exact evidence" value={evidence?.available ? formatRate((evidence as EvidenceMetrics).exact.value) : findings.available && (findings as FindingsMetrics).evidence_exact ? formatRate((findings as FindingsMetrics).evidence_exact!.value) : "—"} hint="Q3 · matched exceptions" />
+    </dl>
+  );
+}
+
+export function DispositionMatrix({ disposition }: { disposition: DispositionMetrics }) {
+  const full = disposition.matrix_with_not_evaluated;
+  if (!full) return <Matrix caption="Expected dispositions by predicted ones" rows={[...DISPOSITION_ORDER]} columns={[...DISPOSITION_ORDER]} counts={disposition.matrix_gold_by_predicted} />;
+  return (
+    <div className="space-y-1">
+      <div className="overflow-auto rounded-md border border-border">
+        <table className="w-full text-xs">
+          <caption className="sr-only">Expected dispositions by predicted ones, with receipts not evaluated</caption>
+          <thead>
+            <tr>
+              <th scope="col" className="px-2 py-1.5 text-left font-medium text-muted-foreground">Expected ↓ · predicted →</th>
+              {full.columns.map((column) => (
+                <th key={column} scope="col" className="px-2 py-1.5 text-right font-medium text-muted-foreground">{column === "not_evaluated" ? "not evaluated" : column}</th>
+              ))}
+              <th scope="col" className="px-2 py-1.5 text-right font-medium text-muted-foreground">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {DISPOSITION_ORDER.map((row) => (
+              <tr key={row} className="border-t border-border">
+                <th scope="row" className="px-2 py-1 text-left font-medium">{row}</th>
+                {full.columns.map((column) => {
+                  const count = full.rows[row]?.[column] ?? 0;
+                  const undecided = column !== "not_evaluated" ? disposition.undecided_by_cell?.[row]?.[column as Disposition] ?? 0 : 0;
+                  return (
+                    <td key={column} className={cn("tabular px-2 py-1 text-right", count === 0 ? "text-subtle-foreground" : row === column ? "font-semibold text-status-pass" : "font-semibold text-status-flag-text")}>
+                      {count}
+                      {undecided ? <span className="ml-1 font-normal text-status-review-text" title="not fully decided">({undecided} undecided)</span> : null}
+                    </td>
+                  );
+                })}
+                <td className="tabular px-2 py-1 text-right">{full.row_totals[row]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-subtle-foreground">
+        {full.correct} correct, {full.incorrect} incorrect. A receipt not evaluated is never correct. A pass the engine did not fully decide stays a pass, with its undecided count beside it: a provisional pass, not a cleared one.
+      </p>
+    </div>
+  );
+}
+
+export function MetricsView({ metrics, scoring = "latest", onScoring, evaluationId }: { metrics: EvaluationMetrics; scoring?: "latest" | "original"; onScoring?: (scoring: "latest" | "original") => void; evaluationId?: string }) {
   const { classification, disposition, findings, operational } = metrics;
+  const version = metrics.schema_version;
   return (
     <div className="space-y-5">
       <Provenance metrics={metrics} />
+      <ScoringBanner metrics={metrics} scoring={scoring} onScoring={onScoring} evaluationId={evaluationId} />
+      <Headline metrics={metrics} />
 
-      <Block title="Classification" note="Over lines with an expected category. A line with no category, or one whose receipt failed, is not correct.">
+      <Block title="1 · Classification quality" note="How accurately each line is classified, and how accurately restricted lines are identified. Per labelled line; a line with no category, or whose receipt failed, is wrong.">
         {!classification.available ? (
           <NotScored block={classification} />
         ) : (
@@ -151,33 +248,39 @@ export function MetricsView({ metrics }: { metrics: EvaluationMetrics }) {
               <RateStat label="Category accuracy" rate={classification.accuracy} />
               <RateStat label="Accuracy when predicted" rate={classification.accuracy_when_predicted} />
               <RateStat label="Coverage" rate={classification.coverage} hint="Lines given a category" />
-              <Stat label="Macro F1" value={formatScore(classification.macro.f1)} hint={`P ${formatScore(classification.macro.precision)} · R ${formatScore(classification.macro.recall)}`} />
+              <Stat label="Macro F1" value={formatScore(classification.macro.f1)} hint={`P ${formatScore(classification.macro.precision)} · R ${formatScore(classification.macro.recall)} · over ${Object.keys(classification.per_category).length} expected categories`} />
+            </dl>
+            <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Stat label="Restricted precision" value={formatScore(classification.restricted.precision)} hint={`${classification.restricted.tp} of ${classification.restricted.tp + classification.restricted.fp} flagged lines`} />
+              <Stat label="Restricted recall" value={formatScore(classification.restricted.recall)} hint={`${classification.restricted.tp} of ${classification.restricted.tp + classification.restricted.fn} restricted lines`} />
+              <Stat label="Restricted F1" value={formatScore(classification.restricted.f1)} hint={`independent of macro F1 · ${classification.restricted.lines} lines`} />
+              {classification.restricted_matrix ? (
+                <Stat
+                  label="Restricted matrix"
+                  value={`${classification.restricted.tp} · ${classification.restricted.fp} · ${classification.restricted.fn} · ${classification.restricted_matrix.tn}`}
+                  hint={`TP · FP · FN · TN${classification.restricted_matrix.rows_gold_columns_predicted.true.none + classification.restricted_matrix.rows_gold_columns_predicted.false.none ? ` · ${classification.restricted_matrix.rows_gold_columns_predicted.true.none + classification.restricted_matrix.rows_gold_columns_predicted.false.none} with no value` : ""}`}
+                />
+              ) : null}
             </dl>
             <p className="text-xs text-muted-foreground">
               {formatInteger(classification.lines)} labelled lines:{" "}
               {Object.entries(classification.outcomes)
                 .map(([outcome, count]) => `${count} ${humanize(outcome).toLowerCase()}`)
                 .join(" · ")}
-              . Restricted flag over {formatInteger(classification.restricted.lines)} labelled lines: F1 {formatScore(classification.restricted.f1)}.
+              .{classification.extra_predicted && Object.keys(classification.extra_predicted).length ? ` Predicted categories no answer has: ${Object.entries(classification.extra_predicted).map(([name, count]) => `${name} (${count})`).join(", ")}.` : ""}
             </p>
-            <details>
-              <summary className="cursor-pointer text-[13px] font-medium text-primary">Per category</summary>
-              <div className="mt-2">
-                <PrfTable caption="Scores per expected category" label="Category" rows={Object.entries(classification.per_category)} />
-              </div>
-            </details>
-            <details>
-              <summary className="cursor-pointer text-[13px] font-medium text-primary">Confusion matrix</summary>
-              <div className="mt-2">
-                <Matrix caption="Expected categories by predicted ones" {...classification.confusion_matrix} />
-                <p className="mt-1 text-xs text-subtle-foreground">(none): no category, for whatever reason.</p>
-              </div>
-            </details>
+            <Details summary="Per category">
+              <PrfTable caption="Scores per expected category" label="Category" rows={Object.entries(classification.per_category)} />
+            </Details>
+            <Details summary="Category confusion matrix">
+              <Matrix caption="Expected categories by predicted ones" {...classification.confusion_matrix} />
+              <p className="mt-1 text-xs text-subtle-foreground">(none): no category, for whatever reason.</p>
+            </Details>
           </>
         )}
       </Block>
 
-      <Block title="Disposition" note="Over receipts with an expected disposition. A receipt that could not be evaluated counts as not correct. Dispositions only are compared: a provisional pass counts as matching an expected pass, so read it with Undecided below.">
+      <Block title="2 · Policy decision quality" note="The receipt's disposition: flag, review or pass, as the engine decided it. A receipt that could not be evaluated counts as not correct.">
         {!disposition.available ? (
           <NotScored block={disposition} />
         ) : (
@@ -189,48 +292,45 @@ export function MetricsView({ metrics }: { metrics: EvaluationMetrics }) {
                 <RateStat key={item.key} label={item.label} rate={disposition[item.key]} hint={item.hint} />
               ))}
             </dl>
-            <dl className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-              {RATES.slice(2).map((item) => (
-                <RateStat key={item.key} label={item.label} rate={disposition[item.key]} hint={item.hint} />
-              ))}
-            </dl>
-            <details>
-              <summary className="cursor-pointer text-[13px] font-medium text-primary">Per disposition and matrix</summary>
-              <div className="mt-2 grid gap-3 lg:grid-cols-2">
+            <DispositionMatrix disposition={disposition} />
+            <Details summary="Missed flags, false flags, abstention and undecided outcomes">
+              <dl className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+                {RATES.slice(2).map((item) => (
+                  <RateStat key={item.key} label={item.label} rate={disposition[item.key]} hint={item.hint} />
+                ))}
+              </dl>
+              <div className="mt-2">
                 <PrfTable caption="Scores per disposition" label="Disposition" rows={DISPOSITION_ORDER.map((name) => [name, disposition.per_disposition[name]] as [string, Prf & { support: number }])} />
-                <Matrix caption="Expected dispositions by predicted ones" rows={[...DISPOSITION_ORDER]} columns={[...DISPOSITION_ORDER]} counts={disposition.matrix_gold_by_predicted} />
               </div>
-              {disposition.execution_errors ? (
-                <p className="mt-1 text-xs text-status-flag-text">{disposition.execution_errors} labelled receipts could not be evaluated and count as not correct.</p>
-              ) : null}
-            </details>
+            </Details>
           </>
         )}
       </Block>
 
-      <Block title="Findings" note="Exceptions and review signals by rule. Strict counts every EXC-03 uncertainty signal as a false positive, as the answers never hold one.">
+      <Block title="3 · Exception detection" note="Does it raise the right rule on the right receipt? Exceptions and review signals, rule by rule. EXC-03 uncertainty signals are never expected, so each counts against the strict score.">
         {!findings.available ? (
           <NotScored block={findings} />
+        ) : findings.macro ? (
+          <DetectionSection findings={findings} />
         ) : (
           <>
-            <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <Stat label="Micro F1 (strict)" value={formatScore(findings.micro.f1)} hint={`P ${formatScore(findings.micro.precision)} · R ${formatScore(findings.micro.recall)}`} />
-              <Stat
-                label="Micro F1 without EXC-03"
-                value={formatScore(findings.micro_without_uncertainty_signals.f1)}
-                hint={`P ${formatScore(findings.micro_without_uncertainty_signals.precision)} · R ${formatScore(findings.micro_without_uncertainty_signals.recall)}`}
-              />
-              <RateStat label="Exact evidence lines" rate={findings.evidence_exact} />
-              <Stat label="Receipts scored" value={`${formatInteger(findings.evaluated)}/${formatInteger(findings.receipts)}`} />
-            </dl>
-            <details>
-              <summary className="cursor-pointer text-[13px] font-medium text-primary">Per rule</summary>
-              <div className="mt-2">
-                <PrfTable caption="Scores per rule" label="Rule" rows={Object.entries(findings.per_rule)} />
-              </div>
-            </details>
+            <NotInVersion what="Per-rule detection with missed and unexpected findings" version={version} />
+            <PrfTable caption="Scores per rule" label="Rule" rows={Object.entries(findings.per_rule)} />
           </>
         )}
+      </Block>
+
+      <Block title="4 · Evidence correctness" note="For the exceptions that match an expected one: does it cite exactly the right line items? Separate from detection and disposition.">
+        {!metrics.evidence ? <NotInVersion what="Evidence correctness" version={version} /> : !metrics.evidence.available ? <Unscored block={metrics.evidence} /> : <EvidenceSection evidence={metrics.evidence} />}
+      </Block>
+
+      <Block title="5 · Keyword baseline" note="How much better or worse than matching restricted terms: the simpler system this replaces, on the same lines.">
+        {!metrics.baseline ? <NotInVersion what="The keyword baseline" version={version} /> : !metrics.baseline.available ? <Unscored block={metrics.baseline} /> : <BaselineSection baseline={metrics.baseline} />}
+      </Block>
+
+      <Block title="6 · Coverage and error analysis" note="Which rules this dataset exercised and tests, and where the run failed and which stage was responsible.">
+        {!metrics.coverage ? <NotInVersion what="Rule coverage" version={version} /> : !metrics.coverage.available ? <Unscored block={metrics.coverage} /> : <CoverageSection coverage={metrics.coverage} />}
+        {!metrics.error_analysis ? null : !metrics.error_analysis.available ? <Unscored block={metrics.error_analysis} /> : <ErrorAnalysisSection analysis={metrics.error_analysis} />}
       </Block>
 
       <Block title="Operational" note="Over the receipts run. Latency is wall-clock time per receipt in the first pass: replay is fast, live includes each provider call.">

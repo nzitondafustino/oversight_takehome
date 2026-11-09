@@ -13,7 +13,7 @@ from typing import get_args
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from expense_validator.compiler.extract import NUMBER_WORDS, REVIEW_SIGNAL, RULE_ID, Clause, PolicyDocument, extract_document, thresholds_in
+from expense_validator.compiler.extract import NUMBER_WORDS, REVIEW_SIGNAL, RULE_ID, Clause, PolicyDocument, extract_document, possible_limits, thresholds_in
 from expense_validator.compiler.llm_extract import (
     Complete,
     LlmDocument,
@@ -26,7 +26,6 @@ from expense_validator.compiler.llm_extract import (
 from expense_validator.config import load_config
 from expense_validator.policy.vocabulary import Severity, Unit
 
-NUMBER_IN_TEXT = re.compile(r"\d|\b(?:two|three|four|five|six|seven|eight|nine|ten)\b", re.IGNORECASE)
 STATUSES = ("agreed", "disagree", "unconfirmed", "only_regex", "only_llm")
 UNRESOLVED = frozenset(STATUSES) - {"agreed"}
 
@@ -59,6 +58,11 @@ def _plain(text: str) -> str:
     return " ".join(text.replace("*", "").split())
 
 
+def with_heading(clause: Clause) -> str:
+    """The clause as the policy states it, heading first: a quote of the rule's own heading is a quote of the rule."""
+    return f"{clause.title}. {clause.text}"
+
+
 def _number(value: Decimal) -> str:
     return format(value.normalize(), "f")
 
@@ -82,9 +86,10 @@ def _compare_clause(clause: Clause, rule: LlmRule, policy_doc: str) -> list[Fiel
         FieldResult(clause.rule_id, field, "agreed" if regex == llm else "disagree", regex, llm, **where)
         for field, (regex, llm) in pairs.items()
     ]
-    if not regex_thresholds and not llm_thresholds and NUMBER_IN_TEXT.search(RULE_ID.sub("", clause.text)):
+    # Both readings found no limit, yet the clause states a number that could be one: a reviewer confirms it is not.
+    if not regex_thresholds and not llm_thresholds and possible_limits(clause.text):
         results = [r if r.field != "thresholds" else FieldResult(r.rule_id, r.field, "unconfirmed", [], [], **where) for r in results]
-    quote_found = _plain(rule.quote) in _plain(clause.text)
+    quote_found = _plain(rule.quote) in _plain(with_heading(clause))
     results.append(FieldResult(clause.rule_id, "quote", "agreed" if quote_found else "disagree", None, rule.quote, **where))
     return results
 
@@ -255,9 +260,8 @@ def reconcile(results: list[FieldResult], resolutions: list[Resolution], documen
     return Reconciliation(resolved, unresolved, errors)
 
 
-def _clause_text(document: str, rule_id: str) -> str:
-    clause = next((c for c in extract_document(document, "").clauses if c.rule_id == rule_id), None)
-    return "" if clause is None else clause.text
+def _clause(document: str, rule_id: str) -> Clause | None:
+    return next((c for c in extract_document(document, "").clauses if c.rule_id == rule_id), None)
 
 
 def _numbers_in(text: str) -> set[Decimal]:
@@ -276,7 +280,8 @@ def unsupported_value(field: str, rule_id: str, value: object, document: str) ->
 
     Shared by reviewer resolutions and review decisions, so both are held to the same evidence.
     """
-    clause = _clause_text(document, rule_id)
+    found = _clause(document, rule_id)
+    clause = "" if found is None else found.text
     heading = f"**{rule_id} — "
     if field == "rule":
         if value not in ("present", "absent"):
@@ -311,8 +316,8 @@ def unsupported_value(field: str, rule_id: str, value: object, document: str) ->
         missing = [item for item in value if item not in clause]
         return f"the clause does not mention {missing}" if missing else None
     if field == "quote":
-        if not isinstance(value, str) or not value.strip() or _plain(value) not in _plain(clause):
-            return "the quote must be in the clause, word for word"
+        if not isinstance(value, str) or not value.strip() or found is None or _plain(value) not in _plain(with_heading(found)):
+            return "the quote must be in the clause or its heading, word for word"
         return None
     return f"{field} is not a field that can be resolved"
 

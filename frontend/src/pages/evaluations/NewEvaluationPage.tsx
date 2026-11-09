@@ -10,7 +10,7 @@ import { formatInteger } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Section } from "@/pages/dashboard/Section";
 import { ClassificationSelector } from "@/pages/validate/ClassificationSelector";
-import { choose, ineligibleReason, isEligibleRuleset, LANGGRAPH, modeAvailability, nodeText, orchestratorOf, providerName, replaySetsFor } from "@/pages/validate/config";
+import { choose, ineligibleReason, isEligibleRuleset, LANGGRAPH, langgraphNodes, modeAvailability, nodeText, orchestratorOf, providerName, replaySetsFor } from "@/pages/validate/config";
 import { datasetLabel } from "./DatasetsPage";
 import { MODE_TEXT, SELECT } from "./display";
 import {
@@ -38,6 +38,7 @@ const FIELD_IDS: Record<FieldKey, string> = {
   mode: "eval-mode-replay",
   orchestrator: "eval-orchestrator",
   model: "eval-model",
+  reflection: "eval-reflection-retries",
   replaySet: "eval-replay-set",
   translation: "eval-translation",
   limits: "eval-limits-error",
@@ -47,7 +48,7 @@ const FIELD_IDS: Record<FieldKey, string> = {
   confirm: "eval-confirm-live",
   uncapped: "eval-uncapped-phrase",
 };
-const ORDER: FieldKey[] = ["dataset", "mode", "ruleset", "orchestrator", "model", "replaySet", "translation", "limits", "spend", "calls", "receipts", "uncapped", "confirm"];
+const ORDER: FieldKey[] = ["dataset", "mode", "ruleset", "orchestrator", "model", "reflection", "replaySet", "translation", "limits", "spend", "calls", "receipts", "uncapped", "confirm"];
 
 function Label({ htmlFor, children, hint }: { htmlFor: string; children: ReactNode; hint?: ReactNode }) {
   return (
@@ -123,7 +124,7 @@ export function NewEvaluationPage() {
   const rulesetUnresolved = !form.rulesetId && !ruleset.value;
   const orchestrator = orchestratorOf(form, discovery);
   const translationProvider = discovery.translation.models.find((item) => item.default)?.provider;
-  const langgraphNodes = discovery.orchestrators.find((item) => item.id === LANGGRAPH)?.nodes ?? [];
+  const nodes = langgraphNodes(form, discovery);
   const chosenModel = backend.value && backend.value.id !== LANGGRAPH ? form.model.trim() || backend.value.default_model : null;
   const live = modeAvailability(discovery, "live");
 
@@ -244,9 +245,10 @@ export function NewEvaluationPage() {
                 <>
                   <dt className="text-muted-foreground">Model nodes</dt>
                   <dd className="space-y-0.5">
-                    {langgraphNodes.map((node, index) => (
-                      <span key={`${node.name}-${index}`} className="block">
+                    {nodes.map((node) => (
+                      <span key={node.name} className="block">
                         {nodeText(node)}
+                        {node.overridden ? <span className="text-xs text-subtle-foreground"> · chosen for this run</span> : null}
                       </span>
                     ))}
                   </dd>
@@ -309,10 +311,10 @@ export function NewEvaluationPage() {
                         mode={form.mode}
                         choice={form}
                         automatic
-                        errors={{ orchestrator: error("orchestrator"), model: error("model") }}
+                        errors={{ orchestrator: error("orchestrator"), model: error("model"), reflection: error("reflection") }}
                         onChange={(next) => {
                           change({ ...choose(form, next), replaySet: null });
-                          touch("orchestrator" in next ? "orchestrator" : "model");
+                          touch("orchestrator" in next ? "orchestrator" : "reflection" in next ? "reflection" : "model");
                         }}
                       />
                     </div>

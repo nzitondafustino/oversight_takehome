@@ -116,7 +116,7 @@ def _imported(path):
 
 def test_evaluation_computation_imports_no_command_line():
     computation = [path for path in EVALUATION.glob("*.py")]
-    assert {path.name for path in computation} == {"__init__.py", "classification.py", "dataset.py", "metrics.py", "policy_outputs.py", "predictions.py", "report.py", "robustness.py", "scenarios.py", "texts.py"}
+    assert {path.name for path in computation} == {"__init__.py", "classification.py", "coverage.py", "dataset.py", "detection.py", "error_analysis.py", "keyword_baseline.py", "metrics.py", "policy_outputs.py", "predictions.py", "report.py", "robustness.py", "scenarios.py", "texts.py"}
     for path in computation:
         names = _imported(path)
         assert not {"argparse", "sys", "expense_validator.run_receipts"} & names, path.name

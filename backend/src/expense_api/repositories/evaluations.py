@@ -1,6 +1,6 @@
 """The evaluation collections: datasets, jobs, per-receipt results and provider-call usage.
 
-- evaluation_datasets: one immutable version per document. Nothing ever updates one.
+- evaluation_datasets: one version per document. Content and hashes are immutable; descriptions and deletion markers may change.
 - evaluations: one job per document. Only its lifecycle, progress, lease and outcome fields change, and every
   change is a conditional update, so two workers can never both own a job or move it from a stale state.
 - evaluation_results: one receipt's outcome per document, keyed by evaluation and receipt, so a resumed job
@@ -52,13 +52,13 @@ class DatasetRepository:
         raise ApiError(409, "version_conflict", "too many concurrent versions of this dataset name; try again")
 
     def find_upload(self, name: str, original_sha256: str) -> dict | None:
-        return self.collection.find_one({"name": name, "original_sha256": original_sha256}, _without(*DATASET_CONTENT), sort=[("version", ASCENDING)])
+        return self.collection.find_one({"name": name, "original_sha256": original_sha256, "deleted_at": {"$exists": False}}, _without(*DATASET_CONTENT), sort=[("version", ASCENDING)])
 
-    def get(self, dataset_id: str, *, with_content: bool = False) -> dict | None:
-        return self.collection.find_one({"_id": dataset_id}, None if with_content else _without("original"))
+    def get(self, dataset_id: str, *, with_content: bool = False, include_deleted: bool = False) -> dict | None:
+        return self.collection.find_one({"_id": dataset_id, **({} if include_deleted else {"deleted_at": {"$exists": False}})}, None if with_content else _without("original"))
 
     def page(self, name: str | None, limit: int, offset: int) -> tuple[list[dict], int]:
-        query = {} if name is None else {"name": name}
+        query = {"deleted_at": {"$exists": False}, **({} if name is None else {"name": name})}
         items = list(self.collection.find(query, _without(*DATASET_CONTENT)).sort(NEWEST_FIRST).skip(offset).limit(limit))
         return items, self.collection.count_documents(query)
 
@@ -91,7 +91,7 @@ class EvaluationRepository:
         return self.collection.find_one({"idempotency_key": key})
 
     def get(self, evaluation_id: str, *, summary: bool = False) -> dict | None:
-        return self.collection.find_one({"_id": evaluation_id}, _without(*JOB_DETAIL) if summary else None)
+        return self.collection.find_one({"_id": evaluation_id, "deleted_at": {"$exists": False}}, _without(*JOB_DETAIL) if summary else None)
 
     def get_any(self, evaluation_id: str) -> dict | None:
         """A job by ID alone, for the worker."""
@@ -99,11 +99,12 @@ class EvaluationRepository:
 
     def page(self, query: dict, limit: int, offset: int) -> tuple[list[dict], int]:
         query = dict(query)
+        query = {**query, "deleted_at": {"$exists": False}}
         items = list(self.collection.find(query, _without(*JOB_DETAIL)).sort(NEWEST_FIRST).skip(offset).limit(limit))
         return items, self.collection.count_documents(query)
 
     def many(self, evaluation_ids: list[str]) -> list[dict]:
-        return list(self.collection.find({"_id": {"$in": evaluation_ids}}))
+        return list(self.collection.find({"_id": {"$in": evaluation_ids}, "deleted_at": {"$exists": False}}))
 
     def claim(self, worker_id: str, moment: datetime, expires_at: datetime) -> dict | None:
         """Atomically take the oldest queued job. MongoDB applies one findAndModify at a time to a document, so two

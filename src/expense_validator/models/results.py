@@ -1,6 +1,6 @@
 """Define typed validation results and provenance.
 
-ReceiptResult.to_record() exports the receipt record without provenance.
+ReceiptResult.to_record() exports the receipt in the brief's shape, with everything else in its metadata.
 """
 
 from typing import Literal
@@ -94,26 +94,43 @@ class ReceiptResult(_Result):
     provenance: Provenance
 
     def to_record(self) -> dict:
-        """Return the receipt as one JSONL object."""
+        """Return the receipt as one JSONL object, in the brief's shape whatever model or adapter answered.
+
+        The top level, each line and each exception hold only the brief's fields. Everything else, such as what one
+        adapter adds (Jev's probabilities, LangGraph's attempts), the translation, and the engine's decision details,
+        is in metadata, so records from every model have the same shape and differ only there.
+        """
         dump = self.model_dump(mode="json")
-        lines = []
+        lines, line_metadata = [], {}
         for line in dump["line_items"]:
-            record = {name: line[name] for name in ("line_id", "description_raw", "category", "restricted", "confidence")}
-            record |= {name: line[name] for name in ("english_translation", "attributes", "classification_error") if line[name] is not None}
-            lines.append(record)
-        metadata = dump["metadata"]
+            lines.append({name: line[name] for name in LINE_FIELDS})
+            extra = {name: line[name] for name in LINE_METADATA if line[name] is not None}
+            if extra:
+                line_metadata[line["line_id"]] = extra
+        source_quotes = [{"rule_id": item["rule_id"], "line_ids": item["line_ids"], "source_quote": item["source_quote"]} for item in dump["exceptions"]]
         return {
             "receipt_id": dump["receipt_id"],
             "disposition": dump["disposition"],
             "line_items": lines,
-            "exceptions": dump["exceptions"],
+            "exceptions": [{name: item[name] for name in EXCEPTION_FIELDS} for item in dump["exceptions"]],
             "review_signals": dump["review_signals"],
-            "decided": dump["decided"],
-            "disposition_reasons": dump["disposition_reasons"],
-            "open_questions": dump["open_questions"],
-            "uncertainty": dump["uncertainty"],
-            "metadata": {name: metadata[name] for name in ("model", "translation_model", "retriever", "prompt_sha256", "ruleset_version", "replayed", "latency_ms")},
+            "metadata": {
+                **{name: dump["metadata"][name] for name in ("model", "retriever", "latency_ms")},  # the brief's, first
+                **dump["metadata"],
+                "classification_backend": self.provenance.classification_backend,
+                "decided": dump["decided"],
+                "disposition_reasons": dump["disposition_reasons"],
+                "open_questions": dump["open_questions"],
+                "uncertainty": dump["uncertainty"],
+                "source_quotes": source_quotes,
+                "line_items": line_metadata,
+            },
         }
+
+
+LINE_FIELDS = ("line_id", "description_raw", "category", "restricted", "confidence")  # the brief's; no model gives a reasoning
+LINE_METADATA = ("english_translation", "attributes", "classification_error", "classification_details")
+EXCEPTION_FIELDS = ("rule_id", "policy_doc", "severity", "line_ids", "evidence", "explanation")
 
 
 class BatchResult(_Result):

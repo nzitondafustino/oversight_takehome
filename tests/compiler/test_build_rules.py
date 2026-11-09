@@ -156,3 +156,17 @@ def test_process_rules_are_the_ones_that_raise_nothing():
         "MCC-03",
         "REG-05",
     }
+
+
+def test_scoped_logic_retains_verified_rules_without_changing_the_artifact():
+    logic = {"ruleset_version": RULESET.ruleset_version, "rules": [],
+             "retained_rules": json.loads(RULESET.to_json())["rules"]}
+    assert build_ruleset(yaml.safe_dump(logic, sort_keys=False), list(CLAUSES.values())).to_json() == RULESET.to_json()
+
+
+def test_scoped_logic_refuses_a_retained_rule_whose_source_changed():
+    logic = {"ruleset_version": RULESET.ruleset_version, "rules": [],
+             "retained_rules": json.loads(RULESET.to_json())["rules"]}
+    logic["retained_rules"][0]["provenance"]["clause_hash"] = "0" * 64
+    with pytest.raises(ValueError, match="retained rule no longer matches its source clause"):
+        build_ruleset(yaml.safe_dump(logic), list(CLAUSES.values()))

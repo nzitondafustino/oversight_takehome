@@ -20,14 +20,25 @@ def _rows(response):
     return list(csv.DictReader(io.StringIO(response.content.decode("utf-8"), newline="")))
 
 
-def test_the_json_export_is_the_whole_run_in_canonical_form(findings_run):
+BRIEF = ["receipt_id", "disposition", "line_items", "exceptions", "review_signals", "metadata"]
+
+
+def test_the_json_export_is_the_run_with_each_receipt_in_the_briefs_shape_in_canonical_form(findings_run):
     client, _, run = findings_run
     response = _export(client, run, format="json")
     assert response.status_code == 200 and response.headers["content-type"] == "application/json"
     assert response.headers["content-disposition"] == f'attachment; filename="{run["run_id"]}.json"'
     assert (response.headers["x-content-type-options"], response.headers["cache-control"]) == ("nosniff", "no-store")
-    assert json.loads(response.content) == run == client.get(f"/v1/runs/{run['run_id']}").json()
-    assert response.content == (json.dumps(run, sort_keys=True, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
+    body = json.loads(response.content)
+    assert body["export_schema"] == "run-export/2"
+    assert {key: value for key, value in body.items() if key not in ("export_schema", "receipts")} == {key: value for key, value in run.items() if key != "results"}
+    assert [record["receipt_id"] for record in body["receipts"]] == [result["receipt_id"] for result in run["results"]["results"]]
+    for record, result in zip(body["receipts"], run["results"]["results"]):
+        assert list(record) == BRIEF
+        assert [list(line) for line in record["line_items"]] == [["line_id", "description_raw", "category", "restricted", "confidence"]] * len(result["line_items"])
+        assert [list(item) for item in record["exceptions"]] == [["rule_id", "policy_doc", "severity", "line_ids", "evidence", "explanation"]] * len(result["exceptions"])
+        assert (record["metadata"]["decided"], record["metadata"]["open_questions"]) == (result["decided"], result["open_questions"])  # nothing is lost: it is in metadata
+    assert response.content == (json.dumps(body, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")  # compact, in the fields' own order
     assert _export(client, run).content == response.content  # json is the default
 
 
@@ -94,7 +105,7 @@ def test_csv_cells_are_quoted_and_cannot_run_as_formulas(findings_run):
 def test_a_run_with_no_findings_exports_only_the_header(client):
     run = validate(client, create_ruleset(client)["ruleset_id"]).json()  # RCP-001 passes
     assert _export(client, run, format="csv").content == (",".join(CSV_COLUMNS) + "\r\n").encode("utf-8")
-    assert json.loads(_export(client, run, format="json").content)["results"]["results"][0]["exceptions"] == []
+    assert json.loads(_export(client, run, format="json").content)["receipts"][0]["exceptions"] == []
 
 
 def test_an_export_is_of_a_known_run_and_a_known_format(findings_run):

@@ -64,8 +64,9 @@ def reading_of(text: str) -> str:
 def test_a_matching_reading_of_the_real_policy_has_no_disagreements():
     results = agreement_report(DOCS, lambda prompt, text: reading_of(text))
     assert len({result.rule_id for result in results}) == 41
-    assert {result.status for result in results} <= {"agreed", "unconfirmed"}
-    assert all(result.field == "thresholds" for result in results if result.status == "unconfirmed")
+    # No clause in the real policy states a number that could be a limit and is not read as one: the numbers left
+    # are rule counts ("those three" in REG-01) and merchant codes (MCC 5813 in MCC-03), which a reviewer never confirms.
+    assert {result.status for result in results} == {"agreed"}
 
 
 def test_llm_sees_only_the_prompt_and_the_document():

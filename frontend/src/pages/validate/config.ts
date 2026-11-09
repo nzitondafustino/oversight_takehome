@@ -5,7 +5,7 @@
  */
 import type { BackendInfo, Backends, ClassificationModelInfo, ClassificationSetup, ExecutionMode, OrchestratorNode, RulesetSummary, ValidationClassification } from "@/api/types";
 import type { JsonObject, JsonValue } from "@/lib/losslessJson";
-import { stringifyJson } from "@/lib/losslessJson";
+import { toJsonText } from "@/lib/losslessJson";
 
 /**
  * What a person chooses for classification: how lines reach a model (the orchestrator), the API provider, and the
@@ -18,6 +18,21 @@ export interface ClassificationChoice {
   provider: string | null;
   /** Direct only. Empty: the deployment's default model, from its config.yaml. */
   model: string;
+  /**
+   * LangGraph only, for this run: a classification model by node name. A node left out, or empty, keeps the model
+   * config.yaml gives it. Its adapter follows from the model, as for direct classification.
+   */
+  nodeModels?: Record<string, string>;
+  /** LangGraph only, for this run: reflection changes. A field left undefined keeps the deployment's value. */
+  reflection?: ReflectionChoice;
+}
+
+export interface ReflectionChoice {
+  enabled?: boolean;
+  /** Typed text, checked against the deployment's maximum before it is sent as a whole number. */
+  maxRetries?: string;
+  maxCalls?: string;
+  structured?: boolean;
 }
 
 export interface ValidationConfig extends ClassificationChoice {
@@ -35,6 +50,7 @@ export const INITIAL_CONFIG: ValidationConfig = {
   orchestrator: null,
   provider: null,
   model: "",
+  nodeModels: {},
   replaySet: "",
   // On unless the user says receipts a cross-receipt rule could need are missing from the batch.
   contextComplete: true,
@@ -139,6 +155,166 @@ export function backendIdFor(choice: ClassificationChoice, backends: Backends): 
   return { id: fallback.backend };
 }
 
+/** A LangGraph node as this run would use it: its configured name and place, and the model chosen for it, if any. */
+export interface LangGraphNode extends OrchestratorNode {
+  name: string;
+  /** The node as config.yaml configures it, from discovery. */
+  configured: OrchestratorNode;
+  /** A model other than the configured one was chosen for this node. */
+  overridden: boolean;
+  /** Discovery's entry for the node's model, if it offers it. */
+  info: ClassificationModelInfo | undefined;
+}
+
+/** LangGraph's configured nodes, in order, as discovery reports them. */
+export function configuredNodes(backends: Backends): OrchestratorNode[] {
+  return backends.orchestrators.find((item) => item.id === LANGGRAPH)?.nodes ?? [];
+}
+
+/**
+ * Each LangGraph node as this choice would run it. A chosen model brings the adapter, provider and protocol discovery
+ * reports for it; a node left alone keeps its configured adapter. Order and names are always the configured ones.
+ */
+export function langgraphNodes(choice: ClassificationChoice, backends: Backends): LangGraphNode[] {
+  return configuredNodes(backends).map((configured, index) => {
+    const name = configured.name ?? String(index);
+    const chosen = choice.nodeModels?.[name]?.trim() ?? "";
+    const overridden = Boolean(chosen) && chosen !== configured.model;
+    const model = overridden ? chosen : configured.model;
+    const info = backends.classification_models.find((item) => item.model === model);
+    if (!overridden) return { ...configured, name, configured, overridden, info };
+    return { name, model, backend: info?.backend ?? null, adapter: info?.backend ?? null, provider: info?.provider ?? null, protocol: info?.protocol ?? null, configured, overridden, info };
+  });
+}
+
+export interface LangGraphOverride {
+  backends?: { name: string; backend: string; model: string }[];
+  reflection?: { enabled?: boolean; max_retries?: number; max_total_calls_per_line?: number; feedback_context?: string };
+}
+
+/**
+ * schemas/validation.py ClassificationSelection.langgraph for this choice: the whole node list when a node's model
+ * changed, each node with its configured name, its adapter and its model, as a given list replaces config.yaml's; and
+ * only the reflection fields that differ from the deployment's. Undefined when nothing changed, so the run keeps the
+ * deployment's configuration exactly. Routing is never sent.
+ */
+export function langgraphOverride(choice: ClassificationChoice, backends: Backends): LangGraphOverride | undefined {
+  const override: LangGraphOverride = {};
+  const nodes = langgraphNodes(choice, backends);
+  if (nodes.some((node) => node.overridden)) override.backends = nodes.map((node) => ({ name: node.name, backend: node.adapter ?? node.backend ?? "", model: node.model ?? "" }));
+  const configured = langgraphReflection(backends);
+  const chosen = effectiveReflection(choice, backends);
+  const reflection: NonNullable<LangGraphOverride["reflection"]> = {};
+  if (chosen.enabled !== configured.enabled) reflection.enabled = chosen.enabled;
+  if (chosen.maxRetries !== configured.maxRetries) reflection.max_retries = chosen.maxRetries;
+  if (chosen.maxCalls !== configured.maxCalls) reflection.max_total_calls_per_line = chosen.maxCalls;
+  if (chosen.structured !== configured.structured) reflection.feedback_context = chosen.structured ? "structured" : "reviewer_feedback";
+  if (Object.keys(reflection).length) override.reflection = reflection;
+  return Object.keys(override).length ? override : undefined;
+}
+
+export interface ReflectionInfo {
+  enabled: boolean;
+  reviewer: { model?: string; protocol?: string | null; provider?: string | null } | null;
+  maxRetries: number;
+  maxCalls: number;
+  structured: boolean;
+  /** The deployment's maximums (EXPENSE_API_MAX_REFLECTION_*), which the API enforces. */
+  limits: { maxRetries: number; maxCalls: number };
+  /** The adapters whose reviser takes structured context. */
+  structuredRevisers: string[];
+}
+
+/** The deployment's LangGraph reflection and its maximums, as discovery reports them. */
+export function langgraphReflection(backends: Backends): ReflectionInfo {
+  const orchestrator = backends.backends.find((item) => item.id === LANGGRAPH);
+  const reflection = orchestrator?.capabilities.reflection as
+    | { enabled?: boolean; reviewer?: ReflectionInfo["reviewer"]; max_retries?: number; max_total_calls_per_line?: number; feedback_context?: string; limits?: { max_retries?: number; max_total_calls_per_line?: number }; structured_revisers?: string[] }
+    | undefined;
+  const maxRetries = reflection?.max_retries ?? 2;
+  const maxCalls = reflection?.max_total_calls_per_line ?? 6;
+  return {
+    enabled: Boolean(reflection?.enabled),
+    reviewer: reflection?.reviewer ?? null,
+    maxRetries,
+    maxCalls,
+    structured: reflection?.feedback_context === "structured",
+    // A deployment that reports no maximums is held to the core's own bounds.
+    limits: { maxRetries: reflection?.limits?.max_retries ?? 10, maxCalls: reflection?.limits?.max_total_calls_per_line ?? 50 },
+    structuredRevisers: reflection?.structured_revisers ?? [],
+  };
+}
+
+function wholeNumber(text: string | undefined): number | null {
+  return text !== undefined && /^\d+$/.test(text.trim()) ? Number(text.trim()) : null;
+}
+
+/** This run's reflection: each field as chosen, else the deployment's. A number not yet valid keeps the deployment's. */
+export function effectiveReflection(choice: ClassificationChoice, backends: Backends): { enabled: boolean; maxRetries: number; maxCalls: number; structured: boolean } {
+  const configured = langgraphReflection(backends);
+  const chosen = choice.reflection ?? {};
+  return {
+    enabled: chosen.enabled ?? configured.enabled,
+    maxRetries: wholeNumber(chosen.maxRetries) ?? configured.maxRetries,
+    maxCalls: wholeNumber(chosen.maxCalls) ?? configured.maxCalls,
+    structured: chosen.structured ?? configured.structured,
+  };
+}
+
+/** What the API would certainly refuse in the reflection settings, as the deployment's maximums say. */
+export function reflectionIssues(choice: ClassificationChoice, backends: Backends): string[] {
+  const configured = langgraphReflection(backends);
+  const chosen = choice.reflection ?? {};
+  const enabled = chosen.enabled ?? configured.enabled;
+  if (!enabled) return [];
+  const issues: string[] = [];
+  if (!configured.reviewer) issues.push("Reflection needs a reviewer, and this deployment configures none.");
+  const { maxRetries, maxCalls } = configured.limits;
+  if (chosen.maxRetries !== undefined && chosen.maxRetries.trim() !== "") {
+    const value = wholeNumber(chosen.maxRetries);
+    if (value === null || value > maxRetries) issues.push(`Revision retries must be a whole number from 0 to ${maxRetries}.`);
+  }
+  if (chosen.maxCalls !== undefined && chosen.maxCalls.trim() !== "") {
+    const value = wholeNumber(chosen.maxCalls);
+    if (value === null || value < 1 || value > maxCalls) issues.push(`Model calls per line must be a whole number from 1 to ${maxCalls}.`);
+  }
+  // Left untyped, the deployment's own value applies, and the API refuses it if it is over the maximum too.
+  if (!chosen.maxRetries?.trim() && configured.maxRetries > maxRetries) issues.push(`The deployment's ${configured.maxRetries} revision retries exceed its maximum of ${maxRetries}: choose fewer.`);
+  if (!chosen.maxCalls?.trim() && configured.maxCalls > maxCalls) issues.push(`The deployment's ${configured.maxCalls} calls per line exceed its maximum of ${maxCalls}: choose fewer.`);
+  return issues;
+}
+
+/**
+ * Whether a node's adapter can revise with a reviewer's feedback (the core's REVISERS), as discovery reports it; with
+ * structured context, only an adapter whose reviser takes it.
+ */
+export function canRevise(node: OrchestratorNode, backends: Backends, structured = false): boolean {
+  const adapter = node.adapter ?? node.backend;
+  if (structured && adapter && !langgraphReflection(backends).structuredRevisers.includes(adapter)) return false;
+  return backends.backends.find((item) => item.id === adapter)?.capabilities.revise === true;
+}
+
+/**
+ * What the API or core would certainly refuse in the chosen node models: a model discovery does not offer, one whose
+ * adapter cannot run in this mode, or, live, one outside the classification allowlist. Nodes left alone are checked
+ * live too once any node changes, as the whole list is then sent and every model in it checked.
+ */
+export function nodeIssues(choice: ClassificationChoice, backends: Backends, mode: ExecutionMode): string[] {
+  const nodes = langgraphNodes(choice, backends);
+  const sent = nodes.some((node) => node.overridden);
+  const issues: string[] = [];
+  for (const node of nodes) {
+    if (!node.overridden && !(sent && mode === "live")) continue;
+    if (!node.info) {
+      issues.push(`${node.name}: ${node.model} is not a classification model this deployment offers.`);
+      continue;
+    }
+    const availability = modelAvailability(node.info, backends, mode);
+    if (!availability.available) issues.push(`${node.name}: ${node.model}: ${availability.reason ?? "unavailable"}.`);
+  }
+  return issues;
+}
+
 export function backendFor(choice: ClassificationChoice, backends: Backends): BackendInfo | undefined {
   const { id } = backendIdFor(choice, backends);
   return backends.backends.find((item) => item.id === id);
@@ -180,7 +356,10 @@ export function setupText(setup: ClassificationSetup | undefined, backend: strin
 
 /** The choice in a few words, for summaries: "OpenRouter · typesafe/jev-1.14", or LangGraph. */
 export function choiceText(choice: ClassificationChoice, backends: Backends): string {
-  if (orchestratorOf(choice, backends) === LANGGRAPH) return "LangGraph";
+  if (orchestratorOf(choice, backends) === LANGGRAPH) {
+    const nodes = langgraphNodes(choice, backends);
+    return nodes.some((node) => node.overridden) ? `LangGraph · ${nodes.map((node) => `${node.name}: ${node.model ?? "no model"}`).join(" → ")}` : "LangGraph";
+  }
   const backend = backendFor(choice, backends);
   return backend ? `${providerName(backend.provider, backends)} · ${choice.model.trim() || defaultModel(backends)?.model || "default model"}` : "—";
 }
@@ -263,10 +442,14 @@ export function modelLabel(model: ClassificationModelInfo, backends: Backends): 
   return `${model.model} · ${adapterName(model.backend, backends)}`;
 }
 
-/** Changes the choice, clearing what the change makes stale: another orchestrator or provider resets the model. */
+/** Changes the choice, clearing what the change makes stale: another orchestrator or provider resets the model(s). */
 export function choose<T extends ClassificationChoice>(current: T, change: Partial<ClassificationChoice>): T {
   const next = { ...current, ...change };
-  if ("orchestrator" in change && change.orchestrator !== current.orchestrator) next.model = "";
+  if ("orchestrator" in change && change.orchestrator !== current.orchestrator) {
+    next.model = "";
+    next.nodeModels = {};
+    next.reflection = {};
+  }
   if ("provider" in change && change.provider !== current.provider) next.model = "";
   return next;
 }
@@ -315,7 +498,8 @@ export function configIssues(config: ValidationConfig, backends: Backends | unde
       const availability = backendAvailability(backend, config.mode);
       if (!availability.available) issues.push(`${backend.kind === "orchestrator" ? "LangGraph" : adapterName(backend.id, backends)}: ${availability.reason ?? "unavailable"}.`);
       // authorize_classification: a live request may name only a model in the deployment's classification allowlist.
-      const model = config.model.trim();
+      if (backend.id === LANGGRAPH) issues.push(...nodeIssues(config, backends, config.mode), ...reflectionIssues(config, backends));
+      const model = backend.id === LANGGRAPH ? "" : config.model.trim();
       const allowed = classificationAllowlist(backends);
       if (config.mode === "live" && model && !allowed.includes(model)) {
         issues.push(
@@ -338,6 +522,9 @@ export function classificationFor(config: ValidationConfig, backends: Backends):
   // The adapter the chosen model needs, as discovery reports it: requests and records keep naming it as the backend.
   const classification: ValidationClassification = { backend: id };
   if (backend && takesSingleModel(backend) && config.model.trim()) classification.model = config.model.trim();
+  // Only the node list, and only when a node's model changed: routing and reflection stay config.yaml's.
+  const langgraph = id === LANGGRAPH ? langgraphOverride(config, backends) : undefined;
+  if (langgraph) classification.langgraph = langgraph;
   if (config.mode === "replay" && config.replaySet) classification.replay_set = config.replaySet;
   return classification;
 }
@@ -363,5 +550,6 @@ export function buildValidationBody(input: {
     for (const [key, value] of Object.entries(classification)) if (value != null) selection[key] = value;
     body.classification = selection;
   }
-  return stringifyJson(body);
+  // Receipt values keep their exact JSON text; the selection's plain values, such as reflection limits, are numbers.
+  return toJsonText(body);
 }

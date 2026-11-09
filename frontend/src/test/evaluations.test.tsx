@@ -1,3 +1,4 @@
+import { exportViewPdf } from "@/lib/exportViewPdf";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -22,10 +23,13 @@ import backendsJson from "./fixtures/backends.json";
 import { setupText } from "@/pages/validate/config";
 import compareJson from "./fixtures/evaluation/compare.json";
 import datasetsJson from "./fixtures/evaluation/datasets.json";
+import datasetDetailJson from "./fixtures/evaluation/dataset-detail.json";
 import detailQueuedJson from "./fixtures/evaluation/detail-queued.json";
 import detailJson from "./fixtures/evaluation/detail.json";
 import provisionalJson from "./fixtures/evaluation/metrics-provisional.json";
 import metricsJson from "./fixtures/evaluation/metrics.json";
+// Real stored metrics: the live Jev run on the robustness set, rescored with evaluation-metrics/3 through the API.
+import rescoredJson from "./fixtures/evaluation/metrics-rescored.json";
 import resultsJson from "./fixtures/evaluation/results.json";
 
 /**
@@ -77,8 +81,11 @@ let calls: Call[];
 let answer: (method: string, url: URL) => Answer | Promise<Answer> | undefined;
 let backends: Backends;
 
+vi.mock("@/lib/exportViewPdf", () => ({ exportViewPdf: vi.fn(async () => undefined) }));
+
 beforeEach(() => {
   calls = [];
+  vi.mocked(exportViewPdf).mockClear();
   backends = BACKENDS;
   vi.stubGlobal(
     "fetch",
@@ -184,6 +191,50 @@ describe("evaluation form", () => {
     expect(formErrors(form(LIVE), context({ backends: BACKENDS })).mode).toMatch(/does not allow live inference/);
   });
 
+  it("runs a LangGraph node on the model chosen for it, checked like any other, and keeps the defaults otherwise", () => {
+    const swapped = { orchestrator: "langgraph", nodeModels: { primary: "anthropic/claude-haiku-5.5", fallback: "typesafe/jev-1.14" } };
+    // Each node keeps its name and order and takes its model's adapter; routing and reflection are never sent.
+    expect(evaluationBody(form(swapped), context()).classification).toEqual({
+      backend: "langgraph",
+      replay_set: "langgraph",
+      langgraph: { backends: [{ name: "primary", backend: "chat_completions", model: "anthropic/claude-haiku-5.5" }, { name: "fallback", backend: "decisions", model: "typesafe/jev-1.14" }] },
+    });
+    // Only one node changed: the other is sent as configured.
+    expect(evaluationBody(form({ orchestrator: "langgraph", nodeModels: { fallback: "typesafe/jev-1.14" } }), context()).classification?.langgraph).toEqual({
+      backends: [{ name: "primary", backend: "decisions", model: "typesafe/jev-1.14" }, { name: "fallback", backend: "decisions", model: "typesafe/jev-1.14" }],
+    });
+    // Choosing a node's configured model, or nothing, is no override at all.
+    expect(evaluationBody(form({ orchestrator: "langgraph", nodeModels: { primary: "typesafe/jev-1.14", fallback: "" } }), context()).classification).toEqual({ backend: "langgraph", replay_set: "langgraph" });
+    // Live counts the models the run would call: the chosen ones, never the configured ones they replace.
+    expect(liveModels(form({ ...LIVE, orchestrator: "langgraph", nodeModels: { primary: "anthropic/claude-haiku-5.5" } }), LIVE_BACKENDS)).toEqual([
+      { model: "anthropic/claude-haiku-5.5", role: "classification" }, { model: "tencent/hy-mt2-30b-a3b", role: "translation" }]);
+    const haikuNotAllowed = { ...LIVE_BACKENDS, allowed_classification_models: ["typesafe/jev-1.14"], classification_models: LIVE_BACKENDS.classification_models.map((item) => ({ ...item, allowed: item.model === "typesafe/jev-1.14" })) };
+    expect(formErrors(form({ ...LIVE, orchestrator: "langgraph", nodeModels: { fallback: "typesafe/jev-1.14" } }), context({ backends: haikuNotAllowed }))).toEqual({});
+    expect(formErrors(form({ ...LIVE, orchestrator: "langgraph", nodeModels: { primary: "anthropic/claude-haiku-5.5" } }), context({ backends: haikuNotAllowed })).model).toMatch(/anthropic\/claude-haiku-5.5 is not allowed for live classification/);
+    // A model discovery does not offer is refused before anything is sent, never given another adapter.
+    expect(formErrors(form({ orchestrator: "langgraph", nodeModels: { primary: "meta/unknown-1" } }), context()).model).toBe("primary: meta/unknown-1 is not a classification model this deployment offers.");
+  });
+
+  it("sends reflection settings changed for one evaluation, checked against the deployment's maximums", () => {
+    const limited = { ...LIVE_BACKENDS, backends: LIVE_BACKENDS.backends.map((backend) => backend.id === "langgraph" ? { ...backend, capabilities: { ...backend.capabilities, reflection: { ...(backend.capabilities.reflection as object), limits: { max_retries: 3, max_total_calls_per_line: 12 }, structured_revisers: ["chat_completions"] } } } : backend) };
+    const ctx = context({ backends: limited });
+    const langgraph = (reflection: EvaluationForm["reflection"]) => form({ orchestrator: "langgraph", reflection });
+    expect(evaluationBody(langgraph({ enabled: true, maxRetries: "3", maxCalls: "12", structured: true }), ctx).classification?.langgraph).toEqual({
+      reflection: { enabled: true, max_retries: 3, max_total_calls_per_line: 12, feedback_context: "structured" },
+    });
+    // Only what differs from the deployment's: its own retries (2), typed again, are not an override.
+    expect(evaluationBody(langgraph({ enabled: true, maxRetries: "2" }), ctx).classification?.langgraph).toEqual({ reflection: { enabled: true } });
+    expect(evaluationBody(langgraph({}), ctx).classification).toEqual({ backend: "langgraph", replay_set: "langgraph" });
+    expect(formErrors(langgraph({ enabled: true, maxRetries: "0" }), ctx)).not.toHaveProperty("reflection");
+    expect(formErrors(langgraph({ enabled: true, maxRetries: "4" }), ctx).reflection).toBe("Revision retries must be a whole number from 0 to 3.");
+    expect(formErrors(langgraph({ enabled: true, maxCalls: "0" }), ctx).reflection).toBe("Model calls per line must be a whole number from 1 to 12.");
+    expect(formErrors(langgraph({ enabled: true, maxCalls: "two" }), ctx).reflection).toBe("Model calls per line must be a whole number from 1 to 12.");
+    // Turned off, its limits ask for nothing.
+    expect(formErrors(langgraph({ enabled: false, maxRetries: "9" }), ctx)).not.toHaveProperty("reflection");
+    // Live counts the reviewer once reflection is on for this run.
+    expect(liveModels(form({ ...LIVE, orchestrator: "langgraph", reflection: { enabled: true } }), limited).map((item) => item.model)).toContain("anthropic/claude-haiku-5.5");
+  });
+
   it("withdraws paid-call confirmations when the mode or any limit changes, and only then", () => {
     const confirmed = form({ ...LIVE, uncapped: true, uncappedConfirmation: "uncapped" });
     expect(updateForm(confirmed, { label: "nightly" })).toMatchObject({ liveConfirmed: true, uncappedConfirmation: "uncapped" });
@@ -268,6 +319,43 @@ describe("translation model", () => {
     await user.click(screen.getByRole("button", { name: "Start live evaluation (paid)" }));
     await waitFor(() => expect(posts("/api/v1/evaluations")).toHaveLength(1));
     expect(JSON.parse(posts("/api/v1/evaluations")[0]!.body!).classification).toEqual({ backend: "decisions", model: JEV, translation_model: HAIKU });
+  });
+
+  it("chooses LangGraph node models under Advanced settings and shows them in the summary", async () => {
+    answer = (method, url) => (method === "POST" && url.pathname === "/api/v1/evaluations" ? { status: 201, body: QUEUED } : url.pathname === `/api/v1/evaluations/${QUEUED.evaluation_id}` ? { status: 200, body: QUEUED } : undefined);
+    renderAt(`/evaluations/new?dataset=${DATASET.dataset_id}`);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: /Advanced settings/ }));
+    await user.selectOptions(screen.getByLabelText("Orchestrator"), "langgraph");
+    await user.selectOptions(screen.getByLabelText("2. Fallback model"), JEV);
+    expect(screen.getByLabelText("Configuration")).toHaveTextContent("fallback: OpenRouter · typesafe/jev-1.14 (Decisions API) · chosen for this run");
+    expect(screen.getByLabelText("Configuration")).toHaveTextContent("primary: OpenRouter · typesafe/jev-1.14 (Decisions API)");
+    expect(screen.getByRole("note")).toHaveTextContent("reads only typesafe/jev-1.14's answers for the fallback node");
+    await user.click(screen.getByRole("button", { name: "Start replay evaluation" }));
+    await waitFor(() => expect(posts("/api/v1/evaluations")).toHaveLength(1));
+    expect(JSON.parse(posts("/api/v1/evaluations")[0]!.body!).classification).toEqual({
+      backend: "langgraph",
+      replay_set: "langgraph",
+      langgraph: { backends: [{ name: "primary", backend: "decisions", model: JEV }, { name: "fallback", backend: "decisions", model: JEV }] },
+    });
+  });
+
+  it("configures reflection retries under Advanced settings and refuses one beyond the maximum before sending", async () => {
+    answer = (method, url) => (method === "POST" && url.pathname === "/api/v1/evaluations" ? { status: 201, body: QUEUED } : undefined);
+    renderAt(`/evaluations/new?dataset=${DATASET.dataset_id}`);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: /Advanced settings/ }));
+    await user.selectOptions(screen.getByLabelText("Orchestrator"), "langgraph");
+    await user.click(screen.getByRole("checkbox", { name: /Review each answer, and revise it/ }));
+    await user.type(screen.getByLabelText("Revision retries"), "11");
+    await user.click(screen.getByRole("button", { name: "Start replay evaluation" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Revision retries must be a whole number from 0 to 10.");  // the core's bound: this discovery reports no maximum
+    expect(posts("/api/v1/evaluations")).toHaveLength(0);
+    await user.clear(screen.getByLabelText("Revision retries"));
+    await user.type(screen.getByLabelText("Revision retries"), "1");
+    await user.click(screen.getByRole("button", { name: "Start replay evaluation" }));
+    await waitFor(() => expect(posts("/api/v1/evaluations")).toHaveLength(1));
+    expect(JSON.parse(posts("/api/v1/evaluations")[0]!.body!).classification).toEqual({ backend: "langgraph", replay_set: "langgraph", langgraph: { reflection: { enabled: true, max_retries: 1 } } });
   });
 
   it("shows the recorded translator in replay, where it cannot change", async () => {
@@ -434,6 +522,50 @@ describe("evaluation workbench", () => {
     expect(await screen.findByLabelText("Dataset")).toHaveValue(DATASET.dataset_id);
   });
 
+  it("opens a dataset and paginates, searches and expands its reference receipts", async () => {
+    answer = (_, url) => url.pathname === `/api/v1/evaluations/datasets/${DATASET.dataset_id}` ? { status: 200, body: datasetDetailJson } : undefined;
+    const user = userEvent.setup();
+    const router = renderAt("/evaluations/datasets");
+    await user.click(await screen.findByRole("link", { name: "View golden v1" }));
+    expect(router.state.location.pathname).toBe(`/evaluations/datasets/${DATASET.dataset_id}`);
+    const table = await screen.findByRole("table", { name: "Dataset receipts" });
+    expect(within(table).getByRole("button", { name: "RCP-001" })).toBeInTheDocument();
+    expect(within(table).queryByRole("button", { name: "RCP-011" })).not.toBeInTheDocument();
+    expect(screen.getByText("1–10 of 32")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("11–20 of 32")).toBeInTheDocument();
+    expect(within(table).queryByRole("button", { name: "RCP-001" })).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("Rows per page"), "20");
+    expect(screen.getByText("1–20 of 32")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("21–32 of 32")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+    await user.type(screen.getByLabelText("Search receipts"), "Harvest Table Kitchen");
+    expect(screen.getByText("1 of 32 receipts")).toBeInTheDocument();
+    const toggle = screen.getByRole("button", { name: "RCP-001" });
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    const lines = screen.getByRole("table", { name: "Line items for RCP-001" });
+    expect(within(lines).getByText("Grilled salmon entree")).toBeInTheDocument();
+    expect(within(lines).getAllByText("food_beverage")).toHaveLength(3);
+    expect(screen.getByText(/Baseline clean receipt/)).toBeInTheDocument();
+    expect(calls.some((call) => call.path.includes("include_cases=true"))).toBe(true);
+    expect(calls.filter((call) => call.method === "POST")).toHaveLength(0);
+    await user.clear(screen.getByLabelText("Search receipts"));
+    await user.type(screen.getByLabelText("Search receipts"), "no such merchant");
+    expect(screen.getByText("No matching receipts")).toBeInTheDocument();
+  });
+
+  it("shows a dataset load failure and lets the user retry", async () => {
+    answer = (_, url) => url.pathname.includes(`/datasets/${DATASET.dataset_id}`) ? { status: 404, body: { error: { code: "dataset_not_found", message: "Dataset not found", details: null } } } : undefined;
+    renderAt(`/evaluations/datasets/${DATASET.dataset_id}`);
+    expect(await screen.findByRole("alert", {}, { timeout: 7000 })).toHaveTextContent("Dataset not found");
+    answer = (_, url) => url.pathname.includes(`/datasets/${DATASET.dataset_id}`) ? { status: 200, body: datasetDetailJson } : undefined;
+    await userEvent.click(screen.getByRole("button", { name: /retry/i }));
+    expect(await screen.findByRole("table", { name: "Dataset receipts" })).toBeInTheDocument();
+  });
+
   it("polls a running job, labels its metrics provisional, and shows final metrics once it finishes", async () => {
     let polls = 0;
     const running = { ...QUEUED, status: "running" as const, progress: { ...QUEUED.progress, processed_receipts: 10, percent: 31.2 } };
@@ -453,7 +585,7 @@ describe("evaluation workbench", () => {
     expect(await screen.findByText("Final metrics", {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.queryByText("Provisional metrics.")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Export JSON" })).toBeEnabled();
-    expect(screen.getByText("Finished: this record no longer changes.")).toBeInTheDocument();
+    expect(screen.getByText("Finished: execution results are final.")).toBeInTheDocument();
   }, 10_000);
 
   it("says a replay made no provider call and spent nothing new", async () => {
@@ -621,6 +753,124 @@ describe("evaluation workbench", () => {
   });
 });
 
+describe("quality dashboard", () => {
+  const RESCORED = rescoredJson as unknown as EvaluationMetrics;
+  const metricsAt = (body: unknown, extra: (method: string, url: URL) => Answer | undefined = () => undefined) => (method: string, url: URL) =>
+    extra(method, url) ??
+    (url.pathname === `/api/v1/evaluations/${DETAIL.evaluation_id}` ? { status: 200, body: DETAIL } : url.pathname === `/api/v1/evaluations/${DETAIL.evaluation_id}/metrics` ? { status: 200, body } : url.pathname === `/api/v1/evaluations/${DETAIL.evaluation_id}/results` ? { status: 200, body: RESULTS } : undefined);
+
+  it("reports every run compared in the compare view: per category, per rule, dispositions, baseline, evidence and failures", async () => {
+    const [first, second] = COMPARE.evaluations;
+    // The second run was scored with version 1: what that version lacks is said, never shown as zero.
+    const { baseline: _baseline, evidence: _evidence, error_analysis: _errors, coverage: _coverage, ...older } = RESCORED;
+    const earlier = { ...older, evaluation_id: second!.evaluation_id, schema_version: "evaluation-metrics/1" };
+    answer = (method, url) => {
+      if (method === "POST" && url.pathname === "/api/v1/evaluations/compare") return { status: 200, body: COMPARE };
+      if (url.pathname === `/api/v1/evaluations/${first!.evaluation_id}/metrics`) return { status: 200, body: { ...RESCORED, evaluation_id: first!.evaluation_id } };
+      if (url.pathname === `/api/v1/evaluations/${second!.evaluation_id}/metrics`) return { status: 200, body: earlier };
+      return undefined;
+    };
+    renderAt(`/evaluations/compare?ids=${first!.evaluation_id},${second!.evaluation_id}`);
+    const user = userEvent.setup();
+    expect(await screen.findByRole("row", { name: /^Adapter/ })).toBeInTheDocument();  // the comparison table stays
+    const report = (await screen.findByRole("heading", { name: "Evaluation report" })).closest("div")!;
+    expect(await within(report).findByText(/scored with different versions/)).toBeInTheDocument();
+    // Classification: per category, one column per run.
+    expect(within(report).getByRole("table", { name: "Scores per expected category by run" })).toHaveTextContent("alcohol");
+    // Rules: an untested rule is "Not tested", never a perfect or a zero score.
+    // Every section is on the page, in order, each under its own heading: no tab hides one.
+    expect(within(report).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual(["1 · Classification", "2 · Rules", "3 · Dispositions", "4 · Keyword baseline", "5 · Evidence", "6 · Error analysis"]);
+    expect(within(report).queryByRole("tab")).not.toBeInTheDocument();
+    await user.selectOptions(within(report).getByLabelText("Rules shown"), "all");
+    const rules = within(report).getByRole("table", { name: "Scores per rule by run" });
+    expect(within(rules).getByRole("row", { name: /^ALC-02/ })).toHaveTextContent("Not tested");
+    expect(within(rules).getByRole("row", { name: /^ENT-01/ })).toHaveTextContent(/·\d+·\d+/);
+    // Dispositions: a 3×3 matrix for each run.
+    expect(within(report).getAllByRole("table", { name: /Expected dispositions by predicted ones/ })).toHaveLength(2);
+    // Baseline: the model's wins and losses; the version-1 run has no baseline, and says so.
+    const baseline = within(report).getByRole("table", { name: "The model against the keyword baseline by run" });
+    expect(within(baseline).getByRole("row", { name: /^Model wins/ })).toHaveTextContent("4Not in this scoring");
+    expect(within(baseline).getByRole("row", { name: /^Model losses/ })).toHaveTextContent("2Not in this scoring");
+    // Evidence: exact line items, scored for the run that has it.
+    expect(within(report).getByRole("row", { name: /^Exact line items/ })).toHaveTextContent(/100\.0%.*Not in this scoring/);
+    // Errors: the diagnosed failures, each with its stage and the run it is from.
+    const errors = within(report).getByRole("region", { name: "Error analysis" });
+    expect(within(within(errors).getByRole("list", { name: "Diagnosed failures" })).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(report).getByRole("row", { name: /^Retrieval/ })).toHaveTextContent("Not attributed");
+  });
+
+  it("never keeps a run's provisional metrics from while it ran: the compare view reads the final ones and shows classification", async () => {
+    const [first, second] = COMPARE.evaluations;
+    // As the API answers before any receipt has run: provisional, with nothing scored yet.
+    const nothingRun = { available: false, reason: "no receipt has been run yet" };
+    const provisional = { ...RESCORED, provisional: true, status: "running", scored: { kind: "provisional" }, classification: nothingRun, disposition: nothingRun, findings: nothingRun, evidence: nothingRun, baseline: nothingRun };
+    let finished = false;
+    answer = (method, url) => {
+      if (method === "POST" && url.pathname === "/api/v1/evaluations/compare") return { status: 200, body: COMPARE };
+      for (const run of [first!, second!])
+        if (url.pathname === `/api/v1/evaluations/${run.evaluation_id}/metrics`) return { status: 200, body: { ...(finished ? RESCORED : provisional), evaluation_id: run.evaluation_id } };
+      return undefined;
+    };
+    const path = `/evaluations/compare?ids=${first!.evaluation_id},${second!.evaluation_id}`;
+    const router = renderAt(path);
+    const report = () => screen.getByRole("heading", { name: "Evaluation report" }).closest("div")!;
+    await screen.findByRole("heading", { name: "Evaluation report" });
+    // The reason is shown, never a bare "Not scored"; the snapshot is said to be provisional.
+    expect(await within(report()).findByText(/^Provisional metrics, from while/)).toBeInTheDocument();
+    expect(within(within(report()).getByRole("table", { name: "Classification quality by run" })).getByRole("row", { name: /^Category accuracy/ })).toHaveTextContent("Not scored: no receipt has been run yet");
+    // The runs finish. Opened again in the same session, the comparison reads the final metrics, not the cached snapshot.
+    finished = true;
+    await act(() => router.navigate("/evaluations"));
+    await act(() => router.navigate(path));
+    const alcohol = await within(await screen.findByRole("table", { name: "Scores per expected category by run" })).findByRole("row", { name: /^alcohol/ });
+    expect(alcohol).toHaveTextContent(/0\.800.*support 2/);
+    const summary = within(report()).getByRole("table", { name: "Classification quality by run" });
+    expect(within(summary).getByRole("row", { name: /^Category accuracy/ })).toHaveTextContent("88.2%");
+    expect(within(summary).queryByText(/Not scored/)).not.toBeInTheDocument();
+    expect(within(report()).queryByText(/^Provisional metrics/)).not.toBeInTheDocument();
+    expect(within(report()).getAllByRole("table", { name: /^Expected categories by predicted ones/ })).toHaveLength(2);  // one confusion matrix per run
+  });
+
+  it("answers the five questions from a real run's stored metrics, each in its own section", async () => {
+    answer = metricsAt(RESCORED);
+    renderAt(`/evaluations/${DETAIL.evaluation_id}`);
+    const head = await screen.findByLabelText("Headline");
+    expect(head).toHaveTextContent("Category accuracy88.2%");
+    expect(head).toHaveTextContent("Restricted F10.909");
+    expect(head).toHaveTextContent("Finding F10.857");
+    for (const title of ["1 · Classification quality", "2 · Policy decision quality", "3 · Exception detection", "4 · Evidence correctness", "5 · Keyword baseline", "6 · Coverage and error analysis"])
+      expect(screen.getByRole("region", { name: title })).toBeInTheDocument();
+    expect(screen.getByText(/Rescored with evaluation-metrics\/3 on .* It finished scored with evaluation-metrics\/1, which is kept\./)).toBeInTheDocument();
+
+    const rules = screen.getByRole("table", { name: "Exception detection per rule" });
+    const row = (rule: string) => within(rules).getAllByRole("row").find((item) => within(item).queryByText(rule))!;
+    expect(row("ENT-01")).toHaveTextContent("ENT-01Tested100 · 0 · 1—0.0000.000—");
+    expect(row("EXC-03")).toHaveTextContent("No positive case, raised");
+    expect(screen.getByText(/No positive case in the answers, and never raised \(34\)/)).toBeInTheDocument();  // never shown as perfect
+
+    const versus = screen.getByRole("table", { name: "The engine against the keyword baseline on the restricted decision" });
+    expect(within(versus).getAllByRole("row").find((item) => within(item).queryByText("F1"))).toHaveTextContent("F10.9090.333+0.576");
+    expect(screen.getByText("Of 17 lines: both right on 11; the engine alone on 4; the baseline alone on 2; both wrong on 0.")).toBeInTheDocument();
+    expect(within(screen.getByRole("table", { name: "The baseline is right, the engine wrong" })).getByText("Guinness 0.0 pint draught")).toBeInTheDocument();
+
+    const failures = screen.getByRole("list", { name: "Diagnosed failures" });
+    expect(within(failures).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(failures).getAllByRole("listitem")[0]).toHaveTextContent("Classified as alcohol instead of food_beverage.");
+    expect(within(failures).getAllByRole("listitem")[0]).toHaveTextContent("Led to: ALC-01 was raised but not expected; disposition flag instead of pass.");
+    expect(within(screen.getByRole("table", { name: "Expected dispositions by predicted ones, with receipts not evaluated" })).getAllByRole("row")[1]).toHaveTextContent("flag61(1 undecided)007");
+  });
+
+  it("says a run scored with an earlier version lacks the new sections, and rescores it on request", async () => {
+    const earlier = { ...METRICS, scored: { kind: "original", original_schema_version: "evaluation-metrics/1", current_schema_version: "evaluation-metrics/3", rescorings: [] } };
+    answer = metricsAt(earlier, (method, url) => (method === "POST" && url.pathname.endsWith("/rescore") ? { status: 200, body: RESCORED } : undefined));
+    renderAt(`/evaluations/${DETAIL.evaluation_id}`);
+    expect(await screen.findByText(/Scored with evaluation-metrics\/1 when the run finished\. The current scoring, evaluation-metrics\/3, adds/)).toBeInTheDocument();
+    expect(screen.getByText(/The keyword baseline is not in this run's scoring \(evaluation-metrics\/1\)/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Rescore with evaluation-metrics/3" }));
+    await waitFor(() => expect(calls.some((call) => call.method === "POST" && call.path === `/api/v1/evaluations/${DETAIL.evaluation_id}/rescore`)).toBe(true));
+  });
+});
+
 describe("stale evaluation state", () => {
   function deferred() {
     let resolve!: (answer: Answer) => void;
@@ -679,4 +929,36 @@ describe("stale evaluation state", () => {
     expect(client.getQueryData<EvaluationDetail>(queryKeys.evaluation(id))?.status).toBe("cancel_requested");
     expect(result.current.job.data?.status).toBe("cancel_requested");
   });
+});
+
+it("downloads the comparison PDF in the selected baseline order", async () => {
+  vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: () => "blob:pdf", revokeObjectURL: () => {} }));
+  const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+  const ids = COMPARE.evaluations.map(run => run.evaluation_id);
+  answer = (method, url) => method === "POST" && url.pathname === "/api/v1/evaluations/compare" ? { status: 200, body: COMPARE } : undefined;
+  renderAt(`/evaluations/compare?ids=${ids.join(",")}`);
+  const button = await screen.findByRole("button", { name: "Export PDF" });
+  await waitFor(() => expect(button).toBeEnabled());
+  await userEvent.setup().click(button);
+  await waitFor(() => expect(exportViewPdf).toHaveBeenCalledWith("evaluation-comparison"));
+  expect(calls.some(call => call.path.includes("/compare/export"))).toBe(false);
+  expect(JSON.parse(posts("/api/v1/evaluations/compare")[0]!.body!)).toEqual({ evaluation_ids: ids });
+  click.mockRestore();
+});
+
+it("exports evaluation PDF with the selected original scoring view", async () => {
+  vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: () => "blob:pdf", revokeObjectURL: () => {} }));
+  const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+  answer = (_, url) => {
+    if (url.pathname === `/api/v1/evaluations/${DETAIL.evaluation_id}`) return { status: 200, body: DETAIL };
+    if (url.pathname.endsWith("/metrics")) return { status: 200, body: { ...METRICS, scored: { kind: "rescored", original_schema_version: "evaluation-metrics/1", current_schema_version: METRICS.schema_version, rescorings: [{ schema_version: METRICS.schema_version, rescored_at: DETAIL.created_at }] } } };
+    return undefined;
+  };
+  renderAt(`/evaluations/${DETAIL.evaluation_id}`);
+  await userEvent.setup().click(await screen.findByRole("button", { name: /Show as first scored/ }));
+  await userEvent.setup().click(screen.getByRole("button", { name: "Export PDF" }));
+  await waitFor(() => expect(exportViewPdf).toHaveBeenCalledWith(DETAIL.evaluation_id));
+  expect(calls.some(call => call.path === `/api/v1/evaluations/${DETAIL.evaluation_id}/metrics?scoring=original`)).toBe(true);
+  expect(calls.some(call => call.path.includes("/export?"))).toBe(false);
+  click.mockRestore();
 });

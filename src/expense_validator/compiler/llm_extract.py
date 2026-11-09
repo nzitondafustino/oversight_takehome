@@ -5,6 +5,9 @@ import json
 import os
 import re
 import threading
+import time
+from contextlib import contextmanager
+from contextvars import ContextVar
 import urllib.request
 from decimal import Decimal
 from pathlib import Path
@@ -82,6 +85,21 @@ def extract_with_llm(text: str, complete: Complete) -> LlmDocument:
 PROVIDER = "openrouter"
 RESPONSE_FORMAT = {"type": "json_object"}
 
+_CALL_OBSERVER: ContextVar[Callable[[dict], None] | None] = ContextVar("compiler_call_observer", default=None)
+
+
+@contextmanager
+def observe_calls(observer: Callable[[dict], None]):
+    """Observe actual compiler provider calls in this context, outside all caches and recordings.
+
+    Metadata contains no document text, prompts or credentials and never changes reading identities.
+    """
+    token = _CALL_OBSERVER.set(observer)
+    try:
+        yield
+    finally:
+        _CALL_OBSERVER.reset(token)
+
 
 def openrouter(settings: LlmConfig, api_key: str) -> Complete:
     """Return a completion function for the compiler model. Sends the document to OpenRouter."""
@@ -98,8 +116,20 @@ def openrouter(settings: LlmConfig, api_key: str) -> Complete:
             data=json.dumps(body).encode(),
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(request, timeout=settings.timeout_seconds) as response:
-            return json.load(response)["choices"][0]["message"]["content"]
+        started, usage, failed = time.perf_counter(), None, True
+        try:
+            with urllib.request.urlopen(request, timeout=settings.timeout_seconds) as response:
+                answer = json.load(response, parse_float=Decimal)
+            usage = answer.get("usage")
+            content = answer["choices"][0]["message"]["content"]
+            failed = False
+            return content
+        finally:
+            observer = _CALL_OBSERVER.get()
+            if observer is not None:
+                observer({"model": settings.model, "document_sha256": document_sha256(text),
+                          "latency_ms": round((time.perf_counter() - started) * 1000),
+                          "failed": failed, "usage": usage})
 
     return complete
 

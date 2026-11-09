@@ -73,7 +73,7 @@ def test_a_historical_langgraph_evaluation_replays_as_recorded_without_a_provide
     bench.drain(client_factory=no_provider)
     job = bench.get(evaluation_id)
     assert (job["status"], job["error"], job["progress"]["failed_receipts"]) == ("completed", None, 0)
-    assert job["summary"] == HISTORICAL["summary"]
+    assert {name: job["summary"][name] for name in HISTORICAL["summary"]} == HISTORICAL["summary"]  # scored before the summary held more
     # Stored as the earlier API wrote it, and still so: nothing is rewritten.
     stored = bench.database["evaluations"].find_one({"_id": evaluation_id})["configuration"]
     assert {name: stored[name] for name in ("classification_backend", "model_label", "snapshot", "fingerprint")} == {name: HISTORICAL["configuration"][name] for name in ("classification_backend", "model_label", "snapshot", "fingerprint")}
@@ -94,8 +94,9 @@ def test_a_historical_langgraph_evaluation_missing_recordings_never_calls_a_prov
     bench.drain(client_factory=no_provider)
     job = bench.get(evaluation_id)
     assert job["status"] == "completed" and job["spend"]["calls"]["live"] == 0 and job["spend"]["new_spend_usd"] == "0"
-    usage = list(bench.database["evaluation_usage"].find({"evaluation_id": evaluation_id}))
-    assert usage and all(record["mode"] != "live" for record in usage)
+    # Each receipt is a replay miss, never scored on the answers the LLM node gave in Jev's place.
+    assert job["error_summary"] == {"replay_recording_missing": len(LANGGRAPH_RECEIPTS)}
+    assert all(record["mode"] != "live" for record in bench.database["evaluation_usage"].find({"evaluation_id": evaluation_id}))
 
 
 # --- 3 and 4. Earlier names run the same adapters; new executions record the adapters' own names ---

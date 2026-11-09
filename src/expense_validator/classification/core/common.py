@@ -170,6 +170,22 @@ def revision_input(normalized: NormalizedReceipt, line: NormalizedLine, previous
     return json.dumps({"line": json.loads(line_input(normalized, line)), "previous_classification": _proposal(previous), "reviewer_feedback": feedback}, ensure_ascii=False)
 
 
+def structured_revision_input(normalized: NormalizedReceipt, line: NormalizedLine, previous: ClassifiedLine, context, vocabulary) -> str:
+    """Build a structured revision's input: the line as classified, the answer revised with its confidence, the
+    review, the definitions of the categories in question, and where this retry stands. Nothing else is added."""
+    named = [category for category in (previous.category, context.suggested_category) if category is not None and category in vocabulary.categories]
+    request = {
+        "line": json.loads(line_input(normalized, line)),
+        "previous_classification": _proposal(previous) | {"confidence": None if previous.confidence is None else str(previous.confidence)},
+        "review": {"verdict": context.verdict, "reason": context.reason, "feedback": context.feedback, "suggested_category": context.suggested_category},
+        "categories_in_question": {category: vocabulary.categories[category].examples for category in dict.fromkeys(named)},
+        "retry": {"number": context.retry, "max": context.max_retries},
+    }
+    if context.validation_error is not None:
+        request["failed_revision"] = context.validation_error
+    return json.dumps(request, ensure_ascii=False)
+
+
 def check_reflection(result: ReflectionResult, vocabulary: Vocabulary, proposed: ClassifiedLine) -> ReflectionResult:
     """Return a reviewer's result when it is usable.
 

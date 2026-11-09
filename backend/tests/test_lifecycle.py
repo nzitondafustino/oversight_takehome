@@ -66,7 +66,7 @@ def test_a_compiled_draft_holds_the_compilers_candidate_and_its_hashes(client):
     assert (record["version"], record["status"], record["source"]["kind"]) == (1, "draft", "policy_compiler")
     assert record["artifact_sha256"] == REPOSITORY_RULESET  # the candidate these documents compile to
     compilation = record["compilation"]
-    assert (compilation["recording_set"], compilation["reading_kind"], compilation["ready_for_approval"], compilation["comparisons_needing_review"]) == ("live", "model", False, 4)
+    assert (compilation["recording_set"], compilation["reading_kind"], compilation["ready_for_approval"], compilation["comparisons_needing_review"]) == ("live", "model", False, 1)
     assert [document["filename"] for document in compilation["documents"]] == [document["filename"] for document in POLICY_DOCUMENTS]
     assert [(event["from_status"], event["to_status"]) for event in record["transitions"]] == [(None, "draft")]
 
@@ -136,9 +136,9 @@ def test_the_compiler_decides_whether_a_review_can_be_accepted(client):
     decisions = review_decisions(client, record)
     review = f"/v1/rulesets/{record['ruleset_id']}/review"
     attempts = {
-        "no decisions, while four fields await one": None,
-        "one field left undecided": decisions[1:],
-        "a regex reading where there is none": [{**decision, "action": "accept_regex"} for decision in decisions],
+        "no decisions, while one field awaits one": None,
+        "a reading that leaves out a limit the executable rule holds": [{**decision, "action": "accept_llm"} for decision in decisions],
+        "a confirmation of a field the readings disagree on": [{**decision, "action": "confirm"} for decision in decisions],
     }
     for label, attempt in attempts.items():
         response = client.post(review, json={"actor": "r.eviewer", "decision": "accepted", "decisions": attempt})
@@ -178,7 +178,7 @@ def test_an_approval_that_does_not_cover_this_version_is_refused(client):
     client.post(f"/v1/rulesets/{record['ruleset_id']}/review", json={"actor": "r.eviewer", "decision": "accepted", "decisions": decisions})
     good = _core_approval()
     forged = {
-        "an approval of a different review": _core_approval(change={"action": "accept_llm"}),  # MCC-03: the LLM's reading instead
+        "an approval of a different review": _core_approval(change={"rationale": "another reviewer's reason"}),  # TIME-03, decided with another rationale
         "an approval of the unreviewed extraction": {**good, "output_sha256": hashlib.sha256(b"extraction").hexdigest()},
         "a candidate hash that is not this version": {**good, "ruleset_sha256": "0" * 64},
     }

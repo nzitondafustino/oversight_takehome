@@ -14,7 +14,6 @@ The harness reproduces the frozen Module 10.6 benchmarks, with the figures later
 
 | Input | Identity |
 |---|---|
-| dataset_customer | `northwind` |
 | dataset_receipts | `32` |
 | dataset_sha256 | `a277d73b45a8296389099abdb94b152aa89e99d71d141db47fdd7402f6489dff` |
 | fields_sha256 | `8c0331daf2b771bae7d47d5cea5762424152043980e3119c1fbb65c2c50b43c4` |

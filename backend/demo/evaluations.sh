@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Replay-only evaluation demo: calls no paid model. Run it with the stack up (docker compose up -d from backend/).
+# Replay-only evaluation demo: calls no paid model. Run it with the stack up (docker compose up -d from the repository root).
 # Needs curl and jq. Reads the repository's files beside this script; writes its working files to the current folder.
 #
 # 1. Publishes a ruleset version through the lifecycle (the README's end-to-end demo, steps 1 to 5), unless

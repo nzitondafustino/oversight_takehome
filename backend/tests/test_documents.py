@@ -90,9 +90,15 @@ def test_an_unknown_document_is_not_found_and_takes_no_revision(client):
     assert client.get(f"/v1/documents/{created['document_id']}").json() == created
 
 
-def test_a_stored_revision_that_no_longer_matches_its_hash_is_refused(make_client):
+def test_a_stored_revision_that_no_longer_matches_its_hash_is_refused(make_client, s3):
     mongo = mongomock.MongoClient(tz_aware=True)
     client = make_client(mongo=mongo)
     created = _create(client).json()
-    mongo["expense_api"]["documents"].update_one({"document_id": created["document_id"]}, {"$set": {"content": "edited behind the API"}})
+    stored = mongo["expense_api"]["documents"].find_one({"document_id": created["document_id"]})["storage"]
+    # The S3 object edited behind the API: its text no longer matches the hash MongoDB recorded.
+    s3.put_object(Bucket=stored["bucket"], Key=stored["key"], Body=b"edited behind the API")
     assert _code(client.get(f"/v1/documents/{created['document_id']}")) == (500, "integrity_error")
+    # Or the recorded hash edited: the same refusal, whichever side changed.
+    other = _create(client).json()
+    mongo["expense_api"]["documents"].update_one({"document_id": other["document_id"]}, {"$set": {"content_sha256": "0" * 64}})
+    assert _code(client.get(f"/v1/documents/{other['document_id']}")) == (500, "integrity_error")

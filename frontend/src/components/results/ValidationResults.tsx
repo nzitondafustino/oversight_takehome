@@ -1,6 +1,7 @@
 import { CircleDashed, Download, History, Loader2 } from "lucide-react";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { exportViewPdf } from "@/lib/exportViewPdf";
 import { downloadFile } from "@/api/client";
 import { runExportUrl } from "@/api/endpoints";
 import { useRunJson } from "@/api/queries";
@@ -18,15 +19,16 @@ import { filterResults, ReceiptResultsList } from "./ReceiptResultsList";
 import { sortByDisposition } from "./sort";
 import { setupFacts } from "@/pages/validate/config";
 
-/** JSON and CSV exports of one stored record, downloaded through downloadFile so an API refusal is shown, not saved. */
-export function ExportButtons({ name, urlFor, disabledReason }: { name: string; urlFor: (format: "json" | "csv") => string; disabledReason?: string }) {
-  const [busy, setBusy] = useState<"json" | "csv" | null>(null);
+/** PDFs capture the current UI; JSON/CSV download the complete saved record from the API. */
+export function ExportButtons({ name, urlFor, disabledReason, formats = ["json", "csv", "pdf"] }: { name: string; urlFor: (format: "json" | "csv" | "pdf") => string; disabledReason?: string; formats?: readonly ("json" | "csv" | "pdf")[] }) {
+  const [busy, setBusy] = useState<"json" | "csv" | "pdf" | null>(null);
   const [error, setError] = useState<unknown>(null);
-  async function download(format: "json" | "csv") {
+  async function download(format: "json" | "csv" | "pdf") {
     setBusy(format);
     setError(null);
     try {
-      await downloadFile(urlFor(format), `${name}.${format}`);
+      if (format === "pdf") await exportViewPdf(name);
+      else await downloadFile(urlFor(format), `${name}.${format}`);
     } catch (caught) {
       setError(caught);
     } finally {
@@ -34,10 +36,10 @@ export function ExportButtons({ name, urlFor, disabledReason }: { name: string; 
     }
   }
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex gap-1.5">
-        {(["json", "csv"] as const).map((format) => (
-          <Button key={format} type="button" variant="outline" size="sm" onClick={() => void download(format)} disabled={busy !== null || Boolean(disabledReason)} title={disabledReason}>
+    <div data-pdf-exclude className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-1.5">
+        {formats.map((format) => (
+          <Button key={format} type="button" variant="outline" size="sm" onClick={() => void download(format)} disabled={busy !== null || Boolean(disabledReason)} title={disabledReason ?? (format === "pdf" ? "Save the current view, with its charts and filters, as one continuous PDF page" : undefined)}>
             {busy === format ? <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden /> : <Download aria-hidden />}
             Export {format.toUpperCase()}
           </Button>
@@ -108,7 +110,7 @@ function RunDetails({ run, historyLink }: { run: RunResponse; historyLink: boole
         </Fact>
       </dl>
       <div className="mt-4 flex flex-wrap items-start gap-2 border-t border-border pt-3">
-        <ExportButtons name={run.run_id} urlFor={(format) => runExportUrl(run.run_id, format)} />
+        <ExportButtons name={run.run_id} urlFor={(format) => runExportUrl(run.run_id, format)} formats={["json", "csv"]} />
         {historyLink ? (
           <Button asChild variant="ghost" size="sm">
             <Link to={`/runs/${encodeURIComponent(run.run_id)}`}>
@@ -213,6 +215,7 @@ export function ValidationResults({ run, inputs, historyLink = true }: { run: Ru
   const header = (onFilter?: (value: Disposition | "all") => void) => (
     <Card className="space-y-3 px-5 py-4">
       <DispositionSummary run={run} onFilter={onFilter} activeFilter={onFilter ? disposition : undefined} />
+      <ExportButtons name={run.run_id} urlFor={(format) => runExportUrl(run.run_id, format)} formats={["pdf"]} />
       <RunDetails run={run} historyLink={historyLink} />
     </Card>
   );

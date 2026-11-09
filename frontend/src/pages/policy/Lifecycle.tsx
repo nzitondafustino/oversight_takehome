@@ -1,44 +1,45 @@
-import { Check, CircleDot, Loader2, Rocket, Send, ShieldCheck, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Loader2, Rocket, Send, ShieldCheck, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ApiError } from "@/api/client";
-import { useBackends, useRulesetComparisons, useRulesetTransition } from "@/api/queries";
-import type { PublishMode, RulesetDetail, RulesetStatus, RulesetTransition } from "@/api/types";
+import { useBackends, useExtractionBaseline, useRulesetComparisons, useRulesetTransition } from "@/api/queries";
+import type { PublishMode, RulesetDetail, RulesetTransition } from "@/api/types";
 import { ErrorState, LoadingRows } from "@/components/states/states";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/misc";
 import { formatDateTime } from "@/lib/format";
-import { cn } from "@/lib/utils";
 import { SELECT } from "@/pages/evaluations/display";
 import { ActorField, useActor } from "./actor";
 import { DecisionForm } from "./DecisionForm";
+import { changeTexts } from "./review/issues";
+import { rulesOf } from "./RulesView";
 
-const STEPS: { status: RulesetStatus; label: string }[] = [
-  { status: "draft", label: "Draft" },
-  { status: "in_review", label: "In review" },
-  { status: "approved", label: "Approved" },
-  { status: "published", label: "Published" },
-];
+function titlesOf(version: RulesetDetail): Record<string, string> {
+  return Object.fromEntries(rulesOf(version).map((rule) => [rule.rule_id, rule.title ?? rule.rule_id]));
+}
 
-export function LifecycleSteps({ version }: { version: RulesetDetail }) {
-  const at = STEPS.findIndex((step) => step.status === version.status);
+/** What approving this version authorizes: each rule it changes from the published version. No earlier approval covers it. */
+function ApprovalScope({ extractionId, titles }: { extractionId: string; titles: Record<string, string> }) {
+  const baseline = useExtractionBaseline(extractionId).data;
+  if (!baseline?.published) return null;
+  const rules = [...new Set((baseline.rule_changes ?? []).map((change) => change.rule_id))];
+  const name = `${baseline.published.name} v${baseline.published.version}`;
   return (
-    <ol className="flex flex-wrap items-center gap-1 text-xs" aria-label="Lifecycle">
-      {STEPS.map((step, index) => (
-        <li key={step.status} className="flex items-center gap-1" aria-current={index === at ? "step" : undefined}>
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium",
-              index < at ? "border-status-pass-border bg-status-pass-soft text-status-pass" : index === at ? "border-primary bg-primary-soft text-primary" : "border-border text-subtle-foreground",
-            )}
-          >
-            {index < at ? <Check className="size-3" aria-hidden /> : index === at ? <CircleDot className="size-3" aria-hidden /> : null}
-            {step.label}
-          </span>
-          {index < STEPS.length - 1 ? <span aria-hidden className="text-subtle-foreground">→</span> : null}
-        </li>
-      ))}
-    </ol>
+    <div className="rounded-md border border-border px-3 py-2 text-[13px]" role="region" aria-label="What this approval authorizes">
+      <p className="font-medium">What this approval authorizes</p>
+      {rules.length ? (
+        <ul className="mt-0.5 space-y-0.5">
+          {rules.map((ruleId) => (
+            <li key={ruleId}>
+              <span className="font-mono text-xs">{ruleId}</span>{titles[ruleId] ? ` ${titles[ruleId]}` : ""}: {changeTexts(ruleId, baseline).map((change) => `${change.label} ${change.before} → ${change.after}`).join("; ")}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-muted-foreground">No rule does anything different from {name}.</p>
+      )}
+      <p className="text-xs text-muted-foreground">Compared with {name}, the published version. Its approval does not cover these changes: each version is approved for exactly what it does.</p>
+    </div>
   );
 }
 
@@ -70,7 +71,7 @@ function Step({ title, children }: { title: string; children: ReactNode }) {
  * The one step a version's state allows, sent through the API, which checks it again and asks the compiler at
  * approval and publication. Nothing here moves a version the API refuses, and a refusal is shown as given.
  */
-export function LifecycleActions({ version }: { version: RulesetDetail }) {
+export function LifecycleActions({ version, canPublish = true }: { version: RulesetDetail; /** The API's readiness: Publish is offered only when it says nothing stands in the way. */ canPublish?: boolean }) {
   const transition = useRulesetTransition();
   const backends = useBackends();
   const [actor, setActor] = useActor();
@@ -106,7 +107,7 @@ export function LifecycleActions({ version }: { version: RulesetDetail }) {
           {compiled === null
             ? "An uploaded artifact can be reviewed, but no approval can ever cover it."
             : compiled.prepared_review
-              ? `Accepting reuses the decisions of extraction review ${compiled.prepared_review.review_id}; the compiler checks them again.`
+              ? `Accepting uses the ${(compiled.prepared_review.decisions ?? []).length} ${(compiled.prepared_review.decisions ?? []).length === 1 ? "decision" : "decisions"} recorded in this compilation's review. The compiler checks them again before accepting.`
               : compiled.ready_for_approval
                 ? "The compiler's readings agree on every field: no decisions are needed."
                 : "The compiler needs a decision for each field below before it accepts this review."}
@@ -157,8 +158,9 @@ export function LifecycleActions({ version }: { version: RulesetDetail }) {
         <p className="text-xs text-muted-foreground">
           The compiler rebuilds the candidate from the stored documents and decisions, and approves only if it would publish exactly this artifact.
         </p>
+        {version.compilation?.extraction_id && !version.edits ? <ApprovalScope extractionId={version.compilation.extraction_id} titles={titlesOf(version)} /> : null}
         {blocked ? (
-          <p className="text-xs text-status-review-text">{blocked}</p>
+          <div className="space-y-2"><p className="text-xs text-status-review-text">{blocked}</p>{compiled === null ? <Button asChild size="sm"><Link to="/policies?tab=documents">Compile from policy documents</Link></Button> : null}</div>
         ) : (
           <>
             <label htmlFor="approve-mode" className="block text-xs font-medium">
@@ -180,6 +182,12 @@ export function LifecycleActions({ version }: { version: RulesetDetail }) {
             </Button>
           </>
         )}
+      </Step>
+    );
+  } else if (version.status === "approved" && !canPublish) {
+    body = (
+      <Step title="Publish">
+        <p className="text-xs text-status-review-text">Publication is blocked: resolve what is listed above first. Publishing still rebuilds the version and checks its approval.</p>
       </Step>
     );
   } else if (version.status === "approved") {
@@ -218,7 +226,6 @@ export function LifecycleActions({ version }: { version: RulesetDetail }) {
 
   return (
     <div className="space-y-3">
-      <LifecycleSteps version={version} />
       {version.status !== "published" ? <ActorField actor={actor} setActor={setActor} id="lifecycle-actor" /> : null}
       {body}
       {transition.isError ? <Refusal error={transition.error} /> : null}

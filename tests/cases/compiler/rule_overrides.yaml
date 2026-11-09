@@ -1,0 +1,125 @@
+# Reviewed changes to the hand-written rule logic (compiler/overrides.py), given to PolicyCompiler with the real
+# policy documents and their recorded readings, signed off as a reviewer would.
+suite: policy_compiler
+
+rule_overrides_accepted:
+  # Logic the policy text does not state: the compiler builds and validates it, and the candidate is a new one.
+  - id: a clearer rule title
+    overrides: [{rule_id: ALC-01, set: {title: Alcohol needs an entertainment context}, reviewer: r.eviewer, rationale: clearer for reviewers}]
+    expected: {rule_id: ALC-01, field: title, value: Alcohol needs an entertainment context}
+  - id: a rule's condition
+    overrides: [{rule_id: REG-01, set: {applies_when: {op: in, field: receipt.entity, values: [APAC]}}, reviewer: r.eviewer, rationale: one entity as a list}]
+    expected: {rule_id: REG-01, field: applies_when, value: {op: in, field: receipt.entity, values: [APAC]}}
+  - id: the disposition of each severity
+    overrides: [{rule_id: EXC-01, set: {params: {flag_severities: {type: set, values: [critical, high]}, review_severities: {type: set, values: [low, medium]}}}, reviewer: r.eviewer, rationale: medium goes to review}]
+    expected: {rule_id: EXC-01, field: params, value: {flag_severities: {type: set, values: [critical, high]}, review_severities: {type: set, values: [low, medium]}}}
+  - id: a merchant code list
+    overrides: [{rule_id: ALC-01, set: {params: {on_premises: {type: set, values: ["5812", "5813"]}}}, reviewer: r.eviewer, rationale: hotels sell alcohol at retail}]
+    expected: {rule_id: ALC-01, field: params.on_premises, value: {type: set, values: ["5812", "5813"]}}
+
+rule_overrides_blocked:
+  # Built, then refused by the compiler's own faithful check: a rule's limits and severity are what its clause states.
+  - id: a cap the policy does not state
+    overrides: [{rule_id: ALC-02, set: {params: {cap_usd: {type: number, value: "40", unit: usd}}}, reviewer: r.eviewer, rationale: raise the cap}]
+    expected:
+      blocker: "validation: error faithful: ALC-02: cap_usd is 40 usd, not in its clause"
+      discrepancies: [{rule_id: ALC-02, policy_doc: meals-and-entertainment-policy.md, field: thresholds, stated: [{value: "30", unit: usd}], compiled: {cap_usd: {value: "40", unit: usd}}}]
+  - id: a severity the policy does not state
+    overrides: [{rule_id: ALC-02, set: {severity: high}, reviewer: r.eviewer, rationale: stricter}]
+    expected:
+      blocker: "validation: error faithful: ALC-02: severity ['high'], its clause states ['medium']"
+      discrepancies: [{rule_id: ALC-02, policy_doc: meals-and-entertainment-policy.md, field: severities, stated: [medium], compiled: [high]}]
+
+rule_overrides_refused:
+  - {id: a field that is fixed, overrides: [{rule_id: ALC-01, set: {source_quote: anything}, reviewer: r, rationale: x}], expected: "these fields cannot be overridden: \\['source_quote'\\]"}
+  - {id: a rule's identity, overrides: [{rule_id: ALC-01, set: {rule_id: ALC-09}, reviewer: r, rationale: x}], expected: "cannot be overridden"}
+  - {id: an unknown rule, overrides: [{rule_id: ZZZ-01, set: {title: x}, reviewer: r, rationale: x}], expected: "ZZZ-01: no rule with this ID to override"}
+  - {id: a new param, overrides: [{rule_id: ALC-02, set: {params: {extra: {type: number, value: "1", unit: usd}}}, reviewer: r, rationale: x}], expected: "no param 'extra' to change"}
+  - {id: a param's type, overrides: [{rule_id: ALC-02, set: {params: {cap_usd: {type: set, values: ["30"]}}}, reviewer: r, rationale: x}], expected: "must stay a number param"}
+  - {id: a param's unit, overrides: [{rule_id: ALC-02, set: {params: {cap_usd: {type: number, value: "30", unit: eur}}}, reviewer: r, rationale: x}], expected: "must keep its unit, usd"}
+  - {id: no rationale, overrides: [{rule_id: ALC-01, set: {title: x}, reviewer: r}], expected: "rationale: Field required"}
+  - {id: a rule twice, overrides: [{rule_id: ALC-01, set: {title: x}, reviewer: r, rationale: x}, {rule_id: ALC-01, set: {title: y}, reviewer: r, rationale: x}], expected: "overridden more than once"}
+  - {id: an outcome that does not exist, overrides: [{rule_id: ALC-01, set: {outcome: warn}, reviewer: r, rationale: x}], expected: "outcome must be exception or review_signal"}
+
+# A document revision read with the rule logic of the version before it. The revised text's reading is the recorded
+# reading of the original with `reading` in place of its rule's thresholds: an authored simulation, never model output.
+# expected: whether a candidate is built, and each rule that does not do what its (revised) clause states.
+amendments:
+  - id: a policy that now asks for three receipts, compiled with logic that checks two
+    document: transaction-pattern-rules.md
+    replace: ["Two or more receipts", "Three or more receipts"]
+    reading: {rule_id: TIME-03, thresholds: [{value: "3", unit: count}, {value: "50", unit: usd}, {value: "75", unit: usd}]}
+    overrides: []
+    expected:
+      candidate: false
+      discrepancies: [{rule_id: TIME-03, policy_doc: transaction-pattern-rules.md, field: thresholds, stated: [{value: "3", unit: count}, {value: "50", unit: usd}, {value: "75", unit: usd}], compiled: {min_receipts: {value: "2", unit: count}, itemization_usd: {value: "75", unit: usd}, gift_cap_usd: {value: "50", unit: usd}}}]
+  - id: the same amendment, with the rule's param corrected to what the policy now states
+    document: transaction-pattern-rules.md
+    replace: ["Two or more receipts", "Three or more receipts"]
+    reading: {rule_id: TIME-03, thresholds: [{value: "3", unit: count}, {value: "50", unit: usd}, {value: "75", unit: usd}]}
+    overrides: [{rule_id: TIME-03, set: {params: {min_receipts: {type: number, value: "3", unit: count}}}, reviewer: r.eviewer, rationale: the policy now asks for three receipts}]
+    expected: {candidate: true, discrepancies: []}
+  - id: a correction the amended policy does not state is still refused
+    document: transaction-pattern-rules.md
+    replace: ["Two or more receipts", "Three or more receipts"]
+    reading: {rule_id: TIME-03, thresholds: [{value: "3", unit: count}, {value: "50", unit: usd}, {value: "75", unit: usd}]}
+    overrides: [{rule_id: TIME-03, set: {params: {min_receipts: {type: number, value: "4", unit: count}}}, reviewer: r.eviewer, rationale: probe}]
+    expected:
+      candidate: false
+      discrepancies: [{rule_id: TIME-03, policy_doc: transaction-pattern-rules.md, field: thresholds, stated: [{value: "3", unit: count}, {value: "50", unit: usd}, {value: "75", unit: usd}], compiled: {min_receipts: {value: "4", unit: count}, itemization_usd: {value: "75", unit: usd}, gift_cap_usd: {value: "50", unit: usd}}}]
+  - id: a revision of unrelated text leaves every rule as it was
+    document: transaction-pattern-rules.md
+    replace: ["Transaction times are recorded in local time", "All transaction times are recorded in local time"]
+    reading: null
+    overrides: []
+    expected: {candidate: true, discrepancies: []}
+  - id: a reworded clause the rule logic still quotes the old words of
+    document: regional-addendum.md
+    replace: ["report REG-01 instead of those three", "report REG-01 in place of those three"]
+    reading: null
+    overrides: []
+    expected:
+      candidate: false
+      discrepancies: [{rule_id: REG-01, policy_doc: regional-addendum.md, field: source_quote, stated: "Alcohol is **never** reimbursable for APAC-entity employees, including\nwithin client entertainment. This overrides ALC-01 and ALC-02: where those rules would have\npermitted alcohol with an attendee count, REG-01 still makes it a **high** exception. For APAC employees REG-01 replaces ALC-01, ALC-02 and\nALC-03: report REG-01 in place of those three. Rules about the merchant, such as MCC-01, still apply.", compiled: report REG-01 instead of those three}]
+
+additions:
+  # A revision adds a clause under a new rule ID. Nothing implements it: the build stops and says what the clause
+  # states, so a reviewer can write its rule as an addition, which the compiler builds and checks like any other.
+  - id: a new clause no rule implements
+    document: transaction-pattern-rules.md
+    append: "\n\n**TIME-05 — Large weekend purchase.** A receipt over $500 dated on a weekend raises a **review signal**.\n"
+    reading: {rule_id: TIME-05, title: Large weekend purchase, section: null, severities: [], review_signal: true, thresholds: [{value: "500", unit: usd}], references: [], quote: "A receipt over $500 dated on a weekend"}
+    overrides: []
+    expected:
+      candidate: false
+      discrepancies: [{rule_id: TIME-05, policy_doc: transaction-pattern-rules.md, field: rule, compiled: null, stated: {title: Large weekend purchase, text: "A receipt over $500 dated on a weekend raises a **review signal**.", severities: [], review_signal: true, thresholds: [{value: "500", unit: usd}]}}]
+  - id: the new clause with the rule a reviewer adds for it
+    document: transaction-pattern-rules.md
+    append: "\n\n**TIME-05 — Large weekend purchase.** A receipt over $500 dated on a weekend raises a **review signal**.\n"
+    reading: {rule_id: TIME-05, title: Large weekend purchase, section: null, severities: [], review_signal: true, thresholds: [{value: "500", unit: usd}], references: [], quote: "A receipt over $500 dated on a weekend"}
+    overrides:
+      - rule_id: TIME-05
+        add: true
+        set: {outcome: review_signal, scope: receipt, source_quote: "A receipt over $500 dated on a weekend", params: {total_usd: {type: number, value: "500", unit: usd}}, applies_when: {op: gt, field: receipt.total_amount_usd, value: {param: total_usd}}}
+        reviewer: r.eviewer
+        rationale: the revised policy adds TIME-05
+    expected: {candidate: true, discrepancies: []}
+  - id: an added rule with a limit its clause does not state
+    document: transaction-pattern-rules.md
+    append: "\n\n**TIME-05 — Large weekend purchase.** A receipt over $500 dated on a weekend raises a **review signal**.\n"
+    reading: {rule_id: TIME-05, title: Large weekend purchase, section: null, severities: [], review_signal: true, thresholds: [{value: "500", unit: usd}], references: [], quote: "A receipt over $500 dated on a weekend"}
+    overrides:
+      - rule_id: TIME-05
+        add: true
+        set: {outcome: review_signal, scope: receipt, source_quote: "A receipt over $500 dated on a weekend", params: {total_usd: {type: number, value: "400", unit: usd}}, applies_when: {op: gt, field: receipt.total_amount_usd, value: {param: total_usd}}}
+        reviewer: r.eviewer
+        rationale: probe
+    expected:
+      candidate: false
+      discrepancies: [{rule_id: TIME-05, policy_doc: transaction-pattern-rules.md, field: thresholds, stated: [{value: "500", unit: usd}], compiled: {total_usd: {value: "400", unit: usd}}}]
+
+additions_refused:
+  - {id: a rule that already exists, overrides: [{rule_id: ALC-01, add: true, set: {outcome: exception, scope: receipt, source_quote: x}, reviewer: r, rationale: x}], expected: "ALC-01: already has a rule: change it rather than add one"}
+  - {id: an addition without its quote, overrides: [{rule_id: ZZZ-01, add: true, set: {outcome: exception, scope: receipt}, reviewer: r, rationale: x}], expected: "a new rule needs \\['source_quote'\\]"}
+  - {id: an addition with an unknown scope, overrides: [{rule_id: ZZZ-01, add: true, set: {outcome: exception, scope: line, source_quote: x}, reviewer: r, rationale: x}], expected: "scope must be item or receipt"}
+  - {id: an addition with no clause of its own, overrides: [{rule_id: ZZZ-01, add: true, set: {outcome: review_signal, scope: receipt, source_quote: x, applies_when: {op: eq, field: receipt.itemized, value: false}}, reviewer: r, rationale: x}], expected: "build failed: ZZZ-01: no clause with the ID ZZZ-01"}

@@ -18,7 +18,7 @@ from expense_validator import (
     ValidatorError,
     ValidatorSettings,
 )
-from expense_validator.config import canonical_backend
+from expense_validator.config import LANGGRAPH, canonical_backend
 from openrouter.errors import OpenRouterError
 
 import expense_api
@@ -51,7 +51,7 @@ class ValidationService:
         replay_set = self._authorize(request)
         record = self.rulesets.get(request.ruleset_id)
         self._check_publication(record, request.preview)
-        validator = self._validator(request.execution_mode, replay_set, self.store.path(record))
+        validator = self._validator(request.execution_mode, replay_set, self.store.path(record), self.store.policy_docs(record, self.rulesets.compilation.documents))
         started, clock = now(), time.perf_counter()
         batch = self._run(validator, request)
         duration_ms, completed = round((time.perf_counter() - clock) * 1000), now()
@@ -98,12 +98,12 @@ class ValidationService:
     def _check_publication(self, record: dict, preview: bool) -> None:
         check_publication(self.settings, record, preview)
 
-    def _validator(self, mode: str, replay_set: str | None, ruleset_path: Path) -> ExpenseValidator:
+    def _validator(self, mode: str, replay_set: str | None, ruleset_path: Path, policy_docs_path: Path | None = None) -> ExpenseValidator:
         """A new validator for this request alone, reading exactly the stored ruleset."""
         cache_dir = self.settings.replay_sets[replay_set] if mode == "replay" else self.settings.live_cache_dir
         try:
             core = ValidatorSettings.from_config(self.settings.core_config, mode=mode, cache_dir=cache_dir)
-            return self.build_validator(core.model_copy(update={"ruleset_path": ruleset_path}))
+            return self.build_validator(core.model_copy(update={"ruleset_path": ruleset_path, **({"policy_docs_path": policy_docs_path} if policy_docs_path is not None else {})}))
         except ConfigurationError as error:
             if mode == "live":
                 raise ApiError(503, "live_inference_unavailable", str(error)) from None
@@ -185,6 +185,7 @@ def authorize_classification(settings: Settings, selection, mode: str, receipt_c
         first = mismatches[0]
         raise ApiError(422, "model_adapter_mismatch", f"{first['model']} cannot run on the {first['backend']} adapter{first['where']}: it needs {' or '.join(first['compatible']) or 'no registered adapter'}",
                        {"mismatches": [{key: item[key] for key in ("model", "backend", "node", "compatible")} for item in mismatches]})
+    _check_reflection_limits(settings, selection)
     if selection.translation_model is not None and not is_chat_model(selection.translation_model):
         # The translator sends chat completions: a model that never answers them would fail every translation it is sent.
         raise ApiError(422, "translation_model_unsupported", f"{selection.translation_model} does not answer chat completions, so it cannot translate")
@@ -207,6 +208,29 @@ def authorize_classification(settings: Settings, selection, mode: str, receipt_c
     if name not in settings.replay_sets:
         raise ApiError(422, "unknown_replay_set", f"no replay set {name!r}", {"available": sorted(settings.replay_sets)})
     return name
+
+
+def _check_reflection_limits(settings: Settings, selection) -> None:
+    """Refuse LangGraph reflection beyond the deployment's maximums, as the request and config.yaml combine.
+
+    A configuration the core cannot read or merge is left for the core to refuse, with its own reason.
+    """
+    try:
+        core = ValidatorSettings.from_config(settings.core_config, mode="deterministic")
+    except ConfigurationError:
+        return
+    if canonical_backend(selection.backend or core.classification_backend) != LANGGRAPH:
+        return
+    try:
+        reflection = core.langgraph.merged(selection.langgraph).reflection
+    except ValueError:
+        return
+    limits = {"max_retries": settings.max_reflection_retries, "max_total_calls_per_line": settings.max_reflection_calls_per_line}
+    asked = {"max_retries": reflection.max_retries, "max_total_calls_per_line": reflection.max_total_calls_per_line}
+    over = sorted(name for name in limits if asked[name] > limits[name])
+    if reflection.enabled and over:
+        raise ApiError(422, "reflection_limit_exceeded", f"reflection asks for more than this deployment allows: {', '.join(f'{name} {asked[name]} > {limits[name]}' for name in over)}",
+                       {"limits": limits, "requested": asked})
 
 
 def check_publication(settings: Settings, record: dict, preview: bool) -> None:

@@ -1,5 +1,7 @@
+import { RecordActions } from "@/components/management/RecordActions";
 import { ArrowLeft, Ban, Loader2, RadioTower, RefreshCw } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { evaluationExportUrl } from "@/api/endpoints";
 import { useCancelEvaluation, useEvaluation, useEvaluationMetrics } from "@/api/queries";
 import { isActiveEvaluation, type EvaluationDetail } from "@/api/types";
@@ -36,7 +38,7 @@ function Overview({ job }: { job: EvaluationDetail }) {
               {job.lease?.heartbeat_at ? ` · worker heartbeat ${formatRelative(job.lease.heartbeat_at)}` : job.status === "queued" ? " · waiting for a worker" : ""}
             </span>
           ) : (
-            "Finished: this record no longer changes."
+            "Finished: execution results are final."
           )}
           {progress.failed_receipts ? <span className="text-status-flag-text"> · {progress.failed_receipts} receipts failed</span> : null}
         </p>
@@ -77,9 +79,11 @@ function Overview({ job }: { job: EvaluationDetail }) {
 }
 
 export function EvaluationDetailPage() {
+  const navigate = useNavigate();
   const { evaluationId = "" } = useParams();
   const job = useEvaluation(evaluationId);
-  const metrics = useEvaluationMetrics(evaluationId);
+  const [scoring, setScoring] = useState<"latest" | "original">("latest");
+  const metrics = useEvaluationMetrics(evaluationId, scoring);
   const cancel = useCancelEvaluation();
 
   const back = (
@@ -104,6 +108,7 @@ export function EvaluationDetailPage() {
         actions={
           <>
             {back}
+            <RecordActions path={`/v1/evaluations/${encodeURIComponent(current.evaluation_id)}`} title="evaluation" field="label" value={current.label} deleteDisabled={active} onDeleted={() => navigate("/evaluations")} />
             {active ? (
               <Button
                 type="button"
@@ -124,7 +129,7 @@ export function EvaluationDetailPage() {
         <EvaluationStatusBadge status={current.status} />
         <ModeBadge mode={current.execution_mode} preview={current.preview} />
         <div className="ml-auto">
-          <ExportButtons name={current.evaluation_id} urlFor={(format) => evaluationExportUrl(current.evaluation_id, format)} disabledReason={active ? "Exports are available once the evaluation finishes" : undefined} />
+          <ExportButtons name={current.evaluation_id} urlFor={(format) => evaluationExportUrl(current.evaluation_id, format, scoring)} disabledReason={active ? "Exports are available once the evaluation finishes" : undefined} />
         </div>
       </div>
       {cancel.isError ? <ErrorState error={cancel.error} className="mb-4" /> : null}
@@ -152,7 +157,7 @@ export function EvaluationDetailPage() {
           ) : metrics.isError ? (
             <ErrorState error={metrics.error} onRetry={() => void metrics.refetch()} />
           ) : (
-            <MetricsView metrics={metrics.data} />
+            <MetricsView metrics={metrics.data} scoring={scoring} onScoring={setScoring} evaluationId={evaluationId} />
           )}
         </Section>
 

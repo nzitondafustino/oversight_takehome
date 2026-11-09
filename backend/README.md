@@ -13,6 +13,8 @@ policy document → extraction → review → approval → publication → expen
 - searches run history, explores and exports findings from the stored result, and reports which backends and catalog values the deployment supports
 - evaluates labelled datasets as background jobs, with quality metrics, spending per call, receipt and run, comparisons and exports: see [EVALUATIONS.md](EVALUATIONS.md)
 
+See [policy extraction modes](POLICY_EXTRACTION.md) for full, incremental and document-removal runs, automatic ID resolution, and publishing their new versions.
+
 ## Architecture
 
 ```text
@@ -69,6 +71,59 @@ POST /v1/rulesets {"extraction": {extraction_id, review_id}} ──▶ draft ver
   - `based_on_revision` makes a stale edit a 409 `revision_conflict`.
 - `GET /v1/documents` lists each document's latest revision, without its text. `GET /v1/documents/{id}?revision=` returns one revision with its exact text.
 
+### Describing documents
+
+Each document has an optional profile, the same for all its revisions: a `category` (`meals_entertainment`, `gifts_awards`, `approvals_exceptions`, `travel_regional`, `receipts_documentation`, `merchant_restrictions` or `technology_equipment`; `null` is unclassified), a `description`, and a `scope` of `regions`, `entities` and `expense_types`. It may be given at upload, and is changed with `PATCH /v1/documents/{id}/profile` (`actor` required; only the fields given change). It is kept in `document_profiles`, apart from the revisions: changing it never touches a revision's text, hash or S3 object, and a document never described, such as one stored before profiles existed, is simply unclassified. A category is chosen by a person, never inferred from a filename. Documents and their summaries carry the profile.
+
+### Duplicates
+
+`PATCH /v1/documents/{id}/profile` with `duplicate_of` marks a document a duplicate of another, and `null` restores it. It is profile metadata only: no revision, approval or S3 object is deleted or changed. It is accepted only when both latest revisions have the same SHA-256 (422 `not_identical` otherwise: documents that are only similar are compared, not merged), never for the document itself (422 `invalid_duplicate`), and one level deep: the kept document cannot itself be a duplicate, and a document others duplicate cannot become one (409 `duplicate_chain`). The library hides a duplicate only while its text is still identical to the kept copy.
+
+### Approving a document revision
+
+Each revision has its own approval: `draft` (every revision starts here, and none inherits another's approval), `needs_review`, or `approved`. `POST /v1/documents/{id}/revisions/{revision}/approval` takes `action` (`submit`: draft → needs review; `approve`: needs review → approved; `return_to_draft`, with a required `note`), `actor`, and `content_sha256`, which must be that revision's hash (409 `revision_mismatch` otherwise). The revision's text is read from storage and checked against its hash before any action. Steps are conditional on the status they expect, so two reviewers cannot both succeed (409 `approval_conflict`), and every step is appended to the revision's history with who (a claim), when, the note and the hash. `GET …/approval` returns the status and history; documents and summaries carry each revision's own `approval`. Document approval is separate from ruleset approval and publication: using a document in a published ruleset never approves it, and records from before approval existed are drafts.
+
+### Where a document's text is stored
+
+Each revision's Markdown is one object in Amazon S3, at `policy-documents/{document_id}/revisions/{revision}/document.md`. The object is private, encrypted server-side (SSE-S3, or SSE-KMS with `EXPENSE_API_S3_KMS_KEY_ID`) and typed `text/markdown; charset=utf-8`, and it is sent with its SHA-256 so S3 checks it on arrival. MongoDB keeps each revision's metadata and a `storage` reference (`provider`, `bucket`, `region`, `key`, and the `version_id` S3 returned), never the text. The API's responses are unchanged, and never include the reference.
+
+- **Writes are create-only** (`If-None-Match: *`): no revision's object is ever replaced. Of two uploads racing for one revision number, at most one writes the object, and the unique `(document_id, revision)` index allows one record: the other is a 409 `revision_conflict`.
+- **Partial failures.** A failed S3 write creates no record (503 `document_storage_unavailable`, naming the key and S3's error code, never a credential or the text). A failed MongoDB write deletes the object just written, unless a record may reference it: if MongoDB reports the write failed but made it, the request succeeds; if MongoDB cannot say, the object is kept and logged, and `--orphans` below reports it. An object an earlier failed attempt left is reused when it holds exactly the same text, so a retry succeeds.
+- **Reads** take the object from the record's own reference and check it against the recorded SHA-256 and size: a mismatch is a 500 `integrity_error`, a missing object a 500 `document_content_missing`, and a denied or unreachable S3 a 503 `document_storage_unavailable`. Extraction and compilation read documents only through this, so the compiler never knows about S3.
+- **Without a bucket** (`AWS_S3_BUCKET` unset), uploads and revisions are a 503, and records written before S3 storage are still read.
+- **Least privilege.** The API needs `s3:PutObject`, `s3:GetObject` (and `s3:GetObjectVersion` on a versioned bucket) and `s3:DeleteObject` on `arn:aws:s3:::BUCKET/policy-documents/*` and `arn:aws:s3:::BUCKET/ruleset-documents/*`; `--orphans` also needs `s3:ListBucket` on the bucket. Keep Block Public Access on. Credentials come from boto3's standard chain: in Docker, `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in the repository's `.env`.
+
+### Moving documents stored before S3
+
+Records written before S3 storage hold their text in MongoDB, and are read and checked as before until moved. Nothing moves them at startup. From the API's environment (in Docker, `docker compose exec api python -m expense_api.migrate_documents`):
+
+```sh
+python -m expense_api.migrate_documents            # a dry run: no S3 call, and nothing changed
+python -m expense_api.migrate_documents --apply    # move them
+python -m expense_api.migrate_documents --orphans  # S3 objects no record references: reported, never deleted
+```
+
+Each record's text must match its recorded hash, or it is reported (`hash_mismatch`) and left alone. Its object is written create-only, read back and verified, and only then is the record updated, atomically: the reference is set and the text removed in one update, with the ID, revision, timestamps and every other field unchanged. A run can be stopped at any point and run again: a moved record is no longer selected, and an object an interrupted run wrote is verified and reused, never duplicated. Output names records and keys, never text.
+
+### A compiled version's documents
+
+A version made by `compile` or from an extraction lists the documents it was compiled from in `compilation.documents`: `document_id`, `filename`, `sha256` (the compiler's hash of the text) and, from an extraction, `revision`. Each entry holds `size_bytes` and an S3 `storage` reference to the exact text, never the text:
+
+- From an extraction, an S3-backed revision's own object is referenced where it is, so nothing is copied, and several versions share it. Text sent inline, or a revision not yet moved to S3, is written create-only to `ruleset-documents/{ruleset_id}/documents/{sha256}.md`. The key names the version's ID, fixed before it is stored, because its number is assigned only as it is stored.
+- The objects are written before the version is stored. A failed write stores no version and removes what it wrote. A failed or lost version number removes the version's own objects, never a revision's. A store that MongoDB reports failed but made is the request's own.
+- Review, approval and publication rebuild the version from its references: each text is read back, checked against its hash, and given to the compiler as before, which must reproduce the stored extraction, ruleset and review hashes. A missing object is a 500 `document_content_missing`, and a changed one a 500 `integrity_error`. The compiler never knows where the text was kept.
+- The API shows each document as before, without text or reference.
+
+A version stored before this keeps the text in its entries, and is read and rebuilt as before, until it is moved:
+
+```sh
+python -m expense_api.migrate_rulesets            # a dry run: no S3 call, and nothing changed
+python -m expense_api.migrate_rulesets --apply    # move them
+python -m expense_api.migrate_rulesets --orphans  # ruleset-documents objects no version references: reported, never deleted
+```
+
+Each entry's text must match its `sha256`, or the version is reported (`inconsistent_snapshot`) and left exactly as it is, whatever its status. Each text is stored as a new version would store it, read back and compared byte for byte, and only then does one atomic update, made only while the entries are still exactly as read, replace them with their references. The artifact, its hash, the approval, status and timestamps are untouched, so a published version keeps its identity and approval, and rebuilds from the same documents. It can be stopped and run again.
+
 ### Extractions
 
 `POST /v1/documents/extractions` names exact `{document_id, revision}` pairs, one revision per document. Together they are the policy candidate. The backend loads those revisions and passes their original text to `PolicyCompiler.extract` as `PolicyDocumentInput`s. It never substitutes the repository's policy files.
@@ -96,6 +151,15 @@ Beside it, it stores:
 
 Nothing is truncated. `GET …/extractions/{id}` returns the summary and the fields a review must decide. `GET …/extractions/{id}/comparisons` pages through every comparison.
 
+Reviewing an extraction also has:
+
+- `GET /v1/documents/extractions/{id}/reviews/{review_id}`: a stored review with its decisions, to continue from it.
+- Change requests: `POST /v1/documents/extractions/{id}/change-requests` (`actor`, `comparison_id`, `requested_correction`, optional `comment`) records that one compared field should be corrected, with the rule, field, document and the requester's claimed name. `GET …/change-requests` lists them and `POST …/change-requests/{change_request_id}/resolve` (`actor`, `note`) closes one, once. A request rewrites nothing: no document, reading, review or version changes. While any is open, no version is made from the extraction (409 `changes_requested`, naming each), and no version made from it is approved. It is the reviewer's way to stop an extraction short of approval with a reason attached; the correction itself is a new revision and a new extraction.
+- Versions and amendments. A decision names one extraction (`extraction_sha256`), so none is ever applied to another: a new revision is a new extraction, decided again. `GET /v1/documents/extractions/{id}/baseline` sets the extraction beside the latest published version: `rule_changes` (each rule field the draft does differently, `before` published and `after` draft, including a rule only one has as field `rule`), `changed_clauses` (rules whose clause text changed) and `decisions`: each field the published version was approved with a decision for, `unchanged` when the clause text and both readings are the same (the reviewer may save that decision again for this extraction, explicitly) or `changed` (decide again). A draft rule that does not do what the current text states is not a reviewer's error: the extraction has no candidate and its summary lists `discrepancies` (the core's `RuleDiscrepancy`: `stated` beside `compiled`). The correction is `rule_overrides` on `POST /v1/documents/extractions` with an `actor`, each with a `rationale`: compiled in, validated against the text like the rule logic, stored with who and why, and carried into every version made from it, so approval and publication rebuild it exactly. A clause new to the documents that no rule implements is a discrepancy of field `rule` (`stated`: its title, text, severities, review signal and limits); a rule override with `add: true` writes its rule, giving also `scope`, `source_quote` and `params`, and the compiler checks it like any other. An earlier version's approval never covers a new version's artifact.
+- `GET /v1/documents/extractions/{id}/comparisons/{comparison_id}/source` (and `GET /v1/rulesets/{id}/comparisons/{comparison_id}/source` for a version's own snapshot) returns the field's document text with its location, verified rather than approximated: the revision's text must match its stored hash and the hash the compiler read, the comparison's `evidence` must match its `clause_hash`, and the evidence must occur exactly once, word for word. Then it gives the clause's `from_line` and `to_line`, the rule's heading line when the text confirms it, and `highlights`: each place inside the clause where a value only one reading has occurs as a whole number or phrase (or, for an unconfirmed field, each number the compiler saw). Otherwise `location` is null and `reason` says why.
+- A listed extraction carries `versions` (the ruleset versions made from it, with their status) and `open_change_requests`; a single one also carries `rule_titles`, each candidate rule's title.
+- Live extraction may name only a model in `policy_compiler.extraction_models` from `GET /v1/backends`: `EXPENSE_API_ALLOWED_EXTRACTION_MODELS`, or else the allowed models the compiler can send chat completions to, never a decision model such as Jev or a model allowed only for translation.
+
 `GET /v1/documents/extractions` lists extractions, newest first (`limit` up to 100, `offset`, and `document_id` for those that read a revision of one document). Each item is the stored summary with its reviews, without `review_required`: a list never reads the core's stored results, so `GET …/extractions/{id}` gives those fields.
 
 An extraction's `status` is what the compiler found:
@@ -104,6 +168,14 @@ An extraction's `status` is what the compiler found:
 - `ready_for_approval`: nothing awaits one
 
 It is never "approved": approval belongs to a ruleset version.
+
+### Extractions in the background
+
+`POST /v1/documents/extraction-jobs` takes the same body as `POST /v1/documents/extractions`, checks it at once (the mode, the model and every exact revision; a refusal is the same 4xx and stores nothing), and answers 202 with a job; `GET /v1/documents/extraction-jobs/{job_id}` follows it: `status` (`queued`, `running`, `succeeded`, `failed`), `progress` (`stage` `reading` or `building`, `done` of `total` documents, the `current` document), then `extraction_id`, or `error`. A live job reads the documents one at a time, so its progress names each; the core records every live reading and replays a recording it has, so the full extraction that follows calls no model again. Use it for live extraction: a synchronous request can outlast the frontend proxy's 120 s and fail as a 502 while the API is still working. The job runs in a thread of the API process; one that made no progress for 15 minutes (its process stopped) reports itself failed as `interrupted`, and is never retried automatically. Starting again reuses the readings already recorded, at no cost.
+
+### How each limit is applied
+
+An extraction's detail carries `rule_logic`: for each rule under review, its conditions (`applies_when`, `select`), its params, and `param_uses`, where each param is compared. A declarative rule compares a param in its own conditions (`in_conditions`). A helper compares its params in code, so the core describes each one (`expense_validator.policy.param_use`): what is measured, the comparison, what it applies to, and, for TIME-03, the rule whose threshold it is (`threshold_of`: DOC-01 for `itemization_usd`, GIFT-01 for `gift_cap_usd`). A core test fails if a helper param in the contracts has no description. The descriptions never change what the engine does.
 
 ### Reviews
 
@@ -127,6 +199,19 @@ Only a review the core reports `ready_for_approval` can become a candidate. One 
 - the prepared review
 
 It then enters the lifecycle below unchanged. Its lifecycle review may omit `decisions` to accept the prepared ones, which the compiler re-runs and must reproduce.
+
+## Policy compilation analytics
+
+Policy Management's **Analytics** tab shows spending and performance for the newest 100 stored extractions,
+with live/replay filtering and paginated details. New extractions expose an optional `analytics` object on both
+list and detail responses: elapsed compilation time (excluding queue wait), provider request time, live/failed
+calls, reused document readings, input/output tokens and exact provider-reported USD costs. Incomplete billing
+is labelled as a lower bound; missing usage is unknown, never free. Replay and cache hits make no new provider calls.
+
+Metrics are stored beside the signed compiler result, so they do not change extraction, review or approval
+hashes. Historical snapshots without telemetry remain readable and are excluded from measured totals. The view
+covers completed stored extractions, not failed jobs without a snapshot, human review time, publication or receipt
+validation costs. No historical spending or timing is fabricated.
 
 ## Ruleset lifecycle
 
@@ -156,6 +241,18 @@ Each transition is one conditional, atomic MongoDB update. It matches the versio
 - An edit is a new version: `POST /v1/rulesets` again. Give `based_on_version` to say which version the edit replaces. If another version was created since, the request is a 409 `version_conflict`, so two edits of one version can never both become the next.
 - The artifact, its hash, its source and its compilation are written once. A transition may set only `status`, `submitted_at`, `review`, `approved_at`, `approval_json`, `approval_reference`, `approval_mode`, `published_at` and `publication_mode`; the repository refuses anything else.
 - Approved and published versions accept no step that changes them. Publishing an already published version again returns it unchanged. Giving a different `approval_reference` is a 409 `publication_conflict`.
+
+### Editing rules: a reviewed override layer
+
+`POST /v1/rulesets/{id}/edits` changes the rules of a compiled version (any status) and stores the result as the next draft version of its name. The edited version never changes. The body is `{"actor", "rationale", "changes": [{"rule_id", "set": {...}}]}`. `set` may change only a rule's `title`, `outcome` (`exception` or `review_signal`), `severity`, `applies_when`, `select`, `waived_by_ref` (the required evidence) and `params` values; a param keeps its name, type and unit, and nothing else (ID, kind, policy document, quote, provenance) can change.
+
+The changes are not written into a stored artifact. They are the core's rule overrides (`expense_validator.compiler.overrides`), applied to `rules/rule_logic.yaml` before the compiler builds the candidate. So the new version is compiled again from the same document revisions and readings (replay, no model call, the same S3 objects), and the compiler validates it exactly as hand-written logic: the schema, the field catalog, the runtime and evidence checks, and the faithful check. A limit, severity or review signal the policy text does not state is refused (422 `rule_edit_invalid`, with each blocker and its `rule_id`); such a change needs a revision of the document instead. A malformed change is a 422 `invalid_rule_change`, a change to what the rule already is a 422 `no_change`, and an uploaded artifact a 409 `not_compiled`.
+
+The overrides are stored in `compilation.rule_overrides`, and every later rebuild (approval, publication) applies them again, so an approval binds the overridden artifact and its hash. The version's `edits` records each changed field before and after, who changed it and why, and the version it was based on; review decisions are carried over as the prepared review. The new version then goes through review, approval and publication like any other.
+
+### Readiness
+
+`GET /v1/rulesets/{id}/readiness` is the publication summary: `next_step` (`submit`, `review`, `approve`, `publish`, `none`), `rules_changed`, `review_remaining`, `validation_errors` (always 0: a stored version was validated), `approval`, `approval_mode`, `can_publish`, and `blockers`, each a plain message with the `rule_id` or `comparison_id` it concerns (an open change request, an undecided field, a rejected review). It changes nothing; `publish` still runs every safeguard itself.
 
 ### Schema-valid is not policy-approved
 
@@ -253,9 +350,9 @@ Filters combine, and a repeated filter means any of its values:
 
 The order is fixed: receipts in receipt ID order, then the kinds in the order above, then the core's own order. Uncertainty alone is `kind=uncertainty`.
 
-### Export: `GET /v1/runs/{run_id}/export?format=json|csv`
+### Export: `GET /v1/runs/{run_id}/export?format=json|csv|pdf`
 
-- `json`, the default, is the run exactly as `GET /v1/runs/{run_id}` returns it: the core's full result, dispositions, uncertainty, provenance and the ruleset reference. It is canonical JSON, with sorted keys, no extra spaces, UTF-8 not escaped, and a final newline.
+- `json`, the default, is `export_schema: "run-export/2"`: the run as `GET /v1/runs/{run_id}` describes it (ruleset reference, mode, classification, setup, execution), with `receipts` in place of the core's result. Each receipt is `ReceiptResult.to_record()`: exactly the brief's fields (`receipt_id`, `disposition`, `line_items`, `exceptions`, `review_signals`, `metadata`), in the brief's order, whatever model or adapter answered. Everything else (decided, disposition reasons, open questions, uncertainty, signed quotes, translations, attributes and the adapter's own details) is in each receipt's `metadata`; see `evaluation/final/README.md`. It is compact JSON in the fields' own order, UTF-8 not escaped, with a final newline. Version 1 was the API response itself.
 - `csv` is one row per finding, in the findings order, with these columns:
   - `run_id`
   - `ruleset_id`, `ruleset_name`, `ruleset_version`, `ruleset_label`, `ruleset_sha256`
@@ -265,9 +362,10 @@ The order is fixed: receipts in receipt ID order, then the kinds in the order ab
   - `explanation`, `evidence`, `source_quote`, `reason`, `reasons`, `field`, `state`, `confidence`
   - `disposition_reasons`, `record`
 
-  Each record field fills its own column, and a field the core's record lacks is empty. `line_ids`, `reasons`, `disposition_reasons` and `record`, the whole core record, are canonical JSON in their cells. A run with no findings is the header alone.
+  Each record field fills its own column, and a field the core's record lacks is empty. The CSV keeps the core's own records, `source_quote` included. `line_ids`, `reasons`, `disposition_reasons` and `record`, the whole core record, are canonical JSON in their cells. A run with no findings is the header alone.
 - The CSV is UTF-8 with no byte-order mark, RFC 4180 quoting and `\r\n` line endings.
 - Every text cell starting with `=`, `+`, `-`, `@`, a tab or a line break gets a leading `'`, so a spreadsheet never runs it as a formula. The `record` cell and the JSON export keep the text exactly.
+- `pdf` is the server's report of the stored run. The UI's Export PDF is different: it saves the view on screen.
 - The same run always exports to the same bytes.
 - Responses have `Content-Disposition: attachment; filename="<run_id>.<format>"`, `X-Content-Type-Options: nosniff` and `Cache-Control: no-store`.
 - No key or secret is ever in a run, so none can be in an export.
@@ -359,16 +457,18 @@ export EXPENSE_API_COMPILER_RECORDING_SETS='{"live": "../evaluation/compiler/liv
 ## Container deployment
 
 ```sh
-cd backend
+# from the repository root
 cp .env.example .env        # optional: every setting has a safe default
 docker compose up --build -d
 ```
 
-The API is served at http://localhost:8000/docs, `/openapi.json` and `/health`. Compose runs three services:
+`compose.yaml` is at the repository root; the API's image is built from `backend/Dockerfile` with the root as its context, as it holds the core package too. The API is served at http://localhost:8000/docs, `/openapi.json` and `/health`. Compose runs five services:
 
 - `api`: the FastAPI application
 - `worker`: the evaluation worker, `python -m expense_api.worker`, from the same image and with the same settings. It serves no port. It shares the `live-cache` volume with the API, where each live evaluation keeps its answers. `docker compose up --scale worker=2` runs two, as each job is claimed atomically
 - `mongo`: MongoDB, on an internal network with no published port, with its data in the `mongo-data` volume
+- `frontend`: the React UI, built from `frontend/Dockerfile` and served by nginx at http://localhost:3000, which proxies `/api` to the API and cannot reach MongoDB
+- `mongo-express`: a MongoDB browser at http://localhost:8081, for local inspection only: it reaches the whole database, so leave it out of any shared deployment
 
 The image runs without the repository:
 
@@ -380,7 +480,7 @@ The image runs without the repository:
   - the three replay sets, in `/srv/replay/*`
   - the compiler's model readings, in `/srv/recordings/compiler/live`
 - Any of these folders can instead be mounted read-only over its path. The image has no `rules/ruleset.json`.
-- `Dockerfile.dockerignore` admits only those files, so `.env`, `.venv`, `.git`, the tests and the labelled receipts never enter the build. The application runs as a non-root user.
+- The root `.dockerignore` admits only those files, so `.env`, `.venv`, `.git`, the tests and the labelled receipts never enter the build. The application runs as a non-root user.
 
 `docker compose down` stops the stack and keeps the data. Add `-v` to delete it.
 
@@ -465,6 +565,13 @@ Every variable is `EXPENSE_API_*` unless noted. A request can choose none of the
 | `COMPILER_RECORDING_SETS` | `{}` | JSON object: recording set name to a folder of the compiler's recorded readings |
 | `COMPILER_LIVE_RECORDING_SET` | none | The set a live extraction records model readings into. It must hold model readings only. None: live extraction is unavailable |
 | `MAX_DOCUMENT_BYTES` | `524288` | The largest document text, in UTF-8 bytes |
+| `AWS_S3_BUCKET`, not prefixed (or `EXPENSE_API_S3_BUCKET`) | unset | The bucket that holds policy document text. Unset: documents cannot be stored (503) |
+| `AWS_REGION`, not prefixed (or `EXPENSE_API_S3_REGION`) | `us-east-1` | The bucket's region |
+| `S3_DOCUMENT_PREFIX` | `policy-documents` | The key prefix of document objects |
+| `S3_RULESET_PREFIX` | `ruleset-documents` | The key prefix of compiled versions' own document objects |
+| `S3_KMS_KEY_ID` | unset | SSE-KMS with this key; unset: SSE-S3 (AES256) |
+| `S3_ENDPOINT_URL` | unset | An S3-compatible endpoint, for local testing |
+| `S3_TIMEOUT_SECONDS` | `10` | Connect and read timeout of each S3 call, with up to 3 attempts |
 | `ALLOWED_PUBLICATION_MODES` | `["production"]` | What an approval may authorize. Add `"simulation"` to try the lifecycle with simulated readings |
 | `ALLOW_PREVIEW_VALIDATION` | `false` | Whether a request may validate against a version not published for production |
 | `REPLAY_SETS` | `{}` | JSON object: replay set name to a recordings folder, for classification |
@@ -497,6 +604,10 @@ Every variable is `EXPENSE_API_*` unless noted. A request can choose none of the
 | `POST /v1/rulesets/{id}/submit` | 200 | 404; 409 |
 | `POST /v1/rulesets/{id}/review` | 200 | 404; 409; 422 `review_not_ready`, `invalid_review_decisions` |
 | `POST /v1/rulesets/{id}/approve` | 200 | 404; 409 `review_required`, `approval_unverifiable`, `compilation_changed`; 422 `approval_refused`, `approval_does_not_hold`, `invalid_approval`, `publication_mode_not_allowed` |
+| `POST /v1/documents/extraction-jobs` | 202: the job, with its progress | 403; 404; 409; 422; 503 |
+| `GET /v1/documents/extraction-jobs/{job_id}` | 200: its progress, then its `extraction_id` or `error` | 404 `extraction_job_not_found` |
+| `POST /v1/rulesets/{id}/edits` | 201: the next draft version, with its `edits` | 404; 409 `not_compiled`, `compilation_changed`; 422 `rule_edit_invalid`, `invalid_rule_change`, `no_change` |
+| `GET /v1/rulesets/{id}/readiness` | 200: the publication summary and its blockers | 404 |
 | `POST /v1/rulesets/{id}/publish` | 200, also for a version already published with this approval | 404; 409 `invalid_transition`, `publication_conflict`, `compilation_changed`; 422 `approval_does_not_hold` |
 | `POST /v1/documents` | 201: revision 1, with its text | 422 `invalid_request`, `invalid_document`; 413 `document_too_large` |
 | `GET /v1/documents?filename=&limit=&offset=` | 200: each document's latest revision, without text | 422 |
@@ -506,6 +617,7 @@ Every variable is `EXPENSE_API_*` unless noted. A request can choose none of the
 | `GET /v1/documents/extractions?document_id=&limit=&offset=` | 200: a page of extraction summaries with their reviews, newest first | 422 `invalid_request` |
 | `GET /v1/documents/extractions/{id}` | 200: summary, review-required fields, provenance, reviews | 404 `extraction_not_found` |
 | `GET /v1/documents/extractions/{id}/comparisons?review_required=&limit=&offset=` | 200: a page of comparisons | 404; 500 `integrity_error` |
+| `GET /v1/documents/extractions/{id}/baseline` | 200: the extraction beside the latest published version | 404; 500 `integrity_error` |
 | `POST /v1/documents/extractions/{id}/review` | 201: the stored review, ready or not | 404; 409 `stale_extraction`, `legacy_extraction`; 422 `invalid_review_decisions`; 500 `integrity_error` |
 | `POST /v1/validate` | 201: the persisted run | see below |
 | `GET /v1/runs?…` | 200: run summaries, newest first | 422 `invalid_request`, `invalid_filter` |
@@ -720,3 +832,26 @@ The tests use mongomock and the recorded readings and answers. Lifecycle tests u
 - See [Security limitations](#security-limitations).
 
 For existing databases, recordings and approval identities, see [Single-company upgrade](SINGLE_COMPANY_MIGRATION.md).
+
+## Edit and delete records
+
+- `PATCH /v1/evaluations/datasets/{id}` edits `description`; changed receipt contents are uploaded as a new version.
+- `DELETE /v1/evaluations/datasets/{id}` hides the dataset after its active evaluations are cancelled or finished.
+- `PATCH /v1/evaluations/{id}` edits `label`. `DELETE` hides a terminal evaluation; results and provider usage remain stored for history. A deleted evaluation's idempotency key cannot create another paid run.
+- `PATCH /v1/documents/extractions/{id}/reviews/{review_id}` accepts the same body as a new review and records revised decisions under a new signed ID. `DELETE` hides an unused review; reviews referenced by ruleset versions are protected.
+- `DELETE /v1/rulesets/{id}/rules/{rule_id}` accepts `actor` and `rationale` and creates a new draft with the check inactive (`status: not_evaluable`). It does not rewrite a published artifact. Restore it with a versioned edit setting `status: active`; process directives cannot be removed. Approval and publication remain separate steps.
+
+The frontend exposes these actions in dataset/evaluation detail pages, compilation provenance (saved reviews), and expanded rules. Deletion requires confirmation. Deletes retain tombstones and immutable payloads; normal list/read endpoints hide deleted records, while internal history and worker reads retain their source data. Version numbers are not reused. These are management operations in the existing single-company deployment; authentication is still supplied by the deployment, not this application.
+
+
+## PDF reports
+
+The UI’s **Export PDF** captures the current rendered view as one continuous PDF page, including Northwind Global styling, charts, metric cards, filters, expanded sections and the current table page. It does not expand hidden details or request a backend report. JSON/CSV export the complete saved data.
+
+For automation, the API also provides structured, paginated PDF reports from saved records:
+
+- `GET /v1/runs/{run_id}/export?format=pdf` (whole batch)
+- `GET /v1/evaluations/{evaluation_id}/export?format=pdf&scoring=latest` (or `original`)
+- `GET /v1/evaluations/compare/export?evaluation_ids=eval_first&evaluation_ids=eval_second` (2–10 completed runs; first is the baseline)
+
+API reports repeat table headings and paginate long evidence. API comparisons use original stored metrics. Both export methods make no provider calls; active evaluations retain their export restrictions.

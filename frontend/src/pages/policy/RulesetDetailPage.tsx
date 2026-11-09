@@ -1,41 +1,28 @@
+import { DuplicatePublication } from "./DuplicatePublication";
+import { RecordActions } from "@/components/management/RecordActions";
 import { ArrowLeft } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { useRuleset, useRulesetComparisons, useRulesets } from "@/api/queries";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useReadiness, useRevisionApproval, useRuleset, useRulesetComparisons, useRulesets } from "@/api/queries";
 import type { FieldComparison, RulesetDetail } from "@/api/types";
 import { PageHeader } from "@/components/layout/AppLayout";
 import { highlightJson } from "@/components/results/JsonViewer";
-import { EmptyState, ErrorState, LoadingRows } from "@/components/states/states";
+import { ErrorState, LoadingRows } from "@/components/states/states";
 import { RulesetStatusBadge } from "@/components/status/badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/misc";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDateTime, humanize, shortHash } from "@/lib/format";
 import { Section } from "@/pages/dashboard/Section";
 import { Facts } from "@/pages/evaluations/display";
+import { VersionChangesPanel } from "./review/VersionPanels";
 import { ValueText } from "./actor";
-import { ComparisonCard } from "./DecisionForm";
+import { EditsSummary, PublicationWorkflow } from "./PublicationWorkflow";
+import { ApprovalBadge } from "./DocumentPanels";
+import { displayTitle } from "./library";
+import { VersionReview } from "./review/ReviewViews";
+import { rulesOf, RulesView } from "./RulesView";
 import { LifecycleActions } from "./Lifecycle";
-import { ReviewState, sourceText } from "./PoliciesPage";
-
-/** The fields every rule in the core's RuleSet schema carries; the rest is shown as stored. */
-interface ArtifactRule {
-  rule_id: string;
-  title?: string;
-  policy_doc?: string;
-  status?: string;
-  kind?: string;
-  severity?: string | null;
-  source_quote?: string | null;
-  params?: Record<string, unknown>;
-  [key: string]: unknown;
-}
-
-function rulesOf(version: RulesetDetail): ArtifactRule[] {
-  const rules = version.artifact.rules;
-  return Array.isArray(rules) ? (rules as ArtifactRule[]) : [];
-}
+import { sourceText } from "./PoliciesPage";
 
 function Provenance({ version }: { version: RulesetDetail }) {
   const compilation = version.compilation;
@@ -156,98 +143,12 @@ function Audit({ version, comparisons }: { version: RulesetDetail; comparisons: 
   );
 }
 
-function Rules({ version }: { version: RulesetDetail }) {
-  const [query, setQuery] = useState("");
-  const rules = rulesOf(version).filter((rule) => !query || `${rule.rule_id} ${rule.title ?? ""} ${rule.policy_doc ?? ""}`.toLowerCase().includes(query.toLowerCase()));
-  return (
-    <div className="space-y-2">
-      <Input aria-label="Find a rule" placeholder="Find a rule by ID, title or document" className="h-8 max-w-sm text-[13px]" value={query} onChange={(event) => setQuery(event.target.value)} />
-      <ul className="space-y-1.5">
-        {rules.map((rule) => (
-          <li key={rule.rule_id} className="rounded-md border border-border">
-            <details>
-              <summary className="flex cursor-pointer flex-wrap items-center gap-1.5 px-3 py-2 text-[13px]">
-                <span className="font-mono font-semibold">{rule.rule_id}</span>
-                <span>{rule.title}</span>
-                {rule.status && rule.status !== "active" ? <Badge variant="neutral">{rule.status}</Badge> : null}
-                {rule.severity ? <Badge variant="outline">{rule.severity}</Badge> : null}
-                <span className="ml-auto text-xs text-subtle-foreground">
-                  {rule.kind} · {rule.policy_doc}
-                </span>
-              </summary>
-              <div className="border-t border-border px-3 py-2">
-                {rule.source_quote ? <blockquote className="mb-2 border-l-2 border-border pl-3 text-xs">“{rule.source_quote}”</blockquote> : null}
-                <pre className="max-h-72 overflow-auto rounded-md bg-muted/40 p-2 font-mono text-[11px] leading-4">{highlightJson(JSON.stringify(rule, null, 2))}</pre>
-              </div>
-            </details>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 /**
  * The compiler's field comparisons grouped by rule, beside the rule as this version holds it. A rule in the
  * comparisons but not in the artifact (or the reverse) is called out, never filled in.
  */
-function Comparison({ version }: { version: RulesetDetail }) {
-  const [everything, setEverything] = useState(false);
-  const comparisons = useRulesetComparisons(version.compilation ? version.ruleset_id : undefined, false);
-  const rules = useMemo(() => new Map(rulesOf(version).map((rule) => [rule.rule_id, rule])), [version]);
-  if (!version.compilation) return <EmptyState title="No comparisons" description="This version is an uploaded artifact: the compiler never read policy text for it." className="py-6" />;
-  if (comparisons.isPending) return <LoadingRows rows={4} label="Loading comparisons" />;
-  if (comparisons.isError) return <ErrorState error={comparisons.error} onRetry={() => void comparisons.refetch()} />;
-
-  const byRule = new Map<string, FieldComparison[]>();
-  for (const item of comparisons.data.comparisons) byRule.set(item.rule_id, [...(byRule.get(item.rule_id) ?? []), item]);
-  const unsettled = (items: FieldComparison[]) => items.some((item) => item.status !== "agreed" || item.review_required);
-  const shown = [...byRule.entries()].filter(([, items]) => everything || unsettled(items));
-  const notCompared = [...rules.keys()].filter((ruleId) => !byRule.has(ruleId));
-
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3 text-[13px]">
-        <span>
-          {byRule.size} rules compared · {[...byRule.values()].filter(unsettled).length} with a field not agreed
-        </span>
-        <label className="flex items-center gap-1.5">
-          <input type="checkbox" checked={everything} onChange={(event) => setEverything(event.target.checked)} className="size-3.5 accent-primary" />
-          Show agreed rules too
-        </label>
-      </div>
-      {notCompared.length ? <p className="text-xs text-status-review-text">In this version but not in the comparisons: {notCompared.join(", ")}</p> : null}
-      {shown.length === 0 ? <p className="text-[13px] text-muted-foreground">Every compared field agrees.</p> : null}
-      {shown.map(([ruleId, items]) => {
-        const rule = rules.get(ruleId);
-        return (
-          <section key={ruleId} aria-label={`Rule ${ruleId}`} className="space-y-2 rounded-md border border-border p-3">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="font-mono text-[13px] font-semibold">{ruleId}</span>
-              {rule ? <span className="text-[13px]">{rule.title}</span> : <Badge variant="flag">Not in this version</Badge>}
-            </div>
-            {rule ? (
-              <div className="rounded-md bg-muted/40 p-2 text-xs">
-                <p className="font-medium">In this version (executable)</p>
-                <p>Quote: {rule.source_quote ? `“${rule.source_quote}”` : <span className="text-status-review-text">missing</span>}</p>
-                <p>Severity: {rule.severity ?? "—"}</p>
-                <pre className="mt-1 max-h-40 overflow-auto font-mono text-[11px]">{JSON.stringify(rule.params ?? {}, null, 2)}</pre>
-              </div>
-            ) : null}
-            <ul className="space-y-2">
-              {items.filter((item) => everything || item.status !== "agreed" || item.review_required).map((item) => (
-                <ComparisonCard key={item.comparison_id} comparison={item} />
-              ))}
-            </ul>
-          </section>
-        );
-      })}
-    </div>
-  );
-}
-
 function OtherVersions({ version }: { version: RulesetDetail }) {
-  const versions = useRulesets({ name: version.name, limit: 50, offset: 0 });
+  const versions = useRulesets({ name: version.name, limit: 50, offset: 0, include_superseded: true });
   if (versions.isPending) return <LoadingRows rows={2} label="Loading versions" />;
   if (versions.isError) return <ErrorState error={versions.error} />;
   return (
@@ -261,7 +162,7 @@ function OtherVersions({ version }: { version: RulesetDetail }) {
               v{item.version}
             </Link>
           )}
-          <RulesetStatusBadge status={item.status} />
+          {item.superseded_by ? <span>Superseded by {item.superseded_by.name} v{item.superseded_by.version}</span> : <RulesetStatusBadge status={item.status} />}
           {item.publication_mode ? <Badge variant="outline">{item.publication_mode}</Badge> : null}
           <span className="text-xs text-subtle-foreground">{formatDateTime(item.created_at)}</span>
         </li>
@@ -270,15 +171,52 @@ function OtherVersions({ version }: { version: RulesetDetail }) {
   );
 }
 
+/** Each document revision a version was compiled from, with that exact revision's own approval. */
+function SourceDocuments({ version }: { version: RulesetDetail }) {
+  if (!version.compilation) return <p className="text-[13px] text-muted-foreground">This version was uploaded as an artifact, not compiled from stored documents.</p>;
+  return (
+    <ul className="divide-y divide-border rounded-md border border-border" aria-label="Source documents">
+      {version.compilation.documents.map((document) => (
+        <SourceDocumentRow key={`${document.document_id}-${document.revision ?? "inline"}`} document={document} />
+      ))}
+    </ul>
+  );
+}
+
+function SourceDocumentRow({ document }: { document: RulesetDetail["compilation"] extends infer C ? (C extends { documents: (infer D)[] } ? D : never) : never }) {
+  const approval = useRevisionApproval(document.revision != null ? document.document_id : undefined, document.revision ?? undefined);
+  return (
+    <li className="flex flex-wrap items-center gap-2 px-3 py-2 text-[13px]">
+      <span className="min-w-0 flex-1">
+        {document.revision != null ? (
+          <Link to={`/documents/${encodeURIComponent(document.document_id)}?revision=${document.revision}`} className="font-medium text-primary hover:underline">
+            {displayTitle({ title: null, filename: document.filename })}
+          </Link>
+        ) : (
+          <span className="font-medium">{displayTitle({ title: null, filename: document.filename })}</span>
+        )}
+        <span className="block font-mono text-[11px] text-subtle-foreground">{document.filename}</span>
+      </span>
+      <span className="text-xs text-muted-foreground">{document.revision != null ? `Revision ${document.revision}` : "Sent inline"}</span>
+      {document.revision != null ? (approval.data ? <ApprovalBadge status={approval.data.status} /> : null) : <span className="text-xs text-subtle-foreground">No document approval</span>}
+    </li>
+  );
+}
+
 export function RulesetDetailPage() {
+  const navigate = useNavigate();
   const { rulesetId = "" } = useParams();
   const version = useRuleset(rulesetId);
+  const readiness = useReadiness(rulesetId, version.data?.status, version.data?.review?.review_sha256);
+  const [params, setParams] = useSearchParams();
+  const tab = params.get("tab") ?? (version.data?.status === "in_review" && version.data.compilation ? "review" : "rules");
+  const openRule = (ruleId: string) => setParams({ tab: "rules", rule: ruleId }, { replace: true });
   const comparisons = useRulesetComparisons(version.data?.compilation ? rulesetId : undefined, false);
   const back = (
     <Button asChild variant="outline" size="sm">
-      <Link to="/policies">
+      <Link to="/policies?tab=rules">
         <ArrowLeft aria-hidden />
-        All versions
+        Policy Management
       </Link>
     </Button>
   );
@@ -288,54 +226,72 @@ export function RulesetDetailPage() {
 
   return (
     <>
-      <PageHeader title={`${data.name} v${data.version}`} description={`${data.ruleset_id} · created ${formatDateTime(data.created_at)} · its content never changes`} actions={back} />
-      <div className="mb-4 flex flex-wrap items-center gap-1.5">
-        <RulesetStatusBadge status={data.status} />
-        <ReviewState version={data} />
-        {data.publication_mode ? <Badge variant={data.publication_mode === "production" ? "pass" : "review"}>Published for {data.publication_mode}</Badge> : null}
+      <PageHeader title={`${data.name} v${data.version}`} description={`Created ${formatDateTime(data.created_at)}. Its rules never change; only its approval and publication move.`} actions={<div className="flex gap-2">{back}{data.status !== "published" && data.compilation ? <Button asChild size="sm"><a href="#publication-actions">{data.status === "approved" ? "Publish rules" : "Review and approve rules"}</a></Button> : null}</div>} />
+      {!data.superseded_by && !data.compilation && data.status !== "published" ? <div role="region" aria-label="How to approve and publish" className="mb-4 space-y-3 rounded-lg border border-status-review-border bg-status-review-soft p-4">
+        <h2 className="font-semibold">Create a compiled version to approve and publish</h2>
+        <p className="text-sm">This uploaded ruleset has no compiler record linking its rules to reviewed policy documents. It can be previewed, but cannot be approved or published.</p>
+        <p className="text-sm">Select the policy documents, compile their rules, resolve the review, then submit, accept, approve and publish the new version. Approval covers that exact version.</p>
+        <div className="flex flex-wrap gap-2"><Button asChild size="sm"><Link to="/policies?tab=documents">Select policy documents</Link></Button><Button asChild size="sm" variant="outline"><Link to="/policies?tab=rules">Find a compiled version</Link></Button></div>
+      </div> : null}
+      <div className="mb-4 flex flex-wrap items-center gap-2 text-[13px]">
+        {data.superseded_by ? <Badge variant="neutral">Superseded</Badge> : <RulesetStatusBadge status={data.status} />}
+        {data.status === "draft" || data.status === "in_review" ? <RecordActions path={`/v1/rulesets/${encodeURIComponent(data.ruleset_id)}`} title={data.status === "draft" ? "draft version" : "review version"} onDeleted={() => navigate("/policies?tab=rules")} /> : null}
+        {data.publication_mode ? <span className="text-muted-foreground">for {data.publication_mode}</span> : null}
       </div>
+      {!data.superseded_by && (data.status === "draft" || data.status === "in_review") ? <div className="mb-4"><DuplicatePublication version={data} /></div> : null}
+      {data.superseded_by ? <div role="status" className="mb-4 rounded-lg border border-primary bg-primary-soft p-4">This version was superseded by <Link className="font-medium text-primary hover:underline" to={`/policies/${encodeURIComponent(data.superseded_by.ruleset_id)}`}>{data.superseded_by.name} v{data.superseded_by.version}</Link>. Its original content is retained for history.</div> : null}
       <div className="grid items-start gap-4 xl:grid-cols-3">
         <div className="min-w-0 xl:col-span-2">
-          <Tabs defaultValue="overview">
+          <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })}>
             <TabsList>
-              <TabsTrigger value="overview">Provenance and audit</TabsTrigger>
-              <TabsTrigger value="comparison">Comparison</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
               <TabsTrigger value="rules">Rules</TabsTrigger>
-              <TabsTrigger value="artifact">Artifact</TabsTrigger>
+              <TabsTrigger value="review">Review</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>
-            <TabsContent value="overview" className="space-y-4">
-              <Section id="provenance" title="Provenance">
-                <Provenance version={data} />
-              </Section>
-              <Section id="audit" title="Review, approval and history">
-                <Audit version={data} comparisons={comparisons.data?.comparisons ?? []} />
-              </Section>
-            </TabsContent>
-            <TabsContent value="comparison">
-              <Section id="comparison" title="Extracted against executable" description="The compiler's regex and model readings of each field, beside the rule this version runs.">
-                <Comparison version={data} />
+            <TabsContent value="documents">
+              <Section id="documents" title="Source documents" description="The exact document revisions this version was compiled from, each with its own approval.">
+                <SourceDocuments version={data} />
               </Section>
             </TabsContent>
             <TabsContent value="rules">
-              <Section id="rules" title="Rules" description={`${data.rule_count} rules, as stored in the artifact.`}>
-                <Rules version={data} />
+              <Section id="rules" title="Rules" description={data.status === "published" ? "What this version checks. Editing makes a new draft version: this one never changes." : "What this version checks, in plain words. Edit a rule to make the next draft version."}>
+                <div className="space-y-3">
+                  <VersionChangesPanel rulesetId={data.ruleset_id} titles={Object.fromEntries(rulesOf(data).map((rule) => [rule.rule_id, rule.title ?? rule.rule_id]))} />
+                  <EditsSummary version={data} onOpenRule={openRule} />
+                  <RulesView key={data.ruleset_id} version={data} focus={params.get("rule")} />
+                </div>
               </Section>
             </TabsContent>
-            <TabsContent value="artifact">
-              <Section id="artifact" title="Artifact" description={`SHA-256 ${data.artifact_sha256}. Numbers are exact decimal strings, as stored.`}>
-                <pre className="max-h-[40rem] overflow-auto rounded-md bg-muted/40 p-3 font-mono text-[11px] leading-4" aria-label="Artifact JSON">
-                  {highlightJson(JSON.stringify(data.artifact, null, 2))}
-                </pre>
+            <TabsContent value="review">
+              <Section id="review" title="Review" description="How each interpretation of the policy was decided.">
+                <VersionReview version={data} />
               </Section>
+            </TabsContent>
+            <TabsContent value="history" className="space-y-4">
+              <Section id="audit" title="Review, approval and history">
+                <Audit version={data} comparisons={comparisons.data?.comparisons ?? []} />
+              </Section>
+              <Section id="versions" title={`Versions of ${data.name}`}>
+                <OtherVersions version={data} />
+              </Section>
+              <details className="rounded-lg border border-border bg-card px-4 py-3 text-xs">
+                <summary className="cursor-pointer text-[13px] font-medium">Provenance and artifact</summary>
+                <div className="mt-3 space-y-3">
+                  <Provenance version={data} />
+                  <pre className="max-h-[32rem] overflow-auto rounded-md bg-muted/40 p-3 font-mono text-[11px] leading-4" aria-label="Artifact JSON">
+                    {highlightJson(JSON.stringify(data.artifact, null, 2))}
+                  </pre>
+                </div>
+              </details>
             </TabsContent>
           </Tabs>
         </div>
-        <div className="space-y-4">
-          <Section id="lifecycle" title="Lifecycle">
-            <LifecycleActions version={data} />
-          </Section>
-          <Section id="versions" title={`Versions of ${data.name}`}>
-            <OtherVersions version={data} />
+        <div id="publication-actions" className="scroll-mt-6 space-y-4">
+          <Section id="lifecycle" title="Next step">
+            <div className="space-y-4">
+              {data.superseded_by ? <Button asChild size="sm"><Link to={`/policies/${encodeURIComponent(data.superseded_by.ruleset_id)}`}>View published successor</Link></Button> : <><PublicationWorkflow version={data} onOpenRule={openRule} /><LifecycleActions version={data} canPublish={readiness.data?.can_publish ?? false} /></>}
+            </div>
           </Section>
         </div>
       </div>

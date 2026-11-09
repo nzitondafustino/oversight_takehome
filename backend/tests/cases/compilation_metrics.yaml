@@ -1,0 +1,17 @@
+cases:
+  - name: replay has no new calls or spend
+    calls: []
+    expected: {live_calls: 0, failed_calls: 0, reused_documents: 1, new_spend_usd: '0', cost_completeness: complete, input_tokens: 0, output_tokens: 0}
+  - name: provider costs retain exact decimal precision
+    calls:
+      - {usage: {cost: '0.000000000000000001', prompt_tokens: 12, completion_tokens: 4}}
+      - {usage: {cost: '0.000000000000000002', prompt_tokens: 8, completion_tokens: 3}}
+    expected: {live_calls: 2, failed_calls: 0, reused_documents: 0, new_spend_usd: '0.000000000000000003', cost_completeness: complete, input_tokens: 20, output_tokens: 7}
+  - name: missing cost is unknown rather than free
+    calls:
+      - {usage: {prompt_tokens: 10, completion_tokens: 5}}
+    expected: {live_calls: 1, failed_calls: 0, reused_documents: 0, new_spend_usd: '0', cost_completeness: incomplete, unpriced_calls: 1, input_tokens: 10, output_tokens: 5}
+  - name: failed requests preserve missing billing and token uncertainty
+    calls:
+      - {failed: true, usage: null}
+    expected: {live_calls: 1, failed_calls: 1, reused_documents: 0, new_spend_usd: '0', cost_completeness: incomplete, unpriced_calls: 1, input_tokens: null, output_tokens: null}

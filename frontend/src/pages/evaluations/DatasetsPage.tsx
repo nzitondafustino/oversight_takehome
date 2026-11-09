@@ -1,3 +1,4 @@
+import { RecordActions } from "@/components/management/RecordActions";
 import { Database, FlaskConical, Loader2, Upload } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
@@ -101,6 +102,9 @@ function UploadForm() {
       {upload.isSuccess ? (
         <p className="text-xs text-foreground" role="status">
           Stored as <span className="font-medium">{datasetLabel(upload.data)}</span> · {formatInteger(upload.data.stats.receipts)} receipts.{" "}
+          <Link to={`/evaluations/datasets/${encodeURIComponent(upload.data.dataset_id)}`} className="font-medium text-primary hover:underline">
+            View dataset
+          </Link>{" · "}
           <Link to={`/evaluations/new?dataset=${encodeURIComponent(upload.data.dataset_id)}`} className="font-medium text-primary hover:underline">
             Evaluate it
           </Link>
@@ -203,7 +207,7 @@ export function DatasetsPage() {
                   {datasets.data.items.map((dataset) => (
                     <TableRow key={dataset.dataset_id}>
                       <TableCell className="pl-5">
-                        <p className="font-medium">{datasetLabel(dataset)}</p>
+                        <Link to={`/evaluations/datasets/${encodeURIComponent(dataset.dataset_id)}`} className="font-medium text-primary hover:underline">{datasetLabel(dataset)}</Link>
                         <p className="font-mono text-[11px] text-subtle-foreground">{dataset.dataset_id}</p>
                         {dataset.description ? <p className="max-w-64 text-xs text-muted-foreground">{dataset.description}</p> : null}
                       </TableCell>
@@ -227,12 +231,16 @@ export function DatasetsPage() {
                         {formatRelative(dataset.created_at)}
                       </TableCell>
                       <TableCell className="pr-5 text-right">
+                        <Button asChild size="sm" variant="outline" className="mr-2">
+                          <Link to={`/evaluations/datasets/${encodeURIComponent(dataset.dataset_id)}`} aria-label={`View ${datasetLabel(dataset)}`}>View</Link>
+                        </Button>
                         <Button asChild size="sm" variant="outline">
                           <Link to={`/evaluations/new?dataset=${encodeURIComponent(dataset.dataset_id)}`} aria-label={`Evaluate ${datasetLabel(dataset)}`}>
                             <FlaskConical aria-hidden />
                             Evaluate
                           </Link>
                         </Button>
+                        <span className="ml-2 inline-flex"><RecordActions path={`/v1/evaluations/datasets/${encodeURIComponent(dataset.dataset_id)}`} title="dataset" recordName={datasetLabel(dataset)} onDeleted={() => setOffset(0)} /></span>
                       </TableCell>
                     </TableRow>
                   ))}

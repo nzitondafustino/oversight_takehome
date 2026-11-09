@@ -4,7 +4,7 @@ Creating an evaluation only persists a queued job; the worker process (python -m
 Poll GET /v1/evaluations/{evaluation_id} for its status and progress.
 """
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile
 from pydantic import AwareDatetime
@@ -34,7 +34,7 @@ Datasets = Annotated[DatasetService, Depends(get_dataset_service)]
 Evaluations = Annotated[EvaluationService, Depends(get_evaluation_service)]
 Limit = Annotated[int, Query(ge=1, le=100)]
 Offset = Annotated[int, Query(ge=0)]
-EXPORT_FORMATS = ("json", "csv")
+EXPORT_FORMATS = ("json", "csv", "pdf")
 
 
 # Dataset routes come first, so "datasets" is never read as an evaluation ID.
@@ -103,6 +103,14 @@ def list_evaluations(
     return EvaluationPage(items=[EvaluationSummary(**summary_of(item)) for item in items], total=total, limit=limit, offset=offset)
 
 
+@router.get("/compare/export", responses={200: {"content": {"application/pdf": {}}}, **errors(404, 409, 422, 503)})
+def export_comparison(evaluations: Evaluations, evaluation_ids: Annotated[list[str], Query(min_length=2, max_length=10)]):
+    """PDF of 2–10 completed evaluations, in requested baseline order, from the same saved comparison."""
+    from expense_api.services.pdf_reports import comparison_pdf
+    body = comparison_pdf(evaluations.compare(evaluation_ids))
+    return Response(content=body, media_type="application/pdf", headers={"Content-Disposition": 'attachment; filename="evaluation-comparison.pdf"', "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+
+
 @router.post("/compare", responses=errors(404, 409, 422, 503))
 def compare(body: CompareRequest, evaluations: Evaluations):
     """Completed evaluations side by side, saying whether they can be compared directly."""
@@ -116,9 +124,15 @@ def get_evaluation(evaluation_id: str, evaluations: Evaluations):
 
 
 @router.get("/{evaluation_id}/metrics", responses=errors(404, 422, 500, 503))
-def get_metrics(evaluation_id: str, evaluations: Evaluations):
-    """The stored metrics of a finished run; provisional ones, never stored, while it runs."""
-    return evaluations.metrics(evaluation_id)
+def get_metrics(evaluation_id: str, evaluations: Evaluations, scoring: Annotated[Literal["latest", "original"], Query(description="latest: the latest rescoring, if any; original: as scored when it finished")] = "latest"):
+    """The stored metrics of a finished run, with which scoring version made them; provisional ones, never stored, while it runs."""
+    return evaluations.metrics(evaluation_id, scoring)
+
+
+@router.post("/{evaluation_id}/rescore", responses=errors(404, 409, 422, 500, 503))
+def rescore(evaluation_id: str, evaluations: Evaluations):
+    """Score a finished run again with the current scoring version, from its stored results. Its original metrics stay."""
+    return evaluations.rescore(evaluation_id)
 
 
 @router.get("/{evaluation_id}/results", response_model=ResultPage, responses=errors(404, 422, 500, 503))
@@ -142,14 +156,14 @@ def get_results(
     return ResultPage(evaluation_id=evaluation_id, items=items, total=total, limit=limit, offset=offset)
 
 
-@router.get("/{evaluation_id}/export", responses={200: {"content": {"application/json": {}, "text/csv": {}}, "description": "The evaluation as a file"}, **errors(404, 409, 422, 500, 503)})
-def export(evaluation_id: str, evaluations: Evaluations, format: Annotated[str, Query(description="json or csv")] = "json"):
-    """A finished evaluation as a file: json holds the run, metrics, results and every call; csv one row per line."""
+@router.get("/{evaluation_id}/export", responses={200: {"content": {"application/json": {}, "text/csv": {}, "application/pdf": {}}, "description": "The evaluation as a file"}, **errors(404, 409, 422, 500, 503)})
+def export(evaluation_id: str, evaluations: Evaluations, format: Annotated[str, Query(description="json, csv or pdf")] = "json", scoring: Literal["latest", "original"] = "latest"):
+    """A finished evaluation as a file: json holds the run, metrics, results and every call; csv one row per line; pdf includes the selected scoring view and saved receipt results."""
     if format not in EXPORT_FORMATS:
-        raise ApiError(422, "unsupported_export_format", f"format is json or csv, not {format!r}", {"supported": list(EXPORT_FORMATS)})
-    body = evaluations.export(evaluation_id, format)
+        raise ApiError(422, "unsupported_export_format", f"format is json, csv or pdf, not {format!r}", {"supported": list(EXPORT_FORMATS)})
+    body = evaluations.export(evaluation_id, format, scoring)
     headers = {"Content-Disposition": f'attachment; filename="{evaluation_id}.{format}"', "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store"}
-    return Response(content=body, media_type="application/json" if format == "json" else "text/csv; charset=utf-8", headers=headers)
+    return Response(content=body, media_type={"json": "application/json", "csv": "text/csv; charset=utf-8", "pdf": "application/pdf"}[format], headers=headers)
 
 
 @router.post("/{evaluation_id}/cancel", response_model=EvaluationDetail, responses=errors(404, 409, 422, 503))

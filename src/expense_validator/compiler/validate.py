@@ -199,6 +199,40 @@ def faithful_issues(ruleset: RuleSet, clauses: dict[str, Clause]) -> list[Issue]
     return _check_faithful([rule for rule in ruleset.rules if rule.status != "retired"], clauses)
 
 
+def _limit(value: Decimal, unit: str) -> dict:
+    return {"value": format(value.normalize(), "f"), "unit": unit}
+
+
+def faithful_discrepancies(ruleset: RuleSet, clauses: dict[str, Clause]) -> list[dict]:
+    """Each rule that does not do what its clause states: the clause's limits, severities or review signal beside the
+    rule's, the same differences the faithful check reports, so a correction can name the param or field to change.
+
+    The clause is the source: a rule's compiled behaviour is never taken as right where the text says otherwise.
+    """
+    found = []
+    for rule in (rule for rule in ruleset.rules if rule.status != "retired"):
+        sources = [clauses[source] for source in _source_ids(rule) if source in clauses]
+        if not sources:
+            continue
+        stated = {(t.value, t.unit) for clause in sources for t in clause.thresholds}
+        params = _policy_numbers(rule)
+        holders = [other for other in ruleset.rules if other.status != "retired" and set(_source_ids(other)) & set(_source_ids(rule))]
+        held = {(param.value, param.unit) for other in holders for _, param in _policy_numbers(other)}
+        if any((param.value, param.unit) not in stated for _, param in params) or stated - held:
+            found.append({
+                "rule_id": rule.rule_id, "policy_doc": rule.policy_doc, "field": "thresholds",
+                "stated": [_limit(value, unit) for value, unit in sorted(stated, key=lambda limit: (limit[1], limit[0]))],
+                "compiled": {name: _limit(param.value, param.unit) for name, param in params},
+            })
+        if isinstance(rule, CheckRule) and _check_outcome(rule, sources[0]):
+            if rule.outcome == "review_signal":
+                found.append({"rule_id": rule.rule_id, "policy_doc": rule.policy_doc, "field": "review_signal", "stated": sources[0].review_signal, "compiled": True})
+            else:
+                severities = sorted({rule.severity} | {case.severity for case in rule.severity_cases})
+                found.append({"rule_id": rule.rule_id, "policy_doc": rule.policy_doc, "field": "severities", "stated": sorted(sources[0].severities), "compiled": severities})
+    return found
+
+
 def held_thresholds(ruleset: RuleSet, rule_id: str) -> set[tuple[Decimal, str]]:
     """Return the policy-sourced limits that the rules implementing this clause hold. Project parameters are not policy."""
     rules = [rule for rule in ruleset.rules if rule.status != "retired" and rule_id in _source_ids(rule)]

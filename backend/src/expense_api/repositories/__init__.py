@@ -3,13 +3,14 @@
 from pymongo.database import Database
 from pymongo.errors import OperationFailure
 
-from expense_api.repositories.documents import DocumentRepository
+from expense_api.repositories.documents import DocumentApprovalRepository, DocumentProfileRepository, DocumentRepository
 from expense_api.repositories.evaluations import DatasetRepository, EvaluationRepository, ResultRepository, UsageRepository
+from expense_api.repositories.extraction_jobs import ExtractionJobRepository
 from expense_api.repositories.extractions import ExtractionRepository
 from expense_api.repositories.rulesets import RulesetRepository
 from expense_api.repositories.runs import RunRepository
 
-__all__ = ["DatasetRepository", "DocumentRepository", "EvaluationRepository", "ResultRepository", "UsageRepository", "ExtractionRepository", "RulesetRepository", "RunRepository", "ensure_indexes"]
+__all__ = ["DatasetRepository", "DocumentApprovalRepository", "DocumentProfileRepository", "DocumentRepository", "EvaluationRepository", "ResultRepository", "UsageRepository", "ExtractionJobRepository", "ExtractionRepository", "RulesetRepository", "RunRepository", "ensure_indexes"]
 
 
 def ensure_indexes(database: Database) -> None:
@@ -17,7 +18,8 @@ def ensure_indexes(database: Database) -> None:
     RulesetRepository(database["rulesets"]).ensure_indexes()
     RunRepository(database["runs"]).ensure_indexes()
     DocumentRepository(database["documents"]).ensure_indexes()
-    ExtractionRepository(database["extractions"], database["extraction_reviews"]).ensure_indexes()
+    ExtractionRepository(database["extractions"], database["extraction_reviews"], database["extraction_change_requests"]).ensure_indexes()
+    ExtractionJobRepository(database["extraction_jobs"]).ensure_indexes()
     DatasetRepository(database["evaluation_datasets"]).ensure_indexes()
     EvaluationRepository(database["evaluations"]).ensure_indexes()
     ResultRepository(database["evaluation_results"]).ensure_indexes()

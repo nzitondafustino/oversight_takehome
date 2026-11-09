@@ -31,6 +31,12 @@ Optional `templates` can hold YAML anchors; anchors are local to a file.
 | policy_engine | missing_references | rule_changes | Explicit validator error and constructor error for dangling replacement/carve-out targets, including rulesets built around validation. |
 | policy_compiler | documents_refused | documents | Error regex: `PolicyCompiler.extract` refuses these documents, and the message holds no `SECRET` text from them. |
 | policy_compiler | resolutions_refused | resolutions | Error regex: `extract` refuses these resolutions, given with the real policy documents. |
+| policy_compiler | rule_overrides_accepted | overrides | `{rule_id, field, value}`: reviewed logic changes the compiler builds and validates; the candidate holds the value, and has a new hash. |
+| policy_compiler | rule_overrides_blocked | overrides | `{blocker, discrepancies}`: the blocker the compiler's own validation gives for logic its policy text does not state, such as a limit or severity, and the same difference as `ExtractionResult.discrepancies`. |
+| policy_compiler | amendments | document, replace, reading, overrides | `{candidate, discrepancies}`: one document revised (`replace` in its text, `reading` the thresholds of an authored reading of it), compiled with the repository's rule logic and these overrides. A changed limit is a discrepancy with the rule logic until an override makes the rule state it. |
+| policy_compiler | additions | document, append, reading, overrides | `{candidate, discrepancies}`: a new clause appended to one document (`reading` the authored reading of its rule). With no rule it is a `rule` discrepancy stating what the clause says; a reviewer's addition (`add: true`) is built and faithful-checked like hand-written logic. |
+| policy_compiler | additions_refused | overrides | Error regex: an addition `extract` refuses, or a blocker of the build it stops. |
+| policy_compiler | rule_overrides_refused | overrides | Error regex: `extract` refuses these overrides before building anything. |
 | policy_compiler | settings_refused | mode, changes, completion | Error regex: `PolicyCompiler` refuses settings from config.yaml in `mode` with `changes`, and an injected completion if `completion`. |
 | policy_compiler | overrides_refused | mode, overrides | Error regex: `from_config` and `extract` both refuse these generation overrides in `mode`, before any request. |
 | policy_compiler | recording_keys | changes | `same`: whether a live recording's key is unchanged when `changes` replace the base text, prompt, url, model or temperature. |
@@ -135,6 +141,12 @@ Optional `templates` can hold YAML anchors; anchors are local to a file.
 | completeness | refund_rules | rule, source, receipt, line | `purchase`, `refund` and `zero`: the rule's status with the line at each sign. `beside`: the lines it cites with a purchase and a refund together. `source` must be in the policy document. |
 | offline_eval | rates, prf, rule_scores, dispositions, exact, proofs, classification, buckets, calibration, families | Their own inputs: see the file | Hand-worked scores. `expected` names only the values compared, at any depth. |
 | offline_eval | sources_refused | prediction_set | Error regex: this set of classifications cannot be loaded. |
+| offline_eval | detection | receipts | Hand-worked exception detection (`evaluation/detection.py`): micro, macro over tested rules, per-rule status, missed and unexpected findings, duplicates, wrong-rule attribution. |
+| offline_eval | evidence | matches | Hand-worked evidence correctness: exact line sets, line precision and recall, mismatches, and answers without line IDs not scorable. |
+| offline_eval | restricted_matrix | lines | The restricted decision's 2×3 matrix and categories predicted that no answer has. |
+| offline_eval | keyword_baseline | description | The keyword baseline's reading of one description (`evaluation/keyword_baseline.py`). |
+| offline_eval | baseline_comparison | lines | The main engine and the baseline on the same lines: wins on each side, shared failures, and the differences. |
+| offline_eval | error_analysis | receipts | The stage each observed failure is placed in (`evaluation/error_analysis.py`), with consequences grouped under their root cause. |
 | inevitable | cases, at_the_cap | receipts, complete | As in adversarial_policy bounds, and by receipt ID `inevitable`: null, or the `rule_ids` and number of `readings`, with the rules of each reading checked against a rerun. `cases` also hold in any receipt or line order. |
 | completeness | unknowns | condition, facts | `result`: true, false or null when it turns on field `u` having no value. |
 | completeness | usd, officials | receipts, complete | As in adversarial_policy bounds, and `notes`, text a group's source notes must hold. Also holds in any receipt or line order. |

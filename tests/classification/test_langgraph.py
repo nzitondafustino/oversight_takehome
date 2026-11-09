@@ -362,6 +362,21 @@ def corrected(record, settled):
     return {**record, "disposition_reasons": reasons, "open_questions": questions}
 
 
+def first_run_shape(record):
+    """A record in the shape the first run was written in, before the brief's shape moved the extensions into metadata."""
+    metadata = record["metadata"]
+    lines = metadata["line_items"]
+    quotes = iter(metadata["source_quotes"])
+    return {
+        **{key: record[key] for key in ("receipt_id", "disposition")},
+        "line_items": [{**line, **{key: value for key, value in lines.get(line["line_id"], {}).items() if key != "classification_details"}} for line in record["line_items"]],
+        "exceptions": [{**{key: value for key, value in item.items() if key != "explanation"}, "source_quote": next(quotes)["source_quote"], "explanation": item["explanation"]} for item in record["exceptions"]],
+        "review_signals": record["review_signals"],
+        **{key: metadata[key] for key in ("decided", "disposition_reasons", "open_questions", "uncertainty")},
+        "metadata": {key: metadata[key] for key in ("model", "translation_model", "retriever", "prompt_sha256", "ruleset_version", "replayed", "latency_ms")},
+    }
+
+
 def test_jev_alone_still_replays_its_first_run(tmp_path, offline):
     validator = ExpenseValidator.from_config(CONFIG, mode="replay", cache_dir=JEV_REPLAY, classification_backend="jev", classification_model="typesafe/jev-1.14")
     # The run is written once. Only what the later engine corrections settled is applied over it.
@@ -370,7 +385,7 @@ def test_jev_alone_still_replays_its_first_run(tmp_path, offline):
     first_run = {record["receipt_id"]: corrected(record, settled.get(record["receipt_id"], {}).get("settled", [])) for record in recorded}
     strip = lambda record: {**record, "metadata": {k: v for k, v in record["metadata"].items() if k not in ("replayed", "latency_ms")}}
     batch = validator.validate_batch(list(RECEIPTS.values()), context_complete=True)
-    assert [strip(result.to_record()) for result in batch.results] == [strip(first_run[result.receipt_id]) for result in batch.results]
+    assert [strip(first_run_shape(result.to_record())) for result in batch.results] == [strip(first_run[result.receipt_id]) for result in batch.results]
     assert all("orchestration" not in (line.classification_details or {}) for result in batch.results for line in result.line_items)
 
 
@@ -455,6 +470,7 @@ def test_routing_and_predictions_are_read_back_from_the_audit_for_evaluation(tmp
 
 DESCRIPTION = {json.loads(text)["original_description"]: name for text, name in SHORT.items()}
 CRITIC = {"enabled": True, "reviewer": {"backend": "critic", "model": "critic-1"}}
+SENT_REVISIONS: list[dict] = []  # each structured revision request a stand-in reviser received, in order
 
 
 def stand_in_line(line, answer, vocabulary, details) -> models.ClassifiedLine:
@@ -494,7 +510,15 @@ def reflection_stand_ins(monkeypatch, reviews: dict, revisions: dict, revisers, 
             def complete(prompt, text):
                 calls[f"{model}+revise"] += 1
                 request = json.loads(text)
-                answer = revisions.get(f"{model}:{DESCRIPTION[request['line']['original_description']]}:{request['previous_classification'].get('category')}")
+                key = f"{model}:{DESCRIPTION[request['line']['original_description']]}:{request['previous_classification'].get('category')}"
+                if "retry" in request:  # structured: an answer may be given for one retry alone, as key:retry
+                    SENT_REVISIONS.append(request)
+                    key = f"{key}:{request['retry']['number']}" if f"{key}:{request['retry']['number']}" in revisions else key
+                answer = revisions.get(key)
+                if answer == "missing":
+                    raise ClassificationError(NOT_RECORDED)
+                if answer == "invalid":
+                    raise ClassificationError("item_kind contradicts category")
                 if answer is None:
                     raise ClassificationError(f"{model} could not revise")
                 if answer == "abstain":
@@ -503,15 +527,17 @@ def reflection_stand_ins(monkeypatch, reviews: dict, revisions: dict, revisers, 
 
             return complete
 
-        def revise(normalized, line, previous, feedback, complete, vocabulary):
+        def revise(normalized, line, previous, feedback, complete, vocabulary, context=None):
+            text = common.revision_input(normalized, line, previous, feedback) if context is None else common.structured_revision_input(normalized, line, previous, context, vocabulary)
             try:
-                answer = json.loads(complete(f"{name} revise", common.revision_input(normalized, line, previous, feedback)))
+                answer = json.loads(complete(f"{name} revise", text))
                 result = stand_in_line(line, answer, vocabulary, {"backend": name, "revised": True})
             except ClassificationError as error:
                 result = models.ClassifiedLine(line.line_id, error=str(error))
             return common.finalize(result, line, vocabulary)
 
-        return models.Reviser(prompt=lambda vocabulary: f"{name} revise", cache_key=lambda model, vocabulary: model, cache_folder=f"{name}-revision", connect=connect, revise=revise)
+        return models.Reviser(prompt=lambda vocabulary: f"{name} revise", cache_key=lambda model, vocabulary: model, cache_folder=f"{name}-revision", connect=connect, revise=revise,
+                              structured_prompt=lambda vocabulary: f"{name} revise, structured")
 
     for name in revisers:
         monkeypatch.setitem(registry.REVISERS, name, make(name))
@@ -519,6 +545,7 @@ def reflection_stand_ins(monkeypatch, reviews: dict, revisions: dict, revisers, 
 
 @pytest.mark.parametrize("case", load_cases("classification", "langgraph_reflection"))
 def test_reflection_reviews_revises_and_falls_back_as_its_precedence_says(case, monkeypatch, tmp_path):
+    SENT_REVISIONS.clear()
     calls, _ = stand_ins(monkeypatch, case["answers"])
     reflected = Counter()
     reflection_stand_ins(monkeypatch, case["reviews"], case["revisions"], case["revisers"], reflected)
@@ -544,6 +571,18 @@ def test_reflection_reviews_revises_and_falls_back_as_its_precedence_says(case, 
         assert (lines[name].confidence is None) is (reflection["unresolved"] or lines[name].category is None), name
     for line, unresolved in expected.get("unresolved", {}).items():
         assert audit[line]["reflection"]["unresolved"] is unresolved, line
+    structured = ({**CRITIC, **case["reflection"]}).get("feedback_context") == "structured"
+    for line, reason in expected.get("stop_reason", {}).items():
+        assert audit[line]["reflection"]["stop_reason"] == reason == audit[line]["result"], line
+    if not structured:
+        assert SENT_REVISIONS == [] and all("stop_reason" not in item["reflection"] for item in audit.values())
+    # Each structured request: the review it answers, where the retry stands, and a failed revision's error.
+    sent = [{"category": request["previous_classification"]["category"], "confidence": request["previous_classification"]["confidence"], "review": request["review"],
+             "categories": sorted(request["categories_in_question"]), "retry": request["retry"], **({"failed_revision": request["failed_revision"]} if "failed_revision" in request else {})}
+            for request in SENT_REVISIONS]
+    assert sent == expected.get("requests", sent)
+    for line, attempts in expected.get("revision_attempts", {}).items():
+        assert [{key: attempt[key] for key in ("revision", "outcome", "answers_review", "max_retries", "retried_validation_error")} for attempt in audit[line]["attempts"] if "revision" in attempt] == attempts, line
 
 
 def validator_limits(override: dict) -> dict:
@@ -602,6 +641,60 @@ def test_the_llm_reviews_and_revises_through_its_own_calls_records_them_apart_an
     replay = ExpenseValidator(settings.model_copy(update={"mode": "replay", "openrouter_api_key": None})).validate_batch(receipt, context_complete=False, langgraph_config=config)
     assert [r.to_record() | {"metadata": None} for r in replay.results] == [r.to_record() | {"metadata": None} for r in live.results]
     assert sent == {"reflection": 2, "revision": 1}
+
+
+def test_the_llm_revises_with_structured_context_through_its_own_request_and_recordings(monkeypatch, tmp_path, offline):
+    """A structured revision: the whole review, the previous confidence, the categories in question and the retry."""
+    from expense_validator.classification.backends import llm
+
+    folder = recordings(tmp_path)
+    requests = []
+
+    def fake_send(client, model, temperature, prompt, text, json_schema, what):
+        request = json.loads(text)
+        if what == "reflection":
+            if request["proposed"]["category"] == "personal_electronics":
+                return json.dumps({"verdict": "revise", "reason": "the line names headphones", "suggested_category": "office_supplies", "feedback": "check whether these are office equipment"})
+            return json.dumps({"verdict": "accept", "reason": "the line names the product", "suggested_category": None, "feedback": None})
+        assert prompt.endswith(llm.STRUCTURED_REVISION_INSTRUCTIONS) and "reviewer_feedback" not in request
+        requests.append(request)
+        return json.dumps({"category": "office_supplies", "confidence": 0.9, "recipient_name": None, "recipient_type": None, "venue_type": None, "item_kind": None, "essential_toiletry": None})
+
+    monkeypatch.setattr(llm, "_send", fake_send)
+    settings = ValidatorSettings.from_config(CONFIG, mode="live", cache_dir=folder, classification_backend="langgraph").model_copy(update={"translation_enabled": False, "openrouter_api_key": SecretStr("k")})
+    config = {"reflection": {"enabled": True, "feedback_context": "structured", "max_retries": 3}}
+    receipt = [RECEIPTS["RCP-012"]]
+    live = ExpenseValidator(settings, client_factory=lambda purpose, backend: object()).validate_batch(receipt, context_complete=False, langgraph_config=config)
+    vocabulary = ExpenseValidator(settings).vocabulary
+    line = normalize_receipt(RECEIPTS["RCP-012"], NoOpTranslator()).lines[0]
+    assert requests == [{
+        "line": json.loads(common.line_input(normalize_receipt(RECEIPTS["RCP-012"], NoOpTranslator()), line)),  # the line as classified, nothing more
+        "previous_classification": {"category": "personal_electronics", "confidence": requests[0]["previous_classification"]["confidence"]},
+        "review": {"verdict": "revise", "reason": "the line names headphones", "feedback": "check whether these are office equipment", "suggested_category": "office_supplies"},
+        "categories_in_question": {name: vocabulary.categories[name].examples for name in ("personal_electronics", "office_supplies")},
+        "retry": {"number": 1, "max": 3},
+    }]
+    assert requests[0]["previous_classification"]["confidence"] is not None
+    audit = audits(live)["RCP-012-L1"]
+    assert (audit["result"], audit["reflection"]["stop_reason"], audit["reflection"]["unresolved"], live.results[0].line_items[0].category) == ("accepted", "accepted", False, "office_supplies")
+    assert audit["reflection"] | {"reviews": None, "fallbacks": None} == {"calls": 4, "revisions": 1, "reviews": None, "fallbacks": None, "unresolved": False, "feedback_context": "structured", "stop_reason": "accepted", "max_retries": 3, "max_calls": 6}
+    # Its own recording, apart from a feedback-only revision of the same line; replay reads it with no client.
+    replay = ExpenseValidator(settings.model_copy(update={"mode": "replay", "openrouter_api_key": None})).validate_batch(receipt, context_complete=False, langgraph_config=config)
+    assert [r.to_record() | {"metadata": None} for r in replay.results] == [r.to_record() | {"metadata": None} for r in live.results]
+    # The feedback-only request for the same revision was never recorded: replay has no answer for it.
+    plain = ExpenseValidator(settings.model_copy(update={"mode": "replay", "openrouter_api_key": None})).validate_batch(receipt, context_complete=False, langgraph_config={"reflection": {"enabled": True, "max_retries": 3}})
+    assert [attempt["outcome"] for attempt in audits(plain)["RCP-012-L1"]["attempts"] if "revision" in attempt] == ["missing_recording"]
+
+
+def test_structured_context_is_its_own_prompt_identity_and_the_default_keeps_the_earlier_one():
+    validator = ExpenseValidator.from_config(CONFIG, mode="replay", classification_backend="langgraph")
+    settings = validator.settings
+    def identity(**reflection):
+        merged = settings.model_copy(update={"langgraph": settings.langgraph.merged({"reflection": {"enabled": True, **reflection}})})
+        return validator._prompt_sha256(merged, 2)
+    # The default is left out of the identity, so a reflection order hashes exactly as it did before the field existed.
+    assert identity() == identity(feedback_context="reviewer_feedback")
+    assert identity(feedback_context="structured") != identity()
 
 
 def test_a_missing_review_recording_is_missing_evidence_and_the_classification_stands(tmp_path, offline):

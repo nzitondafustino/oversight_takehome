@@ -159,7 +159,9 @@ export interface Compilation {
   recording_set: string;
   recorded_with: RecordedWith | null;
   extraction_id: string | null;
-  prepared_review: { review_id: string; policy: string; review_sha256: string } | null;
+  prepared_review: { review_id: string; policy: string; review_sha256: string; decisions?: unknown[] } | null;
+  /** Reviewed corrections of the rule logic this version was compiled with, each with who and why. */
+  rule_overrides?: RuleOverride[];
   /** simulation readings never authorize production. */
   reading_kind: "model" | "simulation";
   extraction_sha256: string;
@@ -172,6 +174,7 @@ export interface Compilation {
 }
 
 export interface RulesetSummary {
+  superseded_by?: { ruleset_id: string; name: string; version: number } | null;
   ruleset_id: string;
   name: string;
   version: number;
@@ -186,6 +189,8 @@ export interface RulesetSummary {
   /** Null for an uploaded artifact, which no approval can cover. */
   compilation: Compilation | null;
   review: RulesetReview | null;
+  /** For a version made by editing another: what changed, by whom and why. */
+  edits?: RuleEdits | null;
   approval_reference: string | null;
   approval_mode: PublishMode | null;
   publication_mode: PublishMode | null;
@@ -284,6 +289,23 @@ export interface DocumentSource {
   reference: string | null;
 }
 
+/** What a document is about, chosen by a person, never guessed from its filename. null: unclassified. */
+export type DocumentCategory =
+  | "meals_entertainment"
+  | "gifts_awards"
+  | "approvals_exceptions"
+  | "travel_regional"
+  | "receipts_documentation"
+  | "merchant_restrictions"
+  | "technology_equipment";
+
+/** Where a document applies, as given. An empty list is not stated. */
+export interface DocumentScope {
+  regions: string[];
+  entities: string[];
+  expense_types: string[];
+}
+
 export interface DocumentSummary {
   document_id: string;
   revision: number;
@@ -294,6 +316,88 @@ export interface DocumentSummary {
   source: DocumentSource;
   based_on_revision: number | null;
   created_at: string;
+  /** The document's profile, the same for every revision. Absent or null for one never described. */
+  category?: DocumentCategory | null;
+  description?: string | null;
+  scope?: DocumentScope | null;
+  /** Another document with identical content that is kept: this one is hidden as its duplicate. */
+  duplicate_of?: string | null;
+  profile_updated_at?: string | null;
+  /** This exact revision's approval. Absent in a response from before approval existed: a draft. */
+  approval?: RevisionApprovalState;
+}
+
+export type DocumentApprovalStatus = "draft" | "needs_review" | "approved";
+
+/** The approval of one exact revision. Every revision starts as a draft: none inherits another's approval. */
+export interface RevisionApprovalState {
+  status: DocumentApprovalStatus;
+  content_sha256?: string | null;
+  updated_at?: string | null;
+  updated_by?: ClaimedActor | null;
+}
+
+export interface ApprovalEvent {
+  action: "submit" | "approve" | "return_to_draft";
+  from_status: DocumentApprovalStatus;
+  to_status: DocumentApprovalStatus;
+  actor: ClaimedActor;
+  note: string | null;
+  content_sha256: string;
+  at: string;
+}
+
+export interface RevisionApproval extends RevisionApprovalState {
+  document_id: string;
+  revision: number;
+  history: ApprovalEvent[];
+}
+
+export interface ApprovalActionBody {
+  action: "submit" | "approve" | "return_to_draft";
+  actor: string;
+  /** The exact text acted on: another revision's hash is a 409 revision_mismatch. */
+  content_sha256: string;
+  note?: string;
+}
+
+/** A compared field's clause, verified against the exact revision the compiler read; never approximate. */
+export interface SourceLocation {
+  comparison_id: string;
+  document: { document_id: string; revision: number | null; filename: string; content_sha256: string; content: string };
+  revision_verified: boolean;
+  clause_verified: boolean;
+  location: { from_line: number; to_line: number } | null;
+  section: string | null;
+  heading_line: number | null;
+  highlights: { line: number; start: number; end: number; text: string; side: "regex" | "llm" | "clause" }[];
+  reason: string | null;
+}
+
+/** PATCH /v1/documents/{id}/profile: only the fields given change; no revision ever does. */
+export interface ProfileUpdate {
+  actor: string;
+  category?: DocumentCategory | null;
+  description?: string | null;
+  scope?: DocumentScope | null;
+  /** Marks this document a hidden duplicate of another with identical content; null restores it. Nothing is deleted. */
+  duplicate_of?: string | null;
+}
+
+/** POST /v1/documents/extraction-jobs: an extraction running in the background, and how far it is. */
+export interface ExtractionJob {
+  job_id: string;
+  status: "queued" | "running" | "succeeded" | "failed";
+  execution_mode: "replay" | "live";
+  extraction_model: string | null;
+  documents: string[];
+  progress: { stage: "queued" | "reading" | "building" | "done"; done: number; total: number; current: string | null };
+  extraction_id: string | null;
+  error: { code: string; message: string; details?: unknown } | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  updated_at: string;
 }
 
 export interface DocumentDetail extends DocumentSummary {
@@ -307,6 +411,9 @@ export interface DocumentCreate {
   content: string;
   title?: string;
   source?: Partial<DocumentSource>;
+  category?: DocumentCategory;
+  description?: string;
+  scope?: DocumentScope;
 }
 
 export interface RevisionCreate {
@@ -328,9 +435,58 @@ export interface RecordedWith {
 }
 
 /** Replay reads a named recording set. Live calls a paid model, and the deployment must allow it. */
+/** A reviewed correction of one draft rule's logic, compiled in and validated like the rule logic itself. */
+export interface RuleOverride {
+  rule_id: string;
+  set: Record<string, unknown>;
+  rationale: string | null;
+  reviewer?: string;
+  /** A new rule for a clause no rule implements: set also gives its scope, source_quote and params. */
+  add?: boolean;
+}
+
+/** Corrections of the draft rules: each needs a rationale, and the request an actor. */
+type Corrections = { actor?: string; rule_overrides?: RuleOverride[]; carry_overrides_from?: string };
+
 export type ExtractionCreate =
-  | { documents: RevisionRef[]; execution_mode?: "replay"; recording_set: string; recorded_with?: RecordedWith }
-  | { documents: RevisionRef[]; execution_mode: "live"; extraction_model: string; temperature?: number; timeout_seconds?: number };
+  | ({ documents: RevisionRef[]; execution_mode?: "replay"; recording_set: string; recorded_with?: RecordedWith } & Corrections)
+  | ({ documents: RevisionRef[]; execution_mode: "live"; extraction_model: string; temperature?: number; timeout_seconds?: number } & Corrections);
+
+/** A compiled rule that does not do what its clause states: the core's RuleDiscrepancy. */
+export interface RuleDiscrepancy {
+  rule_id: string;
+  policy_doc: string;
+  /** rule: the documents state a clause under its own rule ID that no rule implements. */
+  field: "thresholds" | "severities" | "review_signal" | "source_quote" | "rule";
+  /** thresholds: {value, unit}[]; severities: string[]; review_signal: boolean; source_quote: the clause text;
+   * rule: {title, text, severities, review_signal, thresholds}. */
+  stated: unknown;
+  /** thresholds: each policy param by name, {value, unit}; severities: string[]; review_signal: boolean. */
+  compiled: unknown;
+}
+
+/** A field of a compilation beside the same field in the published version, with the decision it was published with. */
+export interface PreviousDecision {
+  comparison_id: string;
+  /** unchanged: same clause and readings, so the earlier decision answers the same question; changed: decide again. */
+  state: "unchanged" | "changed";
+  previous: { comparison_id: string; status: ComparisonStatus; regex_value: unknown; llm_value: unknown; evidence: string | null; clause_hash: string | null };
+  decision: ReviewDecision;
+}
+
+/** A version beside the version published before it. */
+export interface VersionChanges {
+  against: { ruleset_id: string; name: string; version: number; published_at: string | null } | null;
+  rule_changes: { rule_id: string; field: string; before: unknown; after: unknown }[];
+}
+
+/** A compilation beside the latest published version. */
+export interface Baseline {
+  published: { ruleset_id: string; name: string; version: number; published_at: string | null } | null;
+  rule_changes?: { rule_id: string; field: string; before: unknown; after: unknown }[];
+  changed_clauses?: { policy_doc: string; rule_id: string }[];
+  decisions?: PreviousDecision[];
+}
 
 export type ExtractionStatus = "no_candidate" | "review_required" | "ready_for_approval";
 export type ComparisonStatus = "agreed" | "disagree" | "unconfirmed" | "only_regex" | "only_llm";
@@ -397,7 +553,23 @@ export interface ExtractionReviewSummary {
 }
 
 /** GET /v1/documents/extractions: the stored summary, without the fields read from the core's result. */
+export interface CompilationAnalytics {
+  duration_ms: number;
+  provider_latency_ms: number;
+  live_calls: number;
+  failed_calls: number;
+  reused_documents: number;
+  documents: number;
+  new_spend_usd: string;
+  cost_completeness: "complete" | "incomplete";
+  unpriced_calls: number;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  calls: { model: string | null; document_sha256: string; latency_ms: number; failed: boolean; cost_usd: string | null; input_tokens: number | null; output_tokens: number | null }[];
+}
+
 export interface ExtractionListItem {
+  analytics?: CompilationAnalytics | null;
   extraction_id: string;
   /** Never "approved": approval is a ruleset version's lifecycle step. */
   status: ExtractionStatus;
@@ -414,11 +586,85 @@ export interface ExtractionListItem {
   comparison_count: number;
   reviews: ExtractionReviewSummary[];
   created_at: string;
+  /** The ruleset versions made from this extraction. Absent in a response from before it was reported. */
+  versions?: VersionRef[];
+  open_change_requests?: number;
+  /** Reviewed corrections of the draft rules this compilation was built with. */
+  rule_overrides?: RuleOverride[];
+}
+
+export interface VersionRef {
+  ruleset_id: string;
+  name: string;
+  version: number;
+  status: RulesetStatus;
+}
+
+/** A reviewer's request that one compared field be corrected. It rewrites nothing; while open it blocks use. */
+export interface ChangeRequest {
+  change_request_id: string;
+  extraction_id: string;
+  comparison_id: string;
+  rule_id: string;
+  field: string;
+  policy_doc: string;
+  document_id: string;
+  requested_correction: string;
+  comment: string | null;
+  status: "open" | "resolved";
+  requested_by: ClaimedActor;
+  created_at: string;
+  resolved_by: ClaimedActor | null;
+  resolution_note: string | null;
+  resolved_at: string | null;
+}
+
+export interface ChangeRequestCreate {
+  actor: string;
+  comparison_id: string;
+  requested_correction: string;
+  comment?: string;
 }
 
 export interface ExtractionSummary extends ExtractionListItem {
+  /** Rules whose compiled behaviour differs from what their clause states: why there is no candidate. */
+  discrepancies?: RuleDiscrepancy[];
+  /** Each candidate rule's title, by rule_id, when the compiler built a candidate. */
+  rule_titles?: Record<string, string>;
   /** The fields an exceptions_only review must decide. */
   review_required: FieldComparison[];
+  /** How each rule under review applies its params: its conditions, params, and where each param is compared. */
+  rule_logic?: Record<string, RuleLogic>;
+}
+
+/** How a helper compares one of its params (the core's policy/param_use.py). */
+export interface HelperParamUse {
+  measure: string;
+  operator: string;
+  applies_to: string;
+  threshold_of: string | null;
+}
+
+/** What a candidate rule does, as the ruleset states it: sent for each rule under review and each it replaces or is replaced by. */
+export interface RuleLogic {
+  kind?: string;
+  scope?: string;
+  helper?: string | null;
+  outcome?: string;
+  severity?: string | null;
+  severity_cases?: { when: unknown; severity: string }[] | null;
+  title?: string;
+  status?: string;
+  policy_doc?: string;
+  applies_when?: unknown;
+  select?: unknown;
+  replaces?: { rule_id: string; level: string }[] | null;
+  waived_by_ref?: string | null;
+  modifies?: string[] | null;
+  requires_ref?: string | null;
+  directive?: string | null;
+  params?: Record<string, { type: "number"; value: string; unit: string; source?: string } | { type: "set"; values: string[] }>;
+  param_uses: Record<string, { in_conditions: ("applies_when" | "select")[]; helper: HelperParamUse | null }>;
 }
 
 export interface ExtractionComparisonPage extends Page<FieldComparison> {
@@ -724,6 +970,10 @@ export interface ClassificationMetrics {
   /** Expected categories by predicted ones; "(none)" is the column for a line with no category. */
   confusion_matrix: { rows: string[]; columns: string[]; counts: Record<string, Record<string, number>> };
   restricted: Prf & { lines: number };
+  /** Scoring version 2. Answer (true, false) by prediction (true, false, none); positive is restricted = true. */
+  restricted_matrix?: { rows_gold_columns_predicted: Record<"true" | "false", Record<"true" | "false" | "none", number>>; tn: number };
+  /** Scoring version 2. Categories predicted that no answer has, with their line counts. */
+  extra_predicted?: Record<string, number>;
 }
 
 export interface DispositionMetrics {
@@ -745,6 +995,121 @@ export interface DispositionMetrics {
   review: Rate;
   abstention: Rate;
   flagged_undecided: Rate;
+  /** Scoring version 2: every labelled receipt, with those not evaluated in their own column. */
+  matrix_with_not_evaluated?: { columns: string[]; rows: Record<Disposition, Record<string, number>>; row_totals: Record<Disposition, number>; correct: number; incorrect: number };
+  /** Scoring version 2: of each cell, the receipts the engine did not fully decide. */
+  undecided_by_cell?: Record<Disposition, Record<Disposition, number>>;
+}
+
+export type RuleStatus = "tested" | "raised_without_answers" | "not_tested";
+
+export interface RuleDetection extends Prf {
+  expected: number;
+  predicted: number;
+  duplicates: number;
+  status: RuleStatus;
+  evidence_exact: Rate;
+}
+
+export interface MissedFinding {
+  receipt_id: string;
+  rule_id: string;
+  kind: "exception" | "signal";
+  expected_line_ids: string[] | null;
+  reason: "not_raised" | "raised" | "not_evaluated";
+}
+
+export interface UnexpectedFinding {
+  receipt_id: string;
+  rule_id: string;
+  kind: "exception" | "signal";
+  line_ids: string[];
+  duplicate: boolean;
+}
+
+export interface EvidenceMetrics {
+  available: true;
+  matched_exceptions: number;
+  scorable: number;
+  not_scorable: number;
+  exact: Rate;
+  line_precision: Rate;
+  line_recall: Rate;
+  severity_exact: Rate;
+  mismatches: { receipt_id: string; rule_id: string; expected_line_ids: string[]; cited_line_ids: string[]; missing_line_ids: string[]; extra_line_ids: string[] }[];
+}
+
+export interface BaselineLine {
+  receipt_id: string;
+  line_id: string;
+  description: string;
+  gold_category: string;
+  gold_restricted: boolean;
+  main: { category: string | null; restricted: boolean | null };
+  baseline: { category: string | null; restricted: boolean; matched: string | null };
+}
+
+export interface BaselineMetrics {
+  available: true;
+  version: string;
+  lines: number;
+  restricted: Record<"main" | "baseline", Prf & { matrix: Record<"true" | "false", Record<"true" | "false" | "none", number>> }>;
+  restricted_categories: Record<"main" | "baseline", { lines: number; accuracy: Rate; macro: { precision: number | null; recall: number | null; f1: number | null } } | null>;
+  difference: Record<"precision" | "recall" | "f1", number | null>;
+  lines_by_outcome: Record<"both_right" | "main_only" | "baseline_only" | "both_wrong", number>;
+  outcomes: Record<"both_right" | "main_only" | "baseline_only" | "both_wrong", BaselineLine[]>;
+  not_comparable: Record<string, string>;
+}
+
+export type Stage = "translation" | "classification" | "retrieval" | "rule_logic";
+
+export interface DiagnosedFailure {
+  id: string;
+  receipt_id: string;
+  line_ids: string[];
+  rule_id: string | null;
+  expected: Record<string, unknown>;
+  actual: Record<string, unknown>;
+  description: string;
+  stage: Stage;
+  evidence: Record<string, unknown>;
+  consequences: string[];
+  recommendation: string;
+  placed_by: string;
+}
+
+export interface ErrorAnalysis {
+  available: true;
+  observed: number;
+  by_stage: Record<Stage, number>;
+  failures: DiagnosedFailure[];
+  retrieval: string;
+  method: string;
+}
+
+export interface RuleCoverageRow {
+  kind: string;
+  execution: "evaluated" | "gate_only" | "not_evaluated" | "never_runs" | "every_receipt";
+  gate_receipts: number;
+  subject_receipts: number;
+  note: string | null;
+  expected: number;
+  predicted: number;
+  undecided_receipts: number;
+  positive_cases: boolean;
+}
+
+export interface CoverageMetrics {
+  available: true;
+  receipts: number;
+  rules: number;
+  executable_rules: number;
+  exercised: string[];
+  not_exercised: string[];
+  with_positive_cases: string[];
+  without_positive_cases: string[];
+  with_undecided: string[];
+  per_rule: Record<string, RuleCoverageRow>;
 }
 
 export interface FindingsMetrics {
@@ -755,8 +1120,18 @@ export interface FindingsMetrics {
   /** Counts every EXC-03 uncertainty signal as a false positive, as the answers never hold one. */
   micro: Prf;
   micro_without_uncertainty_signals: Prf;
-  evidence_exact: Rate;
-  per_rule: Record<string, Prf & { evidence_exact: Rate; severity_exact: Rate }>;
+  /** Scoring version 1 only: version 2 keeps evidence in its own block. */
+  evidence_exact?: Rate;
+  per_rule: Record<string, Prf & Partial<RuleDetection>>;
+  /** Scoring version 2. */
+  macro?: { rules: number; precision: number | null; recall: number | null; f1: number | null };
+  expected?: number;
+  predicted?: number;
+  rules_by_status?: Record<RuleStatus, string[]>;
+  missing?: MissedFinding[];
+  unexpected?: UnexpectedFinding[];
+  attribution?: { receipt_id: string; expected_rule: string; raised_rule: string; shared_line_ids: string[] }[];
+  attribution_counts?: Record<string, number>;
 }
 
 export interface OperationalMetrics {
@@ -787,6 +1162,14 @@ export interface EvaluationMetrics {
   disposition: DispositionMetrics | Unavailable;
   findings: FindingsMetrics | Unavailable;
   operational: OperationalMetrics;
+  /** How these metrics were scored: as the run finished, rescored with a later version, or provisional. */
+  scored?: { kind: "original" | "rescored" | "provisional"; original_schema_version?: string; current_schema_version?: string; rescored_at?: string; rescorings?: { schema_version: string; rescored_at: string }[] };
+  /** Scoring version 2 onwards: absent from metrics scored before it. */
+  scoring?: { baseline_version: string; definitions: Record<string, string> };
+  evidence?: EvidenceMetrics | Unavailable;
+  baseline?: BaselineMetrics | Unavailable;
+  error_analysis?: ErrorAnalysis | Unavailable;
+  coverage?: CoverageMetrics | Unavailable;
 }
 
 // --- Evaluation results and comparison: services/evaluations.py ---
@@ -922,6 +1305,8 @@ export interface BackendInfo {
 
 /** What POST /v1/documents/extractions can use here. Sets are named, never located. */
 export interface PolicyCompilerInfo {
+  /** The only models a live extraction may name: chat models, never a decision model or a translator. */
+  extraction_models?: string[];
   replay: {
     supported: boolean;
     sets: {
@@ -1015,6 +1400,11 @@ export interface Backends {
 export interface ValidationClassification {
   backend?: string | null;
   model?: string | null;
+  /** Changes to config.yaml's classification.langgraph: a whole node list, and reflection fields that differ. */
+  langgraph?: {
+    backends?: { name: string; backend: string; model: string }[];
+    reflection?: { enabled?: boolean; max_retries?: number; max_total_calls_per_line?: number; feedback_context?: string };
+  } | null;
   replay_set?: string | null;
 }
 
@@ -1149,4 +1539,47 @@ export interface FindingFilters {
   kind?: FindingKind[];
   receipt_id?: string[];
   disposition?: Disposition[];
+}
+
+/** GET /v1/taxonomy, the parts a rule editor reads. */
+export interface FieldCatalog {
+  fields: Record<string, { type?: string; unit?: string }>;
+  vocabularies: Record<string, string[]>;
+}
+
+/** POST /v1/rulesets/{id}/edits: reviewed changes to rules, made into a new draft version. */
+export interface RuleEditBody {
+  actor: string;
+  rationale: string;
+  changes: { rule_id: string; set: Record<string, unknown>; rationale?: string }[];
+}
+
+export interface FieldChange {
+  rule_id: string;
+  field: string;
+  before: unknown;
+  after: unknown;
+}
+
+export interface RuleEdits {
+  based_on: string;
+  based_on_version: number;
+  based_on_artifact_sha256: string;
+  actor: string;
+  rationale: string;
+  at: string;
+  changes: FieldChange[];
+}
+
+/** GET /v1/rulesets/{id}/readiness: where a version stands on Edit, Resolve, Approve, Publish. */
+export interface Readiness {
+  status: RulesetStatus;
+  next_step: "submit" | "review" | "approve" | "publish" | "none";
+  rules_changed: number;
+  review_remaining: number;
+  validation_errors: number;
+  approval: "not_approved" | "approved" | "published";
+  approval_mode: string | null;
+  can_publish: boolean;
+  blockers: { message: string; rule_id: string | null; comparison_id: string | null }[];
 }

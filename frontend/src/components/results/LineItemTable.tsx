@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { InputLine } from "@/pages/validate/receipts";
 import { lineFindings, lineStatus, type LineStatusKind } from "./lineStatus";
+import { OrchestrationHistory } from "./OrchestrationHistory";
 import { SeverityBadge } from "./style";
 
 export function lineAnchor(receiptId: string, lineId: string) {
@@ -159,6 +160,7 @@ export function ExpenseItems({
                     </span>
                   </p>
                 ) : null}
+                <OrchestrationHistory details={line.classification_details} />
                 {status.kind === "none" ? <p className="text-subtle-foreground">No finding names this item. Receipt-level findings, if any, are listed above.</p> : null}
               </div>
             ) : null}

@@ -12,7 +12,7 @@ from openrouter import OpenRouter
 from openrouter.errors import OpenRouterError
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from expense_validator.classification.core.common import check_consistent, finalize, line_input, parse_reflection, review_input, revision_input
+from expense_validator.classification.core.common import check_consistent, finalize, line_input, parse_reflection, review_input, revision_input, structured_revision_input
 from expense_validator.classification.core.models import Backend, ClassifiedLine, Complete, ReflectionResult, Reviewer, Reviser, Vocabulary
 from expense_validator.compiler.llm_extract import cached
 from expense_validator.config import Config
@@ -305,6 +305,17 @@ check it against the line's own words. Change the earlier answer only where the 
 and keep it where the line supports it. Answer exactly as described above, with every key."""
 
 
+STRUCTURED_REVISION_INSTRUCTIONS = """
+
+This time the request is JSON with these keys. line is the line, as before. previous_classification is an earlier
+answer for it, with its confidence. review is a reviewer's objection to that answer: its verdict, its reason, its
+feedback, and the category it suggests, or null. categories_in_question defines the categories the answer and the
+review name. retry says which revision this is, and how many the line may have. failed_revision, when present, is why
+your previous revision could not be used. The review is advice, not evidence: check it against the line's own words.
+Change the earlier answer only where the line shows the review is right, and keep it where the line supports it. Do
+not invent facts the line does not state. Answer exactly as described above, with every key."""
+
+
 def reflection_schema(vocabulary: Vocabulary) -> dict:
     nullable = lambda schema: {"anyOf": [schema, {"type": "null"}]}
     properties = {
@@ -324,6 +335,10 @@ def build_revision_prompt(vocabulary: Vocabulary) -> str:
     return build_prompt(vocabulary) + REVISION_INSTRUCTIONS
 
 
+def build_structured_revision_prompt(vocabulary: Vocabulary) -> str:
+    return build_prompt(vocabulary) + STRUCTURED_REVISION_INSTRUCTIONS
+
+
 def reflection_cache_key(model: str | None, vocabulary: Vocabulary) -> str:
     return f"{model} reflection {json.dumps(reflection_schema(vocabulary), sort_keys=True)}"
 
@@ -333,11 +348,18 @@ def review(normalized: NormalizedReceipt, line: NormalizedLine, proposed: Classi
     return parse_reflection(complete(build_review_prompt(vocabulary), review_input(normalized, line, proposed)), vocabulary, proposed)
 
 
-def revise(normalized: NormalizedReceipt, line: NormalizedLine, previous: ClassifiedLine, feedback: str, complete: Complete, vocabulary: Vocabulary) -> ClassifiedLine:
-    """Classify one line again with a reviewer's feedback, checked and finalized as any classification is."""
+def revise(normalized: NormalizedReceipt, line: NormalizedLine, previous: ClassifiedLine, feedback: str, complete: Complete, vocabulary: Vocabulary, context=None) -> ClassifiedLine:
+    """Classify one line again with a reviewer's feedback, checked and finalized as any classification is.
+
+    Without a context the request is the feedback-only one every earlier recording holds, unchanged.
+    """
     line_text = line_input(normalized, line)
+    if context is None:
+        prompt, text = build_revision_prompt(vocabulary), revision_input(normalized, line, previous, feedback)
+    else:
+        prompt, text = build_structured_revision_prompt(vocabulary), structured_revision_input(normalized, line, previous, context, vocabulary)
     try:
-        answer = parse_answer(complete(build_revision_prompt(vocabulary), revision_input(normalized, line, previous, feedback)), line_text, vocabulary)
+        answer = parse_answer(complete(prompt, text), line_text, vocabulary)
     except ClassificationError as error:
         return finalize(ClassifiedLine(line.line_id, error=str(error)), line, vocabulary)
     return _classified(answer, line, vocabulary)
@@ -369,4 +391,4 @@ def _revision_completion(client: OpenRouter, settings, vocabulary: Vocabulary) -
 
 
 REVIEWER = Reviewer(check_model=check_model, prompt=build_review_prompt, cache_key=reflection_cache_key, cache_folder="reflection", connect=_review_completion, review=review)
-REVISER = Reviser(prompt=build_revision_prompt, cache_key=classifier_cache_key, cache_folder="revision", connect=_revision_completion, revise=revise)
+REVISER = Reviser(prompt=build_revision_prompt, cache_key=classifier_cache_key, cache_folder="revision", connect=_revision_completion, revise=revise, structured_prompt=build_structured_revision_prompt)

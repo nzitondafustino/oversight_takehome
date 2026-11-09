@@ -36,9 +36,9 @@ export function AppLayout() {
       >
         Skip to content
       </a>
-      <div className="flex min-h-screen bg-background">
+      <div className="workspace-canvas flex min-h-screen">
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((value) => !value)} />
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div data-pdf-content className="flex min-w-0 flex-1 flex-col">
           <Topbar />
           <main id="main" tabIndex={-1} className="flex-1 px-4 py-6 outline-none md:px-6 lg:px-8">
             <div className="mx-auto w-full max-w-[1400px]">

@@ -14,13 +14,14 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
       )}
     >
       <div className={cn("flex h-14 items-center gap-2.5 border-b border-sidebar-border", collapsed ? "justify-center px-0" : "px-4")}>
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-accent text-primary-foreground">
+        <div className="relative flex size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-accent text-primary-foreground">
           <ShieldCheck className="size-4.5" aria-hidden />
+          <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-sm bg-brand-lime" aria-hidden />
         </div>
         {!collapsed ? (
           <div className="min-w-0 leading-tight">
-            <p className="truncate text-sm font-semibold text-white">Policy Validator</p>
-            <p className="truncate text-[11px] text-sidebar-muted">Expense audit intelligence</p>
+            <p className="truncate text-sm font-semibold text-white">Northwind Global</p>
+            <p className="truncate text-[11px] text-sidebar-muted">Expense Policy Validator</p>
           </div>
         ) : null}
       </div>

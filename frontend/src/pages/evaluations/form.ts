@@ -15,6 +15,11 @@ import {
   isEligibleRuleset,
   isNamedFor,
   LANGGRAPH,
+  effectiveReflection,
+  langgraphNodes,
+  langgraphOverride,
+  nodeIssues,
+  reflectionIssues,
   modeAvailability,
   replaySetsFor,
   translationAllowlist,
@@ -62,6 +67,8 @@ export const INITIAL_FORM: EvaluationForm = {
   orchestrator: null,
   provider: null,
   model: "",
+  nodeModels: {},
+  reflection: {},
   replaySet: null,
   translationModel: "",
   label: "",
@@ -114,7 +121,7 @@ export function resolveBackend(form: EvaluationForm, backends: Backends): Resolv
   const resolved = backendIdFor(form, backends);
   const value = backends.backends.find((item) => item.id === resolved.id) ?? null;
   if (!value) return { value: null, automatic: false, note: resolved.reason ?? "Choose how lines are classified." };
-  const automatic = form.orchestrator === null && !form.model.trim();
+  const automatic = form.orchestrator === null && !form.model.trim() && !langgraphOverride(form, backends);
   if (automatic && !backendAvailability(value, form.mode).available) return { value: null, automatic: false, note: "The deployment's default classification cannot run in this mode: choose another." };
   return { value, automatic, note: automatic ? "The deployment's default" : "Chosen" };
 }
@@ -140,9 +147,9 @@ export function resolveReplaySet(form: EvaluationForm, backend: BackendInfo | nu
   return { value: null, automatic: false, note: sets.length ? `${sets.length} recording sets hold ${whose} answers: choose one.` : `No recording set holds ${whose} answers.` };
 }
 
-export type FieldKey = "dataset" | "ruleset" | "mode" | "orchestrator" | "model" | "replaySet" | "translation" | "limits" | CapKind | "confirm" | "uncapped";
+export type FieldKey = "dataset" | "ruleset" | "mode" | "orchestrator" | "model" | "reflection" | "replaySet" | "translation" | "limits" | CapKind | "confirm" | "uncapped";
 /** The fields under Advanced settings: an error in one opens them. */
-export const ADVANCED_FIELDS: readonly FieldKey[] = ["orchestrator", "model", "replaySet", "translation"];
+export const ADVANCED_FIELDS: readonly FieldKey[] = ["orchestrator", "model", "reflection", "replaySet", "translation"];
 
 /**
  * The translator a run uses, as the API resolves it: none when translation is off; in live mode the chosen model or
@@ -167,9 +174,9 @@ export function liveModels(form: EvaluationForm, backends: Backends): { model: s
   };
   const backend = resolveBackend(form, backends).value;
   if (backend?.id === LANGGRAPH) {
-    for (const node of backends.orchestrators.find((item) => item.id === LANGGRAPH)?.nodes ?? []) add(node.model, "classification");
-    const reflection = backend.capabilities.reflection as { enabled?: boolean; reviewer?: { model?: string } | null } | undefined;
-    if (reflection?.enabled) add(reflection.reviewer?.model, "classification");
+    for (const node of langgraphNodes(form, backends)) add(node.model, "classification");
+    const reflection = backend.capabilities.reflection as { reviewer?: { model?: string } | null } | undefined;
+    if (effectiveReflection(form, backends).enabled) add(reflection?.reviewer?.model, "classification");
   } else add(form.model.trim() || backend?.default_model, "classification");
   const translator = resolveTranslation(form, backends).value;
   if (translator) add(translator, "translation");
@@ -206,6 +213,11 @@ export function formErrors(form: EvaluationForm, context: Context): Partial<Reco
   else {
     const availability = backendAvailability(backend.value, form.mode);
     if (!availability.available) errors[field] = `${backendText(backend.value, backends)}: ${availability.reason ?? "unavailable"}.`;
+    // A model chosen for a LangGraph node is held to the same checks as a direct one: offered, and runnable in this mode.
+    const nodes = backend.value.id === LANGGRAPH ? nodeIssues(form, backends, form.mode) : [];
+    if (nodes.length) errors.model = nodes.join(" ");
+    const reflection = backend.value.id === LANGGRAPH ? reflectionIssues(form, backends) : [];
+    if (reflection.length) errors.reflection = reflection.join(" ");
     if (form.mode === "replay" && !errors[field] && !errors.orchestrator) {
       const set = resolveReplaySet(form, backend.value);
       if (!set.value) errors.replaySet = set.note;
@@ -254,7 +266,7 @@ export function evaluationBody(form: EvaluationForm, context: Context & { backen
   const ruleset = resolveRuleset(form, context.rulesets).value!;
   const backend = resolveBackend(form, context.backends).value!;
   const replaySet = form.mode === "replay" ? resolveReplaySet(form, backend).value ?? "" : "";
-  const choice = { orchestrator: form.orchestrator, provider: form.provider, model: form.model };
+  const choice = { orchestrator: form.orchestrator, provider: form.provider, model: form.model, nodeModels: form.nodeModels, reflection: form.reflection };
   const classification = classificationFor({ ...INITIAL_CONFIG, ...choice, mode: form.mode, replaySet }, context.backends);
   const body: EvaluationCreate = { dataset_id: form.datasetId!, ruleset_id: ruleset.ruleset_id, execution_mode: form.mode };
   if (form.preview) body.preview = true;

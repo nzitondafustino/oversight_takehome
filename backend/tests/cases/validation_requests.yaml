@@ -94,6 +94,16 @@ cases:
   - name: reflection needs a reviewer that can review
     request: {classification: {backend: langgraph, langgraph: {reflection: {enabled: true, reviewer: {backend: jev, model: typesafe/jev-1.14}}}}}
     expect: {status: 422, code: unsupported_configuration}
+  # The deployment's maximums (3 revisions, 12 calls per line), checked before anything runs, as merged with config.yaml.
+  - name: reflection retries above the deployment's maximum
+    request: {classification: {backend: langgraph, langgraph: {reflection: {enabled: true, max_retries: 4}}}}
+    expect: {status: 422, code: reflection_limit_exceeded, details: {limits: {max_retries: 3, max_total_calls_per_line: 12}, requested: {max_retries: 4, max_total_calls_per_line: 6}}}
+  - name: a reflection call budget above the deployment's maximum
+    request: {classification: {backend: langgraph, langgraph: {reflection: {enabled: true, feedback_context: structured, max_total_calls_per_line: 13}}}}
+    expect: {status: 422, code: reflection_limit_exceeded, details: {limits: {max_retries: 3, max_total_calls_per_line: 12}, requested: {max_retries: 2, max_total_calls_per_line: 13}}}
+  - name: an unknown feedback context
+    request: {classification: {backend: langgraph, langgraph: {reflection: {enabled: true, feedback_context: everything}}}}
+    expect: {status: 422, code: unsupported_configuration}
   - name: deterministic mode runs no model, so it takes no model choice
     request: {execution_mode: deterministic, classification: {model: anthropic/claude-haiku-5.5}}
     expect: {status: 422, code: unsupported_configuration}

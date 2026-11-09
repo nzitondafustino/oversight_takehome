@@ -71,7 +71,7 @@ def test_details_show_spending_by_model_backend_and_purpose(runs):
     job = bench.get(ids["jev"])
     assert set(job["spend"]["by_purpose"]) == {"classification", "translation"} and set(job["spend"]["by_backend"]) == {"decisions", "chat_completions"}
     assert job["spend"]["by_model"]["typesafe/jev-1.14"]["calls"] == {"total": 79, "live": 0, "cached": 0, "replayed": 79, "failed": 0}
-    assert job["metrics_schema_version"] == "evaluation-metrics/1" and job["result_context"] == "dataset"
+    assert job["metrics_schema_version"] == "evaluation-metrics/3" and job["result_context"] == "dataset"
 
 
 def test_metrics_are_the_cores_scores_with_their_denominators(runs):
@@ -133,8 +133,9 @@ def test_the_json_export_is_deterministic_and_whole(runs):
     assert first.status_code == 200 and first.content == second.content
     assert first.headers["content-disposition"] == f'attachment; filename="{ids["openrouter"]}.json"'
     body = json.loads(first.content)
-    assert body["export_schema"] == "evaluation-export/1" and len(body["results"]) == 32 and len(body["usage"]) == 90
-    assert body["metrics"] == {key: value for key, value in bench.get(ids["openrouter"], "/metrics").items() if key not in ("evaluation_id", "status", "provisional")}
+    assert body["export_schema"] == "evaluation-export/2" and len(body["results"]) == 32 and len(body["usage"]) == 90
+    assert all(list(item["result"]) == ["receipt_id", "disposition", "line_items", "exceptions", "review_signals", "metadata"] for item in body["results"])  # the brief's shape
+    assert body["metrics"] == {key: value for key, value in bench.get(ids["openrouter"], "/metrics").items() if key not in ("evaluation_id", "status", "provisional", "scored")}
     assert body["evaluation"]["dataset"]["canonical_sha256"] == bench.dataset["canonical_sha256"]
 
 

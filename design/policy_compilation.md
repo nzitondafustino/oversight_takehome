@@ -39,7 +39,16 @@ Two supported review paths share source checks:
 
 Do not combine resolutions and typed decisions in one reviewed publication. The facade rechecks the same documents when reviewing and publishing.
 
-Threshold evidence must use recognized unit forms. Unrelated merchant codes are not automatically limits. Resolved values must remain consistent with developer-authored executable logic; differing limits require a logic change and renewed validation.
+Threshold evidence must use recognized unit forms. Unrelated merchant codes, and a count of the rules a clause names ("those three"), are not limits. Resolved values must remain consistent with developer-authored executable logic; differing limits require a logic change and renewed validation.
+
+## Rule overrides and additions
+
+A reviewed change to the logic is a rule override (`compiler/overrides.py`), applied to the logic text before the build, so the compiler builds, faithful-checks and hashes it like hand-written logic, and approval binds the result.
+
+- **Change:** an existing rule's editable fields (status, title, outcome, severity, conditions, waiver reference, param values). A rule's ID, kind, document, quote and provenance never change, and a param keeps its name, type and unit.
+- **Addition (`add: true`):** a new check rule for a clause the documents state under its own rule ID that no rule implements. It also gives `scope`, `source_quote` and `params`; its kind is `check`, and its document and title come from its clause. Its quote must be in that clause, and its limits and severity must be what the clause states.
+
+A clause no rule implements stops the build: the extraction has no candidate and reports a discrepancy of field `rule` stating the clause's title, text, severities, review signal and limits, for the reviewer who writes its rule. A rule that no longer does what its clause states is a discrepancy of that field (`thresholds`, `severities`, `review_signal`), and one that quotes words its clause no longer has is a `source_quote` discrepancy, which only a change to the logic file corrects.
 
 ## Approval binds interpretation and execution
 
@@ -74,7 +83,7 @@ The facade returns publication blockers. It refuses existing outputs unless `rep
 Compiler, approval, publication, facade, and typed-review tests cover stale document/logic hashes, invalid decisions, recording conflicts, and simulation/production separation using offline fixtures.
 
 - Current input is Markdown. PDF/DOCX conversion and OCR are outside the package.
-- Incremental policy change detection, automatic retirement, version tagging, and archival are not implemented.
+- The package compiles the documents it is given. Incremental runs over changed documents are planned by the API (`backend/POLICY_EXTRACTION.md`); automatic retirement, version tagging and archival are not implemented.
 - Threshold checks enforce recognized forms and supported logic, not unrestricted natural-language meaning.
 - Simulated agreement measures workflow behavior, not extraction quality. Measure authentic provider runs separately; do not inherit historical counts or provenance claims.
 - Persistence, authenticated sign-off, activation, rollback history, and AWS services belong to the integrating backend.

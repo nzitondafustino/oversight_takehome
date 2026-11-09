@@ -66,6 +66,7 @@ class PolicyCompiler(BaseModel):
 
     replay: CompilerReplay
     live: CompilerLive
+    extraction_models: list[str] = []  # the only models a live extraction may name: chat models, never Jev or a translator
 
 
 class RulesetPermissions(BaseModel):

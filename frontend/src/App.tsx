@@ -5,13 +5,16 @@ import { createQueryClient } from "@/api/queries";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DashboardPage } from "@/pages/dashboard/DashboardPage";
 import { ComparePage } from "@/pages/evaluations/ComparePage";
+import { DatasetDetailPage } from "@/pages/evaluations/DatasetDetailPage";
 import { DatasetsPage } from "@/pages/evaluations/DatasetsPage";
 import { NewEvaluationPage } from "@/pages/evaluations/NewEvaluationPage";
 import { EvaluationDetailPage } from "@/pages/evaluations/EvaluationDetailPage";
 import { EvaluationsPage } from "@/pages/evaluations/EvaluationsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { DocumentDetailPage } from "@/pages/policy/DocumentDetailPage";
-import { DocumentsPage } from "@/pages/policy/DocumentsPage";
+import { DocumentsRedirect } from "@/pages/policy/DocumentsPage";
+import { CompilePage } from "@/pages/policy/CompilePage";
+import { DocumentComparePage } from "@/pages/policy/DocumentComparePage";
 import { ExtractionPage } from "@/pages/policy/ExtractionPage";
 import { PoliciesPage } from "@/pages/policy/PoliciesPage";
 import { RulesetDetailPage } from "@/pages/policy/RulesetDetailPage";
@@ -30,10 +33,13 @@ export const routes: RouteObject[] = [
       { path: "evaluations/compare", element: <ComparePage /> },
       { path: "evaluations/new", element: <NewEvaluationPage /> },
       { path: "evaluations/datasets", element: <DatasetsPage /> },
+      { path: "evaluations/datasets/:datasetId", element: <DatasetDetailPage /> },
       { path: "evaluations/:evaluationId", element: <EvaluationDetailPage /> },
       { path: "policies", element: <PoliciesPage /> },
       { path: "policies/:rulesetId", element: <RulesetDetailPage /> },
-      { path: "documents", element: <DocumentsPage /> },
+      { path: "documents", element: <DocumentsRedirect /> },
+      { path: "documents/compile", element: <CompilePage /> },
+      { path: "documents/compare", element: <DocumentComparePage /> },
       { path: "documents/extractions/:extractionId", element: <ExtractionPage /> },
       { path: "documents/:documentId", element: <DocumentDetailPage /> },
       { path: "runs", element: <RunHistoryPage /> },

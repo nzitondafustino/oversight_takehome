@@ -13,6 +13,7 @@ import expense_api
 from expense_api.api.v1 import discovery, documents, evaluations, health, rulesets, runs, validation
 from expense_api.config import Settings
 from expense_api.errors import install_error_handlers
+from expense_api.api.v1 import management
 from expense_api.repositories import ensure_indexes
 
 log = logging.getLogger("expense_api")
@@ -23,6 +24,7 @@ def create_app(
     *,
     mongo_client: MongoClient | None = None,
     build_validator: Callable[[ValidatorSettings], ExpenseValidator] = ExpenseValidator,
+    document_store=None,
 ) -> FastAPI:
     """Build the app. Tests pass their own settings, client and validator; a deployment passes nothing."""
     settings = settings or Settings()
@@ -44,7 +46,9 @@ def create_app(
     app.state.database = client[settings.mongo_database]
     app.state.indexes_ready = False
     app.state.build_validator = build_validator
+    app.state.document_store = document_store  # None: built from settings on first use (dependencies.get_document_store)
     install_error_handlers(app)
+    app.include_router(management.router)
     app.include_router(health.router)
     app.include_router(rulesets.router)
     app.include_router(documents.router)

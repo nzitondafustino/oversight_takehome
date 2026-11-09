@@ -21,7 +21,7 @@ router = APIRouter(prefix="/v1/runs", tags=["runs"])
 Runs = Annotated[RunService, Depends(get_run_service)]
 Limit = Annotated[int, Query(ge=1, le=100)]
 Offset = Annotated[int, Query(ge=0)]
-EXPORT_FORMATS = ("json", "csv")
+EXPORT_FORMATS = ("json", "csv", "pdf")
 
 
 @router.get("", response_model=RunPage, responses=errors(422, 503))
@@ -67,14 +67,17 @@ def list_findings(
     return FindingPage(run_id=run_id, items=[Finding(**item) for item in selected[offset:offset + limit]], total=len(selected), limit=limit, offset=offset)
 
 
-@router.get("/{run_id}/export", responses={200: {"content": {"application/json": {}, "text/csv": {}}, "description": "The run as a file"}, **errors(404, 422, 500, 503)})
-def export(run_id: str, runs: Runs, format: Annotated[str, Query(description="json or csv")] = "json"):
-    """The stored run as a file: json is the whole run; csv is one row per finding."""
+@router.get("/{run_id}/export", responses={200: {"content": {"application/json": {}, "text/csv": {}, "application/pdf": {}}, "description": "The run as a file"}, **errors(404, 422, 500, 503)})
+def export(run_id: str, runs: Runs, format: Annotated[str, Query(description="json, csv or pdf")] = "json"):
+    """The stored run as a file: json is the run with each receipt in the brief's shape; csv is one row per finding; pdf is the full batch report."""
     if format not in EXPORT_FORMATS:
-        raise ApiError(422, "unsupported_export_format", f"format is json or csv, not {format!r}", {"supported": list(EXPORT_FORMATS)})
+        raise ApiError(422, "unsupported_export_format", f"format is json, csv or pdf, not {format!r}", {"supported": list(EXPORT_FORMATS)})
     run = runs.get(run_id)
     if format == "json":
-        body, media_type = export_json(run_response(run).model_dump(mode="json")), "application/json"
+        body, media_type = export_json(run_response(run).model_dump(mode="json"), load_results(run)), "application/json"
+    elif format == "pdf":
+        from expense_api.services.pdf_reports import validation_pdf
+        body, media_type = validation_pdf(run_response(run).model_dump(mode="json")), "application/pdf"
     else:
         body, media_type = export_csv(run, load_results(run)), "text/csv; charset=utf-8"
     headers = {

@@ -2,10 +2,7 @@
 # data/policy-docs). The runner turns each into the core's ReviewDecision for the version's extraction.
 sets:
   live:  # model readings in evaluation/compiler/live
-    - {rule_id: MCC-03, field: thresholds, action: accept_regex}
-    - {rule_id: REG-01, field: thresholds, action: accept_regex}
-    # The model's quote is the heading, which is not in the clause word for word; the executable rule signs this one.
-    - {rule_id: TECH-01, field: quote, action: override, value: "is a **high** exception, regardless of stated business purpose", rationale: the quote the executable rule signs}
+    # The model leaves out "Two or more receipts", a limit TIME-03 holds as min_receipts: the text pattern reading is right.
     - {rule_id: TIME-03, field: thresholds, action: accept_regex}
   fixtures:  # authored simulation readings in tests/fixtures/llm_responses
     - {rule_id: MCC-03, field: thresholds, action: accept_regex}

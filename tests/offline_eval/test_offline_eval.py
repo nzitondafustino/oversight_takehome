@@ -41,6 +41,8 @@ def picked(actual, wanted):
     """Whether what a case names, at any depth, is what came back. Anything it leaves out is not compared."""
     if isinstance(wanted, dict):
         return {key: picked(actual[key], value) for key, value in wanted.items()}
+    if isinstance(wanted, list) and isinstance(actual, list) and len(wanted) == len(actual):
+        return [picked(item, value) for item, value in zip(actual, wanted)]  # a list of another length fails as it is
     return actual
 
 

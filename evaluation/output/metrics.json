@@ -93,7 +93,6 @@
     }
   },
   "inputs": {
-    "dataset_customer": "northwind",
     "dataset_receipts": 32,
     "dataset_sha256": "a277d73b45a8296389099abdb94b152aa89e99d71d141db47fdd7402f6489dff",
     "fields_sha256": "8c0331daf2b771bae7d47d5cea5762424152043980e3119c1fbb65c2c50b43c4",
@@ -850,6 +849,7 @@
             1.0
           ]
         },
+        "extra_predicted": {},
         "lines": 79,
         "macro": {
           "f1": 1.0,
@@ -1044,10 +1044,24 @@
           "precision": 1.0,
           "recall": 1.0,
           "tp": 21
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 58,
+              "none": 0,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 0,
+              "true": 21
+            }
+          },
+          "tn": 58
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -1169,7 +1183,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "60eb498d0dc25e79fe921f38fa6f0cd9af88ba762c1b6a619263281da77b1a51",
+      "predictions_sha256": "b586361d1aeb7e7e467d721b2c8f40b975ff320f5d92b50272110f5b5e4091b6",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -2749,6 +2763,7 @@
             1.0
           ]
         },
+        "extra_predicted": {},
         "lines": 79,
         "macro": {
           "f1": 1.0,
@@ -2943,10 +2958,24 @@
           "precision": 1.0,
           "recall": 1.0,
           "tp": 21
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 58,
+              "none": 0,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 0,
+              "true": 21
+            }
+          },
+          "tn": 58
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -3068,7 +3097,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "81cdfb1cf77fda73f27a08b32e9c427a4cc00dc986103c9146249496b26d449a",
+      "predictions_sha256": "7b27f5af2e6d5fd5c70eab08f4262fa7efd89f0baf54c762a5aa001f6f6749fb",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -4693,6 +4722,7 @@
             1.0
           ]
         },
+        "extra_predicted": {},
         "lines": 79,
         "macro": {
           "f1": 1.0,
@@ -4887,10 +4917,24 @@
           "precision": 1.0,
           "recall": 1.0,
           "tp": 21
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 58,
+              "none": 0,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 0,
+              "true": 21
+            }
+          },
+          "tn": 58
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -5012,7 +5056,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "4ae930483a2362d14a4a0aeb12e7d63291fca004c8730fab278b1ae2058852b1",
+      "predictions_sha256": "c1548a92d0d95c18c0b93db2a5eb569c943ffc4f28489d89cede4154837ca372",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -6541,6 +6585,7 @@
             1.0
           ]
         },
+        "extra_predicted": {},
         "lines": 79,
         "macro": {
           "f1": 1.0,
@@ -6735,10 +6780,24 @@
           "precision": 1.0,
           "recall": 1.0,
           "tp": 21
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 58,
+              "none": 0,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 0,
+              "true": 21
+            }
+          },
+          "tn": 58
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -6860,7 +6919,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "04ed33d8da587722c09fdbdf1cbda3914ee2d021c08738f336905c1652269a5a",
+      "predictions_sha256": "e72fa59776489af708b2e4afed8273f1037c23606de13f0d91fff9fb46779f5d",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -8389,6 +8448,7 @@
             0.046371
           ]
         },
+        "extra_predicted": {},
         "lines": 79,
         "macro": {
           "f1": 0.0,
@@ -8583,10 +8643,24 @@
           "precision": null,
           "recall": 0.0,
           "tp": 0
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 0,
+              "none": 58,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 21,
+              "true": 0
+            }
+          },
+          "tn": 0
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -8708,7 +8782,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "0bedc1810b705c33b53394623d5a53ec1e57213485d8a677be131eb1df6fba17",
+      "predictions_sha256": "4b550291822958c6e5a0cac40eac07b10709ba87056c57b14ab61252193fb8b7",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -10180,6 +10254,7 @@
             1.0
           ]
         },
+        "extra_predicted": {},
         "lines": 79,
         "macro": {
           "f1": 1.0,
@@ -10374,10 +10449,24 @@
           "precision": 1.0,
           "recall": 1.0,
           "tp": 21
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 58,
+              "none": 0,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 0,
+              "true": 21
+            }
+          },
+          "tn": 58
         }
       },
       "complete": false,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -10499,7 +10588,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "3dd974a7fd81235651ef462c8e272e6890530fbe2450750b6a5e516a2e23cb02",
+      "predictions_sha256": "2c87e274f78053a8b2826e52eebd1a702c5865b2562a42c4991e8e973d5bcd0d",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -12275,6 +12364,7 @@
             1.0
           ]
         },
+        "extra_predicted": {},
         "lines": 79,
         "macro": {
           "f1": 1.0,
@@ -12469,10 +12559,24 @@
           "precision": 1.0,
           "recall": 1.0,
           "tp": 21
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 58,
+              "none": 0,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 0,
+              "true": 21
+            }
+          },
+          "tn": 58
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -12594,7 +12698,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "19a499b2b956c62c7aeb20e002fcc38a6a0e39b5aa7ad0ade61926f4b2e5afd9",
+      "predictions_sha256": "98adc5c1e0d7a7fa4f25c700b5dd0702609f17433161068f597ec935cdb2ccfa",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -14328,6 +14432,7 @@
             1.0
           ]
         },
+        "extra_predicted": {},
         "lines": 79,
         "macro": {
           "f1": 1.0,
@@ -14522,10 +14627,24 @@
           "precision": 1.0,
           "recall": 1.0,
           "tp": 21
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 58,
+              "none": 0,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 0,
+              "true": 21
+            }
+          },
+          "tn": 58
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -14647,7 +14766,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "24b6a4b37f1a646aa210cd442914d88802d7b8574ed6dd70514044977c90123a",
+      "predictions_sha256": "5618f518b2b1c2dee27eb55f022be0ca01e6603f2e5daa9a5a21aba99c338620",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -16449,6 +16568,7 @@
             1.0
           ]
         },
+        "extra_predicted": {},
         "lines": 79,
         "macro": {
           "f1": 1.0,
@@ -16643,10 +16763,24 @@
           "precision": 1.0,
           "recall": 1.0,
           "tp": 21
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 58,
+              "none": 0,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 0,
+              "true": 21
+            }
+          },
+          "tn": 58
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -16768,7 +16902,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "ffccfb7df729489ee6ab77601c9be162ba34ed300d3f44383088792daabc42de",
+      "predictions_sha256": "e8943413c6727684d744f84c6b138ff402bd608bc1b00b4c7c508bb0a92b5523",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -18337,6 +18471,9 @@
             0.938894
           ]
         },
+        "extra_predicted": {
+          "gambling": 1
+        },
         "lines": 79,
         "macro": {
           "f1": 0.821879,
@@ -18531,10 +18668,24 @@
           "precision": null,
           "recall": 0.0,
           "tp": 0
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 0,
+              "none": 58,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 21,
+              "true": 0
+            }
+          },
+          "tn": 0
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -18656,7 +18807,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "5ffcb514f666142133645f4a0b017513bb1474822010041ed2bacf1896e41211",
+      "predictions_sha256": "f071393a8e9dbabf01fe8cf2b1d24f767524a3774b6d6d02c70a71d72e795ee8",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -20353,6 +20504,9 @@
             0.956415
           ]
         },
+        "extra_predicted": {
+          "gambling": 1
+        },
         "lines": 79,
         "macro": {
           "f1": 0.812337,
@@ -20547,10 +20701,24 @@
           "precision": null,
           "recall": 0.0,
           "tp": 0
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 0,
+              "none": 58,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 21,
+              "true": 0
+            }
+          },
+          "tn": 0
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -20672,7 +20840,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "ebc8fd01d97d4b4a74b1c448ab4b9a36e05e1221a210c6b4d641bf43473dfdaf",
+      "predictions_sha256": "198c80ee4cb4b2fe421b5a450f6fcef66d6662b384c194a3cb45b6097cac4fb1",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -22282,6 +22450,10 @@
             0.938894
           ]
         },
+        "extra_predicted": {
+          "airfare": 1,
+          "gambling": 1
+        },
         "lines": 79,
         "macro": {
           "f1": 0.763493,
@@ -22476,10 +22648,24 @@
           "precision": null,
           "recall": 0.0,
           "tp": 0
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 0,
+              "none": 58,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 21,
+              "true": 0
+            }
+          },
+          "tn": 0
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -22601,7 +22787,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "47dd5eb48c89ed571a743a72b7a6182e40b3112275a71199994087ac0a6f86ae",
+      "predictions_sha256": "9eec8ae903a9566aa8150e4ee3c8dcd83127162e45001116add5efdf99d5bf45",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -24352,6 +24538,9 @@
             0.938894
           ]
         },
+        "extra_predicted": {
+          "gambling": 1
+        },
         "lines": 79,
         "macro": {
           "f1": 0.821879,
@@ -24546,10 +24735,24 @@
           "precision": null,
           "recall": 0.0,
           "tp": 0
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 0,
+              "none": 58,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 21,
+              "true": 0
+            }
+          },
+          "tn": 0
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -24671,7 +24874,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "d7a1a72e7b18775486440cbc7893462c42aa36bcf560348af72995e091231511",
+      "predictions_sha256": "08ca2db4af5359dffc2c6d5a846bd86fa3b1a0e2899fde3ba11820c3c3532851",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -26370,6 +26573,9 @@
             0.956415
           ]
         },
+        "extra_predicted": {
+          "gambling": 1
+        },
         "lines": 79,
         "macro": {
           "f1": 0.812337,
@@ -26564,10 +26770,24 @@
           "precision": null,
           "recall": 0.0,
           "tp": 0
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 0,
+              "none": 58,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 21,
+              "true": 0
+            }
+          },
+          "tn": 0
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -26689,7 +26909,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "c45f396601aaa4af8c48e91be216d6b33fd33fe3ce4a6bbc20e0d6794e5a1aad",
+      "predictions_sha256": "ff81778b61662176356b233e5fc740cd25aeebe5aed5fcbcbd1235412916d16c",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -28382,6 +28602,10 @@
             0.938894
           ]
         },
+        "extra_predicted": {
+          "airfare": 1,
+          "gambling": 1
+        },
         "lines": 79,
         "macro": {
           "f1": 0.763493,
@@ -28576,10 +28800,24 @@
           "precision": null,
           "recall": 0.0,
           "tp": 0
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 0,
+              "none": 58,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 21,
+              "true": 0
+            }
+          },
+          "tn": 0
         }
       },
       "complete": true,
-      "customer_id": "northwind",
       "disposition": {
         "abstention": {
           "denominator": 32,
@@ -28701,7 +28939,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "6e53d60bb5b57f193d53ef4334f8bce7a7effc443f5e1a1550e1c736ebfca291",
+      "predictions_sha256": "dd9a0dd11475bb12f61eee6d6b88681dad7cbe2da11eddef8cc6e574097fbd8b",
       "proofs": {
         "actually_critical": 0,
         "correct_flag": {
@@ -29875,6 +30113,7 @@
             1.0
           ]
         },
+        "extra_predicted": {},
         "lines": 6,
         "macro": {
           "f1": 1.0,
@@ -29925,10 +30164,24 @@
           "precision": null,
           "recall": 0.0,
           "tp": 0
+        },
+        "restricted_matrix": {
+          "rows_gold_columns_predicted": {
+            "false": {
+              "false": 0,
+              "none": 0,
+              "true": 0
+            },
+            "true": {
+              "false": 0,
+              "none": 6,
+              "true": 0
+            }
+          },
+          "tn": 0
         }
       },
       "complete": true,
-      "customer_id": "synthetic-smoke",
       "disposition": {
         "abstention": {
           "denominator": 6,
@@ -30050,7 +30303,7 @@
         }
       },
       "measured_classifier_performance": false,
-      "predictions_sha256": "0ba682abe123dc01b730640b581c43ca84d3c17b977e2f20bc95b9501780512f",
+      "predictions_sha256": "7c61928ca800e6bd52254cf9dff028fcf25b47d6b2e9139bcd9ae1ce24510534",
       "proofs": {
         "actually_critical": 1,
         "correct_flag": {

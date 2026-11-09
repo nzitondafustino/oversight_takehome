@@ -1,305 +1,63 @@
 # Expense Policy Validator
 
-Classifies expense receipt lines, applies deterministic policy rules, and returns `pass`, `review`, or `flag` with evidence. One company shares versioned policies; employee country and entity select regional overrides. Submit all relevant receipts together: context completeness defaults to true, and no historical receipts are fetched.
+Classifies each receipt line, checks the receipt against nine written policies, and returns `flag`, `review` or `pass` with evidence quoted from the policy. Setup, package usage and the REST API: [docs/USAGE.md](docs/USAGE.md). All 32 receipts offline, no key or spend: `python -m expense_validator.run_receipts --replay evaluation/final/replay`.
 
-## Quick start
-
-Run from the repository root. Requires Python 3.12+; Docker Compose for the full application, Node.js 22+ for frontend development.
-
-```sh
-python3.12 -m venv .venv
-.venv/bin/python -m pip install -e '.[dev]'
-
-# Offline end-to-end run: recorded answers, no API key or paid calls.
-.venv/bin/python -m expense_validator.run_receipts \
-  --replay evaluation/final/replay --out /tmp/expense-receipts.jsonl
-.venv/bin/python -m pytest -q
-
-# API, worker, MongoDB, and frontend; live inference is off by default.
-docker compose -f backend/compose.yaml up --build -d
-```
-
-Open the [frontend](http://localhost:3000), [Swagger UI](http://localhost:8000/docs), or [OpenAPI schema](http://localhost:8000/openapi.json). A fresh database has no published rulesets: follow the replay-only [API demo](backend/README.md#end-to-end-demo) or run `bash backend/demo/evaluations.sh` with `curl` and `jq` installed. The script publishes a ruleset, uploads datasets, and runs replay evaluations; it writes working files in the current directory.
-
-For local backend development, install both packages together; the core is not fetched from a package index:
-
-```sh
-python3.12 -m venv backend/.venv
-backend/.venv/bin/python -m pip install -e '.[dev]' -e './backend[dev]'
-bash backend/test.sh -q  # includes real MongoDB tests; starts and removes a disposable Docker container
-
-cd frontend
-npm ci
-npm run dev             # http://localhost:5173; proxies /api to the backend
-npm run typecheck
-npm test
-npm run build
-```
-
-See [backend setup](backend/README.md), [frontend setup](frontend/README.md), and [existing-database migration](backend/SINGLE_COMPANY_MIGRATION.md).
-
-## Architecture
-
-The existing diagrams are in `design/`; this checkout has no `architecture/` directory.
-
-![Receipt validation pipeline](design/expense_validation.png)
-
-[Interactive diagram](design/expense_validation.html) · [Validation design](design/expense_validation.md)
-
-![Policy compilation pipeline](design/offline_policy_compiler.png)
-
-[Interactive diagram](design/offline_policy_compiler.html) · [Compilation design](design/policy_compilation.md). The compilation diagram includes target architecture; its companion document distinguishes implemented and planned capabilities.
+## Architecture, and why
 
 ```text
-Policy documents + handwritten rule logic → extract → review → approve → publish
-                                                                         ↓
-Receipts → ingest → normalize/translate → classify → deterministic rules → findings/disposition
-                                                                         ↓
-Frontend → FastAPI → services → core library                         stored runs
-                        ↕                                                ↕
-                      MongoDB ← worker ← queued dataset evaluations ──────┘
+receipt → ingest → normalize → translate → classify → policy engine → exceptions, review signals, disposition
+                                (model)     (model)    (deterministic)
+policy docs + hand-written rule logic → compile → review → approve → published ruleset
 ```
 
-| Component | Responsibility and connections |
-|---|---|
-| Ingestion (`ingestion/`) | Validates raw records/JSONL; separates labels and notes from runtime inputs. |
-| Normalization/translation (`normalization/`) | Cleans line text deterministically; optionally translates non-English text while retaining originals. Translation is separate from classification. |
-| Classification (`classification/`) | Produces category, confidence, and stated attributes. Neither the LLM nor Jev decides policy or disposition. |
-| Orchestration | Direct runs one adapter per line. LangGraph routes between adapters on errors/low confidence; optional bounded reflection reviews classifications, not policy. |
-| Policy engine (`engine/`) | Builds facts and uncertainty views; evaluates checks and cross-receipt helpers; resolves replacements, references, and carve-outs; groups evidence and computes disposition. |
-| Rule management (`policy/`, `compiler/`, `PolicyCompiler`) | Combines nine source policies with developer-authored predicates, validates candidates, reconciles independent readings, and gates publication on review/approval hashes. |
-| Evaluation (`evaluation/`) | Scores predictions and rule outputs against separate reference answers; reports classification, exception, disposition, coverage, and uncertainty metrics. |
-| FastAPI (`backend/src/expense_api/`) | Typed REST contracts, synchronous validation, document/ruleset lifecycle, history, exports, and queued evaluations. Calls the core library. |
-| Worker and MongoDB | Workers atomically claim jobs; MongoDB persists immutable document/dataset/ruleset versions, results, lifecycle events, and provider usage. Artifact files are hash-checked copies of stored rulesets. |
-| Frontend (`frontend/`) | React/TypeScript UI for validation, rules, documents, evaluations, and history. Calls FastAPI through `/api`; it does not implement policy decisions. |
+- **Models describe items; code decides policy.** EXC-01 says disposition is "computed, not judged", and an exception accuses an employee. Classifiers return only a category, a confidence and stated attributes; the engine (`engine/`) decides the rest and is unit-tested without models.
+- **Translation is a separate step** that never replaces the original, so it can be cached, measured or turned off on its own.
+- **Classification is pluggable:** Claude Haiku (`chat_completions`), TypeSafe Jev (`decisions`), or LangGraph falling back from one to the other. Policy behaviour is the same whichever answered.
+- **Rules are hand-written and checked against the documents.** No model output is executed.
+- **Labels never reach inference**, and every model answer is cached by model, prompt and text, so replay is reproducible and free.
 
-Core paths above are under `src/expense_validator/`. The core does not depend on FastAPI or MongoDB.
+The FastAPI service, worker and React UI (`backend/`, `frontend/`) call the same core and add versioned documents, rulesets, history and evaluations.
 
-### Names that mean different things
+## Core prompts
 
-| Name | Role |
-|---|---|
-| Direct | Execution without an orchestration graph; one selected classification adapter. |
-| LangGraph | Orchestrator for ordered adapters, fallback, and optional reflection. Not a provider or model. |
-| OpenRouter | Provider/API gateway used by both execution adapters. |
-| Claude Haiku / Jev | Classification models: `anthropic/claude-haiku-5.5` / `typesafe/jev-1.14`. Jev answers bounded questions through the Decisions API. |
-| `chat_completions` / `decisions` | Execution adapters: request protocol, response parsing, and model compatibility. Earlier aliases `openrouter` / `jev` still work. |
+- **Classification** (`classification/backends/llm.py`): "You describe one line item … You never judge whether it is allowed." It receives one line as JSON (description, language, translation, merchant, merchant category, quantity, price, currency), told to treat values as data, not instructions. It must classify what the item *is* ("names lie"), never from merchant or price alone. It answers strict JSON: a taxonomy category, a confidence from five levels (0.9 clearly … 0.1 cannot tell), and recipient, venue type, item kind and essential toiletry, each `null` unless stated. An answer outside the taxonomy, or naming a recipient the line doesn't, is an error, never a guess. The submitted expense type is withheld, so DOC-03 stays independent.
+- **Jev:** the same facts as five multiple-choice questions; its confidence is a probability.
+- **Translation:** "Translate the following text into English … only output the translated result".
+- **Policy reading** (`compiler/llm_extract.py`): each rule's ID, severities, limits and a verbatim quote, "Report only what the text says".
 
-`config.yaml` chooses adapters, models, translation, routing, and paths. `rules/fields.yaml` defines the field catalog, units, regional mapping, and monetary input contract. `rules/rule_logic.yaml` holds handwritten executable definitions; `rules/ruleset.json` is the local compiled snapshot. The API instead loads the exact stored artifact selected by `ruleset_id`, not the latest document text.
+## How rules are encoded, and where thresholds come from
 
-## Python package usage
+`rules/rule_logic.yaml` holds 42 rules: 35 checks, 6 process directives (EXC-01 to EXC-04 among them) and 1 carve-out. A check has an outcome and severity, a scope (item or receipt), conditions over a typed field catalog (`rules/fields.yaml`) such as "category is alcohol and MCC not in 5812, 5813, 7011", named helpers for what conditions can't express (splits, daily caps, per-recipient gift totals), what it replaces (REG-01 replaces ALC-01 to ALC-03 for APAC), and a `source_quote` that must occur in its clause. The engine resolves findings in a fixed order: checks, replacements, reference waivers, carve-outs, one grouped exception per rule, then EXC-01's disposition.
 
-Run these examples from the repository root, in order. All use recorded inputs and make no paid calls.
+**All 21 numeric limits come from the policy text, and every build checks them.** A *faithful check* refuses any rule whose limits, severities or outcome differ from what its clause states. A model also reads the documents independently; where its reading disagrees with a deterministic text reading (say it misses "two or more receipts"), a person decides, and the decision is bound by hash. **The only number that is a project decision** is EXC-03's `min_confidence`.
 
-### Ingest and validate a batch
+## Uncertainty threshold: 0.5
 
-```python
-from pathlib import Path
-from expense_validator import ExpenseValidator
-from expense_validator.ingestion import IngestionMode, iter_jsonl
-from expense_validator.normalization import NoOpTranslator, normalize_receipt
+A category with confidence below 0.5 raises an EXC-03 review signal, and that line is left out of every other rule. With Haiku's levels that means 0.3 ("probably not, but nothing fits better") and 0.1 ("cannot tell"). Below 0.5 the model itself rates the category more likely wrong than right, and EXC-03 says "a missed review costs far less than a false accusation". A higher threshold would mostly add unmatched signals, as no answer uses EXC-03. As a project extension, a missing field a rule needs also raises EXC-03: a gift with no stated recipient type leaves GIFT-04 open rather than guessed.
 
-# EVALUATION mode strips labels/notes into a separate ground_truth object.
-# Use PRODUCTION mode for unlabelled incoming records.
-receipts = [item.receipt for item in iter_jsonl(
-    Path("data/receipts.jsonl"), IngestionMode.EVALUATION
-)]
-normalized = normalize_receipt(receipts[0], translator=NoOpTranslator())
+## Categories added
 
-validator = ExpenseValidator.from_config(
-    Path("config.yaml"), mode="replay",
-    cache_dir=Path("evaluation/final/replay"),
-)
-batch = validator.validate_batch(receipts)  # context_complete=True by default
-result = batch.for_receipt("RCP-001")
-print(result.disposition, result.decided)  # pass True
-print(result.exceptions, result.review_signals, result.open_questions)
-```
+**None:** the taxonomy is unchanged, so outputs map 1:1 to the answers. What it lacks is carried as attributes: `item_kind` (mobile phone, prescription or OTC medication), `venue_type` (event tickets, with category `other`), and `recipient_type` and `essential_toiletry` for the gift and personal-care rules.
 
-The validator composes ingestion/admission, normalization, configured translation, classification, policy evaluation, and source-verified evidence. `Receipt`, `ValidatorSettings`, `BatchResult`, and `ReceiptResult` are public typed interfaces. `mode="deterministic"` makes no model calls and accepts preclassified receipts; raw receipts still lack categories, so category-dependent checks remain uncertain.
+## Assumptions
 
-`decided` matters independently of disposition: a pass with open questions can be provisional. Exceptions, review signals, and open questions are distinct outputs. See [package API and errors](docs/API.md).
+- Relevant receipts are submitted together. Cross-receipt rules (TIME-03, MEAL-01, HEALTH-01) read only the batch; no history is fetched.
+- Printed amounts are authoritative; USD values are re-derived from the rate and refused beyond half a cent.
+- Approval references are claims, not verified. Times are merchant-local. A missing MCC is not retail. A recipient with no stated type is "unidentified".
+- Haiku's confidence is a self-estimate, not calibrated; Jev's is a probability.
 
-### Classify directly or orchestrate with LangGraph
+## Does data leave the machine?
 
-Use the same facade to change execution without changing policy semantics:
+- **Replay and deterministic runs: nothing**, including the committed outputs, the tests and the API's default mode.
+- **Live classification** sends each line's JSON (above) to OpenRouter, routed to Anthropic or TypeSafe. It never sends employee ID, country, entity, dates, totals, attendees, trips, references or the expense type. **Live translation** sends non-English descriptions to `tencent/hy-mt2-30b-a3b` via OpenRouter, and **live compilation** sends whole policy documents to the extraction model.
+- **The API** keeps receipts and results in local MongoDB, and policy documents and rulesets in the configured Amazon S3 bucket (private, encrypted).
 
-```python
-jev = ExpenseValidator.from_config(
-    Path("config.yaml"), mode="replay",
-    cache_dir=Path("evaluation/jev/runs/first-run/replay"),
-    classification_backend="decisions",
-    classification_model="typesafe/jev-1.14",
-)
-jev_batch = jev.validate_batch(receipts)
+## Worked example: RCP-014
 
-# This recording set covers five receipts; config.yaml defines the graph order.
-graph = ExpenseValidator.from_config(
-    Path("config.yaml"), mode="replay",
-    cache_dir=Path("evaluation/langgraph/runs/live-claude-jev-1/replay"),
-    classification_backend="langgraph",
-)
-covered = {"RCP-011", "RCP-017", "RCP-022", "RCP-023", "RCP-028"}
-graph_batch = graph.validate_batch([r for r in receipts if r.receipt_id in covered])
-```
+FreshMart Supermarket, MCC 5411 (grocery), submitted as *Office Supplies*, $47.76, four lines.
 
-For custom pipelines, public interfaces include `classify_receipt`, `build_classifier`, and `load_vocabulary` from `expense_validator.classification`, plus `normalize_receipt`, `LlmTranslator`, and `NoOpTranslator` from `expense_validator.normalization`. Prefer `ExpenseValidator` when replay, adapter selection, translation, and policy evaluation should be coordinated. [Adapter and orchestration details](docs/API.md).
-
-### Load rules, run PolicyEngine, and score predictions
-
-```python
-import yaml
-from expense_validator.engine.policy_engine import PolicyEngine
-from expense_validator.policy.schema import RuleSet
-from expense_validator.evaluation.dataset import load_dataset
-from expense_validator.evaluation.predictions import apply_predictions, load_predictions
-from expense_validator.evaluation.policy_outputs import evaluate_predictions
-
-ruleset = RuleSet.from_json(Path("rules/ruleset.json").read_text())
-fields = yaml.safe_load(Path("rules/fields.yaml").read_text())
-engine = PolicyEngine(ruleset, fields)  # validates runtime compatibility; immutable snapshot
-
-dataset = load_dataset(Path("data/receipts.jsonl"))
-predictions = load_predictions(Path("evaluation/classification/predictions.json"))
-classified = apply_predictions(dataset.inputs, predictions)
-run = engine.evaluate(classified)  # complete=True; evaluates the whole supplied batch
-print(run.result_for("RCP-001").disposition)
-
-scores = evaluate_predictions(dataset, predictions, ruleset, fields)
-print(scores["classification"]["accuracy"])
-```
-
-The engine needs classified facts; it does not classify descriptions itself. Labels remain in the evaluation harness. Oracle/synthetic predictions test rule behavior but do not measure model performance. [Evaluation guide](evaluation/README.md).
-
-### Compile and validate a candidate
-
-```python
-from expense_validator import PolicyCompiler
-
-compiler = PolicyCompiler.from_config(
-    Path("config.yaml"), mode="replay",
-    recordings_dir=Path("evaluation/compiler/live"),  # recorded model readings
-)
-documents = [
-    {"document_id": p.stem, "filename": p.name, "content": p.read_text()}
-    for p in sorted(Path("data/policy-docs").glob("*.md"))
-]
-extraction = compiler.extract(documents)  # builds and validates; publishes nothing
-print(extraction.blockers)
-if extraction.candidate is not None:
-    candidate = extraction.candidate.ruleset
-    PolicyEngine(candidate, fields)  # runtime validation of rules and catalog
-```
-
-The supplied readings currently require review. Use `compiler.review(extraction, decisions, policy="exceptions_only", documents=documents)`, then `compiler.approve(...)` and `compiler.publish(...)` only after resolving blockers. Approval binds exact output and candidate hashes; simulation readings cannot authorize production. No LLM generates executable predicates: it independently extracts policy facts for comparison with the handwritten rules. See [review/publication examples](docs/API.md#reviewing-every-field).
-
-## REST API
-
-All paths below are backend paths. The frontend proxy adds `/api`. JSON errors share `{"error":{"code":"…","message":"…","details":null}}`; list endpoints return `items`, `total`, `limit`, and `offset`.
-
-| Purpose | Method and path | Result |
-|---|---|---|
-| Discovery | `GET /health`, `GET /v1/backends`, `GET /v1/taxonomy` | Database reachability, available execution settings, field/category catalog. |
-| Documents | `POST /v1/documents`, `GET /v1/documents`, `GET /v1/documents/{document_id}` | Create/list/read immutable policy revisions. |
-| Revisions | `POST /v1/documents/{document_id}/revisions` | Add a revision; `GET` accepts `?revision=N`. |
-| Extraction | `POST /v1/documents/extractions`, `GET /v1/documents/extractions`, `GET /v1/documents/extractions/{extraction_id}` | Extract chosen document revisions; replay by default. |
-| Extraction review | `GET /v1/documents/extractions/{extraction_id}/comparisons`, `POST /v1/documents/extractions/{extraction_id}/review` | Inspect interpretations and record review decisions. |
-| Rulesets | `POST /v1/rulesets`, `GET /v1/rulesets`, `GET /v1/rulesets/{ruleset_id}` | Create/list/read exact versioned artifacts. |
-| Publication | `GET /v1/rulesets/{ruleset_id}/comparisons`; `POST /v1/rulesets/{ruleset_id}/submit`, `/review`, `/approve`, `/publish` | Draft → in_review → approved → published. Rejection returns to draft. |
-| Validation | `POST /v1/validate` | Synchronous classification/evaluation; persists a completed run (201). |
-| Run history | `GET /v1/runs`, `GET /v1/runs/{run_id}`, `GET /v1/runs/{run_id}/findings`, `GET /v1/runs/{run_id}/export` | Filter history; inspect results/evidence; JSON or CSV export. |
-| Datasets | `POST /v1/evaluations/datasets`, `GET /v1/evaluations/datasets`, `GET /v1/evaluations/datasets/{dataset_id}` | Multipart JSON/JSONL/YAML upload; immutable labelled dataset versions. |
-| Evaluation jobs | `POST /v1/evaluations`, `GET /v1/evaluations`, `GET /v1/evaluations/{evaluation_id}` | Queue jobs; inspect status/progress. |
-| Evaluation outputs | `GET /v1/evaluations/{evaluation_id}/metrics`, `/results`, `/export` | Scores, receipt results, and JSON/CSV exports. |
-| Job control | `POST /v1/evaluations/{evaluation_id}/cancel`, `POST /v1/evaluations/compare` | Cooperative cancellation; compare 2–10 completed jobs. |
-
-### Create a ruleset from reviewed documents
-
-Upload documents, extract their selected revisions, and resolve comparisons first; the [replay demo](backend/README.md#end-to-end-demo) shows the full sequence. Then `POST /v1/rulesets` with the real extraction/review IDs (illustrative IDs below):
-
-```json
-{
-  "name": "policies",
-  "extraction": {
-    "extraction_id": "ext_0123456789abcdef01234567",
-    "review_id": "rev_0123456789abcdef01234567"
-  }
-}
-```
-
-The 201 response includes `ruleset_id`, `name`, the next `version`, `status: "draft"`, and `artifact_sha256`. Submission and review precede approval/publication; validation does not automatically activate a newly uploaded document or draft.
-
-### Validate receipts
-
-Use a production-published ruleset ID from `GET /v1/rulesets`. This command strips reference answers and writes a request file; it makes no HTTP/model call:
-
-```sh
-python3 - <<'PY'
-import json
-from pathlib import Path
-r = json.loads(Path("data/receipts.jsonl").read_text().splitlines()[0])
-r.pop("labels"); r.pop("notes")
-for line in r["line_items"]:
-    line.pop("labels")
-Path("/tmp/expense-request.json").write_text(json.dumps({
-    "ruleset_id": "REPLACE_WITH_PUBLISHED_ID", "execution_mode": "replay",
-    "classification": {"backend": "chat_completions", "replay_set": "openrouter"},
-    "receipts": [r],
-}))
-PY
-# Replace REPLACE_WITH_PUBLISHED_ID in /tmp/expense-request.json before sending.
-curl -sS http://localhost:8000/v1/validate \
-  -H 'Content-Type: application/json' --data-binary @/tmp/expense-request.json
-```
-
-Response excerpt (IDs vary):
-
-```json
-{
-  "run_id": "run_…",
-  "status": "completed",
-  "execution_mode": "replay",
-  "context_complete": true,
-  "results": {
-    "mode": "replay",
-    "context_complete": true,
-    "results": [{"receipt_id": "RCP-001", "disposition": "pass", "decided": true,
-                 "exceptions": [], "review_signals": [], "open_questions": []}]
-  }
-}
-```
-
-### Queue an evaluation
-
-```sh
-curl -sS http://localhost:8000/v1/evaluations/datasets \
-  -F name=golden -F file=@data/receipts.jsonl
-```
-
-Use the returned `dataset_id` and a published `ruleset_id` in `POST /v1/evaluations`:
-
-```json
-{
-  "dataset_id": "REPLACE_WITH_DATASET_ID",
-  "ruleset_id": "REPLACE_WITH_PUBLISHED_ID",
-  "execution_mode": "replay",
-  "classification": {"backend": "decisions", "model": "typesafe/jev-1.14", "replay_set": "jev"},
-  "label": "jev replay",
-  "idempotency_key": "jev-replay-001"
-}
-```
-
-The 201 response includes `evaluation_id`, `status: "queued"`, dataset/ruleset snapshots, and progress. Poll `GET /v1/evaluations/{evaluation_id}`. Jobs move through `queued` → `running` → `completed`, `failed`, `cancelled`, or `budget_exhausted`; a running cancellation first becomes `cancel_requested`.
-
-The worker evaluates individual receipts, then replays the available dataset together to resolve cross-receipt checks. `result_context` identifies dataset versus isolated results. Expired replay jobs can resume; lost live jobs are not automatically retried, avoiding duplicate charges. Live LangGraph evaluation jobs are currently refused by the metered worker; LangGraph replay and the core facade are separate supported paths.
-
-### Configuration and safeguards
-
-- **No built-in authentication.** Deploy behind authentication/access controls. Reviewer/approver names are recorded claims, not verified identities. There is no customer selector or tenant parameter.
-- **Replay fails closed.** Missing recordings return an error; replay never falls back to paid inference. Core/API deterministic mode makes no model calls.
-- **Live is opt-in.** Requires server enablement, allowed models, and a provider key. Evaluation jobs additionally require `confirm_live` and a budget, or explicitly permitted uncapped execution. Translation can also incur provider calls; budgets are best effort because cost is known after a call returns.
-- **Publication is separate from upload.** Normal validation requires production publication. Draft previews require both deployment permission and `preview: true`; an uploaded ruleset alone cannot pass compiler approval.
-- **Immutable identities.** Ruleset/dataset versions, artifact hashes, and approval hashes identify exact inputs. Request bodies reject unknown fields. Model overrides are checked against deployment/model compatibility rules.
-- **Configuration locations.** `config.yaml` configures the core; `backend/.env.example` documents `EXPENSE_API_*` settings. Compose reads `backend/.env` for settings and optionally the root `.env` for runtime provider credentials. Never commit keys. Check `GET /v1/backends` for what this deployment actually allows.
-
-See [full REST reference and replay demo](backend/README.md), [evaluation jobs, budgets, and metrics](backend/EVALUATIONS.md), [data dictionary](data/README.md), and [test guide](tests/README.md).
+1. **Ingest:** labels stripped. All lines are English, so nothing is translated.
+2. **Classify** (Haiku, replayed): `{"original_description": "Cooking wine - Marsala 375ml", "merchant_category": "Grocery stores and supermarkets", …}` → `alcohol` 0.9; "cooking" doesn't make it food. Tide Pods, paper towels and dish soap → `household_goods` 0.9. Nothing is below 0.5, so no EXC-03.
+3. **Engine:** ALC-03, alcohol from a merchant that isn't a restaurant, bar or hotel → **high** on L4. HOUSE-01 → **medium**, citing L1 to L3. DOC-03, *Office Supplies* doesn't cover them → **medium**, citing no line, per EXC-04. MCC-02, medium-risk MCC → **review signal** only.
+4. **Evidence:** each exception quotes its verified clause, such as "Alcohol purchased from a package store, liquor store, or any other merchant that is not a restaurant, bar or hotel is never reimbursable…".
+5. **Disposition:** EXC-01 flags any high or medium exception, so **`flag`**, decided. That matches the answer: the same three exceptions, the same signal. The record is in `evaluation/final/receipts.jsonl`.

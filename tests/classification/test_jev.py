@@ -352,10 +352,11 @@ def _golden_choices():
     choices = {}
     for receipt in load_receipts():
         normalized = normalize_receipt(receipt)
-        golden = {line["line_id"]: line for line in GOLDEN[receipt.receipt_id]["line_items"]}
+        record = GOLDEN[receipt.receipt_id]
+        golden = {line["line_id"]: line for line in record["line_items"]}
         for line in normalized.lines:
             gold = golden[line.line_id]
-            attributes = gold.get("attributes") or {}
+            attributes = (record["metadata"]["line_items"].get(line.line_id) or {}).get("attributes") or {}
             chosen = {"category": (gold["category"], gold["confidence"])}
             for name in ("recipient_type", "venue_type", "item_kind"):
                 if attributes.get(name) not in (None, "unidentified"):
@@ -370,15 +371,18 @@ def test_the_same_classifications_from_jev_give_the_same_policy_findings(offline
     choices = _golden_choices()
     _install(offline, FakeOpenRouter(lambda state: choices[json.dumps(state, sort_keys=True)]))
     batch = _jev_validator().validate_batch(load_receipts(), context_complete=True)
-    named = {rid for rid, record in GOLDEN.items() if any((line.get("attributes") or {}).get("recipient_name") or (line.get("attributes") or {}).get("recipient_type") == "unidentified" for line in record["line_items"])}
+    attributes = lambda record: [(record["metadata"]["line_items"].get(line["line_id"]) or {}).get("attributes") for line in record["line_items"]]
+    named = {rid for rid, record in GOLDEN.items() if any((found or {}).get("recipient_name") or (found or {}).get("recipient_type") == "unidentified" for found in attributes(record))}
     assert named == {"RCP-018", "RCP-022"}
     compared = 0
     for result in batch.results:
         record, golden = result.to_record(), GOLDEN[result.receipt_id]
-        for field in ("disposition", "decided", "exceptions", "review_signals", "disposition_reasons", "open_questions", "uncertainty"):
+        for field in ("disposition", "exceptions", "review_signals"):
             assert record[field] == golden[field], (result.receipt_id, field)
+        for field in ("decided", "disposition_reasons", "open_questions", "uncertainty", "source_quotes"):
+            assert record["metadata"][field] == golden["metadata"][field], (result.receipt_id, field)
         assert [{k: line[k] for k in ("line_id", "category", "restricted", "confidence")} for line in record["line_items"]] == [{k: line[k] for k in ("line_id", "category", "restricted", "confidence")} for line in golden["line_items"]]
-        assert [line.get("attributes") for line in record["line_items"]] == [line.get("attributes") for line in golden["line_items"]]
+        assert attributes(record) == attributes(golden)
         compared += 1
     assert compared == 32
 
@@ -402,6 +406,11 @@ def test_jev_results_are_saved_on_their_own_in_the_same_jsonl_as_the_llm(offline
     for record in saved:
         golden = GOLDEN[record["receipt_id"]]
         assert record["metadata"]["model"] == MODEL and golden["metadata"]["model"] != MODEL
-        for field in ("disposition", "exceptions", "uncertainty", "open_questions"):
+        assert record["metadata"]["classification_backend"] == "decisions" != golden["metadata"]["classification_backend"]
+        for field in ("disposition", "exceptions"):
             assert record[field] == golden[field], (record["receipt_id"], field)
-        assert [{k: line.get(k) for k in ("category", "restricted", "confidence", "attributes")} for line in record["line_items"]] == [{k: line.get(k) for k in ("category", "restricted", "confidence", "attributes")} for line in golden["line_items"]]
+        for field in ("uncertainty", "open_questions"):
+            assert record["metadata"][field] == golden["metadata"][field], (record["receipt_id"], field)
+        assert [{k: line[k] for k in ("category", "restricted", "confidence")} for line in record["line_items"]] == [{k: line[k] for k in ("category", "restricted", "confidence")} for line in golden["line_items"]]
+        assert [(record["metadata"]["line_items"].get(line["line_id"]) or {}).get("attributes") for line in record["line_items"]] == [(golden["metadata"]["line_items"].get(line["line_id"]) or {}).get("attributes") for line in golden["line_items"]]
+        assert all(extra["classification_details"]["backend"] == "typesafe-jev" for extra in record["metadata"]["line_items"].values())  # Jev's own answers, only in metadata

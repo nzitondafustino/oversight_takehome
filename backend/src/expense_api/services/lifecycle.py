@@ -46,10 +46,48 @@ class LifecycleService:
             raise ApiError(422, "review_not_ready", "the extraction has fields that need a review decision", {"blockers": record["compilation"]["blockers"]})
         return self._move(record, "in_review", {"review": review}, request.actor, request.reason, expected={"review": None})
 
+    def readiness(self, ruleset_id: str) -> dict:
+        """What stands between this version and publication now, in plain words, each linked to its rule or field."""
+        record = self.rulesets.get(ruleset_id)
+        status, compilation = record["status"], record.get("compilation")
+        review = record.get("review") or {}
+        blockers: list[dict] = []
+        if compilation is None and status != "published":
+            blockers.append({"message": "This version was uploaded as an artifact, not compiled from documents, so it cannot be approved."})
+        open_requests = []
+        if compilation and compilation.get("extraction_id"):
+            open_requests = [item for item in self.rulesets.extractions.repository.change_requests_of(compilation["extraction_id"]) if item["status"] == "open"] if self.rulesets.extractions.repository.change_requests is not None else []
+        for item in open_requests:
+            blockers.append({"message": f"A change was requested on {item['rule_id']} ({item['field']}) and is still open.", "rule_id": item["rule_id"], "comparison_id": item["comparison_id"]})
+        settled = status in ("approved", "published") or review.get("decision") == "accepted" or compilation is None or compilation["ready_for_approval"] or bool(compilation.get("prepared_review"))
+        remaining = 0 if settled else compilation["comparisons_needing_review"]
+        if not settled:
+            for blocker in compilation["blockers"]:
+                rule = _rule_in(blocker)
+                blockers.append({"message": f"{rule or 'A rule'} needs a review decision before approval.", "rule_id": rule})
+        if review.get("decision") == "rejected" and status == "draft":
+            blockers.append({"message": f"The last review rejected it: {review.get('reason') or 'no reason given'}. Submit it again once changed."})
+        next_step = {"draft": "submit", "approved": "publish", "published": "none"}.get(status) or ("approve" if review.get("decision") == "accepted" else "review")
+        can_publish = status == "approved" and record.get("approval_reference") is not None and compilation is not None and not open_requests
+        return {
+            "status": status,
+            "next_step": next_step,
+            "rules_changed": len({change["rule_id"] for change in (record.get("edits") or {}).get("changes", [])}),
+            "review_remaining": remaining,
+            "validation_errors": 0,
+            "approval": "published" if status == "published" else "approved" if status == "approved" else "not_approved",
+            "approval_mode": record.get("approval_mode"),
+            "can_publish": can_publish,
+            "blockers": blockers,
+        }
+
     def approve(self, ruleset_id: str, request: ApproveRequest) -> dict:
         record = self._at(ruleset_id, "in_review")
         if (record.get("review") or {}).get("decision") != "accepted":
             raise ApiError(409, "review_required", "only a version whose review was accepted can be approved")
+        if (record.get("compilation") or {}).get("extraction_id"):
+            # A reviewer asked for a field of the extraction to be corrected: it is not approved while that is open.
+            self.rulesets.extractions.refuse_open_change_requests(record["compilation"]["extraction_id"], "approval")
         if record.get("compilation") is None:
             raise ApiError(409, "approval_unverifiable", "this version is an uploaded artifact: the compiler's approval covers only a version it compiled from policy documents")
         if request.mode not in self.settings.allowed_publication_modes:
@@ -87,6 +125,8 @@ class LifecycleService:
 
     def _at(self, ruleset_id: str, status: str, record: dict | None = None) -> dict:
         record = record or self.rulesets.get(ruleset_id)
+        if record.get("superseded_by"):
+            raise ApiError(409, "version_superseded", "this version already has a published successor", record["superseded_by"])
         if record["status"] != status:
             raise ApiError(409, "invalid_transition", f"this step needs a {status} version, and this one is {record['status']}", {"status": record["status"]})
         return record
@@ -108,3 +148,10 @@ def _claimed(actor: str | None) -> dict | None:
 
 def _event(record: dict, to_status: str, actor: str | None, reason: str | None, approval_reference: str | None) -> dict:
     return {"from_status": record["status"], "to_status": to_status, "at": now(), "actor": _claimed(actor), "content_hash": record["artifact_sha256"], "approval_reference": approval_reference, "reason": reason}
+
+
+def _rule_in(message: str) -> str | None:
+    import re
+
+    match = re.search(r"\b([A-Z][A-Z0-9]*(?:[-.][A-Z0-9]+)+)\b", message.split(":", 1)[-1])
+    return match.group(1) if match else None

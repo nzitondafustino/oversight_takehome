@@ -5,11 +5,13 @@ import json
 import socket
 from pathlib import Path
 
+import boto3
 import mongomock
 import pytest
 import yaml
 from expense_validator import ExpenseValidator
 from fastapi.testclient import TestClient
+from moto import mock_aws
 
 from expense_api.config import Settings
 from expense_api.main import create_app
@@ -70,9 +72,37 @@ def core_config(tmp_path_factory) -> Path:
     return path
 
 
+TEST_BUCKET = "test-expense-validator"
+
+
+@pytest.fixture(scope="session")
+def mocked_aws():
+    """A mocked AWS for the whole run: no test reaches AWS, or needs or sees a real credential."""
+    with pytest.MonkeyPatch.context() as patch:
+        for name in ("AWS_PROFILE", "AWS_SESSION_TOKEN", "AWS_S3_BUCKET", "EXPENSE_API_S3_BUCKET"):
+            patch.delenv(name, raising=False)
+        patch.setenv("AWS_ACCESS_KEY_ID", "testing")
+        patch.setenv("AWS_SECRET_ACCESS_KEY", "testing")
+        patch.setenv("AWS_REGION", "us-east-1")
+        with mock_aws():
+            yield boto3.client("s3", region_name="us-east-1")
+
+
+@pytest.fixture(autouse=True)
+def s3(mocked_aws):
+    """An empty, private, unversioned bucket for each test."""
+    mocked_aws.create_bucket(Bucket=TEST_BUCKET)
+    yield mocked_aws
+    for page in mocked_aws.get_paginator("list_object_versions").paginate(Bucket=TEST_BUCKET):
+        for item in page.get("Versions", []) + page.get("DeleteMarkers", []):
+            mocked_aws.delete_object(Bucket=TEST_BUCKET, Key=item["Key"], VersionId=item["VersionId"])
+    mocked_aws.delete_bucket(Bucket=TEST_BUCKET)
+
+
 @pytest.fixture
 def settings(core_config, tmp_path) -> Settings:
     return Settings(
+        s3_bucket=TEST_BUCKET,
         core_config=core_config,
         artifact_dir=tmp_path / "artifacts",
         replay_sets=REPLAY_SETS,

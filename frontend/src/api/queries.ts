@@ -11,6 +11,8 @@ import {
   createDocument,
   createEvaluation,
   createExtraction,
+  getExtractionJob,
+  startExtractionJob,
   createRevision,
   createRuleset,
   getBackends,
@@ -18,7 +20,10 @@ import {
   getDocument,
   getEvaluation,
   getEvaluationMetrics,
+  rescoreEvaluation,
   getExtraction,
+  getExtractionBaseline,
+  getRulesetChanges,
   getHealth,
   getRuleset,
   getRulesetComparisons,
@@ -37,6 +42,17 @@ import {
   transitionRuleset,
   uploadDataset,
   validateReceipts,
+  createChangeRequest,
+  getExtractionReview,
+  listChangeRequests,
+  resolveChangeRequest,
+  updateDocumentProfile,
+  actOnRevisionApproval,
+  getComparisonSource,
+  getRevisionApproval,
+  editRules,
+  getFieldCatalog,
+  getReadiness,
 } from "./endpoints";
 import {
   isActiveEvaluation,
@@ -49,6 +65,7 @@ import {
   type EvaluationResultFilters,
   type EvaluationSummary,
   type ExtractionCreate,
+  type ExtractionJob,
   type ExtractionReviewCreate,
   type ExtractionSummary,
   type FindingFilters,
@@ -58,6 +75,12 @@ import {
   type RulesetDetail,
   type RulesetTransition,
   type RunFilters,
+  type ChangeRequestCreate,
+  type DocumentSummary,
+  type ProfileUpdate,
+  type ApprovalActionBody,
+  type FieldComparison,
+  type RuleEditBody,
 } from "./types";
 
 /** How often an active evaluation is polled. The worker heartbeats each receipt, so seconds are enough. */
@@ -78,10 +101,10 @@ export const queryKeys = {
   evaluationMetrics: (evaluationId: string) => ["records", "evaluations", "detail", evaluationId, "metrics"] as const,
   evaluationResults: (evaluationId: string, params: PageParams & EvaluationResultFilters) => ["records", "evaluations", "detail", evaluationId, "results", params] as const,
   evaluationComparison: (evaluationIds: readonly string[]) => ["records", "evaluations", "compare", [...evaluationIds]] as const,
-  datasets: (params: PageParams & { name?: string }) => ["records", "datasets", "list", params] as const,
+  datasets: (params: PageParams & { name?: string; include_superseded?: boolean }) => ["records", "datasets", "list", params] as const,
   datasetLists: () => ["records", "datasets", "list"] as const,
   dataset: (datasetId: string, includeCases: boolean) => ["records", "datasets", "detail", datasetId, { includeCases }] as const,
-  rulesets: (params: PageParams & { name?: string }) => ["records", "rulesets", "list", params] as const,
+  rulesets: (params: PageParams & { name?: string; include_superseded?: boolean }) => ["records", "rulesets", "list", params] as const,
   rulesetLists: () => ["records", "rulesets", "list"] as const,
   ruleset: (rulesetId: string) => ["records", "rulesets", "detail", rulesetId] as const,
   rulesetComparisons: (rulesetId: string, reviewRequired: boolean) => ["records", "rulesets", "detail", rulesetId, "comparisons", { reviewRequired }] as const,
@@ -92,6 +115,9 @@ export const queryKeys = {
   extractions: (params: PageParams & { document_id?: string }) => ["records", "extractions", "list", params] as const,
   extractionLists: () => ["records", "extractions", "list"] as const,
   extraction: (extractionId: string) => ["records", "extractions", "detail", extractionId] as const,
+  extractionReview: (extractionId: string, reviewId: string) => ["records", "extractions", "detail", extractionId, "review", reviewId] as const,
+  changeRequests: (extractionId: string) => ["records", "extractions", "detail", extractionId, "change-requests"] as const,
+  documentLibrary: () => ["records", "documents", "library"] as const,
   extractionComparisons: (extractionId: string, params: PageParams & { review_required?: boolean }) =>
     ["records", "extractions", "detail", extractionId, "comparisons", params] as const,
   runLists: () => ["records", "runs"] as const,
@@ -139,7 +165,7 @@ export function useEvaluations(params: PageParams & EvaluationFilters = {}) {
   });
 }
 
-export function useRulesets(params: PageParams & { name?: string } = {}) {
+export function useRulesets(params: PageParams & { name?: string; include_superseded?: boolean } = {}) {
   return useQuery({
     queryKey: queryKeys.rulesets(params),
     queryFn: ({ signal }) => listRulesets(params, { signal }),
@@ -306,12 +332,34 @@ export function useEvaluation(evaluationId: string | undefined) {
 }
 
 /** Never polled: a running job's metrics are provisional and recomputed per request. Stored metrics never change. */
-export function useEvaluationMetrics(evaluationId: string | undefined) {
+export function useEvaluationMetrics(evaluationId: string | undefined, scoring: "latest" | "original" = "latest") {
   return useQuery({
-    queryKey: queryKeys.evaluationMetrics(evaluationId ?? ""),
-    queryFn: ({ signal }) => getEvaluationMetrics(evaluationId!, { signal }),
+    queryKey: [...queryKeys.evaluationMetrics(evaluationId ?? ""), scoring] as const,
+    queryFn: ({ signal }) => getEvaluationMetrics(evaluationId!, scoring, { signal }),
     enabled: Boolean(evaluationId),
     staleTime: (current) => (current.state.data?.provisional === false ? Infinity : 0),
+  });
+}
+
+/** Several runs' stored metrics, each under the same key as one run's, so the comparison and the detail page share them. */
+export function useEvaluationsMetrics(evaluationIds: readonly string[]) {
+  return useQueries({
+    queries: evaluationIds.map((evaluationId) => ({
+      queryKey: [...queryKeys.evaluationMetrics(evaluationId), "latest"] as const,
+      queryFn: ({ signal }: { signal: AbortSignal }) => getEvaluationMetrics(evaluationId, "latest", { signal }),
+      // Stored metrics never change; provisional ones, cached while the run was watched, are read again.
+      staleTime: (current: { state: { data?: { provisional: boolean } } }) => (current.state.data?.provisional === false ? Infinity : 0),
+    })),
+  });
+}
+
+/** Rescores a finished run; its metrics, original and latest, are read again. */
+export function useRescoreEvaluation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (evaluationId: string) => rescoreEvaluation(evaluationId),
+    retry: false,
+    onSuccess: (_, evaluationId) => void queryClient.invalidateQueries({ queryKey: queryKeys.evaluationMetrics(evaluationId) }),
   });
 }
 
@@ -334,7 +382,7 @@ export function useEvaluationComparison(evaluationIds: readonly string[]) {
   });
 }
 
-export function useDatasets(params: PageParams & { name?: string } = {}) {
+export function useDatasets(params: PageParams & { name?: string; include_superseded?: boolean } = {}) {
   return useQuery({
     queryKey: queryKeys.datasets(params),
     queryFn: ({ signal }) => listDatasets(params, { signal }),
@@ -440,6 +488,24 @@ export function useExtraction(extractionId: string | undefined) {
   });
 }
 
+/** A version beside the version published before it. */
+export function useRulesetChanges(rulesetId: string | undefined) {
+  return useQuery({
+    queryKey: ["records", "rulesets", "changes", rulesetId ?? ""] as const,
+    queryFn: ({ signal }) => getRulesetChanges(rulesetId!, { signal }),
+    enabled: Boolean(rulesetId),
+  });
+}
+
+/** The compilation beside the latest published version, refreshed when something is published. */
+export function useExtractionBaseline(extractionId: string | undefined) {
+  return useQuery({
+    queryKey: ["records", "extractions", "baseline", extractionId ?? ""] as const,
+    queryFn: ({ signal }) => getExtractionBaseline(extractionId!, { signal }),
+    enabled: Boolean(extractionId),
+  });
+}
+
 /** An extraction's comparisons are a stored snapshot: they never change. */
 export function useExtractionComparisons(extractionId: string | undefined, params: PageParams & { review_required?: boolean } = {}) {
   return useQuery({
@@ -448,6 +514,27 @@ export function useExtractionComparisons(extractionId: string | undefined, param
     enabled: Boolean(extractionId),
     placeholderData: keepPreviousData,
     staleTime: Infinity,
+  });
+}
+
+/** Starts an extraction in the background: a slow live one is never cut off by a request timeout. */
+export function useStartExtractionJob() {
+  return useMutation({ mutationFn: (body: ExtractionCreate) => startExtractionJob(body), retry: false });
+}
+
+/** A background extraction, refreshed every second until it finishes; then its extraction lists are refreshed. */
+export function useExtractionJob(jobId: string | null) {
+  const queryClient = useQueryClient();
+  return useQuery({
+    queryKey: ["records", "extraction-jobs", jobId ?? ""],
+    queryFn: async ({ signal }) => {
+      const job = await getExtractionJob(jobId!, { signal });
+      if (job.status === "succeeded") void queryClient.invalidateQueries({ queryKey: queryKeys.extractionLists() });
+      return job;
+    },
+    enabled: !!jobId,
+    refetchInterval: (query: { state: { data?: ExtractionJob } }) => (query.state.data && ["succeeded", "failed"].includes(query.state.data.status) ? false : 1000),
+    refetchIntervalInBackground: true,
   });
 }
 
@@ -521,4 +608,152 @@ export function useRulesetTransition() {
 function cacheRuleset(queryClient: QueryClient, version: RulesetDetail) {
   queryClient.setQueryData(queryKeys.ruleset(version.ruleset_id), version);
   void queryClient.invalidateQueries({ queryKey: queryKeys.rulesetLists() });
+}
+
+/** Every document's latest revision, read a page of 100 at a time: the library searches, groups and filters them here. */
+export function useDocumentLibrary() {
+  return useQuery({
+    queryKey: queryKeys.documentLibrary(),
+    queryFn: async ({ signal }) => {
+      const items: DocumentSummary[] = [];
+      for (let offset = 0; ; offset += 100) {
+        const page = await listDocuments({ limit: 100, offset }, { signal });
+        items.push(...page.items);
+        if (items.length >= page.total || !page.items.length) return items;
+      }
+    },
+    staleTime: 15_000,
+  });
+}
+
+export function useUpdateDocumentProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ documentId, body }: { documentId: string; body: ProfileUpdate }) => updateDocumentProfile(documentId, body),
+    retry: false,
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.allDocuments() }),
+  });
+}
+
+/** Marks (or, with null, restores) documents as duplicates, one profile change each. Nothing is deleted. */
+export function useMarkDuplicates() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ actor, changes }: { actor: string; changes: { document_id: string; duplicate_of: string | null }[] }) => {
+      for (const change of changes) await updateDocumentProfile(change.document_id, { actor, duplicate_of: change.duplicate_of });
+    },
+    retry: false,
+    onSettled: () => void queryClient.invalidateQueries({ queryKey: queryKeys.allDocuments() }),
+  });
+}
+
+/** One stored review with its decisions: never changes, so it is never refetched. */
+export function useExtractionReview(extractionId: string | undefined, reviewId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.extractionReview(extractionId ?? "", reviewId ?? ""),
+    queryFn: ({ signal }) => getExtractionReview(extractionId!, reviewId!, { signal }),
+    enabled: Boolean(extractionId && reviewId),
+    staleTime: Infinity,
+    // Saving a decision makes a new review: the previous one stays in view while it loads, so the reviewer keeps
+    // their place and sees the outcome of what they saved.
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useChangeRequests(extractionId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.changeRequests(extractionId ?? ""),
+    queryFn: ({ signal }) => listChangeRequests(extractionId!, { signal }),
+    enabled: Boolean(extractionId),
+  });
+}
+
+function refreshChangeRequests(queryClient: QueryClient, extractionId: string) {
+  void queryClient.invalidateQueries({ queryKey: queryKeys.changeRequests(extractionId) });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.extraction(extractionId), exact: true });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.extractionLists() });
+}
+
+export function useCreateChangeRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ extractionId, body }: { extractionId: string; body: ChangeRequestCreate }) => createChangeRequest(extractionId, body),
+    retry: false,
+    onSuccess: (request) => refreshChangeRequests(queryClient, request.extraction_id),
+  });
+}
+
+export function useResolveChangeRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ extractionId, changeRequestId, body }: { extractionId: string; changeRequestId: string; body: { actor: string; note: string } }) => resolveChangeRequest(extractionId, changeRequestId, body),
+    retry: false,
+    onSuccess: (request) => refreshChangeRequests(queryClient, request.extraction_id),
+  });
+}
+
+export function useRevisionApproval(documentId: string | undefined, revision: number | undefined) {
+  return useQuery({
+    queryKey: ["records", "documents", "approval", documentId ?? "", revision ?? 0] as const,
+    queryFn: ({ signal }) => getRevisionApproval(documentId!, revision!, { signal }),
+    enabled: Boolean(documentId && revision),
+  });
+}
+
+export function useRevisionApprovalAction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ documentId, revision, body }: { documentId: string; revision: number; body: ApprovalActionBody }) => actOnRevisionApproval(documentId, revision, body),
+    retry: false,
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.allDocuments() }),
+  });
+}
+
+/** Every comparison of an extraction, read a page of 500 at a time: the review filters them here. Never changes. */
+export function useAllExtractionComparisons(extractionId: string | undefined) {
+  return useQuery({
+    queryKey: ["records", "extractions", "detail", extractionId ?? "", "all-comparisons"] as const,
+    queryFn: async ({ signal }) => {
+      const items: FieldComparison[] = [];
+      for (let offset = 0; ; offset += 500) {
+        const page = await listExtractionComparisons(extractionId!, { limit: 500, offset }, { signal });
+        items.push(...page.items);
+        if (items.length >= page.total || !page.items.length) return items;
+      }
+    },
+    enabled: Boolean(extractionId),
+    staleTime: Infinity,
+  });
+}
+
+export function useComparisonSource(owner: { extractionId: string } | { rulesetId: string } | undefined, comparisonId: string | undefined) {
+  const id = owner ? ("extractionId" in owner ? `ext:${owner.extractionId}` : `rs:${owner.rulesetId}`) : "";
+  return useQuery({
+    queryKey: ["records", "sources", id, comparisonId ?? ""] as const,
+    queryFn: ({ signal }) => getComparisonSource(owner!, comparisonId!, { signal }),
+    enabled: Boolean(owner && comparisonId),
+    staleTime: Infinity,
+  });
+}
+
+export function useFieldCatalog() {
+  return useQuery({ queryKey: ["catalog"] as const, queryFn: ({ signal }) => getFieldCatalog({ signal }), staleTime: Infinity });
+}
+
+/** What stands between a version and publication now: refetched whenever the version changes, including when its review is accepted. */
+export function useReadiness(rulesetId: string | undefined, status?: string, review?: string | null) {
+  return useQuery({
+    queryKey: ["records", "rulesets", "readiness", rulesetId ?? "", status ?? "", review ?? ""] as const,
+    queryFn: ({ signal }) => getReadiness(rulesetId!, { signal }),
+    enabled: Boolean(rulesetId),
+  });
+}
+
+export function useEditRules() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ rulesetId, body }: { rulesetId: string; body: RuleEditBody }) => editRules(rulesetId, body),
+    retry: false,
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["records", "rulesets"] }),
+  });
 }

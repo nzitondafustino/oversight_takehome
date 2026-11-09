@@ -2,6 +2,7 @@ import { Check, ChevronDown, ChevronRight, CircleDashed, X } from "lucide-react"
 import { Fragment, useState } from "react";
 import { useEvaluationResults } from "@/api/queries";
 import type { Disposition, EvaluationResultFilters, EvaluationResultItem } from "@/api/types";
+import { OrchestrationHistory } from "@/components/results/OrchestrationHistory";
 import { DecidedBadge } from "@/components/results/style";
 import { EmptyState, ErrorState, LoadingRows } from "@/components/states/states";
 import { DispositionBadge, isProvisionalPass } from "@/components/status/badges";
@@ -95,6 +96,7 @@ function ReceiptLines({ item }: { item: EvaluationResultItem }) {
                   <td className={cn("py-1 pr-2", scored?.outcome === "correct" ? "text-status-pass" : scored ? "text-status-flag-text" : "text-subtle-foreground")}>
                     {scored ? humanize(scored.outcome) : "not labelled"}
                     {line?.classification_error ? <span className="block text-status-flag-text">{line.classification_error}</span> : null}
+                    {line?.classification_details?.orchestration ? <div className="mt-1"><OrchestrationHistory details={line.classification_details} /></div> : null}
                   </td>
                   <td className="tabular py-1 text-right">{line?.confidence ?? "—"}</td>
                 </tr>

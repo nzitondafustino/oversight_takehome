@@ -64,9 +64,9 @@ def test_an_extraction_keeps_the_cores_result_for_the_exact_revisions(client):
         [(ref["document_id"], ref["revision"]) for ref in refs], key=lambda pair: next(item["filename"] for item in extraction["documents"] if item["document_id"] == pair[0])
     )
     assert {item["content_sha256"] for item in extraction["documents"]} == {hashlib.sha256(document["content"].encode()).hexdigest() for document in POLICY_DOCUMENTS}
-    assert extraction["provenance"] | {"prompt_sha256": None} == {"execution_mode": "replay", "recording_set": "live", "recorded_with": None, "reading_kind": "model", "extraction_model": None, "temperature": None, "timeout_seconds": None, "overrides": [], "prompt_sha256": None}
-    assert [(item["rule_id"], item["field"]) for item in extraction["review_required"]] == [("MCC-03", "thresholds"), ("REG-01", "thresholds"), ("TECH-01", "quote"), ("TIME-03", "thresholds")]
-    assert len(extraction["blockers"]) == 4 and extraction["agreement_summary"]["rules_needing_review"] == 4
+    assert extraction["provenance"] | {"prompt_sha256": None} == {"execution_mode": "replay", "recording_set": "live", "recorded_with": None, "reading_kind": "model", "extraction_model": None, "temperature": None, "timeout_seconds": None, "overrides": [], "rule_overrides_from": None, "prompt_sha256": None}
+    assert [(item["rule_id"], item["field"]) for item in extraction["review_required"]] == [("TIME-03", "thresholds")]
+    assert len(extraction["blockers"]) == 1 and extraction["agreement_summary"]["rules_needing_review"] == 1
     assert extraction["comparison_count"] == 287 and extraction["reviews"] == []
 
     fetched = client.get(f"/v1/documents/extractions/{extraction['extraction_id']}")
@@ -308,8 +308,8 @@ def test_a_listed_extraction_is_its_stored_summary_without_the_cores_result(revi
     client, extraction, review = reviewed
     [listed] = _list(client)["items"]
     fetched = client.get(f"/v1/documents/extractions/{extraction['extraction_id']}").json()
-    assert "review_required" not in listed and "result_json" not in listed
-    assert listed == {name: value for name, value in fetched.items() if name != "review_required"}
+    assert "review_required" not in listed and "rule_titles" not in listed and "rule_logic" not in listed and "discrepancies" not in listed and "result_json" not in listed
+    assert listed == {name: value for name, value in fetched.items() if name not in ("review_required", "rule_titles", "rule_logic", "discrepancies")}  # read from the core's result: the single view only
     assert [(item["review_id"], item["ready_for_approval"], item["remaining"]) for item in listed["reviews"]] == [(review["review_id"], True, 0)]
 
 

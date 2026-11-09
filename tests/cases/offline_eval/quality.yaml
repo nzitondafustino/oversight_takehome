@@ -1,0 +1,200 @@
+suite: offline_eval
+
+# Hand-worked scores for exception detection, evidence, the restricted matrix, the keyword baseline and error
+# analysis. A receipt names only what it holds: evaluated defaults to true, expected and predicted to none.
+# A finding is {rule_id, kind (exception unless given), line_ids, severity (high unless given)}. expected names only
+# the values compared, at any depth.
+
+detection:
+  - id: a right flag does not hide a missed rule
+    receipts:
+      - expected: [{rule_id: ALC-01, line_ids: [L1]}, {rule_id: TIME-03, line_ids: []}]
+        predicted: [{rule_id: ALC-01, line_ids: [L1]}]
+    rules: []
+    expected:
+      micro: {tp: 1, fp: 0, fn: 1, precision: 1.0, recall: 0.5}
+      per_rule: {ALC-01: {tp: 1, expected: 1, predicted: 1, status: tested}, TIME-03: {tp: 0, fn: 1, expected: 1, predicted: 0, precision: null, recall: 0.0, f1: 0.0, status: tested}}
+      missing: [{receipt_id: R1, rule_id: TIME-03, kind: exception, expected_line_ids: [], reason: not_raised}]
+  - id: an unexpected finding is a false positive of a rule with no answers, which is not tested
+    receipts:
+      - predicted: [{rule_id: TECH-01, line_ids: [L2]}]
+    rules: [TECH-01, HOUSE-01]
+    expected:
+      micro: {tp: 0, fp: 1, fn: 0, precision: 0.0, recall: null}
+      per_rule: {TECH-01: {fp: 1, precision: 0.0, recall: null, f1: 0.0, status: raised_without_answers}, HOUSE-01: {tp: 0, fp: 0, fn: 0, precision: null, recall: null, f1: null, status: not_tested}}
+      macro: {rules: 0, precision: null, recall: null, f1: null}
+      rules_by_status: {tested: [], raised_without_answers: [TECH-01], not_tested: [HOUSE-01]}
+      unexpected: [{receipt_id: R1, rule_id: TECH-01, kind: exception, line_ids: [L2], duplicate: false}]
+  - id: the same rule raised twice where once was expected counts the second as a duplicate
+    receipts:
+      - expected: [{rule_id: ALC-01, line_ids: [L1]}]
+        predicted: [{rule_id: ALC-01, line_ids: [L1]}, {rule_id: ALC-01, line_ids: [L1]}]
+    rules: []
+    expected:
+      per_rule: {ALC-01: {tp: 1, fp: 1, fn: 0, duplicates: 1, expected: 1, predicted: 2}}
+      unexpected: [{receipt_id: R1, rule_id: ALC-01, duplicate: true}]
+  - id: the right lines under the wrong rule is a miss, an extra, and an attribution error
+    receipts:
+      - expected: [{rule_id: ALC-03, line_ids: [L4]}]
+        predicted: [{rule_id: ALC-01, line_ids: [L4]}]
+    rules: []
+    expected:
+      micro: {tp: 0, fp: 1, fn: 1}
+      attribution: [{receipt_id: R1, expected_rule: ALC-03, raised_rule: ALC-01, shared_line_ids: [L4]}]
+      attribution_counts: {"ALC-03 → ALC-01": 1}
+  - id: a receipt that failed to run misses everything it was expected to raise
+    receipts:
+      - evaluated: false
+        expected: [{rule_id: GIFT-02, line_ids: [L1]}]
+        predicted: [{rule_id: GIFT-02, line_ids: [L1]}]
+    rules: []
+    expected:
+      micro: {tp: 0, fp: 0, fn: 1}
+      missing: [{receipt_id: R1, rule_id: GIFT-02, reason: not_evaluated}]
+  - id: macro is over tested rules, a tested rule never raised has precision 0
+    receipts:
+      - expected: [{rule_id: ALC-01, line_ids: [L1]}, {rule_id: GIFT-02, line_ids: [L2]}]
+        predicted: [{rule_id: ALC-01, line_ids: [L1]}, {rule_id: TECH-01, line_ids: [L3]}]
+    rules: []
+    expected:
+      macro: {rules: 2, precision: 0.5, recall: 0.5, f1: 0.5}
+      micro: {tp: 1, fp: 1, fn: 1, precision: 0.5, recall: 0.5, f1: 0.5}
+  - id: a review signal matches on the rule and is never scored for evidence
+    receipts:
+      - expected: [{rule_id: MCC-02, kind: signal, line_ids: null}]
+        predicted: [{rule_id: MCC-02, kind: signal, line_ids: []}]
+    rules: []
+    expected:
+      micro: {tp: 1, fp: 0, fn: 0}
+      evidence: {matched_exceptions: 0, scorable: 0, exact: {numerator: 0, denominator: 0, value: null}}
+  - id: an uncertainty signal is a false positive, left out of micro without uncertainty signals
+    receipts:
+      - predicted: [{rule_id: EXC-03, kind: signal, line_ids: []}]
+    rules: []
+    expected:
+      micro: {tp: 0, fp: 1, fn: 0}
+      micro_without_uncertainty_signals: {tp: 0, fp: 0, fn: 0, precision: null, recall: null, f1: null}
+
+evidence:
+  - id: the same lines in another order are exact
+    matches: [{expected: {line_ids: [L1, L2]}, found: {line_ids: [L2, L1]}}]
+    expected: {exact: {numerator: 1, denominator: 1, value: 1.0}, line_precision: {numerator: 2, denominator: 2}, line_recall: {numerator: 2, denominator: 2}, mismatches: []}
+  - id: a missing line is not exact, and lowers recall only
+    matches: [{expected: {line_ids: [L1, L2]}, found: {line_ids: [L1]}}]
+    expected:
+      exact: {numerator: 0, denominator: 1}
+      line_precision: {numerator: 1, denominator: 1, value: 1.0}
+      line_recall: {numerator: 1, denominator: 2, value: 0.5}
+      mismatches: [{receipt_id: R1, rule_id: ALC-01, expected_line_ids: [L1, L2], cited_line_ids: [L1], missing_line_ids: [L2], extra_line_ids: []}]
+  - id: an extra line is not exact, and lowers precision only
+    matches: [{expected: {line_ids: [L1, L2]}, found: {line_ids: [L1, L2, L3]}}]
+    expected: {exact: {numerator: 0, denominator: 1}, line_precision: {numerator: 2, denominator: 3}, line_recall: {numerator: 2, denominator: 2}, mismatches: [{extra_line_ids: [L3], missing_line_ids: []}]}
+  - id: a receipt-level exception citing no line, as expected, is exact
+    matches: [{expected: {line_ids: []}, found: {line_ids: []}}]
+    expected: {exact: {numerator: 1, denominator: 1}, line_precision: {numerator: 0, denominator: 0, value: null}}
+  - id: an answer that does not say which lines is not scorable, never assumed right
+    matches: [{expected: {line_ids: null}, found: {line_ids: [L1]}}]
+    expected: {matched_exceptions: 1, scorable: 0, not_scorable: 1, exact: {numerator: 0, denominator: 0, value: null}}
+  - id: a wrong severity is counted apart from the lines
+    matches: [{expected: {line_ids: [L1], severity: medium}, found: {line_ids: [L1], severity: low}}]
+    expected: {exact: {numerator: 1, denominator: 1}, severity_exact: {numerator: 0, denominator: 1}}
+
+restricted_matrix:
+  - id: every cell of the restricted decision, with a missing prediction in its own column
+    lines:
+      - {gold_restricted: true, restricted: true}
+      - {gold_restricted: true, restricted: false}
+      - {gold_restricted: true, restricted: null}
+      - {gold_restricted: false, restricted: true}
+      - {gold_restricted: false, restricted: false}
+      - {gold_restricted: false, restricted: false}
+    expected:
+      restricted: {tp: 1, fp: 1, fn: 2, precision: 0.5, recall: 0.333333}
+      restricted_matrix: {tn: 2, rows_gold_columns_predicted: {"true": {"true": 1, "false": 1, "none": 1}, "false": {"true": 1, "false": 2, "none": 0}}}
+  - id: a category no answer has is listed, not dropped
+    lines:
+      - {gold_category: food_beverage, category: alcohol}
+      - {gold_category: food_beverage, category: food_beverage}
+    expected: {extra_predicted: {alcohol: 1}, macro: {precision: 1.0, recall: 0.5}}
+
+keyword_baseline:
+  # The baseline's reading of a description: its category, and whether it is restricted.
+  - {id: a taxonomy term, description: House red wine glass, expected: {category: alcohol, restricted: true, matched: wine}}
+  - {id: "a non-alcoholic ale is still matched: the weakness the baseline stands for", description: Ginger ale, expected: {category: alcohol, restricted: true, matched: ale}}
+  - {id: a word inside another is not a term, description: Gingerbread latte, expected: {category: null, restricted: false}}
+  - {id: a name that lies is still matched, description: Beer battered cod, expected: {category: alcohol, restricted: true}}
+  - {id: an untranslated term is not matched, description: Vino tinto, expected: {category: null, restricted: false}}
+  - {id: a gift card before a gift, description: Amazon gift card, expected: {category: gift_card}}
+  - {id: a smart watch before a watch, description: Smart watch band, expected: {category: personal_electronics}}
+  - {id: a plural, description: Cigarettes x2, expected: {category: tobacco, matched: Cigarettes}}
+
+baseline_comparison:
+  - id: each approach's wins and shared failures are counted on the same lines
+    lines:
+      - {line_id: L1, description: Beer battered cod, gold_category: food_beverage, gold_restricted: false, category: food_beverage, restricted: false}
+      - {line_id: L2, description: Vino tinto, gold_category: alcohol, gold_restricted: true, category: alcohol, restricted: true}
+      - {line_id: L3, description: Cooking wine, gold_category: alcohol, gold_restricted: true, category: food_beverage, restricted: false}
+      - {line_id: L4, description: Moscow Mule mug, gold_category: household_goods, gold_restricted: true, category: null, restricted: null}
+    expected:
+      lines_by_outcome: {both_right: 0, main_only: 2, baseline_only: 1, both_wrong: 1}
+      restricted:
+        main: {tp: 1, fp: 0, fn: 2}
+        baseline: {tp: 1, fp: 1, fn: 2}
+      difference: {precision: 0.5, recall: 0.0}
+      not_comparable: {disposition: the baseline decides no receipt disposition}
+
+error_analysis:
+  - id: a missed finding on a misread line is a consequence of the line, not a failure of its own
+    receipts:
+      - lines: [{line_id: L1, description: Cooking wine, gold_category: alcohol, gold_restricted: true, category: food_beverage, restricted: false}]
+        missing: [{rule_id: ALC-03, kind: exception, expected_line_ids: [L1], reason: not_raised}]
+        expected_disposition: flag
+        disposition: pass
+    expected:
+      observed: 1
+      by_stage: {classification: 1, translation: 0, retrieval: 0, rule_logic: 0}
+      failures: [{id: F1, stage: classification, line_ids: [L1], consequences: ["ALC-03 was not raised", disposition pass instead of flag]}]
+  - id: an untranslated foreign line is placed in translation
+    receipts:
+      - lines: [{line_id: L1, description: Vino tinto, language: es, translation: null, gold_category: alcohol, gold_restricted: true, category: other, restricted: false}]
+    expected: {by_stage: {translation: 1}, failures: [{stage: translation, placed_by: "rule 1: not English, and no translation"}]}
+  - id: a translated foreign line is placed in classification, with its translation to check
+    receipts:
+      - lines: [{line_id: L1, description: Vino tinto, language: es, translation: Red wine, gold_category: alcohol, gold_restricted: true, category: food_beverage, restricted: false}]
+    expected: {by_stage: {classification: 1}, failures: [{evidence: {translation: Red wine}}]}
+  - id: a missed finding with every line read right is rule logic
+    receipts:
+      - lines: [{line_id: L1, description: Cooking wine, gold_category: alcohol, gold_restricted: true, category: alcohol, restricted: true}]
+        missing: [{rule_id: ALC-03, kind: exception, expected_line_ids: [L1], reason: not_raised}]
+    expected: {by_stage: {rule_logic: 1}, failures: [{rule_id: ALC-03, stage: rule_logic}]}
+  - id: a line the engine was unsure of, with its category right, is classification, and explains its open rule and signal
+    receipts:
+      - lines: [{line_id: L1, description: Lunch with the deputy minister, gold_category: food_beverage, gold_restricted: false, category: food_beverage, restricted: false}]
+        uncertainty: [{line_id: L1, field: recipient_type, reason: secondary_field_uncertain}]
+        missing: [{rule_id: GIFT-04, kind: exception, expected_line_ids: [L1], reason: not_raised}]
+        unexpected: [{rule_id: EXC-03, kind: signal, line_ids: [], duplicate: false}]
+        expected_disposition: flag
+        disposition: review
+        uncertain: true
+    expected:
+      observed: 1
+      by_stage: {classification: 1, translation: 0, retrieval: 0, rule_logic: 0}
+      failures: [{stage: classification, placed_by: "rule 2: an uncertain classified field", consequences: ["GIFT-04 was not raised", "EXC-03 was raised but not expected", disposition review instead of flag]}]
+  - id: a receipt-level finding missed on a receipt with a failed line is that line's consequence
+    receipts:
+      - lines: [{line_id: L2, description: Tip, gold_category: service_fee, gold_restricted: false, category: null, restricted: null, error: essential_toiletry contradicts category service_fee}]
+        missing: [{rule_id: DOC-03, kind: exception, expected_line_ids: [], reason: not_raised}]
+    expected: {observed: 1, failures: [{stage: classification, line_ids: [L2], consequences: ["DOC-03 was not raised"]}]}
+  - id: an uncertainty signal with nothing uncertain on any line is rule logic
+    receipts:
+      - unexpected: [{rule_id: EXC-03, kind: signal, line_ids: [], duplicate: false}]
+    expected: {by_stage: {rule_logic: 1}}
+  - id: a receipt that did not run is not diagnosed as a rule failure
+    receipts:
+      - evaluated: false
+        missing: [{rule_id: GIFT-02, kind: exception, expected_line_ids: [L1], reason: not_evaluated}]
+    expected: {observed: 0}
+  - id: nothing wrong, nothing diagnosed
+    receipts:
+      - lines: [{line_id: L1, description: Salad, gold_category: food_beverage, gold_restricted: false, category: food_beverage, restricted: false}]
+    expected: {observed: 0, failures: []}

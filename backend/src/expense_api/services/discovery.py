@@ -44,7 +44,12 @@ def backends(settings: Settings) -> dict:
         "routing": configured.routing.model_dump(),
         "reflection": {"enabled": configured.reflection.enabled,
                        "reviewer": None if configured.reflection.reviewer is None else configured.reflection.reviewer.model_dump() | _adapter(configured.reflection.reviewer.backend),
-                       "max_retries": configured.reflection.max_retries, "max_total_calls_per_line": configured.reflection.max_total_calls_per_line},
+                       "max_retries": configured.reflection.max_retries, "max_total_calls_per_line": configured.reflection.max_total_calls_per_line,
+                       "feedback_context": configured.reflection.feedback_context,
+                       # What a request may ask for: the deployment's maximums, and the adapters that revise with structured context.
+                       "limits": {"max_retries": settings.max_reflection_retries, "max_total_calls_per_line": settings.max_reflection_calls_per_line},
+                       "feedback_contexts": ["reviewer_feedback", "structured"],
+                       "structured_revisers": [name for name, reviser in REVISERS.items() if reviser.structured_prompt is not None]},
     }
     return {
         "default_backend": core.classification_backend,
@@ -144,6 +149,15 @@ def _classification_models(settings: Settings, core: ValidatorSettings, entries:
     return models
 
 
+def extraction_models(settings: Settings) -> list[str]:
+    """The models live policy extraction may use: the deployment's own list, or else the allowed models the compiler
+    can send chat completions to, without any that is allowed only as a translator. Never a decision model such as Jev."""
+    if settings.allowed_extraction_models is not None:
+        return sorted(model for model in settings.allowed_extraction_models if is_chat_model(model))
+    translation_only = settings.translation_allowlist - settings.classification_allowlist
+    return sorted(model for model in settings.allowed_models if is_chat_model(model) and model not in translation_only)
+
+
 def is_chat_model(model: str) -> bool:
     """Whether the core accepts the model for OpenRouter chat completions, as the translator sends them."""
     return _fits(BACKENDS[CHAT_COMPLETIONS].check_model, model)
@@ -157,6 +171,7 @@ def _policy_compiler(settings: Settings, key_present: bool) -> dict:
     return {
         "replay": {"supported": bool(sets), "sets": sets},
         "live": {"permitted": settings.allow_live, "configured": configured, "credential_configured": key_present, "available": settings.allow_live and configured and key_present},
+        "extraction_models": extraction_models(settings),  # the only models a live extraction may name
     }
 
 

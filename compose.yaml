@@ -1,4 +1,4 @@
-# docker compose up --build   (from backend/; settings come from backend/.env, see .env.example)
+# docker compose up --build   (from the repository root; settings come from .env, see .env.example)
 name: expense-api
 
 # The API and the evaluation worker run the same image with the same settings. Only the API serves HTTP.
@@ -12,30 +12,41 @@ x-backend-environment: &backend-environment
   # Each role's own allowlist; "null" (unset) uses EXPENSE_API_ALLOWED_MODELS for that role.
   EXPENSE_API_ALLOWED_CLASSIFICATION_MODELS: ${EXPENSE_API_ALLOWED_CLASSIFICATION_MODELS:-null}
   EXPENSE_API_ALLOWED_TRANSLATION_MODELS: ${EXPENSE_API_ALLOWED_TRANSLATION_MODELS:-null}
+  # Models a live policy extraction may use; "null" (unset): the allowed chat models, never Jev or a translator.
+  EXPENSE_API_ALLOWED_EXTRACTION_MODELS: ${EXPENSE_API_ALLOWED_EXTRACTION_MODELS:-null}
   EXPENSE_API_LIVE_CACHE_DIR: /var/lib/expense_api/live-cache
+  # The most LangGraph reflection may do for one line: revisions (0 allows none), and model calls of every kind.
+  EXPENSE_API_MAX_REFLECTION_RETRIES: ${EXPENSE_API_MAX_REFLECTION_RETRIES:-3}
+  EXPENSE_API_MAX_REFLECTION_CALLS_PER_LINE: ${EXPENSE_API_MAX_REFLECTION_CALLS_PER_LINE:-12}
   EXPENSE_API_ALLOW_PREVIEW_VALIDATION: ${EXPENSE_API_ALLOW_PREVIEW_VALIDATION:-false}
   EXPENSE_API_ALLOWED_PUBLICATION_MODES: ${EXPENSE_API_ALLOWED_PUBLICATION_MODES:-["production"]}
   EXPENSE_API_MAX_DOCUMENT_BYTES: ${EXPENSE_API_MAX_DOCUMENT_BYTES:-524288}
+  # Policy document contents live in S3 (one private, encrypted object per revision); MongoDB keeps only metadata.
+  # No bucket: documents are read (those not yet migrated) but not stored.
+  AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+  AWS_REGION: ${AWS_REGION:-us-east-1}
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+  AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+  EXPENSE_API_S3_DOCUMENT_PREFIX: ${EXPENSE_API_S3_DOCUMENT_PREFIX:-policy-documents}
+  EXPENSE_API_S3_RULESET_PREFIX: ${EXPENSE_API_S3_RULESET_PREFIX:-ruleset-documents}
+  # Optional values stay unset when absent, preserving the application's None defaults.
+  EXPENSE_API_S3_KMS_KEY_ID:
+  EXPENSE_API_S3_ENDPOINT_URL:
+  EXPENSE_API_PRICING_TABLE:
   EXPENSE_API_MAX_DATASET_BYTES: ${EXPENSE_API_MAX_DATASET_BYTES:-4194304}
   EXPENSE_API_MAX_DATASET_RECEIPTS: ${EXPENSE_API_MAX_DATASET_RECEIPTS:-500}
   EXPENSE_API_WORKER_LEASE_SECONDS: ${EXPENSE_API_WORKER_LEASE_SECONDS:-120}
-  # OPENROUTER_API_KEY is not set here: it comes from the repository's .env (env_file below), which `environment`
-  # would otherwise override. It is read only in live mode, and never stored.
-
-# The repository's .env (the core's, git-ignored, kept out of the image by Dockerfile.dockerignore), passed to the
-# containers at start. Optional: without it, live mode has no key.
-x-backend-env-file: &backend-env-file
-  - path: ../.env
-    required: false
+  # Compose interpolates only the declared settings from the shell or root .env.
+  OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
 
 services:
   api:
     build:
-      context: ..
+      context: .  # the repository root: the image holds the core package and the backend
       dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
-    env_file: *backend-env-file
     environment: *backend-environment
     volumes:
       - live-cache:/var/lib/expense_api/live-cache
@@ -50,10 +61,9 @@ services:
   # its answers there, under evaluations/<evaluation_id>, so it can be replayed later.
   worker:
     build:
-      context: ..
+      context: .  # the repository root: the image holds the core package and the backend
       dockerfile: backend/Dockerfile
     command: ["python", "-m", "expense_api.worker"]
-    env_file: *backend-env-file
     environment: *backend-environment
     volumes:
       - live-cache:/var/lib/expense_api/live-cache
@@ -90,11 +100,11 @@ services:
     depends_on:
       - mongo
 
-  # The React frontend (../frontend), served by nginx at http://localhost:3000. nginx proxies /api to the api
+  # The React frontend (frontend/), served by nginx at http://localhost:3000. nginx proxies /api to the api
   # service on the same origin, as the API serves no CORS headers. It reaches only the api, never mongo.
   frontend:
     build:
-      context: ../frontend
+      context: ./frontend
     ports:
       - "3000:80"
     environment:

@@ -134,9 +134,22 @@ def canonical_json(value: object) -> str:
     return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
 
 
-def export_json(response: dict) -> bytes:
-    """The whole run, as GET /v1/runs/{run_id} returns it, in canonical JSON."""
-    return (canonical_json(response) + "\n").encode("utf-8")
+def export_bytes(value: object) -> bytes:
+    """A JSON export in its fields' own order, so each receipt reads as the brief shows it. As deterministic as canonical
+    JSON: the order is the code's, never the data's."""
+    return (json.dumps(value, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
+
+
+RUN_EXPORT_SCHEMA = "run-export/2"  # 2: each receipt in the brief's shape (ReceiptResult.to_record); 1 was the API response
+
+
+def export_json(response: dict, batch: BatchResult) -> bytes:
+    """The run as GET /v1/runs/{run_id} describes it, with each receipt in the brief's shape, in canonical JSON.
+
+    Every model and adapter gives the same receipt fields; what is particular to one is in the receipt's metadata.
+    """
+    body = {"export_schema": RUN_EXPORT_SCHEMA, **{key: value for key, value in response.items() if key != "results"}, "receipts": [result.to_record() for result in batch.results]}
+    return export_bytes(body)
 
 
 def export_csv(run: dict, batch: BatchResult) -> bytes:

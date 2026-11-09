@@ -97,7 +97,7 @@ For each active exception, `PolicyEvidence` checks `source_quote` in the matchin
 | `LineResult` | Source, classification, translation, attributes, errors, backend details |
 | `ReceiptResult` | Disposition, `decided`, exceptions, signals, questions, uncertainty, metadata, provenance |
 | `BatchResult` | Mode, completeness, receipt-ID-sorted results |
-| `to_record()` | Brief export omitting provenance and backend classification details |
+| `to_record()` | The brief's shape exactly, for every model and adapter; the extensions and each adapter's own `classification_details` are in `metadata`, provenance is left out |
 
 Use `model_dump(mode="json")` to retain full typed evidence. Metadata is not a complete provider billing ledger.
 

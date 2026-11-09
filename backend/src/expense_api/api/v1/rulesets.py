@@ -14,7 +14,11 @@ from expense_api.api.json_body import DecimalJSONRoute
 from expense_api.dependencies import get_lifecycle_service, get_ruleset_service
 from expense_api.errors import ApiError
 from expense_api.schemas.common import errors
+from expense_api.schemas.documents import SourceLocation
 from expense_api.schemas.rulesets import (
+    Readiness,
+    VersionChanges,
+    RuleEditRequest,
     ApproveRequest,
     Compilation,
     ComparisonPage,
@@ -51,15 +55,22 @@ def list_rulesets(
     name: Annotated[RulesetName | None, Query(description="One name's versions")] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
+    include_superseded: bool = False,
 ):
     """List ruleset versions, newest first, with their lifecycle state and without their artifacts."""
-    items, total = service.page(name, limit, offset)
+    items, total = service.page(name, limit, offset, include_superseded)
     return RulesetPage(items=[summary(record) for record in items], total=total, limit=limit, offset=offset)
 
 
 @router.get("/{ruleset_id}", response_model=RulesetDetail, responses=errors(404, 422, 500, 503))
 def get_ruleset(ruleset_id: str, service: Service):
     return detail(service.get(ruleset_id))
+
+
+@router.get("/{ruleset_id}/changes", response_model=VersionChanges, responses=errors(404, 500, 503))
+def get_changes(ruleset_id: str, service: Service):
+    """What this version does differently from the version published before it: each rule field, before and after."""
+    return VersionChanges(**service.changes(ruleset_id))
 
 
 @router.get("/{ruleset_id}/comparisons", response_model=ComparisonPage, responses=errors(404, 409, 422, 503))
@@ -71,6 +82,34 @@ def get_comparisons(ruleset_id: str, service: Service, review_required: Annotate
     # A version compiled before the single-company migration stores each comparison with its customer_id.
     comparisons = [FieldComparison.model_validate(without_scope(item)) for item in json.loads(record["compilation"]["comparisons_json"])]
     return ComparisonPage(extraction_sha256=record["compilation"]["extraction_sha256"], comparisons=[item for item in comparisons if item.review_required or not review_required])
+
+
+@router.get("/{ruleset_id}/comparisons/{comparison_id}/source", response_model=SourceLocation, responses=errors(404, 409, 500, 503))
+def get_source(ruleset_id: str, comparison_id: str, service: Service):
+    """A compared field's clause in the exact text this version was compiled from, verified, never approximate."""
+    record = service.get(ruleset_id)
+    if record.get("compilation") is None:
+        raise ApiError(409, "not_compiled", "this version was uploaded, so it has no comparisons to review")
+    comparisons = [FieldComparison.model_validate(without_scope(item)) for item in json.loads(record["compilation"]["comparisons_json"])]
+    comparison = next((item for item in comparisons if item.comparison_id == comparison_id), None)
+    if comparison is None:
+        raise ApiError(404, "comparison_not_found", f"version {ruleset_id} has no comparison {comparison_id}")
+    return service.source(ruleset_id, comparison)
+
+
+@router.post("/{ruleset_id}/edits", status_code=201, response_model=RulesetDetail, responses=errors(404, 409, 422, 500, 503))
+def edit_rules(ruleset_id: str, body: RuleEditRequest, response: Response, service: Service):
+    """A new draft version with reviewed changes to some rules. This version, published or not, never changes:
+    the compiler builds the draft again from the same documents with the changes applied, and validates it."""
+    record = service.edit(ruleset_id, body)
+    response.headers["Location"] = f"/v1/rulesets/{record['_id']}"
+    return detail(record)
+
+
+@router.get("/{ruleset_id}/readiness", response_model=Readiness, responses=errors(404, 503))
+def get_readiness(ruleset_id: str, lifecycle: Lifecycle):
+    """What stands between this version and publication now, each blocker linked to its rule or field."""
+    return lifecycle.readiness(ruleset_id)
 
 
 @router.post("/{ruleset_id}/submit", response_model=RulesetDetail, responses=TRANSITION_ERRORS)

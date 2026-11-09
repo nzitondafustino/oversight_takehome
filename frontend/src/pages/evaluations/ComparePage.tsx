@@ -1,3 +1,5 @@
+import { evaluationComparisonExportUrl } from "@/api/endpoints";
+import { ExportButtons } from "@/components/results/ValidationResults";
 import { AlertTriangle, ArrowLeft, CheckCircle2, GitCompare } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -11,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatInteger, formatScore, formatUsd, shortHash } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { adapterIdentity, adapterText, modelText, setupHeadline } from "@/pages/validate/config";
+import { CompareReport } from "./CompareReport";
 import { newSpendText, rateDetail, rateText, recordedCostText } from "./display";
 
 type Row = { label: string; hint?: string; cell: (run: EvaluationComparisonRow, baseline: EvaluationComparisonRow) => ReactNode; differs?: (run: EvaluationComparisonRow, baseline: EvaluationComparisonRow) => boolean };
@@ -213,13 +216,14 @@ export function ComparePage() {
             </table>
           </CardContent>
         </Card>
+        <CompareReport rows={runs} />
       </div>
     );
   }
 
   return (
     <>
-      <PageHeader title="Compare evaluations" description="Completed runs side by side, with what makes them comparable or not." actions={back} />
+      <PageHeader title="Compare evaluations" description="Completed runs side by side: what ran, what makes them comparable, and their full evaluation report." actions={<div className="flex flex-wrap gap-2">{back}<ExportButtons name="evaluation-comparison" formats={["pdf"]} urlFor={() => evaluationComparisonExportUrl(ids)} disabledReason={!comparison.data || comparison.isError ? "Choose 2 to 10 completed evaluations before exporting" : undefined} /></div>} />
       {body}
     </>
   );

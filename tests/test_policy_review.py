@@ -110,6 +110,8 @@ def test_a_decision_is_applied_only_where_the_source_and_the_rules_support_it(ca
     review = _review([*base, _decision(comparison, **case["decision"])])
     field = next(f for f in review.fields if f.comparison.comparison_id == comparison.comparison_id)
     assert {"outcome": field.outcome, "codes": _codes(review), "ready": review.ready_for_approval} == case["expected"]
+    # A conflict with the executable rules is shown on the decision that caused it, not left unattached.
+    assert all(issue.comparison_id == comparison.comparison_id for issue in review.issues if issue.code in ("executable_conflict", "interpretation_mismatch"))
 
 
 def test_one_sided_readings_are_reviewable():
@@ -249,7 +251,7 @@ def test_an_incomplete_or_invalid_review_never_publishes(tmp_path):
     meal = _find(EXTRACTION, "MEAL-01", "thresholds")
     override = [*_sign_offs(), _decision(meal, "override", value=[{"value": "100", "unit": "usd"}], rationale="the cap is 100")]
     invalid = _published(compiler, tmp_path, approval, override, name="invalid.json")
-    assert any(reason.startswith("the reviewed interpretation disagrees with the executable rules: error faithful: MEAL-01") for reason in invalid.reasons)
+    assert any(reason.startswith("MEAL-01 thresholds: this decision departs from what the clause states") for reason in invalid.reasons)
 
 
 def test_review_and_extraction_approvals_do_not_stand_in_for_each_other(tmp_path):

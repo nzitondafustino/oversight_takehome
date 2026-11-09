@@ -2,6 +2,7 @@
 
 import io
 import json
+import re
 import shutil
 import socket
 import threading
@@ -103,8 +104,8 @@ def test_in_memory_documents_give_exactly_what_the_file_based_gate_gives(no_netw
     assert extraction.candidate.ruleset.to_json() == PATHS.ruleset.read_text()
     assert extraction.blockers == tuple(from_files.reasons) and not extraction.ready_for_approval
     assert [(item.document_id, item.rule_id, item.field, item.status, item.resolution) for item in extraction.review_items] == [
-        ("doc-merchant-category-risk", "MCC-03", "thresholds", "unconfirmed", None),
-        ("doc-regional-addendum", "REG-01", "thresholds", "unconfirmed", None),
+        ("doc-merchant-category-risk", "MCC-03", "thresholds", "disagree", None),
+        ("doc-regional-addendum", "REG-01", "thresholds", "disagree", None),
     ]
     assert (extraction.mode, extraction.reading_kind, extraction.extraction_model) == ("replay", "simulation", None)
     assert len(extraction.clauses) == 41 and {d.document_id for d in extraction.documents} == {d["document_id"] for d in _documents()}
@@ -725,3 +726,111 @@ def test_live_mode_takes_no_recorded_with_and_replay_checks_it(tmp_path):
     for bad in ({"extraction_model": " ", "temperature": 0.0}, {"extraction_model": "vendor/m", "temperature": 3.0}, {"extraction_model": "vendor/m", "temperature": True}):
         with pytest.raises(ValidationError):
             RecordedWith(**bad)
+
+
+# --- Reviewed rule overrides ---
+
+
+@pytest.fixture(scope="module")
+def signed_off():
+    compiler = _replay()
+    resolutions = _sign_offs(compiler.extract(_documents()))
+    return compiler, resolutions, compiler.extract(_documents(), resolutions=resolutions)
+
+
+@pytest.mark.parametrize("case", load_cases("policy_compiler", "rule_overrides_accepted"), ids=lambda case: case["id"])
+def test_a_reviewed_logic_change_is_built_and_validated_by_the_compiler(case, signed_off, no_network):
+    compiler, resolutions, plain = signed_off
+    overridden = compiler.extract(_documents(), resolutions=resolutions, rule_overrides=case["overrides"])
+    assert overridden.ready_for_approval and overridden.blockers == ()
+    assert overridden.candidate.ruleset_sha256 != plain.candidate.ruleset_sha256
+    assert overridden.extraction_sha256 == plain.extraction_sha256  # the readings are the same: only the logic changed
+    rule = next(rule for rule in overridden.candidate.ruleset.rules if rule.rule_id == case["expected"]["rule_id"]).model_dump(mode="json", exclude_none=True)
+    held = rule
+    for part in case["expected"]["field"].split("."):
+        held = held[part]
+    assert held == case["expected"]["value"]
+
+
+@pytest.mark.parametrize("case", load_cases("policy_compiler", "rule_overrides_blocked"), ids=lambda case: case["id"])
+def test_a_logic_change_the_policy_does_not_state_is_blocked(case, signed_off, no_network):
+    compiler, resolutions, _ = signed_off
+    blocked = compiler.extract(_documents(), resolutions=resolutions, rule_overrides=case["overrides"])
+    assert blocked.candidate is None and not blocked.ready_for_approval
+    assert case["expected"]["blocker"] in blocked.blockers
+    # The same difference, as data: what the clause states beside what the rule does.
+    assert [item.model_dump() for item in blocked.discrepancies] == case["expected"]["discrepancies"]
+
+
+def _amended(tmp_path, case) -> tuple[list[dict], "Path"]:
+    """The policy documents with one revised, and recordings that hold an authored reading of the revised text."""
+    documents = _documents()
+    target = next(document for document in documents if document["filename"] == case["document"])
+    original = target["content"]
+    if "append" in case:  # a new clause
+        target["content"] = original.rstrip("\n") + case["append"]
+    else:
+        assert case["replace"][0] in original
+        target["content"] = original.replace(*case["replace"], 1)
+    recordings = tmp_path / "recordings"
+    shutil.copytree(RECORDINGS, recordings)
+    entry = json.loads((RECORDINGS / f"{document_sha256(original)}.json").read_text())
+    response = json.loads(entry["response"])
+    if case.get("append"):
+        response["rules"].append(case["reading"])
+    elif case["reading"]:
+        for rule in response["rules"]:
+            if rule["rule_id"] == case["reading"]["rule_id"]:
+                rule["thresholds"] = case["reading"]["thresholds"]
+    revised = {**entry, "document_sha256": document_sha256(target["content"]), "origin": "authored in a test: the reading of a revised document", "response": json.dumps(response, ensure_ascii=False)}
+    (recordings / f"{revised['document_sha256']}.json").write_text(json.dumps(revised))
+    return documents, recordings
+
+
+@pytest.mark.parametrize("case", load_cases("policy_compiler", "amendments"), ids=lambda case: case["id"])
+def test_a_revised_policy_is_compared_with_the_rule_logic_not_with_earlier_versions(case, tmp_path, no_network):
+    documents, recordings = _amended(tmp_path, case)
+    extraction = _replay(recordings).extract(documents, rule_overrides=case["overrides"])
+    assert (extraction.candidate is not None) == case["expected"]["candidate"]
+    assert [item.model_dump() for item in extraction.discrepancies] == case["expected"]["discrepancies"]
+
+
+@pytest.mark.parametrize("case", load_cases("policy_compiler", "additions"), ids=lambda case: case["id"])
+def test_a_new_clause_needs_a_rule_and_a_reviewers_addition_is_built_and_checked_like_any_rule(case, tmp_path, no_network):
+    documents, recordings = _amended(tmp_path, case)
+    extraction = _replay(recordings).extract(documents, rule_overrides=case["overrides"])
+    assert (extraction.candidate is not None) == case["expected"]["candidate"]
+    assert [item.model_dump() for item in extraction.discrepancies] == case["expected"]["discrepancies"]
+    if extraction.candidate is not None:
+        added = next(rule for rule in extraction.candidate.ruleset.rules if rule.rule_id == case["overrides"][0]["rule_id"])
+        assert (added.kind, added.policy_doc, added.title) == ("check", case["document"], case["reading"]["title"])  # from its clause, not the reviewer
+
+
+@pytest.mark.parametrize("case", load_cases("policy_compiler", "additions_refused"), ids=lambda case: case["id"])
+def test_an_addition_that_cannot_be_a_rule_is_refused_or_blocks_the_build(case, no_network):
+    try:
+        extraction = _replay().extract(_documents(), rule_overrides=case["overrides"])
+    except InvalidInputError as error:
+        assert re.search(case["expected"], str(error))
+    else:
+        assert extraction.candidate is None and any(re.search(case["expected"], reason) for reason in extraction.blockers)
+
+
+@pytest.mark.parametrize("case", load_cases("policy_compiler", "rule_overrides_refused"), ids=lambda case: case["id"])
+def test_an_invalid_override_is_refused_before_anything_is_built(case, no_network):
+    with pytest.raises(InvalidInputError, match=case["expected"]):
+        _replay().extract(_documents(), rule_overrides=case["overrides"])
+
+
+def test_an_approval_binds_the_overridden_artifact_and_publication_needs_the_same_overrides(signed_off, no_network, tmp_path):
+    compiler, resolutions, _ = signed_off
+    overrides = load_cases("policy_compiler", "rule_overrides_accepted")[0].values[0]["overrides"]
+    approval = compiler.approve(compiler.extract(_documents(), resolutions=resolutions, rule_overrides=overrides), **APPROVER)
+    out = tmp_path / "ruleset.json"
+    without = compiler.publish(_documents(), approval=approval, out=out, mode="simulation", resolutions=resolutions)
+    assert not without.published and any("approval does not hold" in reason for reason in without.reasons) and not out.exists()
+    published = compiler.publish(_documents(), approval=approval, out=out, mode="simulation", resolutions=resolutions, rule_overrides=overrides)
+    assert published.published
+    rules = {rule["rule_id"]: rule for rule in json.loads(out.read_text())["rules"]}
+    assert rules["ALC-01"]["title"] == "Alcohol needs an entertainment context"
+    assert rules["ALC-02"] == {rule["rule_id"]: rule for rule in json.loads(PATHS.ruleset.read_text())["rules"]}["ALC-02"]  # nothing else changed

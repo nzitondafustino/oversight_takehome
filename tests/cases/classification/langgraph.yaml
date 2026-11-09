@@ -68,25 +68,25 @@ langgraph_overrides:
     expected:
       backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
       routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
-      reflection: {enabled: true, reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}, max_retries: 2, max_total_calls_per_line: 6}
+      reflection: {enabled: true, reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}, max_retries: 2, max_total_calls_per_line: 6, feedback_context: reviewer_feedback}
   - id: one reflection field changes alone
     override: {reflection: {max_retries: 0}}
     expected:
       backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
       routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
-      reflection: {enabled: false, reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}, max_retries: 0, max_total_calls_per_line: 6}
+      reflection: {enabled: false, reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}, max_retries: 0, max_total_calls_per_line: 6, feedback_context: reviewer_feedback}
   - id: a reviewer is replaced whole, and the budgets stay
     override: {reflection: {enabled: true, reviewer: {backend: chat_completions, model: openai/gpt-5.5-mini}, max_total_calls_per_line: 4}}
     expected:
       backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
       routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
-      reflection: {enabled: true, reviewer: {backend: chat_completions, model: openai/gpt-5.5-mini}, max_retries: 2, max_total_calls_per_line: 4}
+      reflection: {enabled: true, reviewer: {backend: chat_completions, model: openai/gpt-5.5-mini}, max_retries: 2, max_total_calls_per_line: 4, feedback_context: reviewer_feedback}
   - id: a routing override leaves reflection as configured
     override: {routing: {min_confidence: 0.8}}
     expected:
       backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
       routing: {min_confidence: 0.8, fallback_on_error: true, fallback_on_low_confidence: true}
-      reflection: {enabled: false, reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}, max_retries: 2, max_total_calls_per_line: 6}
+      reflection: {enabled: false, reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}, max_retries: 2, max_total_calls_per_line: 6, feedback_context: reviewer_feedback}
 
 # Each override goes to validate_batch with classification_backend langgraph, and must be refused. expected is a pattern.
   # The adapters' earlier names, openrouter and jev, still name the same adapters, and read as their own names.
@@ -100,7 +100,7 @@ langgraph_overrides:
     expected:
       backends: [[primary, decisions, typesafe/jev-1.14], [fallback, chat_completions, anthropic/claude-haiku-5.5]]
       routing: {min_confidence: 0.9, fallback_on_error: true, fallback_on_low_confidence: true}
-      reflection: {enabled: true, reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}, max_retries: 2, max_total_calls_per_line: 6}
+      reflection: {enabled: true, reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}, max_retries: 2, max_total_calls_per_line: 6, feedback_context: reviewer_feedback}
 
 langgraph_overrides_refused:
   - {id: an unknown top-level field, override: {retries: 3}, expected: "unknown fields: \\['retries'\\]"}
@@ -274,6 +274,132 @@ langgraph_routes:
 # category, result, revisions and verdicts, and every call by model: classifications by model, revisions as
 # <model>+revise, reviews as critic-1.
 langgraph_reflection:
+  # Structured feedback context: each revision is told the review, the previous confidence, the categories in
+  # question and its retry; a failed revision is retried with its error; only a reviewer's accept verifies.
+  - id: structured, a rejected classification is revised with the whole review, then accepted
+    order: [[primary, alpha, alpha-1]]
+    reflection: {feedback_context: structured}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [alcohol, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    reviews: {"L1:alcohol": [revise, food_beverage, "the line names a meal, not an alcoholic drink"]}
+    revisions: {"alpha-1:L1:alcohol": [food_beverage, 0.95]}
+    expected:
+      answered_by: {L1: primary}
+      category: {L1: food_beverage, L2: alcohol}
+      result: {L1: accepted, L2: accepted}
+      stop_reason: {L1: accepted, L2: accepted, L3: accepted}
+      unresolved: {L1: false, L2: false, L3: false}
+      revisions: {L1: 1}
+      verdicts: {L1: [revise, accept]}
+      calls: {alpha-1: 3, alpha-1+revise: 1, critic-1: 4}
+      requests:
+        - {category: alcohol, confidence: "0.95", categories: [alcohol, food_beverage], retry: {number: 1, max: 2},
+           review: {verdict: revise, reason: "revise, by the line's words", feedback: "the line names a meal, not an alcoholic drink", suggested_category: food_beverage}}
+      revision_attempts: {L1: [{revision: 1, outcome: accepted, answers_review: 0, max_retries: 2, retried_validation_error: false}]}
+  - id: structured, a revision that fails validation is retried with its error, then accepted
+    order: [[primary, alpha, alpha-1]]
+    reflection: {feedback_context: structured}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [alcohol, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    reviews: {"L1:alcohol": [revise, food_beverage, "the line names a meal, not an alcoholic drink"]}
+    revisions: {"alpha-1:L1:alcohol:1": invalid, "alpha-1:L1:alcohol": [food_beverage, 0.95]}
+    expected:
+      answered_by: {L1: primary}
+      category: {L1: food_beverage}
+      result: {L1: accepted}
+      unresolved: {L1: false}
+      revisions: {L1: 2}
+      verdicts: {L1: [revise, accept]}
+      calls: {alpha-1: 3, alpha-1+revise: 2, critic-1: 4}
+      requests:
+        - {category: alcohol, confidence: "0.95", categories: [alcohol, food_beverage], retry: {number: 1, max: 2},
+           review: {verdict: revise, reason: "revise, by the line's words", feedback: "the line names a meal, not an alcoholic drink", suggested_category: food_beverage}}
+        - {category: alcohol, confidence: "0.95", categories: [alcohol, food_beverage], retry: {number: 2, max: 2}, failed_revision: item_kind contradicts category,
+           review: {verdict: revise, reason: "revise, by the line's words", feedback: "the line names a meal, not an alcoholic drink", suggested_category: food_beverage}}
+      revision_attempts:
+        L1:
+          - {revision: 1, outcome: error, answers_review: 0, max_retries: 2, retried_validation_error: false}
+          - {revision: 2, outcome: accepted, answers_review: 0, max_retries: 2, retried_validation_error: true}
+  - id: structured, repeated validation failures end at the retry limit, unresolved
+    order: [[primary, alpha, alpha-1]]
+    reflection: {feedback_context: structured}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [alcohol, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    reviews: {"L1:alcohol": [revise, food_beverage, "the line names a meal, not an alcoholic drink"]}
+    revisions: {"alpha-1:L1:alcohol": invalid}
+    expected:
+      answered_by: {L1: primary}
+      category: {L1: alcohol}
+      result: {L1: revision_failed}
+      stop_reason: {L1: revision_failed}
+      unresolved: {L1: true}
+      revisions: {L1: 2}
+      calls: {alpha-1: 3, alpha-1+revise: 2, critic-1: 3}
+  - id: structured, an unchanged revision stops, unresolved
+    order: [[primary, alpha, alpha-1]]
+    reflection: {feedback_context: structured}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [alcohol, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    reviews: {"L1:alcohol": [revise, food_beverage, "the line names a meal, not an alcoholic drink"]}
+    revisions: {"alpha-1:L1:alcohol": [alcohol, 0.95]}
+    expected: {answered_by: {L1: primary}, category: {L1: alcohol}, result: {L1: revision_unchanged}, stop_reason: {L1: revision_unchanged}, unresolved: {L1: true}, revisions: {L1: 1}, calls: {alpha-1: 3, alpha-1+revise: 1, critic-1: 3}}
+  - id: structured, the retry limit ends revising, unresolved, each request saying where it stands
+    order: [[primary, alpha, alpha-1]]
+    reflection: {feedback_context: structured, max_retries: 1}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [revise, null, "a gratuity is a charge, not an item"], "L3:gift": [revise, service_fee, a tip is not a gift]}
+    revisions: {"alpha-1:L3:other": [gift, 0.9], "alpha-1:L3:gift": [service_fee, 0.95]}
+    expected:
+      answered_by: {L3: primary}
+      category: {L3: gift}
+      result: {L3: retries_exhausted}
+      stop_reason: {L3: retries_exhausted}
+      unresolved: {L3: true}
+      revisions: {L3: 1}
+      calls: {alpha-1: 3, alpha-1+revise: 1, critic-1: 4}
+      requests:
+        - {category: other, confidence: "0.95", categories: [other], retry: {number: 1, max: 1},
+           review: {verdict: revise, reason: "revise, by the line's words", feedback: "a gratuity is a charge, not an item", suggested_category: null}}
+  - id: structured, with no retries a rejection revises nothing and stays unresolved
+    order: [[primary, alpha, alpha-1]]
+    reflection: {feedback_context: structured, max_retries: 0}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [other, 0.95]}}
+    reviews: {"L3:other": [revise, service_fee, "a gratuity is a charge, not an item"]}
+    revisions: {}
+    expected: {answered_by: {L3: primary}, category: {L3: other}, result: {L3: retries_exhausted}, unresolved: {L3: true}, revisions: {L3: 0}, requests: [], calls: {alpha-1: 3, critic-1: 3}}
+  - id: structured, a call budget spent before any review leaves every answer unresolved
+    order: [[primary, alpha, alpha-1]]
+    reflection: {feedback_context: structured, max_total_calls_per_line: 1}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    reviews: {}
+    revisions: {}
+    expected: {answered_by: {L1: primary}, category: {L1: food_beverage}, result: {L1: call_budget, L2: call_budget, L3: call_budget}, stop_reason: {L1: call_budget}, unresolved: {L1: true, L2: true, L3: true}, calls: {alpha-1: 3}}
+  - id: by default, a call budget spent before any review keeps each answer's confidence, as before
+    order: [[primary, alpha, alpha-1]]
+    reflection: {max_total_calls_per_line: 1}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [food_beverage, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    reviews: {}
+    revisions: {}
+    expected: {answered_by: {L1: primary}, category: {L1: food_beverage}, result: {L1: call_budget}, unresolved: {L1: false, L2: false, L3: false}, calls: {alpha-1: 3}}
+  - id: structured, a revision with no recording is never retried
+    order: [[primary, alpha, alpha-1]]
+    reflection: {feedback_context: structured}
+    revisers: [alpha]
+    answers: {alpha-1: {L1: [alcohol, 0.95], L2: [alcohol, 0.95], L3: [service_fee, 0.95]}}
+    reviews: {"L1:alcohol": [revise, food_beverage, "the line names a meal, not an alcoholic drink"]}
+    revisions: {"alpha-1:L1:alcohol": missing}
+    expected:
+      answered_by: {L1: primary}
+      category: {L1: alcohol}
+      result: {L1: revision_missing_recording}
+      unresolved: {L1: true}
+      revisions: {L1: 1}
+      calls: {alpha-1: 3, alpha-1+revise: 1, critic-1: 3}
+      revision_attempts: {L1: [{revision: 1, outcome: missing_recording, answers_review: 0, max_retries: 2, retried_validation_error: false}]}
   - id: reflection off changes nothing and calls no reviewer
     order: [[primary, alpha, alpha-1]]
     reflection: {enabled: false}

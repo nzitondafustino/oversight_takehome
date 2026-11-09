@@ -10,7 +10,7 @@ python -m expense_api.worker  ◀───────┘ atomic claim, lease, h
    └▶ the core's ExpenseValidator.validate_batch, receipt by receipt, then the whole dataset
         ├▶ evaluation_results  (each receipt's core result, as soon as it is known)
         └▶ evaluation_usage    (each model call, once)
-GET  /v1/evaluations/{id}, /metrics, /results, /export;  POST /cancel, /compare
+GET  /v1/evaluations/{id}, /metrics, /results, /export;  POST /cancel, /rescore, /compare
 ```
 
 Evaluations are kept apart from validation runs (`/v1/validate`, `runs`): their own collections, endpoints and process. No classification or policy logic lives here. Every receipt goes through `ExpenseValidator.validate_batch`. Every score is the core's own, from `expense_validator.evaluation.metrics`.
@@ -91,6 +91,8 @@ The response is 201 with the queued job, or 200 when this `idempotency_key` alre
   - The core then checks the combination itself, so an unsupported one is a 422 `unsupported_configuration`. Examples are `jev` without a Jev model, or a single `model` given for `langgraph`.
 - **Reading a run.** Each job's `configuration.setup`, and each compared run's `setup`, gives the recorded classification as `orchestrator` (`direct` or `langgraph`), `provider`, `backend` (the adapter, as recorded), `protocol` and `model`, or LangGraph's `nodes`. It is worked out from what the run recorded each time it is read, and never stored, so a run recorded as `backend: jev`, before the adapters were renamed, reads as direct, through OpenRouter, with the Decisions API adapter, is found by `backend=decisions` or `backend=jev`, and replays from its stored snapshot unchanged.
 - **LangGraph.** `langgraph` changes `config.yaml`'s LangGraph configuration field by field, as the core merges it. The whole backend order, each backend's own model, the routing thresholds, and reflection with its reviewer, `max_retries` and `max_total_calls_per_line` are all kept.
+  - To run one node on another model, send the whole node list in `langgraph.backends`, each node with its configured `name`, the adapter its model needs (`classification_models[].backend`) and the model, as the web app does. The list replaces `config.yaml`'s for this job only: routing and reflection stay as configured, and the deployment's configuration is never changed. Every node's model is checked against its adapter (`model_adapter_mismatch`) and, live, against the classification allowlist. The job's snapshot, `model_label` and fingerprint hold the order it ran.
+  - In replay, each node reads only its own model's recordings. A node with no recording for a line would let the next node answer for it in ordinary replay. An evaluation never scores that: the receipt fails as `replay_recording_missing`, as `docs/API.md` requires.
 - **The snapshot.** The job stores `configuration.snapshot`: the exact core settings it will run with, worked out by the core's own `ValidatorSettings.from_config`. The worker runs with this snapshot, not with whatever `config.yaml` says later.
 - **The fingerprint.** `configuration.fingerprint` holds the hashes of the prompt, the ruleset artifact, the taxonomy and the field catalog, plus the core's version.
 - **What the job checks before it runs.** It also records the dataset's `canonical_sha256` and the replay set's `sha256`, a hash of every recorded answer. A worker refuses to run the job if any of these, or anything in the fingerprint, has changed: `dataset_changed`, `ruleset_changed`, `replay_set_changed` or `configuration_changed`. A result can therefore always be traced to its exact inputs.
@@ -108,6 +110,8 @@ The response is 201 with the queued job, or 200 when this `idempotency_key` alre
   - **Translation.** With `translation.enabled`, the translator is one of these models, though it is called only for non-English lines. `classification.translation_model` chooses another for a live run; it must answer chat completions (else `translation_model_unsupported`) and be allowed. A replay always reads the recorded translator's answers: recorded translations are keyed by model, so another translator has none, and its non-English receipts fail with `replay_recording_missing`, never falling back to a live call. Each job records `configuration.translation`: whether it was enabled, the model, and whether it came from the request or `config.yaml`. `GET /v1/backends` reports the default translator, whether it is allowed, and the allowed chat models that could replace it.
 - `OPENROUTER_API_KEY`
 - `LIVE_CACHE_DIR`
+
+LangGraph reflection is set per evaluation through `langgraph.reflection` (`enabled`, `max_retries`, `max_total_calls_per_line`, `feedback_context`; see `docs/API.md`). The deployment's maximums, `EXPENSE_API_MAX_REFLECTION_RETRIES` (default 3, at most 10) and `EXPENSE_API_MAX_REFLECTION_CALLS_PER_LINE` (default 12, at most 50), apply to the request merged with `config.yaml`; anything over them is refused with 422 `reflection_limit_exceeded`, whose details give the `limits` and what was `requested`. `GET /v1/backends` reports them under the LangGraph backend's `capabilities.reflection.limits`. A line's attempts, reviews and stop reason are in its `classification_details.orchestration`.
 
 Live LangGraph runs under the same limits and confirmations as a direct run. Each node's model, and the reviewer's when reflection is on, must be allowed for classification.
 
@@ -161,9 +165,19 @@ Cancellation is cooperative. A provider request already sent is not interrupted,
 
 ## Metrics
 
-`GET /v1/evaluations/{id}/metrics`: the metrics a finished job stored, with `schema_version: evaluation-metrics/1`. They are written once and never recomputed, so a later change to scoring cannot alter a past run's numbers. While a job runs, the response is `provisional: true`: metrics over the receipts stored so far, never stored.
+`GET /v1/evaluations/{id}/metrics`: the metrics a finished job stored, with their recorded `schema_version` (currently `evaluation-metrics/3`). While a job runs, the response is `provisional: true`: metrics over the receipts stored so far, never stored. Before any receipt has run, every scored block says `no receipt has been run yet`.
+
+Original metrics are immutable. `POST /v1/evaluations/{id}/rescore` scores a finished job again with the current version, from its stored results and dataset, with no model call, and stores that beside the original in `rescorings`; asking again for a version already stored changes nothing, and a job still running is a 409 `evaluation_not_finished`. `?scoring=latest` (the default) returns the newest scoring and `?scoring=original` the one the job finished with. Each response says which in `scored`: `{kind: original | rescored | provisional, original_schema_version, current_schema_version, rescorings}`.
 
 Every rate is the core's `rate`: `{numerator, denominator, value, wilson_95}`. A rate over nothing has `value: null`, never 0. A block with nothing to score, such as category metrics on an unlabelled dataset, is `{"available": false, "reason": ...}`.
+
+### Schema history
+
+- Version 2 added per-rule exception detection, evidence correctness, the restricted
+  matrix, keyword baseline, error analysis and rule coverage. Unevaluated receipts
+  count as missing their expected findings.
+- Version 3 classifies uncertain fields and findings without cited lines under
+  error analysis rules 2 and 3, rather than rule logic.
 
 ### `classification`
 
@@ -328,9 +342,9 @@ Even when they agree, this is a side-by-side view, not a controlled benchmark: o
 
 ## Exports
 
-`GET /v1/evaluations/{id}/export?format=json|csv`, once the job has finished (409 `evaluation_not_finished` before that).
+`GET /v1/evaluations/{id}/export?format=json|csv|pdf`, once the job has finished (409 `evaluation_not_finished` before that). `?scoring=original|latest` picks the metrics a PDF shows.
 
-- **JSON:** the job, its stored metrics, every receipt's result with its answers and scoring, and every call record, as canonical JSON (sorted keys). The same evaluation exports to the same bytes.
+- **JSON:** `export_schema: "evaluation-export/2"`: the job, its stored metrics, every receipt with its answers and scoring, and every call record. Each receipt's `result` is `ReceiptResult.to_record()`: exactly the brief's fields, in the brief's order, for every model, with everything else in its `metadata` (version 1 held the core's whole result). Compact JSON in the fields' own order; the same evaluation exports to the same bytes.
 - **CSV:** one row per line, in dataset and line order, plus one row for a receipt that could not be evaluated. Every text cell starting with `=`, `+`, `-`, `@`, a tab or a newline gets a leading `'`, so no spreadsheet runs it as a formula.
 
 ## Replay demo
@@ -338,7 +352,7 @@ Even when they agree, this is a side-by-side view, not a controlled benchmark: o
 `demo/evaluations.sh` calls no paid model. It publishes a ruleset through the full lifecycle, uploads `data/receipts.jsonl` (32 labelled receipts) and the YAML example, evaluates the 32 receipts with openrouter and with Jev, and evaluates the five with LangGraph and reflection. It then polls, prints metrics and spending, compares and exports.
 
 ```sh
-cd backend && docker compose up --build -d
+docker compose up --build -d   # from the repository root
 mkdir -p /tmp/demo && cd /tmp/demo && bash ~/path/to/backend/demo/evaluations.sh
 ```
 

@@ -6,9 +6,10 @@ import json
 from decimal import Decimal
 
 from bson import ObjectId
-from expense_validator import ConfigurationError, ValidatorSettings
+from expense_validator import ConfigurationError, ReceiptResult, ValidatorSettings
 from expense_validator.config import LANGGRAPH
 from fastapi.encoders import jsonable_encoder
+from pydantic import ValidationError
 from pymongo.database import Database
 
 from expense_api.config import Settings
@@ -18,14 +19,14 @@ from expense_api.repositories.evaluations import TERMINAL
 from expense_api.schemas.evaluations import EvaluationCreate
 from expense_api.services.datasets import DatasetService
 from expense_api.services.discovery import classification_identity, describe_setup, recorded_names
-from expense_api.services.evaluation_metrics import compute
-from expense_api.services.evaluation_runner import Outcome, core_settings, final_state, folder_sha256, live_cache, models_by_role, plan
+from expense_api.services.evaluation_metrics import METRICS_SCHEMA_VERSION, compute
+from expense_api.services.evaluation_runner import Outcome, core_settings, final_state, folder_sha256, live_cache, models_by_role, plan, scoring_inputs
 from expense_api.services.rulesets import ArtifactStore, RulesetService, now, sha256
-from expense_api.services.runs import canonical_json, csv_cell, read_legacy_result
+from expense_api.services.runs import canonical_json, csv_cell, export_bytes, read_legacy_result
 from expense_api.services.spending import names_earlier_adapters, spend_report, summarize
 from expense_api.services.validation import RULESET_REFERENCE, authorize_classification, check_publication
 
-EXPORT_SCHEMA = "evaluation-export/1"
+EXPORT_SCHEMA = "evaluation-export/2"  # 2: each result in the brief's shape (ReceiptResult.to_record); 1 held the core's whole result
 
 
 class EvaluationService:
@@ -117,6 +118,8 @@ class EvaluationService:
         return stored, True
 
     def _same_request(self, existing: dict, request_sha256: str) -> dict:
+        if existing.get("deleted_at"):
+            raise ApiError(409, "evaluation_deleted", "this idempotency key belongs to a deleted evaluation; use a new key")
         if existing["request_sha256"] != request_sha256:
             raise ApiError(409, "idempotency_conflict", "this idempotency_key was used for a different request", {"evaluation_id": existing["_id"]})
         return existing
@@ -177,13 +180,41 @@ class EvaluationService:
             query["created_at"] = created
         return self.jobs.page(query, limit, offset)
 
-    def metrics(self, evaluation_id: str) -> dict:
+    def metrics(self, evaluation_id: str, scoring: str = "latest") -> dict:
+        """A finished run's stored metrics: its latest rescoring by default, or with scoring original the metrics it was
+        scored with when it finished. Never computed again here. While it runs, provisional metrics, never stored."""
         job = self.get(evaluation_id)
+        rescorings = job.get("rescorings") or []
         if job["metrics"] is not None:
-            return {"evaluation_id": evaluation_id, "status": job["status"], "provisional": False, **job["metrics"]}
+            original = job["metrics"].get("schema_version") or job.get("metrics_schema_version")
+            scoring_info = {"original_schema_version": original, "current_schema_version": METRICS_SCHEMA_VERSION, "rescorings": [{"schema_version": item["schema_version"], "rescored_at": item["rescored_at"]} for item in rescorings]}
+            if scoring == "latest" and rescorings:
+                latest = rescorings[-1]
+                return {"evaluation_id": evaluation_id, "status": job["status"], "provisional": False, "scored": {"kind": "rescored", "rescored_at": latest["rescored_at"], **scoring_info}, **latest["metrics"]}
+            return {"evaluation_id": evaluation_id, "status": job["status"], "provisional": False, "scored": {"kind": "original", **scoring_info}, **job["metrics"]}
         # Not finished: the receipts stored so far, each as evaluated alone. Never stored, so never mistaken for the result.
         rows = [self._row(row) for row in self.results.all(evaluation_id)]
-        return {"evaluation_id": evaluation_id, "status": job["status"], "provisional": True, **compute(rows, result_context="isolated_receipts", context_complete=None, dataset_receipts=job["progress"]["total_receipts"])}
+        inputs, _ = scoring_inputs(job, rows, self.database, None)
+        metrics = compute(rows, result_context="isolated_receipts", context_complete=None, dataset_receipts=job["progress"]["total_receipts"], inputs=inputs)
+        return {"evaluation_id": evaluation_id, "status": job["status"], "provisional": True, "scored": {"kind": "provisional"}, **metrics}
+
+    def rescore(self, evaluation_id: str) -> dict:
+        """Score a finished run again with the current scoring, from its stored results and its exact dataset and
+        ruleset versions, and keep it beside the metrics it finished with, which never change. Rescoring with the
+        version already used last returns that rescoring: the same inputs give the same numbers."""
+        job = self.get(evaluation_id)
+        if job["status"] not in TERMINAL or job["metrics"] is None:
+            raise ApiError(409, "evaluation_not_finished", "only a finished evaluation is rescored: its metrics are provisional while it runs")
+        rescorings = job.get("rescorings") or []
+        if (rescorings[-1]["schema_version"] if rescorings else job["metrics"].get("schema_version")) == METRICS_SCHEMA_VERSION:
+            return self.metrics(evaluation_id)
+        rows = [self._row(row) for row in self.results.all(evaluation_id)]
+        inputs, coverage = scoring_inputs(job, rows, self.database, self.settings)
+        metrics = compute(rows, result_context=job["result_context"], context_complete=job["context_complete"], dataset_receipts=job["progress"]["total_receipts"], inputs=inputs, coverage=coverage)
+        entry = {"schema_version": METRICS_SCHEMA_VERSION, "rescored_at": now(), "metrics": metrics}
+        if self.jobs.transition(evaluation_id, {"status": job["status"], "rescorings": {"$size": len(rescorings)}} if rescorings else {"status": job["status"], "rescorings": {"$exists": False}}, {"rescorings": [*rescorings, entry]}) is None:
+            raise ApiError(409, "evaluation_changed", "the evaluation changed while it was rescored: try again")
+        return self.metrics(evaluation_id)
 
     def results_page(self, evaluation_id: str, filters: dict, limit: int, offset: int) -> tuple[list[dict], int]:
         self.get(evaluation_id)
@@ -236,7 +267,7 @@ class EvaluationService:
             if job["status"] == "cancel_requested":
                 return job
             if job["status"] == "queued":
-                changed = self.jobs.transition(evaluation_id, {"status": "queued"}, final_state(job, Outcome(stop_reason="cancelled"), self.database))
+                changed = self.jobs.transition(evaluation_id, {"status": "queued"}, final_state(job, Outcome(stop_reason="cancelled"), self.database, self.settings))
             else:
                 moment = now()
                 changed = self.jobs.transition(evaluation_id, {"status": "running"}, {"status": "cancel_requested", "cancel_requested_at": moment, "updated_at": moment})
@@ -261,17 +292,29 @@ class EvaluationService:
 
     # --- Exporting ---
 
-    def export(self, evaluation_id: str, format: str) -> bytes:
+    def export(self, evaluation_id: str, format: str, scoring: str = "latest") -> bytes:
         job = self.get(evaluation_id)
         if job["status"] not in TERMINAL:
             raise ApiError(409, "evaluation_not_finished", f"evaluation {evaluation_id} is {job['status']}: export it once it has finished")
         rows = self.results.all(evaluation_id)
         items = self._items(evaluation_id, rows)
+        if format == "pdf":
+            from expense_api.services.pdf_reports import evaluation_pdf
+            return evaluation_pdf(jsonable_encoder({"evaluation": detail(job), "metrics": self.metrics(evaluation_id, scoring), "results": items}))
         if format == "json":
             usage = [{name: value for name, value in record.items() if name != "created_at"} for record in self.usage.all(evaluation_id)]
-            body = {"export_schema": EXPORT_SCHEMA, "evaluation": detail(job), "metrics": job["metrics"], "results": items, "usage": usage}
-            return (canonical_json(jsonable_encoder(body)) + "\n").encode("utf-8")
+            results = [{**item, "result": None if item["result"] is None else brief_record(item)} for item in items]
+            body = {"export_schema": EXPORT_SCHEMA, "evaluation": detail(job), "metrics": job["metrics"], "results": results, "usage": usage}
+            return export_bytes(jsonable_encoder(body))
         return export_csv(job, items)
+
+
+def brief_record(item: dict) -> dict:
+    """A stored result in the brief's shape, the same for every model; what is particular to one is in its metadata."""
+    try:
+        return ReceiptResult.model_validate(item["result"]).to_record()
+    except ValidationError:
+        raise ApiError(500, "corrupt_result", f"the stored result of {item['receipt_id']} cannot be read") from None
 
 
 def model_label(core) -> str | None:

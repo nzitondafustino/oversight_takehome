@@ -131,7 +131,6 @@ describe("navigation", () => {
       ["Validate Receipts", "Validate Receipts", "/validate"],
       ["Evaluations", "Evaluations", "/evaluations"],
       ["Policy Management", "Policy Management", "/policies"],
-      ["Documents", "Documents", "/documents"],
       ["Run History", "Run History", "/runs"],
       ["Dashboard", "Dashboard", "/"],
     ] as const) {

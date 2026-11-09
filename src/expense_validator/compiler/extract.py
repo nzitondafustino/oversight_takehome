@@ -24,6 +24,13 @@ THRESHOLDS = [
     (re.compile(rf"\battendee\s+count\s+of\s+({NUMBER})\b", re.IGNORECASE), "count"),
     (re.compile(rf"\b({NUMBER})\s+or\s+more\s+receipts\b", re.IGNORECASE), "count"),
 ]
+# A number mentioned in a clause. "one" is left out: it is far more often "one recipient" than a limit.
+NUMBER_MENTION = re.compile(r"\d[\d,]*(?:\.\d+)?|\b(?:two|three|four|five|six|seven|eight|nine|ten)\b", re.IGNORECASE)
+# Numbers that name something rather than limit it: a merchant category code, such as "MCC 5813" or "MCCs 5813 and 5921".
+IDENTIFIERS = re.compile(r"\bMCCs?\s+\d{4}(?:\s*(?:,|or|and)\s*\d{4})*\b")
+# "those three" after a list of rules counts the rules just named, as in "replaces ALC-01, ALC-02 and ALC-03: report
+# REG-01 instead of those three". Followed by a noun such as "receipts", it is a quantity and stays a possible limit.
+RULE_COUNT = re.compile(rf"\b(?:those|these|the|all)\s+({'|'.join(NUMBER_WORDS)})\b(?=\s*(?:rules?\b|[.,;:)]|$))", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -69,6 +76,24 @@ def thresholds_in(text: str) -> list[Threshold]:
         for match in pattern.finditer(text)
     ]
     return _unique([threshold for _, threshold in sorted(found, key=lambda pair: pair[0])])
+
+
+def possible_limits(text: str) -> list[tuple[int, int]]:
+    """Return the spans of the numbers in a clause that could state a limit.
+
+    A rule ID, a merchant category code, and a count of the rules the clause names ("those three" after three rule
+    IDs) are not limits, so a clause holding only those has nothing for a reviewer to confirm.
+    """
+    rules_named = len(set(RULE_ID.findall(text)))
+
+    def blank(match: re.Match) -> str:  # blanked, not removed, so every span is an offset in the original text
+        return " " * len(match.group(0))
+
+    def blank_rule_count(match: re.Match) -> str:
+        return blank(match) if NUMBER_WORDS[match.group(1).lower()] <= rules_named else match.group(0)
+
+    plain = RULE_COUNT.sub(blank_rule_count, IDENTIFIERS.sub(blank, RULE_ID.sub(blank, text)))
+    return [match.span() for match in NUMBER_MENTION.finditer(plain)]
 
 
 def _clause(heading: re.Match, lines: list[str], policy_doc: str, section: str | None) -> Clause:

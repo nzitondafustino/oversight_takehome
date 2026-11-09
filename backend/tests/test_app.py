@@ -7,16 +7,33 @@ from expense_api.config import Settings
 PATHS = {
     "/health": {"get"},
     "/v1/rulesets": {"get", "post"},
-    "/v1/rulesets/{ruleset_id}": {"get"},
+    "/v1/rulesets/{ruleset_id}/duplicate-publication": {"get", "post"},
+    "/v1/rulesets/{ruleset_id}": {"get", "delete"},
     "/v1/rulesets/{ruleset_id}/comparisons": {"get"},
+    "/v1/rulesets/{ruleset_id}/comparisons/{comparison_id}/source": {"get"},
+    "/v1/rulesets/{ruleset_id}/edits": {"post"},
+    "/v1/rulesets/{ruleset_id}/rules/{rule_id}": {"delete"},
+    "/v1/rulesets/{ruleset_id}/readiness": {"get"},
     **{f"/v1/rulesets/{{ruleset_id}}/{step}": {"post"} for step in ("submit", "review", "approve", "publish")},
     "/v1/documents": {"get", "post"},
     "/v1/documents/{document_id}": {"get"},
     "/v1/documents/{document_id}/revisions": {"post"},
+    "/v1/documents/{document_id}/profile": {"patch"},
+    "/v1/documents/{document_id}/revisions/{revision}/approval": {"get", "post"},
+    "/v1/documents/extraction-plan": {"post"},
+    "/v1/documents/extractions/{extraction_id}/ruleset": {"post"},
     "/v1/documents/extractions": {"get", "post"},
+    "/v1/documents/extraction-jobs": {"post"},
+    "/v1/documents/extraction-jobs/{job_id}": {"get"},
     "/v1/documents/extractions/{extraction_id}": {"get"},
     "/v1/documents/extractions/{extraction_id}/comparisons": {"get"},
     "/v1/documents/extractions/{extraction_id}/review": {"post"},
+    "/v1/documents/extractions/{extraction_id}/reviews/{review_id}": {"get", "patch", "delete"},
+    "/v1/documents/extractions/{extraction_id}/comparisons/{comparison_id}/source": {"get"},
+    "/v1/documents/extractions/{extraction_id}/baseline": {"get"},
+    "/v1/rulesets/{ruleset_id}/changes": {"get"},
+    "/v1/documents/extractions/{extraction_id}/change-requests": {"get", "post"},
+    "/v1/documents/extractions/{extraction_id}/change-requests/{change_request_id}/resolve": {"post"},
     "/v1/validate": {"post"},
     "/v1/runs": {"get"},
     "/v1/runs/{run_id}": {"get"},
@@ -26,11 +43,13 @@ PATHS = {
     "/v1/taxonomy": {"get"},
     "/v1/evaluations": {"get", "post"},
     "/v1/evaluations/datasets": {"get", "post"},
-    "/v1/evaluations/datasets/{dataset_id}": {"get"},
+    "/v1/evaluations/datasets/{dataset_id}": {"get", "patch", "delete"},
+    "/v1/evaluations/compare/export": {"get"},
     "/v1/evaluations/compare": {"post"},
-    "/v1/evaluations/{evaluation_id}": {"get"},
+    "/v1/evaluations/{evaluation_id}": {"get", "patch", "delete"},
     **{f"/v1/evaluations/{{evaluation_id}}/{part}": {"get"} for part in ("metrics", "results", "export")},
     "/v1/evaluations/{evaluation_id}/cancel": {"post"},
+    "/v1/evaluations/{evaluation_id}/rescore": {"post"},
 }
 NOT_CREDENTIALS = {"idempotency_key"}  # names a request, as an HTTP Idempotency-Key does: no secret
 
@@ -68,7 +87,7 @@ def test_the_endpoints_are_documented(client):
 def test_request_bodies_refuse_unknown_fields_and_take_no_credentials(client):
     schemas = client.get("/openapi.json").json()["components"]["schemas"]
     for name in ("ValidationRequest", "ClassificationSelection", "RulesetCreate", "RulesetSource", "CompileSource", "TransitionRequest", "ReviewRequest", "ApproveRequest", "PublishRequest", "ExtractionSource",
-                 "DocumentCreate", "RevisionCreate", "DocumentSource", "ExtractionCreate", "RevisionRef", "RecordedWith", "ReviewCreate",
+                 "DocumentCreate", "RevisionCreate", "DocumentSource", "ProfileUpdate", "DocumentScope", "ChangeRequestCreate", "ChangeRequestResolve", "ApprovalAction", "RuleEditRequest", "RuleChange", "ExtractionCreate", "RevisionRef", "RecordedWith", "ReviewCreate",
                  "EvaluationCreate", "Budget", "CompareRequest"):
         assert schemas[name]["additionalProperties"] is False, name
         assert not [field for field in schemas[name]["properties"] if field not in NOT_CREDENTIALS and any(word in field for word in ("key", "secret", "token", "password", "credential"))], name

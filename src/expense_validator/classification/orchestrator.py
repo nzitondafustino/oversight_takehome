@@ -7,6 +7,11 @@ the answering backend cannot revise. Uncertain, repeated, or exhausted reviews
 fall back. Failed reviews retain the answer. Unresolved objections withhold
 confidence for the engine's existing uncertainty handling.
 
+With structured feedback context, each revision is also told the review's verdict, reason and suggestion, the
+previous confidence, the categories in question and its retry number; a revision that fails validation is retried
+with its error while retries and calls remain; and only a reviewer's accept verifies an answer, so a line that ends
+any other way is unresolved.
+
 Route only selected line IDs within their full receipt context. Call budgets
 and a recursion limit bound execution. The compiled graph shares no request
 state and requires the optional langgraph extra.
@@ -21,7 +26,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.runtime import Runtime
 
 from expense_validator.classification.core.common import check_reflection, classification_signature
-from expense_validator.classification.core.models import Backend, ClassifiedLine, Complete, Reviewer, Reviser, Vocabulary
+from expense_validator.classification.core.models import Backend, ClassifiedLine, Complete, RevisionContext, Reviewer, Reviser, Vocabulary
 from expense_validator.config import LangGraphRoutingConfig
 from expense_validator.exceptions import NOT_RECORDED, ClassificationError, ConfigurationError
 from expense_validator.normalization.models import NormalizedReceipt
@@ -61,6 +66,7 @@ class Reflection:
     revisers: tuple[ReviserLink | None, ...]  # one per backend in the order: None where that backend cannot revise
     max_retries: int
     max_calls: int
+    structured: bool = False  # feedback_context: structured
 
 
 @dataclass(frozen=True)
@@ -113,6 +119,8 @@ def _start() -> dict:
         "revisions": 0,
         "calls": 0,  # classifications, revisions and reviews: every call, failed or replayed
         "feedback": None,
+        "review": None,  # structured: the objection the next revision answers, and its place in reviews
+        "validation_error": None,  # structured: why the previous revision could not be used
         "reviser": None,  # the place in the order of the backend that revises next
         "result": None,
     }
@@ -254,7 +262,11 @@ def _after_objection(run: dict, proposed: ClassifiedLine, result, context: Conte
         return _fall_back(run, "no_reviser", context)
     if _spent(run, context):
         return _done(run, "call_budget")
-    return {**run, "phase": "revise", "feedback": result.feedback, "reviser": reviser}
+    revise = {**run, "phase": "revise", "feedback": result.feedback, "reviser": reviser}
+    if context.reflection.structured:
+        review = {"verdict": result.verdict, "reason": result.reason, "feedback": result.feedback, "suggested_category": result.suggested_category}
+        revise |= {"review": (review, len(run["reviews"]) - 1), "validation_error": None}
+    return revise
 
 
 def _reviser(name: str, context: Context) -> int | None:
@@ -279,11 +291,23 @@ def _revise(state: State, runtime: Runtime[Context]) -> dict:
         link = context.reflection.revisers[run["reviser"]]
         previous = run["answer"][1]
         complete, answered = _listening(link.complete)
-        revised = link.reviser.revise(context.normalized, normalized_lines[line_id], previous, run["feedback"], complete, context.vocabulary)
-        outcome = assess(revised, context.routing)
         revision = run["revisions"] + 1
+        if context.reflection.structured:
+            review, answers = run["review"]
+            told = RevisionContext(review["verdict"], review["reason"], review["feedback"], review["suggested_category"], revision, context.reflection.max_retries, run["validation_error"])
+            revised = link.reviser.revise(context.normalized, normalized_lines[line_id], previous, run["feedback"], complete, context.vocabulary, context=told)
+        else:
+            revised = link.reviser.revise(context.normalized, normalized_lines[line_id], previous, run["feedback"], complete, context.vocabulary)
+        outcome = assess(revised, context.routing)
         goes_on = _rank(revised) == 2 and wants_next(outcome, context.routing)
-        run = {**run, "revisions": revision, "calls": run["calls"] + 1, "attempts": run["attempts"] + (_attempt(link.name, link.backend_name, link.model, revised, outcome, goes_on and run["next"] < len(context.chain), bool(answered), revision),)}
+        attempt = _attempt(link.name, link.backend_name, link.model, revised, outcome, goes_on and run["next"] < len(context.chain), bool(answered), revision)
+        if context.reflection.structured:  # which review it answered, and whether it was retrying a failed revision
+            attempt |= {"answers_review": answers, "max_retries": context.reflection.max_retries, "retried_validation_error": run["validation_error"] is not None}
+        run = {**run, "revisions": revision, "calls": run["calls"] + 1, "attempts": run["attempts"] + (attempt,)}
+        if context.reflection.structured and outcome == "error" and revision < context.reflection.max_retries and not _spent(run, context):
+            # Failed validation: try again with the error, while retries and calls remain. A missing recording is never retried.
+            lines[line_id] = {**run, "validation_error": (revised.error or "")[:200]}
+            continue
         if _rank(revised) < 2:
             lines[line_id] = _fall_back(run, "revision_missing_recording" if outcome == "missing_recording" else "revision_failed", context)
         elif classification_signature(revised) == classification_signature(previous):
@@ -359,8 +383,13 @@ def classify_receipt(normalized: NormalizedReceipt, chain: tuple[Link, ...], rou
         name, line, _ = run["answer"]
         audit = {"answered_by": name, "fallback": sum(1 for attempt in run["attempts"] if "revision" not in attempt) > 1, "result": run["result"], "attempts": list(run["attempts"])}
         if reflection is not None:
-            unresolved = run["result"] != "accepted" and _rank(line) == 2 and any(review["verdict"] in ("revise", "uncertain") for review in run["reviews"])
+            if reflection.structured:  # only a reviewer's accept verifies an answer: a limit, a failure or a gap never does
+                unresolved = run["result"] != "accepted" and _rank(line) == 2
+            else:
+                unresolved = run["result"] != "accepted" and _rank(line) == 2 and any(review["verdict"] in ("revise", "uncertain") for review in run["reviews"])
             audit["reflection"] = {"calls": run["calls"], "revisions": run["revisions"], "reviews": list(run["reviews"]), "fallbacks": list(run["fallbacks"]), "unresolved": unresolved}
+            if reflection.structured:
+                audit["reflection"] |= {"feedback_context": "structured", "stop_reason": run["result"], "max_retries": reflection.max_retries, "max_calls": reflection.max_calls}
             if unresolved:  # the category stands; the engine's no_confidence state takes the doubt the review left
                 audit["reflection"]["withheld_confidence"] = None if line.confidence is None else float(line.confidence)
                 line = line._replace(confidence=None)

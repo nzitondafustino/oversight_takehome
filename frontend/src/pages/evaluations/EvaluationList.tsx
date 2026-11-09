@@ -1,3 +1,4 @@
+import { RecordActions } from "@/components/management/RecordActions";
 import { FlaskConical, GitCompare, RadioTower } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,7 +18,7 @@ const PAGE_SIZE = 15;
 const MAX_COMPARED = 10;
 const STATUSES: EvaluationStatus[] = ["queued", "running", "cancel_requested", "completed", "failed", "cancelled", "budget_exhausted"];
 
-function JobRow({ job, selected, onToggle }: { job: EvaluationSummary; selected: boolean; onToggle: () => void }) {
+function JobRow({ job, selected, onToggle, onDeleted }: { job: EvaluationSummary; selected: boolean; onToggle: () => void; onDeleted: () => void }) {
   const active = isActiveEvaluation(job.status);
   const name = job.label ?? job.evaluation_id;
   return (
@@ -86,6 +87,7 @@ function JobRow({ job, selected, onToggle }: { job: EvaluationSummary; selected:
         )}
       </TableCell>
       <TableCell className="pr-5 text-right text-xs">{newSpendText(job.execution_mode, job.spend_summary)}</TableCell>
+      <TableCell><RecordActions path={`/v1/evaluations/${encodeURIComponent(job.evaluation_id)}`} title="evaluation" recordName={name} deleteDisabled={active} onDeleted={onDeleted} /></TableCell>
     </TableRow>
   );
 }
@@ -169,12 +171,12 @@ export function EvaluationList() {
                   <TableHead>Mode · classification</TableHead>
                   <TableHead>Dataset · ruleset</TableHead>
                   <TableHead className="text-right">Key metrics</TableHead>
-                  <TableHead className="pr-5 text-right">New spend</TableHead>
+                  <TableHead className="pr-5 text-right">New spend</TableHead><TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.map((job) => (
-                  <JobRow key={job.evaluation_id} job={latest.get(job.evaluation_id) ?? job} selected={selected.includes(job.evaluation_id)} onToggle={() => toggle(job.evaluation_id)} />
+                  <JobRow onDeleted={() => { setSelected(current => current.filter(id => id !== job.evaluation_id)); setOffset(0); }} key={job.evaluation_id} job={latest.get(job.evaluation_id) ?? job} selected={selected.includes(job.evaluation_id)} onToggle={() => toggle(job.evaluation_id)} />
                 ))}
               </TableBody>
             </Table>

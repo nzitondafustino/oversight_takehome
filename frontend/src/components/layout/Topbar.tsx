@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav";
 
 function sectionFor(pathname: string) {
+  // Document pages belong to Policy Management, which holds the document library.
+  if (pathname.startsWith("/documents")) pathname = "/policies";
   return [...NAV_ITEMS].sort((a, b) => b.to.length - a.to.length).find((item) => (item.to === "/" ? pathname === "/" : pathname.startsWith(item.to)));
 }
 
@@ -60,8 +62,8 @@ export function Topbar() {
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-card/85 md:px-6">
       <nav aria-label="Breadcrumb" className="min-w-0 flex-1">
         <ol className="flex items-center gap-2 text-[13px]">
-          <li className="hidden text-subtle-foreground sm:block">Expense Policy Validator</li>
-          <li aria-hidden className="hidden text-border sm:block">
+          <li className="truncate font-semibold text-accent-foreground">Northwind Global</li>
+          <li aria-hidden className="text-border">
             /
           </li>
           <li className="truncate font-medium text-foreground" aria-current="page">
@@ -69,6 +71,7 @@ export function Topbar() {
           </li>
         </ol>
       </nav>
+      <span className="hidden shrink-0 rounded-full border border-status-info-border bg-primary-soft px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-primary lg:inline-flex">Expense policy exercise</span>
       <ApiStatus />
     </header>
   );

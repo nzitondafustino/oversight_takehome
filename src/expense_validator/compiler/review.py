@@ -197,10 +197,51 @@ def _faithful_problems(extraction: ExtractionResult, fields: list[ReviewedField]
         if isinstance(final.get((*where, "review_signal")), bool):
             changes["review_signal"] = final[(*where, "review_signal")]
         clauses[clause.rule_id] = dataclasses.replace(clause, **changes)
-    return [
-        ReviewIssue(level="error", code="executable_conflict", message=f"the reviewed interpretation disagrees with the executable rules: {issue}. Update rules/rule_logic.yaml and validate again, or change the decision")
-        for issue in faithful_issues(extraction.candidate.ruleset, clauses)
-    ]
+    decided = {(f.comparison.rule_id, f.comparison.field): f for f in fields if f.decision is not None}
+    source = {clause.rule_id: clause for clause in extraction.clauses}
+    return [_conflict(issue, decided.get((issue.rule_id, _faithful_field(issue.message))), source.get(issue.rule_id)) for issue in faithful_issues(extraction.candidate.ruleset, clauses)]
+
+
+def _stated(clause: Clause, field: str) -> object:
+    """What the clause itself states for a field, as the regex extraction reads it: the source a decision answers to."""
+    if field == "thresholds":
+        return sorted((Decimal(t.value), t.unit) for t in clause.thresholds)
+    return sorted(clause.severities) if field == "severities" else clause.review_signal
+
+
+def _decided(field: str, value: object) -> object:
+    if field == "thresholds":
+        limits = _limits(value)
+        return None if limits is None else sorted(limits)
+    return sorted(value) if field == "severities" and isinstance(value, list) else value
+
+
+def _conflict(issue, reviewed: ReviewedField | None, clause: Clause | None) -> ReviewIssue:
+    """A decision and the compiled rule disagree. Which one departs from the clause decides who must act.
+
+    interpretation_mismatch: the decision gives something other than what the clause states, which the compiled rule
+    holds (the build checks every rule against its clause), so the reviewer's reading needs another look.
+    executable_conflict: the decision matches the clause and the compiled rule does not, so the rule needs correcting.
+    """
+    if reviewed is None or clause is None:
+        return ReviewIssue(level="error", code="executable_conflict", message=f"the reviewed interpretation disagrees with the compiled rule: {issue}")
+    field, where = reviewed.comparison.field, reviewed.comparison.comparison_id
+    if _decided(field, reviewed.final_value) != _stated(clause, field):
+        return ReviewIssue(level="error", code="interpretation_mismatch", comparison_id=where,
+                           message=f"{issue.rule_id} {field}: this decision departs from what the clause states, which the compiled rule follows ({issue.message})")
+    return ReviewIssue(level="error", code="executable_conflict", comparison_id=where,
+                       message=f"{issue.rule_id} {field}: this decision matches the clause, but the compiled rule does not ({issue.message}): correct the draft rule with a rule override")
+
+
+def _faithful_field(message: str) -> str | None:
+    """The reviewed field a faithful-check message is about, so its issue is shown on the decision that caused it."""
+    if message.startswith("severity"):
+        return "severities"
+    if message.startswith("review signal"):
+        return "review_signal"
+    if message.startswith("no clause"):
+        return None
+    return "thresholds"  # "<param> is <value>, not in its clause" or "clause states <value>, held by no rule"
 
 
 def review_extraction(extraction: ExtractionResult, decisions: list[ReviewDecision], policy: ReviewPolicy, texts: dict[str, str]) -> ReviewResult:

@@ -79,7 +79,7 @@ class Worker:
                     outcome = Outcome(error={"code": "worker_lost", "message": "the worker stopped during a live run, which is never retried automatically, as that could pay for calls again: start a new evaluation"})
                 else:
                     outcome = Outcome(error={"code": "worker_lost", "message": f"the worker was lost {job['attempts']} times"})
-                changed = self.jobs.transition(job["_id"], expected, final_state(job, outcome, self.database))
+                changed = self.jobs.transition(job["_id"], expected, final_state(job, outcome, self.database, self.settings))
                 log.warning("settled %s after its worker's lease expired", job["_id"])
             settled += changed is not None
         return settled
@@ -110,7 +110,7 @@ class Worker:
                 self.jobs.owned_update(job["_id"], self.worker_id, {"status": "queued", "lease": None, "updated_at": self.clock()})  # resumes, at no cost
                 return
             outcome = Outcome(error={"code": "worker_stopped", "message": "the worker was stopped during a live run, which is never resumed automatically"})
-        if self.jobs.owned_update(job["_id"], self.worker_id, final_state(job, outcome, self.database)) is None:
+        if self.jobs.owned_update(job["_id"], self.worker_id, final_state(job, outcome, self.database, self.settings)) is None:
             log.warning("could not settle %s: its lease was lost", job["_id"])
 
     def _expiry(self, moment: datetime) -> datetime:

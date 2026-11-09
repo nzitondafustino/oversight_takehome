@@ -106,6 +106,28 @@ class Reviewer(NamedTuple):
     review: Callable[["NormalizedReceipt", "NormalizedLine", ClassifiedLine, Complete, Vocabulary], ReflectionResult]
 
 
+class RevisionContext(NamedTuple):
+    """What a structured revision is told about the answer it revises, besides the line itself.
+
+    Attributes:
+        verdict: The review's verdict, revise.
+        reason: The review's one-sentence reason.
+        feedback: What the reviewer says to reconsider.
+        suggested_category: The reviewer's category, or None when it could not tell.
+        retry: This revision's number, from 1.
+        max_retries: The most revisions the line may have.
+        validation_error: The previous revision's error, when it failed the checks every answer gets.
+    """
+
+    verdict: str
+    reason: str | None
+    feedback: str
+    suggested_category: str | None
+    retry: int
+    max_retries: int
+    validation_error: str | None = None
+
+
 class Reviser(NamedTuple):
     """Define an optional feedback-guided classifier revision.
 
@@ -116,11 +138,15 @@ class Reviser(NamedTuple):
         cache_key: Build the revision cache prefix.
         cache_folder: Separate revision cache folder.
         connect: Create the revision completion.
-        revise: Reclassify and finalize once; return an error-only line on failure.
+        revise: Reclassify and finalize once; return an error-only line on failure. Given a
+            RevisionContext as `context`, it sends the structured request instead.
+        structured_prompt: Build the instructions for a structured revision, or None when the reviser
+            takes the reviewer's feedback text alone.
     """
 
     prompt: Callable[[Vocabulary], str]
     cache_key: Callable[[str, Vocabulary], str]
     cache_folder: str
     connect: Callable[["OpenRouter", "ValidatorSettings", Vocabulary], Complete]
-    revise: Callable[["NormalizedReceipt", "NormalizedLine", ClassifiedLine, str, Complete, Vocabulary], ClassifiedLine]
+    revise: Callable[..., ClassifiedLine]
+    structured_prompt: Callable[[Vocabulary], str] | None = None

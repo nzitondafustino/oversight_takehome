@@ -77,7 +77,7 @@ def test_langgraph_keeps_its_whole_order_models_reflection_and_limits(bench):
     snapshot = job["configuration"]["snapshot"]
     assert [child["model"] for child in snapshot["langgraph"]["backends"]] == ["typesafe/jev-1.14", "anthropic/claude-haiku-5.5"]
     assert snapshot["langgraph"]["routing"] == {"min_confidence": 0.8, "fallback_on_error": True, "fallback_on_low_confidence": True}
-    assert snapshot["langgraph"]["reflection"] == {"enabled": True, "reviewer": {"backend": "chat_completions", "model": "anthropic/claude-haiku-5.5"}, "max_retries": 1, "max_total_calls_per_line": 4}
+    assert snapshot["langgraph"]["reflection"] == {"enabled": True, "reviewer": {"backend": "chat_completions", "model": "anthropic/claude-haiku-5.5"}, "max_retries": 1, "max_total_calls_per_line": 4, "feedback_context": "reviewer_feedback"}
     assert snapshot["classification_model"] is None  # no single model overrides the order
     # The order was sent with the adapters' earlier names, and is planned and labelled with their own.
     assert job["configuration"]["model_label"] == "primary=decisions:typesafe/jev-1.14, fallback=chat_completions:anthropic/claude-haiku-5.5"

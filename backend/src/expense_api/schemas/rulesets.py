@@ -143,6 +143,55 @@ class Compilation(BaseModel):
     blockers: list[str]
     comparisons_needing_review: int
     documents: list[CompiledDocument] = []
+    rule_overrides: list[dict[str, Any]] = []  # reviewed logic changes compiled into this version (compiler/overrides.py)
+
+
+class RuleChange(RequestBody):
+    """New values for some of one rule's logic: status, title, outcome, severity, applies_when, select, waived_by_ref or params.
+    The compiler validates them; anything else is refused."""
+
+    rule_id: str = Field(pattern=r"^[A-Z][A-Z0-9]*(?:[-.][A-Z0-9]+)+$")
+    set: dict[str, Any] = Field(min_length=1)
+    rationale: str | None = Field(default=None, max_length=2000)
+    add: bool = Field(default=False, description="A new rule for a clause the documents state and no rule implements: set also gives its scope, source_quote and params")
+
+    @field_validator("set")
+    @classmethod
+    def _standard_json(cls, value):
+        return as_standard_json(value)
+
+
+class RuleEditRequest(RequestBody):
+    actor: Annotated[str, Field(min_length=1, max_length=200, pattern=r"\S")]
+    rationale: str = Field(min_length=1, max_length=2000, pattern=r"\S", description="Why these rules change: kept in the new version's audit")
+    changes: list[RuleChange] = Field(min_length=1, max_length=50)
+
+
+class FieldChange(BaseModel):
+    rule_id: str
+    field: str
+    before: Any = None
+    after: Any = None
+
+
+class VersionChanges(BaseModel):
+    """A version beside the version published before it: each rule field that differs (a rule only one has is field
+    "rule"). against is None when no other version was published before it."""
+
+    against: dict[str, Any] | None
+    rule_changes: list[FieldChange]
+
+
+class RuleEdits(BaseModel):
+    """How a version made by editing another differs from it: field by field, with who and why."""
+
+    based_on: str
+    based_on_version: int
+    based_on_artifact_sha256: str
+    actor: str
+    rationale: str
+    at: datetime
+    changes: list[FieldChange]
 
 
 class Transition(BaseModel):
@@ -155,7 +204,14 @@ class Transition(BaseModel):
     reason: str | None
 
 
+class SupersedingVersion(BaseModel):
+    ruleset_id: str
+    name: str
+    version: int
+
+
 class RulesetSummary(BaseModel):
+    superseded_by: SupersedingVersion | None = None
     ruleset_id: str
     name: str
     version: int
@@ -168,6 +224,7 @@ class RulesetSummary(BaseModel):
     source: RulesetSource
     based_on_version: int | None = None
     compilation: Compilation | None = None  # None for an uploaded artifact, which no approval can cover
+    edits: RuleEdits | None = None  # for a version made by editing another
     review: Review | None = None
     approval_reference: str | None = None  # SHA-256 of the stored approval record
     approval_mode: PublishMode | None = None
@@ -193,3 +250,24 @@ class RulesetPage(BaseModel):
 class ComparisonPage(BaseModel):
     extraction_sha256: str
     comparisons: list[FieldComparison]
+
+
+class ReadinessBlocker(BaseModel):
+    message: str  # in plain words
+    rule_id: str | None = None
+    comparison_id: str | None = None
+
+
+class Readiness(BaseModel):
+    """Where a version stands on Edit, Resolve, Approve, Publish, as the API judges it now. Publishing still
+    rebuilds the version and checks its approval: can_publish says only that nothing stands in the way."""
+
+    status: str
+    next_step: Literal["submit", "review", "approve", "publish", "none"]
+    rules_changed: int
+    review_remaining: int
+    validation_errors: int  # a version is stored only once the compiler and the catalog accept it
+    approval: Literal["not_approved", "approved", "published"]
+    approval_mode: str | None
+    can_publish: bool
+    blockers: list[ReadinessBlocker]

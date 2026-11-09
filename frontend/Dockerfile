@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# Build from frontend/: docker build -t expense-frontend .   (backend/compose.yaml does this as the "frontend" service)
+# Build from frontend/: docker build -t expense-frontend .   (compose.yaml at the repository root does this as the "frontend" service)
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./

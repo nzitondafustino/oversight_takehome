@@ -14,7 +14,8 @@ from expense_validator.policy.schema import CheckRule, RuleSet
 PATHS = load_config().paths
 RULES = {rule.rule_id: rule for rule in RuleSet.from_json(PATHS.ruleset.read_text()).rules}
 OUTPUT = [json.loads(line) for line in runner.OUTPUT.read_text().splitlines()]
-EXCEPTIONS = [(output["receipt_id"], exception) for output in OUTPUT for exception in output["exceptions"]]
+# Each exception with the signed quote its metadata keeps beside it, in the same order.
+EXCEPTIONS = [(output["receipt_id"], {**exception, "source_quote": quote["source_quote"]}) for output in OUTPUT for exception, quote in zip(output["exceptions"], output["metadata"]["source_quotes"], strict=True)]
 
 
 def _clause(policy_doc, rule_id):

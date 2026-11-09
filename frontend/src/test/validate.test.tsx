@@ -1,3 +1,4 @@
+import { exportViewPdf } from "@/lib/exportViewPdf";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
@@ -86,8 +87,11 @@ type Handler = (url: URL, init?: RequestInit) => Answer | Promise<Answer> | unde
 let handler: Handler;
 let requests: { method: string; path: string; body?: string }[];
 
+vi.mock("@/lib/exportViewPdf", () => ({ exportViewPdf: vi.fn(async () => undefined) }));
+
 beforeEach(() => {
   requests = [];
+  vi.mocked(exportViewPdf).mockClear();
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -173,14 +177,200 @@ describe("configuration", () => {
     expect(body.classification).toEqual({ backend: "decisions", model: "typesafe/jev-1.14", replay_set: "jev" });
   });
 
-  it("shows LangGraph's model nodes, each with its provider, and sends no single model", async () => {
+});
+
+/** Discovery with LangGraph's reflection on, as config.yaml would configure it. */
+function withReflection(backends: Backends): Backends {
+  return {
+    ...backends,
+    backends: backends.backends.map((backend) =>
+      backend.id === "langgraph" ? { ...backend, capabilities: { ...backend.capabilities, reflection: { ...(backend.capabilities.reflection as object), enabled: true } } } : backend,
+    ),
+  };
+}
+
+/** Discovery with the deployment's reflection maximums and structured revisers, as the API reports them. */
+function withLimits(backends: Backends, structuredRevisers = ["chat_completions"]): Backends {
+  return {
+    ...backends,
+    backends: backends.backends.map((backend) =>
+      backend.id === "langgraph"
+        ? { ...backend, capabilities: { ...backend.capabilities, reflection: { ...(backend.capabilities.reflection as object), feedback_context: "reviewer_feedback", limits: { max_retries: 3, max_total_calls_per_line: 12 }, structured_revisers: structuredRevisers } } }
+        : backend,
+    ),
+  };
+}
+
+describe("LangGraph node models", () => {
+  const primary = () => screen.getByLabelText("1. Primary model");
+  const fallback = () => screen.getByLabelText("2. Fallback model");
+  const postedClassification = () => JSON.parse(requests.find((request) => request.method === "POST")!.body!).classification;
+
+  async function chooseLangGraph() {
+    await loadDemo();
+    await userEvent.selectOptions(await screen.findByLabelText("Orchestrator"), "langgraph");
+  }
+
+  it("offers a model per configured node, each with its provider and adapter, and sends none it was not given", async () => {
+    handler = validatesWith(singleRun());
+    renderAt("/validate");
+    await chooseLangGraph();
+    expect(screen.queryByLabelText("Classification model")).not.toBeInTheDocument();
+    // Each node starts on its configured model; every option names its provider and adapter.
+    expect(primary()).toHaveValue("");
+    expect(within(primary()).getByRole("option", { name: /^Configured: typesafe\/jev-1.14 · OpenRouter · Decisions API/ })).toBeInTheDocument();
+    expect(within(primary()).getByRole("option", { name: /^anthropic\/claude-haiku-5.5 · OpenRouter · Chat completions/ })).toBeInTheDocument();
+    expect(within(fallback()).getByRole("option", { name: /^Configured: anthropic\/claude-haiku-5.5 · OpenRouter · Chat completions/ })).toBeInTheDocument();
+    // The translator is never offered to a node.
+    expect(screen.queryByRole("option", { name: /tencent\/hy-mt2/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/Reflection is off/)).toBeInTheDocument();
+
+    await userEvent.click(submitButton());
+    await screen.findByText(RUN.run_id);
+    // Nothing changed: the deployment's LangGraph configuration runs exactly, so no node list is sent.
+    expect(postedClassification()).toEqual({ backend: "langgraph", replay_set: "langgraph" });
+  });
+
+  it("changes Primary and Fallback independently, each node keeping its name and taking its model's adapter", async () => {
+    handler = validatesWith(singleRun());
+    renderAt("/validate");
+    await chooseLangGraph();
+
+    await userEvent.selectOptions(primary(), "anthropic/claude-haiku-5.5");
+    expect(fallback()).toHaveValue("");  // the other node is left alone
+    expect(screen.getByText("OpenRouter · Chat completions, from the model", { selector: "#validate-node-primary-help" })).toBeInTheDocument();
+    await userEvent.selectOptions(fallback(), "typesafe/jev-1.14");
+    expect(screen.getByText("OpenRouter · Decisions API, from the model", { selector: "#validate-node-fallback-help" })).toBeInTheDocument();
+
+    await userEvent.click(submitButton());
+    await screen.findByText(RUN.run_id);
+    // The whole node list, in its configured order and names; each adapter is the one its model needs.
+    expect(postedClassification()).toEqual({
+      backend: "langgraph",
+      replay_set: "langgraph",
+      langgraph: { backends: [{ name: "primary", backend: "chat_completions", model: "anthropic/claude-haiku-5.5" }, { name: "fallback", backend: "decisions", model: "typesafe/jev-1.14" }] },
+    });
+  });
+
+  it("sends the configured node unchanged beside one that changed, and nothing once both are back to configured", async () => {
+    handler = validatesWith(singleRun());
+    renderAt("/validate");
+    await chooseLangGraph();
+    await userEvent.selectOptions(fallback(), "typesafe/jev-1.14");
+    await userEvent.selectOptions(fallback(), "");
+    await userEvent.click(submitButton());
+    await screen.findByText(RUN.run_id);
+    expect(postedClassification()).toEqual({ backend: "langgraph", replay_set: "langgraph" });
+  });
+
+  it("disables a model its adapter cannot run in this mode, and a live model outside the allowlist", async () => {
+    // No recorded Decisions API answers in any set: replay cannot run Jev on any node.
+    const unrecorded = { ...BACKENDS, backends: BACKENDS.backends.map((b) => (b.id === "decisions" ? { ...b, replay: { ...b.replay, sets: b.replay.sets.map((set) => ({ ...set, present: false })) } } : b)) };
+    handler = (url) => (url.pathname === "/api/v1/backends" ? { status: 200, body: unrecorded } : undefined);
+    renderAt("/validate");
+    await chooseLangGraph();
+    expect(within(fallback()).getByRole("option", { name: /^typesafe\/jev-1.14 · OpenRouter · Decisions API · No recorded answers/ })).toBeDisabled();
+    // The configured model is held to the same check.
+    expect(within(primary()).getByRole("option", { name: /^Configured: typesafe\/jev-1.14 .* · No recorded answers/ })).toBeDisabled();
+  });
+
+  it("refuses a live run whose node model is not allowed for classification", async () => {
+    handler = (url) => (url.pathname === "/api/v1/backends" ? { status: 200, body: LIVE_BACKENDS } : undefined);
+    renderAt("/validate");
+    await chooseLangGraph();
+    await userEvent.click(screen.getByRole("radio", { name: /Live/ }));
+    // Only Jev is allowed live: Haiku is disabled for every node, configured or not.
+    expect(within(primary()).getByRole("option", { name: /^anthropic\/claude-haiku-5.5 .* · Not allowed for live use/ })).toBeDisabled();
+    expect(within(fallback()).getByRole("option", { name: /^Configured: anthropic\/claude-haiku-5.5 .* · Not allowed for live use/ })).toBeDisabled();
+  });
+
+  it("says which nodes can revise when reflection is on, never assuming every model can", async () => {
+    handler = (url) => (url.pathname === "/api/v1/backends" ? { status: 200, body: withReflection(BACKENDS) } : undefined);
+    renderAt("/validate");
+    await chooseLangGraph();
+    expect(screen.getByText(/Reflection is on: anthropic\/claude-haiku-5.5 reviews \(Chat completions\)\./)).toBeInTheDocument();
+    expect(screen.getByText(/Cannot revise: another node revises its answers/, { selector: "#validate-node-primary-help" })).toBeInTheDocument();
+    expect(screen.getByText(/Revises with the reviewer's feedback/, { selector: "#validate-node-fallback-help" })).toBeInTheDocument();
+    // With Jev on both nodes, no node's adapter can revise, and the page says what the core then does.
+    await userEvent.selectOptions(fallback(), "typesafe/jev-1.14");
+    expect(screen.getByText(/No node's adapter can revise, so an objection sends the line on to the next node\./)).toBeInTheDocument();
+  });
+
+  it("explains that a changed node replays only its own model's recordings, and shows the refusal when they are missing", async () => {
+    handler = (url) =>
+      url.pathname === "/api/v1/validate" ? { status: 409, body: { error: { code: "replay_recording_missing", message: "3 answers are not in the replay cache", details: { missing_answers: 3 } } } } : undefined;
+    renderAt("/validate");
+    await chooseLangGraph();
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+    await userEvent.selectOptions(primary(), "anthropic/claude-haiku-5.5");
+    expect(screen.getByRole("note")).toHaveTextContent(
+      "this replay reads only anthropic/claude-haiku-5.5's answers for the primary node. A node with no recorded answer for a line counts as a failed call: the line goes on to the next node, and its audit says so. A line no node has an answer for refuses the run as missing recordings. Nothing is called live.",
+    );
+    await userEvent.click(submitButton());
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("replay_recording_missing");
+    expect(postedClassification().langgraph.backends[0]).toEqual({ name: "primary", backend: "chat_completions", model: "anthropic/claude-haiku-5.5" });
+  });
+
+  it("sends only the reflection settings changed for this run, within the deployment's maximums", async () => {
+    handler = (url) => (url.pathname === "/api/v1/backends" ? { status: 200, body: withLimits(BACKENDS) } : validatesWith(singleRun())(url));
+    renderAt("/validate");
+    await chooseLangGraph();
+    const enable = screen.getByRole("checkbox", { name: /Review each answer, and revise it/ });
+    expect(enable).not.toBeChecked();
+    expect(screen.queryByLabelText("Revision retries")).not.toBeInTheDocument();
+    await userEvent.click(enable);
+    // The deployment's defaults and maximums, from discovery.
+    expect(screen.getByLabelText("Revision retries")).toHaveAttribute("placeholder", "2");
+    expect(screen.getByText("0 to 3; 0 revises nothing. Default 2.")).toBeInTheDocument();
+    expect(screen.getByText(/^1 to 12: every classification, review, fallback and revision/)).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText("Revision retries"), "4");
+    expect(screen.getByRole("alert")).toHaveTextContent("Revision retries must be a whole number from 0 to 3.");
+    expect(submitButton()).toBeDisabled();
+    await userEvent.clear(screen.getByLabelText("Revision retries"));
+    await userEvent.type(screen.getByLabelText("Revision retries"), "0");  // zero: no revisions at all
+    await userEvent.type(screen.getByLabelText("Model calls per line"), "4");
+    await userEvent.click(screen.getByRole("checkbox", { name: /Structured feedback context/ }));
+    await userEvent.click(submitButton());
+    await screen.findByText(RUN.run_id);
+    expect(postedClassification()).toEqual({
+      backend: "langgraph",
+      replay_set: "langgraph",
+      langgraph: { reflection: { enabled: true, max_retries: 0, max_total_calls_per_line: 4, feedback_context: "structured" } },
+    });
+  });
+
+  it("sends nothing for reflection left as the deployment configures it", async () => {
+    handler = (url) => (url.pathname === "/api/v1/backends" ? { status: 200, body: withLimits(withReflection(BACKENDS)) } : validatesWith(singleRun())(url));
+    renderAt("/validate");
+    await chooseLangGraph();
+    expect(screen.getByRole("checkbox", { name: /Review each answer, and revise it/ })).toBeChecked();
+    await userEvent.type(screen.getByLabelText("Revision retries"), "2");  // the default, typed: no change
+    await userEvent.click(submitButton());
+    await screen.findByText(RUN.run_id);
+    expect(postedClassification()).toEqual({ backend: "langgraph", replay_set: "langgraph" });
+  });
+
+  it("says which nodes can revise with structured context, from the revisers discovery names", async () => {
+    const only = withLimits(withReflection(BACKENDS), []);  // a deployment whose reviser takes no structured context
+    handler = (url) => (url.pathname === "/api/v1/backends" ? { status: 200, body: only } : undefined);
+    renderAt("/validate");
+    await chooseLangGraph();
+    expect(screen.getByText(/Revises with the reviewer's feedback/, { selector: "#validate-node-fallback-help" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("checkbox", { name: /Structured feedback context/ }));
+    expect(screen.getByText(/Cannot revise/, { selector: "#validate-node-fallback-help" })).toBeInTheDocument();
+    expect(screen.getByText(/No node's adapter can revise/)).toBeInTheDocument();
+  });
+
+  it("clears node models when the orchestrator changes", async () => {
     handler = () => undefined;
     renderAt("/validate");
-    await userEvent.selectOptions(await screen.findByLabelText("Orchestrator"), "langgraph");
-    expect(screen.queryByLabelText("Classification model")).not.toBeInTheDocument();
-    const nodes = screen.getByLabelText("LangGraph model nodes");
-    expect(nodes).toHaveTextContent("primary: OpenRouter · typesafe/jev-1.14 (Decisions API)");
-    expect(nodes).toHaveTextContent("fallback: OpenRouter · anthropic/claude-haiku-5.5 (Chat completions)");
+    await chooseLangGraph();
+    await userEvent.selectOptions(primary(), "anthropic/claude-haiku-5.5");
+    await userEvent.selectOptions(screen.getByLabelText("Orchestrator"), "direct");
+    await userEvent.selectOptions(screen.getByLabelText("Orchestrator"), "langgraph");
+    expect(primary()).toHaveValue("");
   });
 });
 
@@ -543,6 +733,38 @@ describe("results", () => {
     expect(within(why).getByText("MCC-02").closest("li")).toHaveTextContent("Whole receipt · review signal, not an exception");
   });
 
+  it("shows a LangGraph line's attempts, reviews and why it stopped", async () => {
+    const run = singleRun();
+    const line = run.results.results[0]!.line_items[0]!;
+    line.confidence = null;
+    line.classification_details = {
+      orchestration: {
+        answered_by: "fallback", result: "retries_exhausted", attempts: [
+          { name: "primary", backend: "decisions", model: "typesafe/jev-1.14", outcome: "accepted", confidence: 0.95, error: null },
+          { name: "fallback", backend: "chat_completions", model: "anthropic/claude-haiku-5.5", outcome: "error", confidence: null, error: "item_kind contradicts category", revision: 1, max_retries: 2, retried_validation_error: false },
+          { name: "fallback", backend: "chat_completions", model: "anthropic/claude-haiku-5.5", outcome: "accepted", confidence: 0.9, error: null, revision: 2, max_retries: 2, retried_validation_error: true },
+        ],
+        reflection: {
+          calls: 5, revisions: 2, unresolved: true, withheld_confidence: 0.9, feedback_context: "structured", stop_reason: "retries_exhausted", max_retries: 2, max_calls: 6, fallbacks: [],
+          reviews: [{ of: "primary", revision: 0, reviewer: "chat_completions", model: "anthropic/claude-haiku-5.5", outcome: "verdict", answered: true, verdict: "revise", reason: "the line names a wine", suggested_category: "alcohol", feedback: "check whether this is a drink", error: null }],
+        },
+      },
+    };
+    handler = validatesWith(run);
+    renderAt("/validate");
+    await validateDemo();
+    const items = await screen.findByRole("list", { name: "Expense items" });
+    await userEvent.click(within(items).getByRole("button", { name: new RegExp(line.description_raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) }));
+    const history = within(items).getByRole("group", { name: "Classification attempts" });
+    expect(history).toHaveTextContent("Stopped: Retry limit reached · 3 attempts · 5 model calls of 6 · 2 revisions of 2");
+    expect(history).toHaveTextContent("Unresolved: confidence withheld");
+    const attempts = within(history).getAllByRole("listitem");
+    expect(attempts[0]).toHaveTextContent("Classification by primary · typesafe/jev-1.14 · accepted · confidence 0.95");
+    expect(attempts[1]).toHaveTextContent("Revision 1 by fallback · anthropic/claude-haiku-5.5 · failed validationitem_kind contradicts category");
+    expect(attempts[2]).toHaveTextContent("Revision 2 by fallback · anthropic/claude-haiku-5.5 · accepted · confidence 0.90 · retried after a failed revision");
+    expect(attempts[3]).toHaveTextContent("Review of primary · revisethe line names a wineFeedback: check whether this is a drinkSuggested: alcohol");
+  });
+
   it("reveals an item's classification and full evidence when expanded", async () => {
     handler = validatesWith(singleRun());
     renderAt("/validate");
@@ -686,7 +908,7 @@ describe("run history", () => {
     expect(requests.some((request) => request.method === "POST")).toBe(false);
   });
 
-  it("downloads JSON and CSV exports through the API", async () => {
+  it("downloads PDF directly from results and JSON/CSV from run details", async () => {
     const created: Blob[] = [];
     vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: (blob: Blob) => (created.push(blob), "blob:x"), revokeObjectURL: () => {} }));
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
@@ -699,10 +921,12 @@ describe("run history", () => {
       return undefined;
     };
     renderAt(`/runs/${RUN.run_id}`);
+    await userEvent.click(await screen.findByRole("button", { name: "Export PDF" }));
     await userEvent.click(await screen.findByText("Run details"));
     await userEvent.click(screen.getByRole("button", { name: "Export JSON" }));
     await userEvent.click(screen.getByRole("button", { name: "Export CSV" }));
     await waitFor(() => expect(click).toHaveBeenCalledTimes(2));
+    expect(exportViewPdf).toHaveBeenCalledWith(RUN.run_id);
     expect(requests.filter((request) => request.path.includes("/export?")).map((request) => request.path)).toEqual([
       `/api/v1/runs/${RUN.run_id}/export?format=json`,
       `/api/v1/runs/${RUN.run_id}/export?format=csv`,

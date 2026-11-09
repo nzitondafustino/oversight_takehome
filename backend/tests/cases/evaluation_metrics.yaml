@@ -44,6 +44,18 @@ cases:
       disposition.accuracy_when_evaluated.denominator: 0
       disposition.accuracy_when_evaluated.value: null
 
+  - name: before any receipt has run, every scored block says so, not that the answers lack labels
+    rows: []
+    receipts: 32
+    expect:
+      classification: {available: false, reason: no receipt has been run yet}
+      disposition: {available: false, reason: no receipt has been run yet}
+      findings: {available: false, reason: no receipt has been run yet}
+      evidence: {available: false, reason: no receipt has been run yet}
+      baseline: {available: false, reason: no receipt has been run yet}
+      coverage: {available: false, reason: no receipt has been run yet}
+      operational.not_run: 32
+
   - name: a dataset without answers has no accuracy, only what needs none
     rows:
       - {lines: [[L1, food_beverage, null], [L2, alcohol, null]], uncertainty: [[L2, category, low_confidence]]}
@@ -96,7 +108,7 @@ cases:
       findings.receipts: 2
       findings.micro: {tp: 1, fp: 2, fn: 0, precision: 0.333333, recall: 1.0, f1: 0.5}
       findings.micro_without_uncertainty_signals: {tp: 1, fp: 1, fn: 0, precision: 0.5, recall: 1.0, f1: 0.666667}
-      findings.evidence_exact.value: 1.0
+      evidence.exact.value: 1.0
       findings.per_rule.ALC-01.tp: 1
       findings.per_rule.MEAL-01.fp: 1
 
@@ -105,8 +117,10 @@ cases:
       - {lines: [[L1, alcohol, null], [L2, alcohol, null]], exceptions: [[ALC-01, [L1], high]], expected_exceptions: [[ALC-01, [L1, L2], high], [DOC-04, [], low]], expected_signals: [ENT-01], signals: [ENT-01]}
     expect:
       findings.micro: {tp: 2, fp: 0, fn: 1, precision: 1.0, recall: 0.666667, f1: 0.8}
-      findings.evidence_exact: {numerator: 0, denominator: 1, value: 0.0, wilson_95: [0.0, 0.793451]}
-      findings.per_rule.DOC-04: {tp: 0, fp: 0, fn: 1, precision: null, recall: 0.0, f1: 0.0, evidence_exact: {numerator: 0, denominator: 0, value: null, wilson_95: null}, severity_exact: {numerator: 0, denominator: 0, value: null, wilson_95: null}}
+      evidence.exact: {numerator: 0, denominator: 1, value: 0.0, wilson_95: [0.0, 0.793451]}
+      evidence.mismatches: [{receipt_id: R0, rule_id: ALC-01, expected_line_ids: [L1, L2], cited_line_ids: [L1], missing_line_ids: [L2], extra_line_ids: []}]
+      findings.per_rule.DOC-04: {expected: 1, predicted: 0, tp: 0, fp: 0, fn: 1, precision: null, recall: 0.0, f1: 0.0, duplicates: 0, status: tested, evidence_exact: {numerator: 0, denominator: 0, value: null, wilson_95: null}}
+      findings.missing: [{receipt_id: R0, rule_id: DOC-04, kind: exception, expected_line_ids: [], reason: not_raised}]
 
   - name: receipts a stopped run never reached are not run, not errors
     rows:
@@ -118,3 +132,36 @@ cases:
       operational.not_run: 2
       operational.execution_errors.value: 0.0
       disposition.receipts: 1
+
+  - name: a receipt that could not be evaluated misses its expected findings, and is its own disposition column
+    rows:
+      - {error: replay_recording_missing, labels: {L1: gift_card}, expected_disposition: flag, expected_exceptions: [[GIFT-02, [L1], high]], expected_signals: []}
+      - {lines: [[L2, alcohol, null]], labels: {L2: alcohol}, disposition: flag, expected_disposition: flag, exceptions: [[ALC-01, [L2], high]], expected_exceptions: [[ALC-01, [L2], high]], expected_signals: []}
+    expect:
+      findings.micro: {tp: 1, fp: 0, fn: 1, precision: 1.0, recall: 0.5, f1: 0.666667}
+      findings.execution_errors: 1
+      findings.missing: [{receipt_id: R0, rule_id: GIFT-02, kind: exception, expected_line_ids: [L1], reason: not_evaluated}]
+      disposition.matrix_with_not_evaluated.columns: [flag, review, pass, not_evaluated]
+      disposition.matrix_with_not_evaluated.rows.flag: {flag: 1, review: 0, pass: 0, not_evaluated: 1}
+      disposition.matrix_with_not_evaluated.row_totals: {flag: 2, review: 0, pass: 0}
+      disposition.matrix_with_not_evaluated.correct: 1
+      disposition.matrix_with_not_evaluated.incorrect: 1
+      error_analysis.observed: 0
+
+  - name: a pass the engine did not fully decide stays a pass, counted apart as undecided
+    rows:
+      - {lines: [[L1, food_beverage, null]], labels: {L1: food_beverage}, disposition: pass, decided: false, expected_disposition: pass, reasons: [incomplete_evidence]}
+      - {lines: [[L2, food_beverage, null]], labels: {L2: food_beverage}, disposition: pass, expected_disposition: pass}
+    expect:
+      disposition.accuracy.numerator: 2
+      disposition.undecided_by_cell.pass: {flag: 0, review: 0, pass: 1}
+      disposition.undetermined: {numerator: 1, denominator: 2, value: 0.5, wilson_95: [0.094531, 0.905469]}
+
+  - name: blocks with nothing to read say why, and are never zero
+    rows:
+      - {lines: [[L1, food_beverage, null]], labels: {L1: food_beverage}, disposition: pass, expected_disposition: pass}
+    expect:
+      baseline: {available: false, reason: no line has an expected restricted value}
+      coverage: {available: false, reason: "rule coverage is measured when a run finishes, on its receipts and its exact ruleset"}
+      evidence: {available: false, reason: no receipt has expected findings (expected_exceptions with review_signals)}
+      scoring.baseline_version: keyword-baseline/1

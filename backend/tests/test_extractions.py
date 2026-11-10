@@ -254,7 +254,7 @@ def test_a_live_extraction_records_model_readings_that_every_later_step_replays(
     assert calls == ["vendor/model-a"] * 9 and len(list(recorded.glob("*.json"))) == 9
     provenance = extraction["provenance"]
     assert (provenance["execution_mode"], provenance["recording_set"], provenance["reading_kind"]) == ("live", "recorded", "model")
-    assert provenance["recorded_with"] == {"extraction_model": "vendor/model-a", "temperature": 0.0}
+    assert provenance["recorded_with"] == {"extraction_model": "vendor/model-a", "temperature": 0.0, "reading_id": None}
 
     review = review_extraction(client, extraction, extraction_decisions(extraction, "fixtures")).json()
     version = _version(client, extraction, review).json()

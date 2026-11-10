@@ -126,8 +126,11 @@ class Compilation:
         except ConfigurationError as error:
             raise ApiError(500, "compiler_configuration_error", f"the policy compiler cannot be configured: {error}") from None
 
-    def live_compiler(self, extraction_model: str, temperature: float | None, timeout_seconds: int | None) -> PolicyCompiler:
-        """A compiler that calls the model and records each reading in the live recording set, as a model reading."""
+    def live_compiler(self, extraction_model: str, temperature: float | None, timeout_seconds: int | None, reading_id: str | None = None) -> PolicyCompiler:
+        """A compiler that calls the model and records each reading in the live recording set, as a model reading.
+
+        With reading_id, it reads every document again rather than replay a recorded reading, and records each under that ID.
+        """
         try:
             settings = CompilerSettings.from_config(
                 self.settings.core_config, mode="live", recordings_dir=self._recordings(self.settings.compiler_live_recording_set), cache_dir=None,
@@ -138,7 +141,7 @@ class Compilation:
         if settings.openrouter_api_key is None:
             raise ApiError(503, "live_extraction_unavailable", "live extraction needs OPENROUTER_API_KEY in the deployment's environment")
         try:
-            return PolicyCompiler(settings)
+            return PolicyCompiler(settings.model_copy(update={"reading_id": reading_id}))
         except ConfigurationError as error:
             raise ApiError(500, "compiler_configuration_error", f"the policy compiler cannot be configured: {error}") from None
 

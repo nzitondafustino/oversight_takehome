@@ -131,9 +131,11 @@ Each entry's text must match its `sha256`, or the version is reported (`inconsis
 | `execution_mode` | Reads | Needs |
 |---|---|---|
 | `replay` (the default) | A server-side `recording_set` by document hash. With `recorded_with`, only readings recorded live with that model and temperature, for this company | Nothing paid. Text with no recorded reading is a 409 `replay_recording_missing` |
-| `live` | The model, with `extraction_model` and optionally `temperature` and `timeout_seconds` | `ALLOW_LIVE`, the model in `ALLOWED_MODELS`, `OPENROUTER_API_KEY`, and a `COMPILER_LIVE_RECORDING_SET` |
+| `live` | The model, with `extraction_model` and optionally `temperature`, `timeout_seconds` and `fresh_reading` | `ALLOW_LIVE`, the model in `ALLOWED_MODELS`, `OPENROUTER_API_KEY`, and a `COMPILER_LIVE_RECORDING_SET` |
 
 A live extraction records each model reading in the live recording set, as the core does. It also stores the model and temperature as `recorded_with`. Every later step then replays exactly those readings, never calling the model again: reviews, the lifecycle's rebuilds, approval and publication.
+
+A live extraction reuses a reading already recorded for the same document text, model and temperature, at no cost. With `fresh_reading: true` it reads every document with the model again instead, and pays for each. Each new reading is recorded under the extraction's own ID, which `recorded_with.reading_id` holds, so earlier readings are kept and every later step replays the new ones. `fresh_reading` is live only: a replay request with it is a 422.
 
 The snapshot stores the core's whole `ExtractionResult` as JSON, with its SHA-256:
 - the candidate ruleset

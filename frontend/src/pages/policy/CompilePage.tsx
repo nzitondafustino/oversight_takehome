@@ -84,7 +84,7 @@ function JobProgress({ job, onRetry }: { job: ExtractionJob; onRetry: () => void
           </p>
           <p>{job.error.message}</p>
           <p className="font-mono text-xs text-muted-foreground">{job.error.code}</p>
-          {job.execution_mode === "live" ? <p className="text-xs text-muted-foreground">Readings already made were recorded: compiling again reuses them, at no cost.</p> : null}
+          {job.execution_mode === "live" ? <p className="text-xs text-muted-foreground">Readings already made were recorded: compiling again reuses them, at no cost, unless “Read every document again” is chosen.</p> : null}
           <Button type="button" size="sm" variant="outline" onClick={onRetry}>
             Try again
           </Button>
@@ -119,6 +119,7 @@ export function CompilePage() {
   const [recordingSet, setRecordingSet] = useState("");
   const [model, setModel] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [fresh, setFresh] = useState(false);
   // The published version's corrections of the rule logic, kept by default so a new compilation starts from them.
   const versions = useRulesets({ limit: 100, offset: 0 });
   const published = (versions.data?.items ?? []).filter((item) => item.status === "published").sort((a, b) => (b.published_at ?? "").localeCompare(a.published_at ?? ""))[0];
@@ -159,7 +160,7 @@ export function CompilePage() {
     if (issues.length) return;
     const refs = chosen.map(({ document_id, revision }) => ({ document_id, revision }));
     const carried = keep && corrections.length && published ? { carry_overrides_from: published.ruleset_id } : {};
-    const body: ExtractionCreate = mode === "live" ? { documents: refs, execution_mode: "live", extraction_model: model, ...carried } : { documents: refs, recording_set: recordingSet, ...carried };
+    const body: ExtractionCreate = mode === "live" ? { documents: refs, execution_mode: "live", extraction_model: model, ...(fresh ? { fresh_reading: true } : {}), ...carried } : { documents: refs, recording_set: recordingSet, ...carried };
     create.mutate(body, { onSuccess: (started) => setJob(started.job_id) });
   }
 
@@ -271,6 +272,13 @@ export function CompilePage() {
                 <label className="flex cursor-pointer gap-2 rounded-md border border-status-review-border bg-status-review-soft p-2 text-[13px]">
                   <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} className="mt-0.5 size-3.5 accent-primary" />
                   <span>I understand live compilation calls a paid model</span>
+                </label>
+                <label className="flex cursor-pointer gap-2 rounded-md border border-border p-2 text-[13px]">
+                  <input type="checkbox" checked={fresh} onChange={(event) => setFresh(event.target.checked)} className="mt-0.5 size-3.5 accent-primary" />
+                  <span>
+                    Read every document again
+                    <span className="block text-xs text-muted-foreground">Calls the model for each document even where a reading with this model is recorded, so every document is paid for. Earlier readings are kept, and this compilation's review and publication use the new ones.</span>
+                  </span>
                 </label>
               </>
             )}

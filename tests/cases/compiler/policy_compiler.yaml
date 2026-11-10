@@ -178,6 +178,12 @@ recording_keys:
   - id: the same temperature written as an integer
     changes: {temperature: 0}
     expected: {same: true}
+  - id: a fresh reading asked for on purpose
+    changes: {reading_id: ext_fresh}
+    expected: {same: false}
+  - id: no fresh reading, as every reading before it
+    changes: {reading_id: null}
+    expected: {same: true}
   - id: another model
     changes: {model: vendor/other}
     expected: {same: false}
@@ -207,11 +213,21 @@ review_decisions:
     field: thresholds
     decision: {action: override, value: [{value: "75.00", unit: usd}, {value: "100", unit: usd}], rationale: same limits}
     expected: {outcome: override, codes: [], ready: true}
-  - id: a stated limit the executable rules do not hold alone is blocked
+  - id: leaving out a stated limit is the reviewer's call, noted, and the rule still checks it
     rule_id: MEAL-01
     field: thresholds
     decision: {action: override, value: [{value: "100", unit: usd}], rationale: the cap is 100}
-    expected: {outcome: override, codes: [interpretation_mismatch], ready: false}
+    expected: {outcome: override, codes: [limit_left_out], ready: true}
+  - id: a reading that leaves out the split count is allowed, with a note
+    rule_id: TIME-03
+    field: thresholds
+    decision: {action: override, value: [{value: "50", unit: usd}, {value: "75", unit: usd}], rationale: 2 is not a threshold}
+    expected: {outcome: override, codes: [limit_left_out], ready: true}
+  - id: a limit the clause does not state is still blocked
+    rule_id: MEAL-01
+    field: thresholds
+    decision: {action: override, value: [{value: "75", unit: usd}, {value: "100", unit: usd}, {value: "100", unit: count}], rationale: probe}
+    expected: {outcome: override, codes: [unsupported_value], ready: false}
   - id: a limit the clause does not state is refused
     rule_id: MEAL-01
     field: thresholds

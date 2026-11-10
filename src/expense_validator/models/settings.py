@@ -166,6 +166,9 @@ def generation_overrides(*, extraction_model: object = None, temperature: object
     return given
 
 
+READING_ID = r"^[A-Za-z0-9_.-]{1,64}$"
+
+
 class RecordedWith(BaseModel):
     """The generation settings a replay must find its recordings made with. Replay mode only."""
 
@@ -173,6 +176,7 @@ class RecordedWith(BaseModel):
 
     extraction_model: str = Field(pattern=r"\S")
     temperature: float = Field(ge=0, le=MAX_TEMPERATURE, allow_inf_nan=False)
+    reading_id: str | None = Field(default=None, pattern=READING_ID)  # the fresh reading to replay, when one was asked for
 
 
 class CompilerSettings(BaseModel):
@@ -185,6 +189,8 @@ class CompilerSettings(BaseModel):
         cache_dir: Answer cache for live mode, keyed by model, temperature, prompt and document.
         recorded_with: Replay mode only. None replays recordings named by document hash, which record no
             generation settings. Given, replay uses only recordings made with these settings.
+        reading_id: Live mode only. Given, every document is read by the model again, even where a reading with
+            the same settings is recorded, and each new reading is recorded under this ID for replay to find.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -202,6 +208,7 @@ class CompilerSettings(BaseModel):
     timeout_seconds: int = Field(default=180, gt=0)
     openrouter_api_key: SecretStr | None = None  # only read in live mode, and never logged
     recorded_with: RecordedWith | None = None
+    reading_id: str | None = Field(default=None, pattern=READING_ID)
 
     @classmethod
     def from_config(

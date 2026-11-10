@@ -279,7 +279,9 @@ replay = PolicyCompiler.from_config(Path("config.yaml"), mode="replay", recordin
                                     recorded_with=RecordedWith(extraction_model="anthropic/claude-haiku-5.5", temperature=0.0))
 ```
 
-Replay with `recorded_with` uses only recordings made with exactly those settings, and fails closed on anything else. Without it, replay reads recordings named by document hash, such as the test fixtures, as before. Those record no generation settings, so the result reports none.
+Replay with `recorded_with` uses only recordings made with exactly those settings, and fails closed on anything else.
+
+A live compiler replays a recording it already has for the same document, prompt, model and temperature. To ask the model again on purpose, give `CompilerSettings.reading_id` (live mode, with `recordings_dir`): every document is read again, the answer cache is skipped, and each reading is recorded under that ID beside the earlier ones. Replay it with `RecordedWith(..., reading_id=...)`. Without it, replay reads recordings named by document hash, such as the test fixtures, as before. Those record no generation settings, so the result reports none.
 
 ### Reviewing every field
 

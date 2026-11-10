@@ -248,10 +248,10 @@ def test_an_incomplete_or_invalid_review_never_publishes(tmp_path):
     approval = compiler.approve(_review(_sign_offs(), compiler=compiler), **APPROVER)
     incomplete = _published(compiler, tmp_path, approval, _sign_offs(), policy="all_fields", name="incomplete.json")
     assert "review incomplete: 285 fields still need a decision" in incomplete.reasons
-    meal = _find(EXTRACTION, "MEAL-01", "thresholds")
-    override = [*_sign_offs(), _decision(meal, "override", value=[{"value": "100", "unit": "usd"}], rationale="the cap is 100")]
+    tech = _find(EXTRACTION, "TECH-01", "severities")
+    override = [*_sign_offs(), _decision(tech, "override", value=[], rationale="probe")]
     invalid = _published(compiler, tmp_path, approval, override, name="invalid.json")
-    assert any(reason.startswith("MEAL-01 thresholds: this decision departs from what the clause states") for reason in invalid.reasons)
+    assert any(reason.startswith("TECH-01 severities: this decision departs from what the clause states") for reason in invalid.reasons)
 
 
 def test_review_and_extraction_approvals_do_not_stand_in_for_each_other(tmp_path):

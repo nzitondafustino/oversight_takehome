@@ -74,8 +74,9 @@ export function Disclosure({ title, hint, children, onOpen }: { title: string; h
 /** This receipt's result inside the stored run's JSON: results.results[i] with its receipt_id. */
 function receiptIn(receiptId: string) {
   return (root: JsonValue): JsonValue | undefined => {
-    const results = isJsonObject(root) && isJsonObject(root.results) ? root.results.results : undefined;
-    return Array.isArray(results) ? results.find((item) => isJsonObject(item) && item.receipt_id === receiptId) : undefined;
+    // The run export lists each receipt, in the brief's shape, under "receipts".
+    const receipts = isJsonObject(root) ? root.receipts : undefined;
+    return Array.isArray(receipts) ? receipts.find((item) => isJsonObject(item) && item.receipt_id === receiptId) : undefined;
   };
 }
 
@@ -256,7 +257,7 @@ export function ReceiptDetail({
               source={runJson}
               select={selectReceipt}
               label={`JSON of receipt ${result.receipt_id}`}
-              note={<>The core's result for this receipt, from the stored run.</>}
+              note={<>This receipt as the run's JSON export gives it, in the brief's shape.</>}
             />
           </Disclosure>
         </div>

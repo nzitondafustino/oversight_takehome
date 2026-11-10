@@ -151,6 +151,7 @@ class RecordedWith(RequestBody):
 
     extraction_model: str = Field(min_length=1, max_length=200, pattern=r"\S")
     temperature: float = Field(ge=0, le=2)
+    reading_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_.-]{1,64}$", description="The fresh reading to replay: set when the compilation that recorded it asked for fresh_reading")
 
 
 class ExtractionCreate(RequestBody):
@@ -167,6 +168,7 @@ class ExtractionCreate(RequestBody):
     extraction_model: str | None = Field(default=None, min_length=1, max_length=200, pattern=r"\S", description="Live only: the model, from the deployment's allowed models")
     temperature: float | None = Field(default=None, description="Live only. The core checks it")
     timeout_seconds: int | None = Field(default=None, description="Live only. The core checks it")
+    fresh_reading: bool = Field(default=False, description="Live only: read every document with the model again, even where a reading with the same model and temperature is recorded. Each reading is recorded under this compilation's ID, and later steps replay exactly those")
     actor: str | None = Field(default=None, min_length=1, max_length=200, pattern=r"\S", description="Who asks for the rule overrides: needed with them")
     rule_overrides: list[RuleChange] = Field(default=[], max_length=50, description="Reviewed corrections of the draft rules, such as a param a revised policy changes. The compiler builds and validates them like the rule logic itself; each needs a rationale")
     carry_overrides_from: str | None = Field(default=None, min_length=1, max_length=64, description="A published ruleset version whose rule corrections this compilation keeps, each with its own reviewer and rationale. A rule given in rule_overrides replaces that rule's carried correction")
@@ -190,6 +192,8 @@ class ExtractionCreate(RequestBody):
                 raise ValueError("replay needs a recording_set")
             if any(value is not None for value in (self.extraction_model, self.temperature, self.timeout_seconds)):
                 raise ValueError("replay reads recordings, so it takes no extraction_model, temperature or timeout_seconds")
+            if self.fresh_reading:
+                raise ValueError("fresh_reading asks the model again, so it needs execution_mode live")
         else:
             if self.recording_set is not None or self.recorded_with is not None:
                 raise ValueError("live extraction records into the deployment's live recording set, so it takes no recording_set or recorded_with")

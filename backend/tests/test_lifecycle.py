@@ -137,7 +137,6 @@ def test_the_compiler_decides_whether_a_review_can_be_accepted(client):
     review = f"/v1/rulesets/{record['ruleset_id']}/review"
     attempts = {
         "no decisions, while one field awaits one": None,
-        "a reading that leaves out a limit the executable rule holds": [{**decision, "action": "accept_llm"} for decision in decisions],
         "a confirmation of a field the readings disagree on": [{**decision, "action": "confirm"} for decision in decisions],
     }
     for label, attempt in attempts.items():

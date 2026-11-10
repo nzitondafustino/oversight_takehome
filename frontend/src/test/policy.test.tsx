@@ -309,6 +309,21 @@ describe("compilation", () => {
     await user.click(paid);
     await waitFor(() => expect(posts("/api/v1/documents/extraction-jobs")).toHaveLength(1));
     expect(JSON.parse(posts("/api/v1/documents/extraction-jobs")[0]!.body!)).toMatchObject({ execution_mode: "live", extraction_model: "anthropic/claude-haiku-5.5" });
+    expect(JSON.parse(posts("/api/v1/documents/extraction-jobs")[0]!.body!)).not.toHaveProperty("fresh_reading");  // recorded readings are reused by default
+  });
+
+  it("reads every document again with the model only when asked", async () => {
+    backends = { ...BACKENDS, policy_compiler: { ...BACKENDS.policy_compiler, extraction_models: ["anthropic/claude-haiku-5.5"], live: { permitted: true, configured: true, credential_configured: true, available: true } } };
+    answer = () => undefined;
+    renderAt(`/documents/compile?d=${first!.document_id}:${first!.revision}`);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("radio", { name: /Read with a model \(live\)/ }));
+    await user.selectOptions(screen.getByLabelText("Policy extraction model"), "anthropic/claude-haiku-5.5");
+    await user.click(screen.getByRole("checkbox", { name: "I understand live compilation calls a paid model" }));
+    await user.click(screen.getByRole("checkbox", { name: /Read every document again/ }));
+    await user.click(screen.getByRole("button", { name: "Compile live (paid)" }));
+    await waitFor(() => expect(posts("/api/v1/documents/extraction-jobs")).toHaveLength(1));
+    expect(JSON.parse(posts("/api/v1/documents/extraction-jobs")[0]!.body!)).toMatchObject({ execution_mode: "live", extraction_model: "anthropic/claude-haiku-5.5", fresh_reading: true });
   });
 
   it("follows a live compilation document by document, and explains a failure with a way to try again", async () => {
@@ -471,13 +486,13 @@ describe("issue review", () => {
     expect(sent).toEqual({ comparison_id: REG.comparison_id, extraction_sha256: REG.extraction_sha256, reviewer: "r.eviewer", action: "accept_regex", rationale: "Not a limit: the number in the clause is not an amount or count the rule checks." });
   });
 
-  it("warns before saving a reading that leaves out a limit the compiled rule checks, and saves it only when asked", async () => {
+  it("warns before saving a reading that leaves out a limit the compiled rule checks, allows it, and saves only when asked", async () => {
     answer = reviewAnswers(WITH_LOGIC, saving(notReadyJson));
     renderAt(`/documents/extractions/${EXTRACTION.extraction_id}?tab=review&item=${TIME.comparison_id}`);
     const user = userEvent.setup();
     const time = await issue("TIME-03", "Limits");
     const decision = within(time).getByRole("radiogroup", { name: "Decision" });
-    expect(within(decision).getByRole("radio", { name: /Use: 50 USD, 75 USD/ }).closest("label")).toHaveTextContent("The policy text states 2 (min receipts), and TIME-03 checks it as the policy says. This leaves it out, so it would be an interpretation mismatch");
+    expect(within(decision).getByRole("radio", { name: /Use: 50 USD, 75 USD/ }).closest("label")).toHaveTextContent("This leaves out 2 (min receipts), which the policy text states. That is your call: it does not block approval, and TIME-03 still checks it as the text states.");
     expect(within(decision).getByRole("radio", { name: /Use: 2 \(count\), 50 USD, 75 USD/ }).closest("label")).not.toHaveTextContent("leaves out");
     await user.click(within(decision).getByRole("radio", { name: /Use: 50 USD, 75 USD/ }));
     expect(reviewPosts()).toHaveLength(0);  // choosing saves nothing
@@ -525,6 +540,18 @@ describe("issue review", () => {
     await waitFor(() => expect(reviewPosts()).toHaveLength(1));
     const sent = JSON.parse(reviewPosts()[0]!.body!).decisions.find((item: { comparison_id: string }) => item.comparison_id === TIME.comparison_id);
     expect(sent).toEqual({ comparison_id: TIME.comparison_id, extraction_sha256: TIME.extraction_sha256, reviewer: "r.eviewer", action: "accept_regex", rationale: "As the policy text states" });
+  });
+
+  it("shows a decision that leaves out a stated limit as allowed, with what the rule still checks, never as a problem", async () => {
+    const message = "TIME-03 thresholds: this decision leaves out 2 count, which the clause states; the compiled rule still checks it as the text states";
+    const saved = { ...notReadyJson, ready_for_approval: true, decisions: [{ comparison_id: TIME.comparison_id, extraction_sha256: EXTRACTION.extraction_sha256, action: "accept_llm", reviewer: "r.eviewer", rationale: "2 is not a threshold" }], remaining: [], issues: [{ level: "note", code: "limit_left_out", comparison_id: TIME.comparison_id, message }] };
+    const reviewed = { ...WITH_LOGIC, reviews: [{ review_id: "rev_1", review_sha256: "b".repeat(64), policy: "exceptions_only", ready_for_approval: true, remaining: 0, error_issues: 0, created_at: "2026-11-08T12:00:00Z" }] } as unknown as ExtractionSummary;
+    answer = reviewAnswers(reviewed, (method, url) => (url.pathname.endsWith("/reviews/rev_1") ? { status: 200, body: saved } : saving(notReadyJson)(method, url)));
+    renderAt(`/documents/extractions/${EXTRACTION.extraction_id}?tab=review&item=${TIME.comparison_id}`);
+    const time = await issue("TIME-03", "Limits");
+    expect(await within(time).findByText(/^Your decision leaves out/)).toHaveTextContent("Your decision leaves out 2 (min receipts), which the policy text states. It does not block approval; TIME-03 still checks it as the text states.");
+    expect(within(time).queryByRole("alert")).not.toBeInTheDocument();
+    expect(within(time).queryByText("Interpretation mismatch")).not.toBeInTheDocument();
   });
 
   it("offers a correction of the value from a mismatch, with the stated value filled in", async () => {
@@ -970,6 +997,18 @@ describe("rule editing", () => {
     renderAt(`/policies/${PUBLISHED.ruleset_id}?tab=rules`);
     const rules = await screen.findByRole("list", { name: "Rules" });
     expect(within(rules).getByRole("button", { name: /^ALC-02/ })).toHaveTextContent(/^ALC-02Alcohol per-attendee cap.*Medium/);
+  });
+
+  it("shows a rule's technical details as readable JSON", async () => {
+    editing();
+    renderAt(`/policies/${PUBLISHED.ruleset_id}?tab=rules`);
+    const user = userEvent.setup();
+    const rules = await screen.findByRole("list", { name: "Rules" });
+    await user.click(within(rules).getByRole("button", { name: /^ALC-02/ }));
+    await user.click(within(rules).getByText("Technical details"));
+    const details = within(rules).getByLabelText("Technical details of ALC-02");
+    expect(details).toHaveTextContent('"rule_id": "ALC-02"');
+    expect(details).not.toHaveTextContent("[object Object]");
   });
 
   it("requires confirmation before staging a rule removal, and cancellation changes nothing", async () => {

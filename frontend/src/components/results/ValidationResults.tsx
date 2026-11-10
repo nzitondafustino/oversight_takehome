@@ -121,11 +121,11 @@ function RunDetails({ run, historyLink }: { run: RunResponse; historyLink: boole
         ) : null}
       </div>
       <div className="mt-3">
-        <Disclosure title="Run JSON" hint="the whole response, exactly as stored" onOpen={() => setJsonOpen(true)}>
+        <Disclosure title="Run JSON" hint="the run export, exactly as stored" onOpen={() => setJsonOpen(true)}>
           <JsonViewer
             source={runJson}
             label={`JSON of run ${run.run_id}`}
-            note={<>As GET /v1/runs/{"{id}"} returns it, from the stored run.</>}
+            note={<>As GET /v1/runs/{"{id}"}/export?format=json returns it, from the stored run.</>}
           />
         </Disclosure>
       </div>

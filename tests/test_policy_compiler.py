@@ -641,6 +641,32 @@ def test_new_settings_add_recordings_and_never_replace_old_ones(monkeypatch, tmp
     assert all((recordings / name).read_bytes() == content for name, content in before.items())
 
 
+def test_a_fresh_reading_calls_the_model_again_and_replays_by_its_own_id(monkeypatch, tmp_path):
+    recordings = tmp_path / "live"
+    _recorded_live(monkeypatch, recordings, extraction_model="vendor/live-model", temperature=0.2)
+    before = {path.name: path.read_bytes() for path in recordings.iterdir()}
+    fake = _FakeOpenRouter()
+    monkeypatch.setattr(urllib.request, "urlopen", fake)
+    settings = _live_settings(cache_dir=tmp_path / "cache", recordings_dir=recordings, reading_id="ext_fresh")
+    fresh = PolicyCompiler(settings).extract(_documents(), extraction_model="vendor/live-model", temperature=0.2)
+    monkeypatch.setattr(urllib.request, "urlopen", lambda *a, **k: pytest.fail("a request was made"))
+    assert len(fake.bodies) == 9  # every document read again, though each was recorded with these settings
+    assert len(list(recordings.iterdir())) == 18 and all((recordings / name).read_bytes() == content for name, content in before.items())
+    chosen = RecordedWith(extraction_model="vendor/live-model", temperature=0.2, reading_id="ext_fresh")
+    assert _replay(recordings, recorded_with=chosen).extract(_documents()).output_sha256 == fresh.output_sha256
+    with pytest.raises(ConfigurationError, match="recorded only with other settings"):
+        _replay(recordings, recorded_with=chosen.model_copy(update={"reading_id": "ext_other"})).extract(_documents())
+
+
+def test_a_fresh_reading_is_live_and_recorded_only(tmp_path):
+    with pytest.raises(ConfigurationError, match="reading_id names a fresh model reading"):
+        PolicyCompiler(_live_settings(reading_id="ext_fresh"))  # nowhere to record it
+    with pytest.raises(ConfigurationError, match="reading_id names a fresh model reading"):
+        PolicyCompiler(_live_settings(recordings_dir=tmp_path / "live", reading_id="ext_fresh"), completion=lambda prompt, text: "{}")
+    with pytest.raises(ValidationError):
+        RecordedWith(extraction_model="vendor/m", temperature=0.0, reading_id="not a valid id")
+
+
 def test_legacy_recordings_replay_as_before_and_record_no_settings(no_network, tmp_path):
     legacy = _replay().extract(_documents())
     assert (legacy.reading_kind, legacy.extraction_model, legacy.temperature) == ("simulation", None, None)

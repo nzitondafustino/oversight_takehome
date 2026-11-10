@@ -150,7 +150,8 @@ class ReviewIssue(_Model):
     Attributes:
         code: unknown_comparison, duplicate_decision, stale_extraction, confirm_not_agreed,
             no_source_value, value_required, value_not_allowed, rationale_required, unsupported_value,
-            interpretation_mismatch, executable_conflict, rejected, reading_error, no_candidate or source_only.
+            interpretation_mismatch, executable_conflict, rejected, reading_error, no_candidate, source_only or
+            limit_left_out (a note: the decision leaves out a number the clause states, which the rule still checks).
     """
 
     level: Literal["error", "note"]

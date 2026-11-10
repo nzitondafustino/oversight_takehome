@@ -813,8 +813,11 @@ describe("results", () => {
 });
 
 describe("JSON view", () => {
-  // The export as the API sends it, with a number written as 0.90: the view must keep that exact text.
-  const RAW = JSON.stringify(RUN).replace(/"confidence":0\.9\b/, '"confidence":0.90');
+  // The export as the API sends it: the run without "results", each receipt under "receipts", and a number
+  // written as 0.90 that the view must keep exactly.
+  const { results, ...runFields } = RUN;
+  const EXPORT = { export_schema: "run-export/2", ...runFields, receipts: results.results };
+  const RAW = JSON.stringify(EXPORT).replace(/"confidence":0\.9\b/, '"confidence":0.90');
   const exportHandler: Handler = (url) => {
     if (url.pathname === "/api/v1/validate") return { status: 201, body: RUN };
     if (url.pathname === `/api/v1/runs/${RUN.run_id}/export`) return { status: 200, body: null, raw: RAW };

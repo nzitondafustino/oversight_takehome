@@ -133,6 +133,8 @@ class PolicyCompiler:
                 raise ConfigurationError(f"{name}: no file at {getattr(settings, name)}")
         if settings.mode == "live" and settings.recorded_with is not None:
             raise ConfigurationError("recorded_with chooses recordings to replay, so live mode takes none")
+        if settings.reading_id is not None and (settings.mode != "live" or settings.recordings_dir is None or self._completion is not None):
+            raise ConfigurationError("reading_id names a fresh model reading: live mode only, recorded in recordings_dir")
         if settings.mode == "replay":
             if self._completion is not None:
                 raise ConfigurationError("replay mode calls no model, so it takes no completion")
@@ -354,12 +356,12 @@ class PolicyCompiler:
         effective = CompilerSettings.model_validate({**settings.model_dump(), **overrides})  # this request's own snapshot
         llm = LlmConfig(model=effective.extraction_model, url=effective.llm_url, temperature=effective.temperature, timeout_seconds=effective.timeout_seconds)
         complete = _request_failures_as_reading_errors(openrouter(llm, effective.openrouter_api_key.get_secret_value()))
-        if effective.cache_dir is not None:
+        if effective.cache_dir is not None and effective.reading_id is None:  # a fresh reading never takes a cached answer
             complete = cached(complete, cache_key(effective.extraction_model, effective.temperature), effective.cache_dir)
         if effective.recordings_dir is not None:
             names = {document_sha256(text): name for name, text in texts.items()}
             origin = {"recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "timeout_seconds": effective.timeout_seconds}
-            generation = _recording_generation(effective.llm_url, effective.extraction_model, effective.temperature)
+            generation = _recording_generation(effective.llm_url, effective.extraction_model, effective.temperature, effective.reading_id)
             complete = model_recording(complete, effective.recordings_dir, generation, lambda text: names[document_sha256(text)], origin)
         return complete, "model", _generation(effective.extraction_model, effective.temperature, effective.timeout_seconds, tuple(sorted(overrides)))
 
@@ -367,7 +369,7 @@ class PolicyCompiler:
     def _replay_configured(self, texts: dict[str, str]) -> tuple[Complete, str, dict]:
         """Replay recordings made with exactly settings.recorded_with, or fail closed."""
         settings, chosen = self.settings, self.settings.recorded_with
-        generation = _recording_generation(settings.llm_url, chosen.extraction_model, chosen.temperature)
+        generation = _recording_generation(settings.llm_url, chosen.extraction_model, chosen.temperature, chosen.reading_id)
         missing = []
         for name, text in texts.items():
             if configured_path(settings.recordings_dir, recording_identity(text, PROMPT, **generation)).is_file():
@@ -383,8 +385,8 @@ class PolicyCompiler:
         return replay_configured(settings.recordings_dir, generation), "model", _generation(chosen.extraction_model, chosen.temperature, None, ())
 
 
-def _recording_generation(url: str, model: str, temperature: float) -> dict:
-    return {"url": url, "model": model, "temperature": temperature}
+def _recording_generation(url: str, model: str, temperature: float, reading_id: str | None = None) -> dict:
+    return {"url": url, "model": model, "temperature": temperature, **({"reading_id": reading_id} if reading_id is not None else {})}
 
 
 def _generation(model: str | None, temperature: float | None, timeout_seconds: int | None, overrides: tuple[str, ...]) -> dict:

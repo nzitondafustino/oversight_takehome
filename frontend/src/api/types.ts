@@ -432,6 +432,8 @@ export interface RevisionRef {
 export interface RecordedWith {
   extraction_model: string;
   temperature: number;
+  /** Set when the compilation that recorded these readings asked the model again on purpose. */
+  reading_id?: string | null;
 }
 
 /** Replay reads a named recording set. Live calls a paid model, and the deployment must allow it. */
@@ -450,7 +452,7 @@ type Corrections = { actor?: string; rule_overrides?: RuleOverride[]; carry_over
 
 export type ExtractionCreate =
   | ({ documents: RevisionRef[]; execution_mode?: "replay"; recording_set: string; recorded_with?: RecordedWith } & Corrections)
-  | ({ documents: RevisionRef[]; execution_mode: "live"; extraction_model: string; temperature?: number; timeout_seconds?: number } & Corrections);
+  | ({ documents: RevisionRef[]; execution_mode: "live"; extraction_model: string; temperature?: number; timeout_seconds?: number; fresh_reading?: boolean } & Corrections);
 
 /** A compiled rule that does not do what its clause states: the core's RuleDiscrepancy. */
 export interface RuleDiscrepancy {

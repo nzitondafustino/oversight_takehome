@@ -38,6 +38,7 @@ import {
   readingItems,
   resolutionOf,
   issueState,
+  leftOutText,
   STATE_TEXT,
   whyFlagged,
   type Effect,
@@ -122,7 +123,7 @@ function Step({ title, children, className }: { title: string; children: ReactNo
 
 function EffectNote({ effect }: { effect: Effect }) {
   return (
-    <p className={cn("text-xs", effect.fits === false ? "text-status-flag-text" : "text-muted-foreground")} data-fits={String(effect.fits)}>
+    <p className={cn("text-xs", effect.fits === false ? "text-status-flag-text" : effect.warn ? "text-status-review-text" : "text-muted-foreground")} data-fits={String(effect.fits)}>
       {effect.text}
     </p>
   );
@@ -514,6 +515,11 @@ export function IssueReview({ owner, extraction, comparisons, ruleTitles, ruleLo
               <IssueFixes />
             </div>
           ) : null}
+          {latest?.issues.some((item) => item.code === "limit_left_out" && item.comparison_id === current.comparison_id) ? (
+            <p role="status" className="rounded-md border border-status-review-border bg-status-review-soft px-3 py-2 text-[13px] text-status-review-text">
+              {leftOutText(current, logic, decidedValue(current, savedDecision))}
+            </p>
+          ) : null}
           {correcting === current.rule_id && extraction && logic ? <RuleCorrection ruleId={current.rule_id} logic={logic} extraction={extraction} onCancel={() => setCorrecting(null)} /> : null}
 
           <div className="grid gap-4 lg:grid-cols-2">
@@ -556,7 +562,7 @@ export function IssueReview({ owner, extraction, comparisons, ruleTitles, ruleLo
                             <span className="min-w-0">
                               <span className="font-medium">{choice.label}</span>
                               {choice.detail ? <span className="block text-xs text-muted-foreground">{choice.detail}</span> : null}
-                              {effect && effect.fits === false ? <span className="block text-xs text-status-flag-text">{effect.text}</span> : null}
+                              {effect && (effect.fits === false || effect.warn) ? <span className={cn("block text-xs", effect.warn ? "text-status-review-text" : "text-status-flag-text")}>{effect.text}</span> : null}
                             </span>
                           </label>
                         );

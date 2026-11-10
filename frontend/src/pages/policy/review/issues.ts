@@ -227,6 +227,8 @@ export interface Effect {
   /** Whether the decision matches the compiled rule: false blocks approval; null when nothing executable reads the field. */
   fits: boolean | null;
   text: string;
+  /** Allowed, but worth saying before saving: the decision leaves out a limit the policy states. */
+  warn?: boolean;
 }
 
 const BLOCKS = "Saving it records the decision, but approval stays blocked until the rule is changed in a draft version.";
@@ -256,7 +258,7 @@ export function decisionEffect(comparison: Pick<FieldComparison, "field" | "rule
       return { fits: true, text: held.length ? `The compiled rule ${id} already uses ${list(held.map(limitLabel))}: no rule change is needed.` : `The compiled rule ${id} has no limit either: no rule change is needed.` };
     const stated = new Set((readingItems("thresholds", comparison.regex_value) ?? []).map(normalize));
     if (dropped.length && dropped.every((limit) => stated.has(limit.item)) && !added.length)
-      return { fits: false, text: `The policy text states ${list(dropped.map(limitLabel))}, and ${id} checks it as the policy says. This leaves it out, so it would be an interpretation mismatch, and approval stays blocked.` };
+      return { fits: true, warn: true, text: `This leaves out ${list(dropped.map(limitLabel))}, which the policy text states. That is your call: it does not block approval, and ${id} still checks it as the text states.` };
     const parts = [];
     if (dropped.length) parts.push(`${id} checks ${list(dropped.map(limitLabel))}, which this leaves out`);
     if (added.length) parts.push(`no part of ${id} uses ${list(added)}`);
@@ -308,6 +310,18 @@ export function problemText(issue: Pick<ReviewIssue, "code" | "message">, compar
   if (issue.code === "rejected") return "You rejected this interpretation. It blocks approval until the policy or its compiled rule is corrected and compiled again.";
   const message = issue.message.replace(PREFIX, "");
   return message.charAt(0).toUpperCase() + message.slice(1) + (message.endsWith(".") ? "" : ".");
+}
+
+/** A decision that leaves out limits the policy states, as the compiler notes it: allowed, and the rule still checks them. */
+export function leftOutText(comparison: FieldComparison, logic: RuleLogic | undefined, decided: unknown): string {
+  const chosen = (readingItems("thresholds", decided) ?? []).map(normalize);
+  const held = logic ? heldLimits(logic) : [];
+  const named = (item: string) => {
+    const limit = held.find((entry) => entry.item === item);
+    return limit ? limitLabel(limit) : item;
+  };
+  const left = (readingItems("thresholds", comparison.regex_value) ?? []).map(normalize).filter((item) => !chosen.includes(item));
+  return `Your decision leaves out ${list(left.map(named))}, which the policy text states. It does not block approval; ${comparison.rule_id} still checks ${left.length === 1 ? "it" : "them"} as the text states.`;
 }
 
 const RULE_ID = /\b[A-Z]+-\d{2}\b/g;  // as the compiler strips it: a rule reference is never a number in the clause

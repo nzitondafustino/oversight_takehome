@@ -129,6 +129,37 @@ def test_live_incremental_reads_only_changed_document_and_replays_for_publicatio
             assert rule == before[rule["rule_id"]]
 
 
+def test_a_fresh_reading_asks_the_model_again_and_publishes_from_that_reading(make_client, settings, tmp_path, monkeypatch):
+    import hashlib
+    import json
+    import expense_validator.policy_compiler as module
+    fixtures = {json.loads(path.read_text())["document_sha256"]: json.loads(path.read_text())["response"] for path in COMPILER_RECORDINGS["fixtures"].glob("*.json")}
+    calls = []
+    def provider(llm, key):
+        def complete(prompt, text):
+            calls.append(text)
+            return fixtures[hashlib.sha256(text.encode()).hexdigest()]
+        return complete
+    monkeypatch.setattr(module, "openrouter", provider)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-only")
+    recordings = tmp_path / "readings"
+    recordings.mkdir()
+    client = make_client(app_settings=settings.model_copy(update={"allow_live": True, "allowed_models": frozenset({"vendor/model-a"}), "compiler_recording_sets": {**COMPILER_RECORDINGS, "recorded": recordings}, "compiler_live_recording_set": "recorded"}))
+    refs = upload_documents(client)
+    request = {"run_mode": "full", "execution_mode": "live", "extraction_model": "vendor/model-a", "temperature": 0.0}
+    assert client.post("/v1/documents/extractions", json=request).status_code == 201
+    reused = client.post("/v1/documents/extractions", json=request).json()
+    assert len(calls) == len(refs) and reused["provenance"]["recorded_with"] == {"extraction_model": "vendor/model-a", "temperature": 0.0, "reading_id": None}
+    fresh = client.post("/v1/documents/extractions", json={**request, "fresh_reading": True})
+    assert fresh.status_code == 201, fresh.text
+    assert len(calls) == 2 * len(refs)  # every document read again, though each reading was recorded
+    assert fresh.json()["provenance"]["recorded_with"]["reading_id"] == fresh.json()["extraction_id"]
+    materialize(client, fresh.json(), "fixtures")  # review and publication replay that fresh reading
+    assert len(calls) == 2 * len(refs)
+    refused = client.post("/v1/documents/extractions", json={"run_mode": "full", "recording_set": "live", "fresh_reading": True})
+    assert refused.status_code == 422 and "fresh_reading" in refused.text
+
+
 def test_background_auto_selection_pins_revisions_before_new_arrivals(client):
     refs = upload_documents(client)
     work = []

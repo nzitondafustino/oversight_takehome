@@ -193,7 +193,9 @@ export function RulesView({ version, focus }: { version: RulesetDetail; focus?: 
                   {rule.source_quote ? <blockquote className="mt-2 border-l-2 border-border pl-3 text-xs text-muted-foreground">“{rule.source_quote}”</blockquote> : null}
                   <details className="mt-2 text-xs">
                     <summary className="cursor-pointer text-muted-foreground">Technical details</summary>
-                    <pre className="mt-1 max-h-64 overflow-auto rounded-md bg-muted p-2 font-mono text-[11px]" dangerouslySetInnerHTML={{ __html: highlightJson(JSON.stringify(rule, null, 2)) }} />
+                    <pre className="mt-1 max-h-64 overflow-auto rounded-md bg-muted p-2 font-mono text-[11px]" aria-label={`Technical details of ${rule.rule_id}`}>
+                      {highlightJson(JSON.stringify(rule, null, 2))}
+                    </pre>
                   </details>
                 </div>
               ) : null}

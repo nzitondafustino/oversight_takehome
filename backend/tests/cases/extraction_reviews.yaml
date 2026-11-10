@@ -17,9 +17,9 @@ cases:
   - name: confirming a disputed field decides nothing
     change: {TIME-03: {action: confirm}}
     expect: {ready: false, remaining: 1, issues: [confirm_not_agreed]}  # an invalid decision decides nothing
-  - name: accepting a reading that leaves out a limit the executable rule holds
-    change: {TIME-03: {action: accept_llm}}  # the model's reading has no "two or more receipts"
-    expect: {ready: false, remaining: 0, issues: [interpretation_mismatch]}
+  - name: accepting a reading that leaves out a limit the clause states is the reviewer's call, noted
+    change: {TIME-03: {action: accept_llm}}  # the model's reading has no "two or more receipts"; the rule still checks it
+    expect: {ready: true, remaining: 0, issues: []}  # a limit_left_out note, which never blocks
   - name: an override needs a rationale
     change: {TIME-03: {action: override, value: [{value: "2", unit: count}, {value: "50", unit: usd}, {value: "75", unit: usd}]}}
     expect: {ready: false, remaining: 1, issues: [rationale_required]}

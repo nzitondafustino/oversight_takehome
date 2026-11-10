@@ -185,12 +185,20 @@ def _faithful_problems(extraction: ExtractionResult, fields: list[ReviewedField]
         for f in fields
         if f.outcome not in ("undecided", "rejected") and f.comparison.comparison_id not in unsupported
     }
-    clauses = {}
+    clauses, notes = {}, []
     for clause in extraction.clauses:
         # Unresolved fields retain the validated regex value.
         changes, where = {}, (clause.policy_doc, clause.rule_id)
         limits = _limits(final.get((*where, "thresholds")))
-        if limits is not None:
+        left_out = set(_stated(clause, "thresholds")) - limits if limits is not None else set()
+        if limits is not None and left_out and limits < set(_stated(clause, "thresholds")):
+            # Leaving out a number the clause states is the reviewer's call, not a departure from the text: the rule
+            # still checks what the text states, so it is noted, kept with the decision's rationale, and never blocks.
+            field = next(f for f in fields if (f.comparison.policy_doc, f.comparison.rule_id, f.comparison.field) == (*where, "thresholds"))
+            text = ", ".join(f"{format(value.normalize(), 'f')} {unit}" for value, unit in sorted(left_out, key=lambda limit: (limit[1], limit[0])))
+            notes.append(ReviewIssue(level="note", code="limit_left_out", comparison_id=field.comparison.comparison_id,
+                                     message=f"{clause.rule_id} thresholds: this decision leaves out {text}, which the clause states; the compiled rule still checks it as the text states"))
+        elif limits is not None:
             changes["thresholds"] = [Threshold(value, unit) for value, unit in sorted(limits, key=lambda limit: (limit[1], limit[0]))]
         if isinstance(final.get((*where, "severities")), list):
             changes["severities"] = final[(*where, "severities")]
@@ -199,7 +207,7 @@ def _faithful_problems(extraction: ExtractionResult, fields: list[ReviewedField]
         clauses[clause.rule_id] = dataclasses.replace(clause, **changes)
     decided = {(f.comparison.rule_id, f.comparison.field): f for f in fields if f.decision is not None}
     source = {clause.rule_id: clause for clause in extraction.clauses}
-    return [_conflict(issue, decided.get((issue.rule_id, _faithful_field(issue.message))), source.get(issue.rule_id)) for issue in faithful_issues(extraction.candidate.ruleset, clauses)]
+    return notes + [_conflict(issue, decided.get((issue.rule_id, _faithful_field(issue.message))), source.get(issue.rule_id)) for issue in faithful_issues(extraction.candidate.ruleset, clauses)]
 
 
 def _stated(clause: Clause, field: str) -> object:

@@ -232,12 +232,14 @@ RECORDING_FORMAT = 3
 CONFIGURED_PREFIX = "configured-"
 
 
-def recording_identity(text: str, prompt: str, *, url: str, model: str, temperature: float) -> dict:
+def recording_identity(text: str, prompt: str, *, url: str, model: str, temperature: float, reading_id: str | None = None) -> dict:
     """Return everything that decides a recorded answer.
 
-    The timeout changes no answer, so it is left out, as are credentials and times.
+    The timeout changes no answer, so it is left out, as are credentials and times. reading_id, given, names one fresh
+    reading asked for on purpose: it is kept apart from every other reading of the same document and settings, and a
+    reading without one keeps the identity it always had.
     """
-    return {
+    return {**({"reading_id": reading_id} if reading_id is not None else {}),
         "format": RECORDING_FORMAT,
         "document_sha256": document_sha256(text),
         "prompt_sha256": document_sha256(prompt),
@@ -329,7 +331,7 @@ def recorded_settings(directory: Path, text: str) -> list[dict]:
         except (ValueError, AttributeError):
             continue
         if identity.get("format") == RECORDING_FORMAT and identity.get("document_sha256") == document:
-            found.append({name: identity.get(name) for name in ("model", "temperature", "url", "prompt_sha256")})
+            found.append({name: identity.get(name) for name in ("model", "temperature", "url", "prompt_sha256", "reading_id") if name in identity})
     return found
 
 

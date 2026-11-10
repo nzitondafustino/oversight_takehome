@@ -70,10 +70,12 @@ class ExtractionService:
         if plan.report:
             overrides = [item for item in overrides if item["rule_id"] in plan.report["affected_rule_ids"]]
         report = progress or (lambda _: None)
+        extraction_id = f"ext_{ObjectId()}"
+        reading_id = extraction_id if request.fresh_reading else None  # a fresh reading is recorded under the compilation it belongs to
         if request.execution_mode == "live":
             recording_set = self.settings.compiler_live_recording_set
-            compiler = self.compilation.live_compiler(request.extraction_model, request.temperature, request.timeout_seconds)
-            if plan.report and plan.report["mode"] == "incremental":
+            compiler = self.compilation.live_compiler(request.extraction_model, request.temperature, request.timeout_seconds, reading_id)
+            if plan.report and plan.report["mode"] == "incremental" and reading_id is None:
                 unchanged = [item for item in inputs if item["document_id"] not in plan.report["changed_document_ids"]]
                 if unchanged:
                     # Refuse before paid work if any unchanged source cannot be replayed under this generation.
@@ -94,11 +96,11 @@ class ExtractionService:
         result = self.compilation.run_extract(compiler, inputs, recording_set, overrides)
         if request.execution_mode == "live":
             # The core records each live reading under its model and temperature: every later step replays exactly those.
-            recorded_with = {"extraction_model": result.extraction_model, "temperature": result.temperature}
+            recorded_with = {"extraction_model": result.extraction_model, "temperature": result.temperature, **({"reading_id": reading_id} if reading_id else {})}
         text = result.model_dump_json()
         read = {document.filename: document for document in result.documents}
         extraction = {
-            "_id": f"ext_{ObjectId()}",
+            "_id": extraction_id,
             "logic_snapshot": plan.logic_snapshot,
             "run": plan.report,
             "status": "no_candidate" if result.candidate is None else ("ready_for_approval" if result.ready_for_approval else "review_required"),

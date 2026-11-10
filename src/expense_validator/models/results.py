@@ -21,7 +21,7 @@ class LineResult(_Result):
     restricted: bool | None
     confidence: float | None
     english_translation: str | None = None
-    attributes: dict[str, str | bool] | None = None  # recipient, venue, item kind, essential toiletry, when read
+    attributes: dict[str, str | bool | float] | None = None  # recipient, venue, item kind, essential toiletry, when read, and each one's confidence where the classifier gave one
     classification_error: str | None = None
     classification_details: dict | None = None  # a backend's own evidence, such as Jev's probabilities. Not in to_record()
 

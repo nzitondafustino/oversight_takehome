@@ -448,7 +448,7 @@ Install both in one command, so that pip takes the core from `..`. The core is n
 ```sh
 docker run --rm -d -p 127.0.0.1:27017:27017 mongo:7.0
 export EXPENSE_API_CORE_CONFIG=../config.yaml
-export EXPENSE_API_REPLAY_SETS='{"openrouter": "../evaluation/final/replay", "jev": "../evaluation/jev/runs/first-run/replay", "langgraph": "../evaluation/langgraph/runs/live-claude-jev-1/replay"}'
+export EXPENSE_API_REPLAY_SETS='{"openrouter": "../evaluation/final/replay", "jev": "../evaluation/jev/runs/first-run/replay", "langgraph": "../evaluation/langgraph/runs/live-claude-jev-2/replay"}'
 export EXPENSE_API_DEFAULT_REPLAY_SET=openrouter
 export EXPENSE_API_COMPILER_RECORDING_SETS='{"live": "../evaluation/compiler/live"}'
 .venv/bin/uvicorn expense_api.main:create_app --factory --port 8000

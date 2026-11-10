@@ -24,7 +24,7 @@ COPY data/policy-docs /srv/core/data/policy-docs
 # documents. Each folder can instead be mounted read-only over its path; nothing is read from a source checkout.
 COPY evaluation/final/replay /srv/replay/openrouter
 COPY evaluation/jev/runs/first-run/replay /srv/replay/jev
-COPY evaluation/langgraph/runs/live-claude-jev-1/replay /srv/replay/langgraph
+COPY evaluation/langgraph/runs/live-claude-jev-2/replay /srv/replay/langgraph
 COPY evaluation/compiler/live /srv/recordings/compiler/live
 
 # The folders volumes mount over exist first, so each volume takes their owner. compiler-recorded is where live

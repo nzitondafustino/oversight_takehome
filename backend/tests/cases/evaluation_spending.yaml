@@ -4,6 +4,7 @@
 #   usage: per model, what each response reports (OpenRouter's usage fields); models not given report
 #          100 prompt tokens, 20 completion tokens and a cost of 0.0001
 #   fail: models whose requests raise a connection error
+#   answers: per model, classification fields it answers instead of the default food_beverage at 0.9
 #   pricing: per model, [input, output] USD per million tokens, in a versioned table
 #   budget: replaces the default $1, 100 calls, 10 receipts; any limit left out is no limit of that kind
 #   uncapped: true for a confirmed run with no limit at all (no budget)
@@ -147,8 +148,10 @@ cases:
       by_backend_live: {decisions: 7, chat_completions: 3}
 
   - name: every node LangGraph routes a line to is metered under its own adapter
-    # The LLM's 0.9 is below this threshold, so every line goes on to Jev: two classification calls a line.
-    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: chat_completions, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: decisions, model: typesafe/jev-1.14}], routing: {min_confidence: 0.95}}}
+    # The LLM answers a category outside the taxonomy, a failure, so every line goes on to Jev: two classification
+    # calls a line. Confidence never routes a line.
+    answers: {anthropic/claude-haiku-5.5: {category: not_in_the_taxonomy}}
+    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: chat_completions, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: decisions, model: typesafe/jev-1.14}]}}
     expect:
       status: completed
       stop_reason: null
@@ -159,7 +162,8 @@ cases:
       by_backend_live: {chat_completions: 10, decisions: 7}
 
   - name: a limit reached inside a LangGraph order stops the run, never routing past the refused call
-    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: chat_completions, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: decisions, model: typesafe/jev-1.14}], routing: {min_confidence: 0.95}}}
+    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: chat_completions, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: decisions, model: typesafe/jev-1.14}]}}
+    answers: {anthropic/claude-haiku-5.5: {category: not_in_the_taxonomy}}
     budget: {max_spend_usd: "1", max_provider_calls: 4, max_receipts: 10}
     expect:
       status: budget_exhausted
@@ -169,7 +173,8 @@ cases:
       spend: {live: 4, failed: 0, new_spend_usd: "0.0004", actual_cost_usd: "0.0004", estimated_cost_usd: "0", cost_completeness: complete, unpriced_calls: 0}
 
   - name: an order written with the adapters' earlier names is metered and capped under their own names
-    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: openrouter, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: jev, model: typesafe/jev-1.14}], routing: {min_confidence: 0.95}}}
+    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: openrouter, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: jev, model: typesafe/jev-1.14}]}}
+    answers: {anthropic/claude-haiku-5.5: {category: not_in_the_taxonomy}}
     budget: {max_spend_usd: "1", max_provider_calls: 4, max_receipts: 10}
     expect:
       status: budget_exhausted
@@ -182,7 +187,8 @@ cases:
       by_backend_live: {chat_completions: 4}
 
   - name: uncapped by calls, an order written with earlier names makes the same calls as one written with the adapters' own
-    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: openrouter, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: jev, model: typesafe/jev-1.14}], routing: {min_confidence: 0.95}}}
+    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: openrouter, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: jev, model: typesafe/jev-1.14}]}}
+    answers: {anthropic/claude-haiku-5.5: {category: not_in_the_taxonomy}}
     expect:
       status: completed
       stop_reason: null
@@ -193,7 +199,8 @@ cases:
       by_backend_live: {chat_completions: 10, decisions: 7}
 
   - name: a spending limit stops a LangGraph order written with earlier names
-    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: openrouter, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: jev, model: typesafe/jev-1.14}], routing: {min_confidence: 0.95}}}
+    classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: openrouter, model: anthropic/claude-haiku-5.5}, {name: fallback, backend: jev, model: typesafe/jev-1.14}]}}
+    answers: {anthropic/claude-haiku-5.5: {category: not_in_the_taxonomy}}
     budget: {max_spend_usd: "0.00025", max_provider_calls: 100, max_receipts: 10}
     expect:
       status: budget_exhausted

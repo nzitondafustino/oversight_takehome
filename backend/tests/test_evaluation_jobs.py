@@ -18,6 +18,7 @@ from expense_api.services.rulesets import now, sha256
 from expense_api.services.runs import canonical_json
 from expense_api.worker import Worker
 from expense_api.services import evaluation_runner
+from expense_api.services.evaluation_runner import JobFailed, from_snapshot
 
 CASES = load_cases("evaluation_requests")
 LIVE_MODELS = ["anthropic/claude-haiku-5.5", "tencent/hy-mt2-30b-a3b"]
@@ -72,11 +73,11 @@ def test_a_new_evaluation_is_queued_with_an_immutable_snapshot(bench):
 
 def test_langgraph_keeps_its_whole_order_models_reflection_and_limits(bench):
     order = {"backends": [{"name": "primary", "backend": "jev", "model": "typesafe/jev-1.14"}, {"name": "fallback", "backend": "openrouter", "model": "anthropic/claude-haiku-5.5"}],
-             "routing": {"min_confidence": 0.8}, "reflection": {"enabled": True, "max_retries": 1, "max_total_calls_per_line": 4}}
+             "routing": {"fallback_on_error": False}, "reflection": {"enabled": True, "max_retries": 1, "max_total_calls_per_line": 4}}
     job = bench.create(classification={"backend": "langgraph", "replay_set": "langgraph", "langgraph": order}).json()
     snapshot = job["configuration"]["snapshot"]
     assert [child["model"] for child in snapshot["langgraph"]["backends"]] == ["typesafe/jev-1.14", "anthropic/claude-haiku-5.5"]
-    assert snapshot["langgraph"]["routing"] == {"min_confidence": 0.8, "fallback_on_error": True, "fallback_on_low_confidence": True}
+    assert snapshot["langgraph"]["routing"] == {"fallback_on_error": False}
     assert snapshot["langgraph"]["reflection"] == {"enabled": True, "reviewer": {"backend": "chat_completions", "model": "anthropic/claude-haiku-5.5"}, "max_retries": 1, "max_total_calls_per_line": 4, "feedback_context": "reviewer_feedback"}
     assert snapshot["classification_model"] is None  # no single model overrides the order
     # The order was sent with the adapters' earlier names, and is planned and labelled with their own.
@@ -401,3 +402,15 @@ def test_each_role_is_checked_against_its_own_allowlist_and_unset_roles_keep_all
     # Without role lists, ALLOWED_MODELS still covers both roles, as before.
     legacy = Workbench(make_client, settings, allow_live=True, live_cache_dir=tmp_path / "legacy", allowed_models=["typesafe/jev-1.14", "tencent/hy-mt2-30b-a3b"])
     assert legacy.create(classification={"backend": "decisions", "model": "typesafe/jev-1.14"}, **LIVE_BODY).status_code == 201
+
+
+@pytest.mark.parametrize("case", load_cases("stored_snapshots"), ids=case_ids(load_cases("stored_snapshots")))
+def test_a_stored_snapshot_loads_only_when_it_can_run_as_it_was_recorded(settings, case):
+    snapshot = {"classification_backend": "decisions", "classification_model": "typesafe/jev-1.14", **case["snapshot"]}
+    load = lambda: from_snapshot(settings, "replay", REPLAY_SETS["jev"], snapshot, REPO / "rules" / "ruleset.json")
+    if case["expect"] == "loads":
+        assert load().classification_backend == "decisions"
+    else:
+        with pytest.raises(JobFailed) as refused:
+            load()
+        assert refused.value.code == "configuration_changed"

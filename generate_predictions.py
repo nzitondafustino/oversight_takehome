@@ -12,7 +12,7 @@ data/receipts.jsonl, with its answers, for comparison.
 Setups:
   jev                    the decisions adapter with typesafe/jev-1.14
   haiku                  the chat_completions adapter with anthropic/claude-haiku-5.5
-  langgraph_jev_haiku    LangGraph: Jev first, Haiku when Jev fails or is not confident enough
+  langgraph_jev_haiku    LangGraph: Jev first, Haiku when Jev fails or abstains (confidence never routes a line)
   langgraph_haiku_jev    LangGraph: Haiku first, then Jev
   langgraph_haiku_haiku  LangGraph: Haiku first, then Haiku again
 
@@ -48,7 +48,7 @@ DATA = ROOT / "data" / "receipts.jsonl"
 SAVED = [
     ROOT / "evaluation" / "final" / "replay",  # Haiku, with its translations
     ROOT / "evaluation" / "jev" / "runs" / "first-run" / "replay",  # Jev
-    ROOT / "evaluation" / "langgraph" / "runs" / "live-claude-jev-1" / "replay",  # LangGraph, Jev then Haiku
+    ROOT / "evaluation" / "langgraph" / "runs" / "live-claude-jev-2" / "replay",  # LangGraph, Jev then Haiku
     ROOT / ".cache" / "llm",
 ]
 JEV = {"backend": "decisions", "model": "typesafe/jev-1.14"}

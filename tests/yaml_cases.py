@@ -76,7 +76,7 @@ SECTIONS = {
     "hardening": {"directives", "directives_refused", "tampered_refused", "completeness", "ties"},
     "ingestion": {"ingested", "refused", "secrets_refused", "streamed", "stream_refused"},
     "normalization": {"text", "text_refused", "receipts", "receipts_refused", "lines_refused", "provider", "provider_refused"},
-    "classification": {"adapters", "recipient_extractions", "finalize", "jev_thresholds", "jev_uncertainty", "jev_answers", "jev_answers_refused", "jev_responses", "jev_provider_failures", "answers", "answers_refused", "thresholds", "provider", "provider_refused", "line_inputs", "receipt_languages", "scores", "recipient_cues", "recipient_answers", "policy_paths", "langgraph_overrides", "langgraph_overrides_refused", "langgraph_routes", "langgraph_reflection"},
+    "classification": {"adapters", "recipient_extractions", "finalize", "jev_attribute_confidence", "jev_uncertainty", "jev_answers", "jev_answers_refused", "jev_responses", "jev_provider_failures", "answers", "answers_refused", "thresholds", "provider", "provider_refused", "line_inputs", "receipt_languages", "scores", "recipient_cues", "recipient_answers", "policy_paths", "langgraph_overrides", "langgraph_overrides_refused", "langgraph_routes", "langgraph_reflection"},
     "robustness": {"thresholds", "levels", "separation", "confusion", "groups", "attributes", "safety"},
     "evidence": {"cases", "refused"},
 }
@@ -243,7 +243,7 @@ INPUTS = {
     ("classification", "adapters"): {"model"},
     ("classification", "recipient_extractions"): {"text", "translation"},
     ("classification", "finalize"): {"description", "line"},
-    ("classification", "jev_thresholds"): {"thresholds"},
+    ("classification", "jev_attribute_confidence"): {"probability"},
     ("classification", "jev_uncertainty"): {"probability"},
     ("classification", "jev_responses"): {"edit"},
     ("classification", "jev_provider_failures"): {"failure"},

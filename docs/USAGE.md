@@ -67,7 +67,7 @@ Frontend → FastAPI → services → core library                         store
 | Ingestion (`ingestion/`) | Validates raw records/JSONL; separates labels and notes from runtime inputs. |
 | Normalization/translation (`normalization/`) | Cleans line text deterministically; optionally translates non-English text while retaining originals. Translation is separate from classification. |
 | Classification (`classification/`) | Produces category, confidence, and stated attributes. Neither the LLM nor Jev decides policy or disposition. |
-| Orchestration | Direct runs one adapter per line. LangGraph routes between adapters on errors/low confidence; optional bounded reflection reviews classifications, not policy. |
+| Orchestration | Direct runs one adapter per line. LangGraph moves a line to the next adapter only when one fails or abstains (confidence is judged by EXC-03, never by routing); optional bounded reflection reviews classifications, not policy. |
 | Policy engine (`engine/`) | Builds facts and uncertainty views; evaluates checks and cross-receipt helpers; resolves replacements, references, and carve-outs; groups evidence and computes disposition. |
 | Rule management (`policy/`, `compiler/`, `PolicyCompiler`) | Combines nine source policies with developer-authored predicates, validates candidates, reconciles independent readings, and gates publication on review/approval hashes. |
 | Evaluation (`evaluation/`) | Scores predictions and rule outputs against separate reference answers; reports classification, exception, disposition, coverage, and uncertainty metrics. |
@@ -138,7 +138,7 @@ jev_batch = jev.validate_batch(receipts)
 # This recording set covers five receipts; config.yaml defines the graph order.
 graph = ExpenseValidator.from_config(
     Path("config.yaml"), mode="replay",
-    cache_dir=Path("evaluation/langgraph/runs/live-claude-jev-1/replay"),
+    cache_dir=Path("evaluation/langgraph/runs/live-claude-jev-2/replay"),
     classification_backend="langgraph",
 )
 covered = {"RCP-011", "RCP-017", "RCP-022", "RCP-023", "RCP-028"}

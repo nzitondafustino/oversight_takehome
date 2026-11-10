@@ -1,8 +1,10 @@
 """EXC-03: which lines cannot be relied on, and the view of each receipt the rules read.
 
 A missing, unknown or low-confidence category raises a signal and is blanked in the view. A secondary
-field raises one only where structured facts say a rule may need it, a project extension. Nothing is
-inferred from descriptions, merchant codes or references.
+field raises one only where structured facts say a rule may need it, a project extension. A secondary value
+whose own confidence is below min_confidence is blanked in the view as well, so no rule reads it, and is then
+judged as a missing value would be: this is the only place an attribute's confidence is judged, never the
+classifier. Nothing is inferred from descriptions, merchant codes or references.
 """
 
 from collections.abc import Mapping
@@ -11,7 +13,7 @@ from decimal import Decimal
 from typing import Literal
 
 from expense_validator.engine.helpers import TYPE_COVERS, ReceiptContext, may_need_recipient
-from expense_validator.engine.inputs import classification_state
+from expense_validator.engine.inputs import classification_state, field_confidence_state
 from expense_validator.engine.models import Evidence, Finding, LineItem, Receipt
 from expense_validator.engine.money import reconcile, without_unverified_usd
 from expense_validator.policy.schema import ProcessRule, RuleSet
@@ -22,6 +24,7 @@ MEDICATION_OR_TECHNOLOGY = {"health_otc", "computer_accessory", "personal_electr
 ITEM_KIND_TYPES = {name for name, covers in TYPE_COVERS.items() if covers & MEDICATION_OR_TECHNOLOGY}
 
 Reason = Literal["category_uncertain", "secondary_field_uncertain"]
+SECONDARY_FIELDS = ("recipient_type", "venue_type", "item_kind", "essential_toiletry")
 
 
 @dataclass(frozen=True)
@@ -86,18 +89,32 @@ def assess_uncertainty(receipt: Receipt, ruleset: RuleSet, fields: Mapping[str, 
         if line.line_id not in exempt
     }
     uncertain = [line for line in receipt.line_items if states.get(line.line_id, "valid") != "valid"]
-    view = without_unverified_usd(
-        receipt.with_classifications({line.line_id: {"category": None} for line in uncertain}), reconcile(receipt, fields)
-    )
+    low = {line.line_id: _low_confidence_fields(line, threshold) for line in receipt.line_items}
+    blanked = {line.line_id: {"category": None} for line in uncertain}
+    for line_id, names in low.items():
+        if names:
+            blanked[line_id] = {**blanked.get(line_id, {}), **{name: None for name in names}, **{f"{name}_confidence": None for name in names}}
+    view = without_unverified_usd(receipt.with_classifications(blanked), reconcile(receipt, fields))
     signals = [
-        _signal(rule, receipt, line, "category_uncertain", "category", states[line.line_id], line.category, threshold)
+        _signal(rule, receipt, line, "category_uncertain", "category", states[line.line_id], line.category, threshold, line.confidence)
         for line in uncertain
     ]
+    originals = {line.line_id: line for line in receipt.line_items}
     for line in view.line_items:
         if line.line_id not in exempt:
-            for field, state in _secondary_uncertainty(line, view, fields, threshold):
-                signals.append(_signal(rule, receipt, line, "secondary_field_uncertain", field, state, getattr(line, field), threshold))
+            source = originals[line.line_id]
+            for field, state in _secondary_uncertainty(line, view, fields, threshold, low[line.line_id]):
+                confidence = getattr(source, f"{field}_confidence") if state == "low_confidence" else source.confidence
+                signals.append(_signal(rule, receipt, source, "secondary_field_uncertain", field, state, getattr(source, field), threshold, confidence))
     return UncertaintyAssessment(receipt, view, tuple(signals), exempt)
+
+
+def _low_confidence_fields(line: LineItem, threshold: Decimal) -> tuple[str, ...]:
+    """The stated secondary fields whose own confidence is below the threshold."""
+    return tuple(
+        name for name in SECONDARY_FIELDS
+        if getattr(line, name) is not None and field_confidence_state(getattr(line, f"{name}_confidence"), threshold) == "low_confidence"
+    )
 
 
 def fully_decided(assessment: UncertaintyAssessment, step_complete: bool) -> bool:
@@ -120,8 +137,10 @@ def _uncertainty_rule(ruleset: RuleSet) -> ProcessRule:
 
 
 def _secondary_uncertainty(
-    line: LineItem, receipt: Receipt, fields: Mapping[str, dict], threshold: Decimal
+    line: LineItem, receipt: Receipt, fields: Mapping[str, dict], threshold: Decimal, low: tuple[str, ...]
 ) -> list[tuple[str, str]]:
+    """The uncertain secondary fields of a line in the view, where low-confidence values are already blanked: each
+    is judged as missing, and reported as low_confidence."""
     found = []
     declared = receipt.submitted_expense_type
     in_other = line.category == "other"
@@ -131,11 +150,11 @@ def _secondary_uncertainty(
         "item_kind": in_other and declared in ITEM_KIND_TYPES,
     }
     for field, is_needed in needed.items():
-        state = classification_state(line, field, fields, threshold)
-        if state == "unknown" or (state == "missing" and is_needed):
+        state = "low_confidence" if field in low else classification_state(line, field, fields, threshold)
+        if state == "unknown" or (state in ("missing", "low_confidence") and is_needed):
             found.append((field, state))
     if line.category == "personal_care" and receipt.baggage_delay_ref is not None and line.essential_toiletry is None:
-        found.append(("essential_toiletry", "missing"))
+        found.append(("essential_toiletry", "low_confidence" if "essential_toiletry" in low else "missing"))
     return found
 
 
@@ -148,6 +167,7 @@ def _signal(
     state: str,
     value: object,
     threshold: Decimal,
+    confidence: Decimal | None,
 ) -> UncertaintySignal:
     finding = Finding(
         rule_id=rule.rule_id,
@@ -161,10 +181,11 @@ def _signal(
             Evidence(fact="uncertainty.state", value=state),
             Evidence(fact=f"item.{field}", value=value),
             Evidence(fact="item.confidence", value=line.confidence),
+            *((Evidence(fact=f"item.{field}_confidence", value=confidence),) if state == "low_confidence" and field != "category" else ()),
             Evidence(fact=f"param.{rule.rule_id}.min_confidence", value=threshold),
         ),
         policy_doc=rule.policy_doc,
         source_quote=rule.source_quote,
         provenance=rule.provenance,
     )
-    return UncertaintySignal(finding, reason, field, state, line.confidence)
+    return UncertaintySignal(finding, reason, field, state, confidence)

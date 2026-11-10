@@ -52,14 +52,6 @@ class TranslationConfig(_Strict):
 
 
 
-class JevThresholds(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
-    recipient_type: float = Field(default=0.5, ge=0, le=1, allow_inf_nan=False)
-    venue_type: float = Field(default=0.5, ge=0, le=1, allow_inf_nan=False)
-    item_kind: float = Field(default=0.5, ge=0, le=1, allow_inf_nan=False)
-    essential_toiletry: float = Field(default=0.5, ge=0, le=1, allow_inf_nan=False)
-
-
 LANGGRAPH = "langgraph"  # the orchestrator's name as a classification backend: never one of its own backends
 
 # A classification backend is an execution adapter, named for the protocol it speaks, never for a provider or model.
@@ -97,12 +89,14 @@ class LangGraphBackendConfig(_Strict):
 
 
 class LangGraphRoutingConfig(BaseModel):
-    """When a line goes on to the next backend. A line below min_confidence is low confidence."""
+    """When a line goes on to the next backend: only when a backend fails or abstains.
+
+    Confidence never routes a line. It travels with the answer, and only the rules judge it: the engine's
+    uncertainty rule (EXC-03, min_confidence in rules/rule_logic.yaml) decides when a confidence is too low.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
-    min_confidence: float = Field(default=0.9, ge=0, le=1, allow_inf_nan=False)
     fallback_on_error: bool = True
-    fallback_on_low_confidence: bool = True
 
 
 class ReflectionReviewerConfig(_Strict):
@@ -207,7 +201,6 @@ class LangGraphConfig(_Strict):
 
 
 class ClassificationConfig(_Strict):
-    jev_thresholds: JevThresholds = JevThresholds()
     backend: str = CHAT_COMPLETIONS  # an adapter in classification.backends.registry.BACKENDS (chat_completions or decisions), or langgraph
     model: str | None = None  # the backend's model; langgraph takes each of its backends' models from langgraph.backends
     langgraph: LangGraphConfig = LangGraphConfig()  # read only when backend is langgraph

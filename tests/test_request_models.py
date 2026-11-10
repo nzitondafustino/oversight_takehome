@@ -13,6 +13,7 @@ from expense_validator import run_receipts as runner
 from expense_validator import validator as validator_module
 from expense_validator.classification.backends import llm as llm_module
 from expense_validator.config import ROOT, load_config
+from expense_validator.engine.models import CLASSIFIED_FIELDS
 from expense_validator.normalization import NoOpTranslator
 
 CONFIG = ROOT / "config.yaml"
@@ -220,7 +221,7 @@ def _example():
 
 def _body(receipt, **models):
     record = receipt.model_dump(mode="json")
-    record["line_items"] = [{name: value for name, value in line.items() if name not in {"category", "restricted", "confidence", "recipient_name", "recipient_type", "venue_type", "item_kind", "essential_toiletry"}} for line in record["line_items"]]
+    record["line_items"] = [{name: value for name, value in line.items() if name not in CLASSIFIED_FIELDS} for line in record["line_items"]]
     return {"context_complete": True, "receipts": [record], **models}
 
 

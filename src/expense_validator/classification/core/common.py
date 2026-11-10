@@ -121,8 +121,15 @@ def finalize(line: ClassifiedLine, normalized: NormalizedLine, vocabulary: Vocab
     if len(names) > 1 or (name and names and not all(other in name or name in other for other in names)):
         conflict = {"recipient_mentions": [mention.model_dump() for mention in mentions], "recipient_name": line.recipient_name, "recipient_type": line.recipient_type}
         # A disputed identity must not be used for per-recipient totals.
-        return line._replace(recipient_name=None, recipient_type=UNIDENTIFIED_RECIPIENT, details={**(line.details or {}), "evidence_conflict": conflict})
+        return line._replace(recipient_name=None, recipient_type=UNIDENTIFIED_RECIPIENT, recipient_type_confidence=None, details={**(line.details or {}), "evidence_conflict": conflict})
     return line
+
+
+ATTRIBUTE_CONFIDENCE_FIELDS = ("recipient_type", "venue_type", "item_kind", "essential_toiletry")
+
+
+def _is_confidence(value: object) -> bool:
+    return isinstance(value, Decimal) and value.is_finite() and 0 <= value <= 1
 
 
 def _check_line(line: ClassifiedLine, normalized: NormalizedLine, vocabulary: Vocabulary) -> None:
@@ -130,8 +137,12 @@ def _check_line(line: ClassifiedLine, normalized: NormalizedLine, vocabulary: Vo
         raise ClassificationError("category is not in taxonomy")
     if line.restricted is not vocabulary.categories[line.category].restricted:
         raise ClassificationError("restricted is not taxonomy-derived")
-    if line.confidence is not None and (not isinstance(line.confidence, Decimal) or not line.confidence.is_finite() or not 0 <= line.confidence <= 1):
+    if line.confidence is not None and not _is_confidence(line.confidence):
         raise ClassificationError("invalid category confidence")
+    for field in ATTRIBUTE_CONFIDENCE_FIELDS:
+        confidence = getattr(line, f"{field}_confidence")
+        if confidence is not None and (getattr(line, field) is None or not _is_confidence(confidence)):
+            raise ClassificationError(f"invalid {field} confidence")
     for field, allowed in (("recipient_type", (*vocabulary.recipient_types, UNIDENTIFIED_RECIPIENT)), ("venue_type", vocabulary.venue_types), ("item_kind", vocabulary.item_kinds)):
         if getattr(line, field) is not None and getattr(line, field) not in allowed:
             raise ClassificationError(f"invalid {field}")

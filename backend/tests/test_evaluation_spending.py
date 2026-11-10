@@ -23,7 +23,7 @@ def test_live_spending(make_client, settings, tmp_path, monkeypatch, case):
     if "pricing" in case:
         changes["pricing_table"] = pricing_file(tmp_path, case["pricing"])
     bench = Workbench(make_client, settings, receipt_ids=("RCP-001", "RCP-008"), **changes)
-    provider = FakeOpenRouter(usage=case.get("usage"), fail=tuple(case.get("fail", ())))
+    provider = FakeOpenRouter(usage=case.get("usage"), fail=tuple(case.get("fail", ())), answers=case.get("answers"))
     limits = {"confirm_uncapped": True} if case.get("uncapped") else {"budget": case.get("budget", BUDGET)}
     job = bench.run(worker={"client_factory": lambda core: provider}, execution_mode="live", confirm_live=True, classification=case.get("classification", {}), **limits)
     expect, spend = case["expect"], job["spend"]

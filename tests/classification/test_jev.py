@@ -86,7 +86,7 @@ def _classified(text: str):
 @pytest.mark.parametrize("case", load_cases("classification", "jev_answers"))
 def test_a_jev_answer_becomes_the_canonical_classification(case):
     line = _classified(json.dumps(jev_response(QUESTIONS, {name: tuple(pair) for name, pair in case["answers"].items()})))
-    values = {**line._asdict(), "confidence": None if line.confidence is None else str(line.confidence)}
+    values = {name: str(value) if name.endswith("confidence") and value is not None else value for name, value in line._asdict().items()}
     assert {name: values[name] for name in case["expected"]} == case["expected"]
 
 
@@ -124,7 +124,7 @@ def test_the_details_keep_every_distribution_and_the_provenance():
     line = _classified(json.dumps(jev_response(QUESTIONS, {"category": ("food_beverage", 0.9)})))
     details = line.details
     assert (details["backend"], details["requested_model"], details["model"]) == ("typesafe-jev", MODEL, SNAPSHOT)
-    assert set(details) == {"backend", "requested_model", "model", "answers", "usage", "attribute_thresholds"}
+    assert set(details) == {"backend", "requested_model", "model", "answers", "usage"}  # no threshold: Jev judges no confidence
     assert set(details["answers"]) == set(QUESTIONS) and details["answers"]["category"]["probabilities"]["food_beverage"] == 0.9
     assert details["answers"]["category"]["confidence"] != 0.9  # Jev's spread statistic is kept, and is not the line's confidence
     assert details["usage"] == {"input_tokens": 812, "output_tokens": 9, "cost": 0.0000341}
@@ -367,11 +367,17 @@ def _golden_choices():
     return choices
 
 
+def stated(attributes):
+    """The attribute values alone: Jev also gives each one's confidence, which the LLM's golden run never has."""
+    kept = {key: value for key, value in (attributes or {}).items() if not key.endswith("_confidence")}
+    return kept or None
+
+
 def test_the_same_classifications_from_jev_give_the_same_policy_findings(offline):
     choices = _golden_choices()
     _install(offline, FakeOpenRouter(lambda state: choices[json.dumps(state, sort_keys=True)]))
     batch = _jev_validator().validate_batch(load_receipts(), context_complete=True)
-    attributes = lambda record: [(record["metadata"]["line_items"].get(line["line_id"]) or {}).get("attributes") for line in record["line_items"]]
+    attributes = lambda record: [stated((record["metadata"]["line_items"].get(line["line_id"]) or {}).get("attributes")) for line in record["line_items"]]
     named = {rid for rid, record in GOLDEN.items() if any((found or {}).get("recipient_name") or (found or {}).get("recipient_type") == "unidentified" for found in attributes(record))}
     assert named == {"RCP-018", "RCP-022"}
     compared = 0
@@ -412,5 +418,5 @@ def test_jev_results_are_saved_on_their_own_in_the_same_jsonl_as_the_llm(offline
         for field in ("uncertainty", "open_questions"):
             assert record["metadata"][field] == golden["metadata"][field], (record["receipt_id"], field)
         assert [{k: line[k] for k in ("category", "restricted", "confidence")} for line in record["line_items"]] == [{k: line[k] for k in ("category", "restricted", "confidence")} for line in golden["line_items"]]
-        assert [(record["metadata"]["line_items"].get(line["line_id"]) or {}).get("attributes") for line in record["line_items"]] == [(golden["metadata"]["line_items"].get(line["line_id"]) or {}).get("attributes") for line in golden["line_items"]]
+        assert [stated((record["metadata"]["line_items"].get(line["line_id"]) or {}).get("attributes")) for line in record["line_items"]] == [stated((golden["metadata"]["line_items"].get(line["line_id"]) or {}).get("attributes")) for line in golden["line_items"]]
         assert all(extra["classification_details"]["backend"] == "typesafe-jev" for extra in record["metadata"]["line_items"].values())  # Jev's own answers, only in metadata

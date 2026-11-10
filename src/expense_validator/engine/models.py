@@ -35,6 +35,7 @@ CLASSIFIED_FIELDS = frozenset(
         "venue_type",
         "item_kind",
         "essential_toiletry",
+        *(f"{name}_confidence" for name in ("recipient_type", "venue_type", "item_kind", "essential_toiletry")),
     }
 )
 
@@ -80,6 +81,12 @@ class LineItem(_Strict):
     item_kind: Text | None = None
     # The baggage-delay exception covers essential toiletries, and personal_care also holds massage.
     essential_toiletry: StrictBool | None = None
+    # The classifier's confidence in each stated attribute, where it gives one (Jev does; the LLM does not). EXC-03
+    # judges it against min_confidence, as it does the category's: a classifier never drops a value by confidence.
+    recipient_type_confidence: Decimal | None = Field(default=None, ge=0, le=1)
+    venue_type_confidence: Decimal | None = Field(default=None, ge=0, le=1)
+    item_kind_confidence: Decimal | None = Field(default=None, ge=0, le=1)
+    essential_toiletry_confidence: Decimal | None = Field(default=None, ge=0, le=1)
 
     def with_classification(self, output: Mapping[str, object]) -> "LineItem":
         """Return a validated copy with classifier output. Never use model_copy for this."""

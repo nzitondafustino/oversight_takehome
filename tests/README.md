@@ -22,7 +22,7 @@ Optional `templates` can hold YAML anchors; anchors are local to a file.
 | classification | adapters | model | `backends`: the registered backends (execution adapters) whose own check accepts this model ID, in registry order; each one's provider is OpenRouter. |
 | classification | recipient_extractions | text, translation | Exact names and source spans; ambiguity retained. |
 | classification | finalize | description, line | `finalize` on a classified line: error pattern or none, recipient name and type, and whether a recipient conflict is kept. |
-| classification | jev_thresholds | thresholds | `refused`: whether these per-attribute Jev thresholds are rejected. |
+| classification | jev_attribute_confidence | probability | `recipient_type` and `confidence` as Jev passes them on, and the EXC-03 `state` of the recipient type (null for none). |
 | classification | jev_uncertainty | probability | `review`: whether the engine's EXC-03 reviews a Jev category with this probability. |
 | policy_engine | isolation | evaluations | Ordered `runs` summaries from repeated evaluations using one engine. |
 | policy_engine | configuration | path, value, receipts | Original receipt outcome after attempted caller-side and engine-side catalog mutations. |

@@ -1,0 +1,13 @@
+# A stored evaluation snapshot, read back by the worker through from_snapshot. Each snapshot is a direct Jev run,
+# changed by `snapshot`. Jev once dropped an attribute at or below its jev_thresholds; only EXC-03 judges attribute
+# confidence now, at min_confidence 0.5. expect: loads, or refused (configuration_changed).
+cases:
+  - name: a snapshot from before jev_thresholds existed loads
+    snapshot: {}
+    expect: loads
+  - name: the earlier default thresholds, which every stored snapshot holds, load as EXC-03's own 0.5
+    snapshot: {jev_thresholds: {recipient_type: 0.5, venue_type: 0.5, item_kind: 0.5, essential_toiletry: 0.5}}
+    expect: loads
+  - name: any other threshold cannot be reproduced, and is refused as changed
+    snapshot: {jev_thresholds: {recipient_type: 0.8, venue_type: 0.5, item_kind: 0.5, essential_toiletry: 0.5}}
+    expect: refused

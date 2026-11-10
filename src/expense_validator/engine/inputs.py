@@ -14,9 +14,9 @@ from expense_validator.engine.money import reconcile
 SUBMITTED_FIELDS = ("entity", "submitted_expense_type")
 
 ClassifiedField = Literal["category", "recipient_type", "venue_type", "item_kind"]
-# valid: in the catalog and, for a category, at or above the threshold. missing: no value.
-# unknown: a value outside the catalog. For a category in the catalog only, no_confidence: no
-# confidence to judge it by. low_confidence: below the threshold.
+# valid: in the catalog and at or above the threshold. missing: no value. unknown: a value outside the catalog.
+# no_confidence: a category with no confidence to judge it by. low_confidence: below the threshold. A secondary
+# field with no confidence of its own is valid: only the category must carry one.
 ClassificationState = Literal["valid", "missing", "unknown", "no_confidence", "low_confidence"]
 
 
@@ -89,7 +89,8 @@ def classification_state(
 ) -> ClassificationState:
     """Return the state of one classified field on a line.
 
-    Confidence applies to the category only. Whether a missing secondary field is uncertain is the caller's call.
+    A secondary field is judged by its own confidence when the classifier gave one. Whether a missing or
+    low-confidence secondary field is uncertain is the caller's call.
     """
     allowed = allowed_values(fields, f"item.{name}")
     value = getattr(item, name)
@@ -98,10 +99,15 @@ def classification_state(
     if value not in allowed:
         return "unknown"
     if name != "category":
-        return "valid"
+        return field_confidence_state(getattr(item, f"{name}_confidence"), min_confidence)
     if item.confidence is None:
         return "no_confidence"
     return "low_confidence" if item.confidence < min_confidence else "valid"
+
+
+def field_confidence_state(confidence: Decimal | None, min_confidence: Decimal) -> ClassificationState:
+    """A stated secondary value's state by its own confidence: none given is valid, below the threshold is low."""
+    return "low_confidence" if confidence is not None and confidence < min_confidence else "valid"
 
 
 def _entity_by_country(fields: Mapping[str, dict]) -> dict[str, str]:

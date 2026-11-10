@@ -209,7 +209,7 @@ cases:
     request: {classification: {backend: langgraph, model: anthropic/claude-haiku-5.5, replay_set: langgraph}}
     expect: {status: 422, code: unsupported_configuration}
   - name: an invalid LangGraph order is refused by the core
-    request: {classification: {backend: langgraph, replay_set: langgraph, langgraph: {routing: {min_confidence: 2}}}}
+    request: {classification: {backend: langgraph, replay_set: langgraph, langgraph: {routing: {fallback_on_error: 'yes'}}}}
     expect: {status: 422, code: unsupported_configuration}
 
   # The body itself

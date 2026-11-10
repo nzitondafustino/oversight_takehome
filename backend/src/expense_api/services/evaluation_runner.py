@@ -65,7 +65,11 @@ CORE_VERSION = version("expense-policy-validator")
 LIVE_BACKENDS = (CHAT_COMPLETIONS, DECISIONS, LANGGRAPH)
 NO_RETRY = RetryConfig("none", None, False)  # a retried request may be billed twice, unseen: never retry in an evaluation
 # The core settings an evaluation fixes when it is created. The worker runs with exactly these.
-SNAPSHOT_FIELDS = {"classification_backend", "classification_model", "langgraph", "jev_thresholds", "translation_enabled", "translation_model", "temperature", "timeout_seconds"}
+SNAPSHOT_FIELDS = {"classification_backend", "classification_model", "langgraph", "translation_enabled", "translation_model", "temperature", "timeout_seconds"}
+# Jev once dropped an attribute at or below these, before only EXC-03 judged attribute confidence. Every snapshot
+# from then holds this default, which EXC-03's min_confidence of 0.5 now applies in the engine, so it is read as
+# that. Any other value could not be reproduced, and is refused as changed.
+EARLIER_JEV_THRESHOLDS = {"recipient_type": 0.5, "venue_type": 0.5, "item_kind": 0.5, "essential_toiletry": 0.5}
 
 
 class JobFailed(Exception):
@@ -102,6 +106,8 @@ def core_settings(settings: Settings, mode: str, cache_dir: Path | None, selecti
 def from_snapshot(settings: Settings, mode: str, cache_dir: Path | None, snapshot: dict, ruleset_path: Path) -> ValidatorSettings:
     """The core's settings with the stored snapshot's classification, whatever config.yaml says today."""
     base = ValidatorSettings.from_config(settings.core_config, mode=mode, cache_dir=cache_dir)
+    if snapshot.get("jev_thresholds") == EARLIER_JEV_THRESHOLDS:
+        snapshot = {name: value for name, value in snapshot.items() if name != "jev_thresholds"}
     try:
         return ValidatorSettings.model_validate({**base.model_dump(), **snapshot, "ruleset_path": ruleset_path})
     except ValueError as error:

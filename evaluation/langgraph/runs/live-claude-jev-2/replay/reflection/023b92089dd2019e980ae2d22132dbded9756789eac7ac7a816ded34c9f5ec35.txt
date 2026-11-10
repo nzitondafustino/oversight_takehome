@@ -1,0 +1,1 @@
+{"verdict":"accept","reason":"Stadium suite tickets for a sporting event fit no listed category, so other is correct, and the venue_type of sporting_event is supported by the description and merchant category.","suggested_category":null,"feedback":null}

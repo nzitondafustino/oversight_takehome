@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError, field_validator
 
-from expense_validator.config import CHAT_COMPLETIONS, LANGGRAPH, JevThresholds, LangGraphConfig, canonical_backend, load_config
+from expense_validator.config import CHAT_COMPLETIONS, LANGGRAPH, LangGraphConfig, canonical_backend, load_config
 from expense_validator.exceptions import ConfigurationError
 from expense_validator.models.results import Mode
 
@@ -53,7 +53,6 @@ class ValidatorSettings(BaseModel):
     taxonomy_path: Path
     policy_docs_path: Path
     cache_dir: Path | None = None
-    jev_thresholds: JevThresholds = JevThresholds()
     classification_backend: str = CHAT_COMPLETIONS  # an adapter in classification.backends.registry.BACKENDS, or langgraph; the validator checks it
     langgraph: LangGraphConfig = LangGraphConfig()  # the orchestrator's backends and routing, read only when the backend is langgraph
     classification_model: str | None = None
@@ -115,7 +114,6 @@ class ValidatorSettings(BaseModel):
             cache_dir=None if mode == "deterministic" else (config.paths.llm_cache if cache_dir is CONFIG_CACHE else cache_dir),
             classification_backend=backend,
             langgraph=langgraph,
-            jev_thresholds=config.classification.jev_thresholds,
             classification_model=classification_model or own_model,
             translation_enabled=config.translation.enabled,
             translation_model=translation_model or config.translation.model,

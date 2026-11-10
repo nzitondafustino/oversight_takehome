@@ -74,12 +74,13 @@ class _Response:
 
 class FakeOpenRouter:
     """Stands in for openrouter.OpenRouter. usage maps a model to the usage its responses report; fail lists
-    models whose requests raise. Every request is kept in calls."""
+    models whose requests raise; answers maps a model to the classification fields it answers instead of
+    CLASSIFICATION's. Every request is kept in calls."""
 
     CLASSIFICATION = {"category": "food_beverage", "confidence": 0.9, "recipient_name": None, "recipient_type": None, "venue_type": None, "item_kind": None, "essential_toiletry": None}
 
-    def __init__(self, usage: dict | None = None, fail: tuple = ()):
-        self.usage, self.fail, self.calls = usage or {}, fail, []
+    def __init__(self, usage: dict | None = None, fail: tuple = (), answers: dict | None = None):
+        self.usage, self.fail, self.answers, self.calls = usage or {}, fail, answers or {}, []
         self.chat = type("Chat", (), {"send": self._chat})()
         self.alpha = type("Alpha", (), {})()
         self.alpha.decisions = type("Decisions", (), {"create": self._decide})()
@@ -95,7 +96,7 @@ class FakeOpenRouter:
         if len(messages) == 1:  # translation: one user message, the prompt then the text
             answer = content.split(TRANSLATION_PROMPT_END, 1)[1].strip()
         else:
-            answer = json.dumps(self.CLASSIFICATION)
+            answer = json.dumps(self.CLASSIFICATION | self.answers.get(model, {}))
         return _Response({"id": f"gen-{len(self.calls)}", "model": model, "choices": [{"message": {"content": answer}}], "usage": self._usage(model)})
 
     def _decide(self, *, model, **_):

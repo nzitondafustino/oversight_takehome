@@ -166,12 +166,12 @@ def test_an_invalid_override_is_refused_at_every_entry_point(case, tmp_path):
 def test_the_config_file_sets_the_defaults_and_the_application_fills_the_rest(tmp_path):
     configured = yaml.safe_load(CONFIG.read_text())
     configured["paths"] = {name: str(ROOT / path) for name, path in configured["paths"].items()}
-    configured["classification"] = {"backend": "langgraph", "langgraph": {"backends": [{"name": "p", "backend": "jev", "model": "typesafe/jev-1.14"}], "routing": {"min_confidence": 0.75}}}
+    configured["classification"] = {"backend": "langgraph", "langgraph": {"backends": [{"name": "p", "backend": "jev", "model": "typesafe/jev-1.14"}]}}
     (tmp_path / "config.yaml").write_text(yaml.safe_dump(configured))
     validator = ExpenseValidator.from_config(tmp_path / "config.yaml", mode="replay", cache_dir=tmp_path)
     assert validator.settings.classification_backend == "langgraph" and validator.settings.classification_model is None
-    # The file's routing field, and the application's defaults for the two it leaves out.
-    assert effective(validator.settings.langgraph) == {"backends": [["p", "decisions", "typesafe/jev-1.14"]], "routing": {"min_confidence": 0.75, "fallback_on_error": True, "fallback_on_low_confidence": True}}
+    # The file's backends, and the application's default for the routing it leaves out.
+    assert effective(validator.settings.langgraph) == {"backends": [["p", "decisions", "typesafe/jev-1.14"]], "routing": {"fallback_on_error": True}}
     configured["classification"] = {"backend": "langgraph"}
     (tmp_path / "config.yaml").write_text(yaml.safe_dump(configured))
     with pytest.raises(ConfigurationError, match="needs at least one backend"):
@@ -189,10 +189,10 @@ def test_a_configured_model_for_langgraph_itself_is_refused(tmp_path):
 
 def test_langgraph_settings_are_refused_where_they_cannot_apply(tmp_path):
     with pytest.raises(ConfigurationError, match="applies only to the langgraph backend, and this one is chat_completions"):
-        ExpenseValidator.from_config(CONFIG, mode="replay", cache_dir=tmp_path, langgraph_config={"routing": {"min_confidence": 0.8}})
+        ExpenseValidator.from_config(CONFIG, mode="replay", cache_dir=tmp_path, langgraph_config={"routing": {"fallback_on_error": False}})
     validator = ExpenseValidator.from_config(CONFIG, mode="replay", cache_dir=tmp_path)
     with pytest.raises(ConfigurationError, match="applies only to the langgraph backend, and this request's is chat_completions"):
-        validator.validate_batch([], context_complete=False, langgraph_config={"routing": {"min_confidence": 0.8}})
+        validator.validate_batch([], context_complete=False, langgraph_config={"routing": {"fallback_on_error": False}})
     with pytest.raises(ConfigurationError, match="cannot give it a classification_model"):
         validator.validate_batch([], context_complete=False, classification_backend="langgraph", classification_model="typesafe/jev-1.14")
     with pytest.raises(ConfigurationError, match="cannot configure langgraph"):
@@ -205,11 +205,11 @@ def test_langgraph_settings_are_refused_where_they_cannot_apply(tmp_path):
 def test_the_effective_configuration_is_frozen():
     config = load_config().classification.langgraph
     with pytest.raises(ValidationError):
-        config.routing.min_confidence = 0.1
+        config.routing.fallback_on_error = False
     with pytest.raises(ValidationError):
         config.backends[0].model = "another"
     assert isinstance(config.backends, tuple)
-    assert config.merged({"routing": {"min_confidence": 0.5}}) is not config and config.routing.min_confidence == 0.9
+    assert config.merged({"routing": {"fallback_on_error": False}}) is not config and config.routing.fallback_on_error is True
 
 
 # --- Routing ---
@@ -255,22 +255,22 @@ def test_an_answered_line_keeps_its_backends_details_and_every_attempt(monkeypat
 
 
 def test_one_validator_serves_different_configurations_in_turn_without_any_leaking(monkeypatch, tmp_path):
-    calls, _ = stand_ins(monkeypatch, {"alpha-1": {"L1": ["food_beverage", 0.95], "L2": ["alcohol", 0.95], "L3": ["other", 0.75]}, "beta-1": {"L3": ["service_fee", 0.97]}})
-    validator = live_validator(tmp_path, langgraph_config=order(["primary", "alpha", "alpha-1"], ["fallback", "beta", "beta-1"], routing={"min_confidence": 0.8}))
+    calls, _ = stand_ins(monkeypatch, {"alpha-1": {"L1": ["food_beverage", 0.95], "L2": ["alcohol", 0.95]}, "beta-1": {"L3": ["service_fee", 0.97]}})  # alpha fails L3
+    validator = live_validator(tmp_path, langgraph_config=order(["primary", "alpha", "alpha-1"], ["fallback", "beta", "beta-1"], routing={"fallback_on_error": True}))
     before, graph, backends = validator.settings, orchestrator.GRAPH, dict(registry.BACKENDS)
     run = lambda **override: routed(validator.validate_batch([ROUTED], context_complete=False, **override))["L3"]
-    assert run() == ("fallback", "service_fee")  # from_config's 0.8 sends the 0.75 line on
-    assert run(langgraph_config={"routing": {"min_confidence": 0.7}}) == ("primary", "other")  # this request's 0.7 keeps it
-    assert run() == ("fallback", "service_fee")  # and the next request is back to 0.8
+    assert run() == ("fallback", "service_fee")  # from_config's error fallback sends the failed line on
+    assert run(langgraph_config={"routing": {"fallback_on_error": False}}) == (None, None)  # this request's keeps the failure
+    assert run() == ("fallback", "service_fee")  # and the next request is back to from_config's
     assert run(langgraph_config=order(["only", "beta", "beta-1"])) == ("only", "service_fee")
     assert run() == ("fallback", "service_fee")
-    assert validator.settings is before and effective(validator.settings.langgraph)["routing"]["min_confidence"] == 0.8
+    assert validator.settings is before and effective(validator.settings.langgraph)["routing"]["fallback_on_error"] is True
     assert orchestrator.GRAPH is graph and dict(registry.BACKENDS) == backends
 
 
 def test_concurrent_requests_with_different_configurations_stay_apart(monkeypatch, tmp_path):
     answers = {
-        "alpha-1": {"L1": ["food_beverage", 0.95], "L2": ["alcohol", 0.6], "L3": ["other", 0.75]},
+        "alpha-1": {"L1": ["food_beverage", 0.95], "L3": ["other", 0.75]},  # alpha fails L2
         "beta-1": {"L1": ["other", 0.99], "L2": ["alcohol", 0.97], "L3": ["service_fee", 0.97]},
     }
     stand_ins(monkeypatch, answers)
@@ -279,7 +279,7 @@ def test_concurrent_requests_with_different_configurations_stay_apart(monkeypatc
         order(["primary", "alpha", "alpha-1"], ["fallback", "beta", "beta-1"]),
         order(["primary", "beta", "beta-1"], ["fallback", "alpha", "alpha-1"]),
         order(["only", "alpha", "alpha-1"]),
-        order(["primary", "alpha", "alpha-1"], ["fallback", "beta", "beta-1"], routing={"min_confidence": 0.5}),
+        order(["primary", "alpha", "alpha-1"], ["fallback", "beta", "beta-1"], routing={"fallback_on_error": False}),
     ]
     alone = [routed(validator.validate_batch([ROUTED], context_complete=False, langgraph_config=config)) for config in configs]
     assert len({json.dumps(found, sort_keys=True) for found in alone}) == len(configs), "each configuration gives its own answers"
@@ -314,24 +314,24 @@ def test_each_backend_records_under_its_own_folder_and_model_and_replays_with_no
 
 
 def test_real_recordings_replay_through_the_policy_engine_with_no_network(tmp_path, offline):
-    """The configured order, Jev then the LLM at 0.9, on all 32 receipts from the repository's recordings."""
+    """The configured order, Jev then the LLM when Jev fails, on all 32 receipts from the repository's recordings."""
     validator = ExpenseValidator.from_config(CONFIG, mode="replay", cache_dir=recordings(tmp_path), classification_backend="langgraph")
     batch = validator.validate_batch(list(RECEIPTS.values()), context_complete=True)
     found = routed(batch)
-    assert Counter(name for name, _ in found.values()) == {"primary": 77, "fallback": 2}
+    assert Counter(name for name, _ in found.values()) == {"primary": 78, "fallback": 1}
     assert found["RCP-017-L2"] == ("fallback", "service_fee")  # Jev's rejected line, answered by the LLM's recording
-    assert found["RCP-005-L3"][0] == "fallback"  # Jev's 0.81 is below 0.9
+    assert found["RCP-005-L3"][0] == "primary"  # Jev's 0.81 is kept: only EXC-03's min_confidence judges it
     assert {result.receipt_id: result.disposition for result in batch.results} == {receipt_id: record["disposition"] for receipt_id, record in GOLDEN.items()}
     rcp_017 = next(result for result in batch.results if result.receipt_id == "RCP-017")
     assert sorted(item.rule_id for item in rcp_017.exceptions) == ["DOC-03", "MCC-01", "PERS-01"] and rcp_017.decided
 
 
-def test_the_reversed_order_sends_only_the_llms_unsure_lines_to_jev(tmp_path, offline):
+def test_the_reversed_order_sends_only_the_lines_the_llm_did_not_classify_to_jev(tmp_path, offline):
     validator = ExpenseValidator.from_config(CONFIG, mode="replay", cache_dir=recordings(tmp_path), classification_backend="langgraph")
     batch = validator.validate_batch(list(RECEIPTS.values()), context_complete=True, langgraph_config=order(["primary", "openrouter", "anthropic/claude-haiku-5.5"], ["fallback", "jev", "typesafe/jev-1.14"]))
-    below = {line["line_id"] for record in GOLDEN.values() for line in record["line_items"] if line["confidence"] is None or line["confidence"] < 0.9}
+    unclassified = {line["line_id"] for record in GOLDEN.values() for line in record["line_items"] if line["category"] is None}
     found = routed(batch)
-    assert {line_id for line_id, (name, _) in found.items() if name == "fallback"} == below and all(name for name, _ in found.values())
+    assert {line_id for line_id, (name, _) in found.items() if name == "fallback"} == unclassified and all(name for name, _ in found.values())
 
 
 def test_a_missing_recording_may_follow_the_configured_fallback_but_never_the_network(tmp_path, offline):
@@ -362,6 +362,12 @@ def corrected(record, settled):
     return {**record, "disposition_reasons": reasons, "open_questions": questions}
 
 
+def _before_attribute_confidences(attributes):
+    """Attributes as the first run wrote them: before each one's confidence was passed on for EXC-03 to judge."""
+    kept = {key: value for key, value in (attributes or {}).items() if not key.endswith("_confidence")}
+    return kept or None
+
+
 def first_run_shape(record):
     """A record in the shape the first run was written in, before the brief's shape moved the extensions into metadata."""
     metadata = record["metadata"]
@@ -369,7 +375,7 @@ def first_run_shape(record):
     quotes = iter(metadata["source_quotes"])
     return {
         **{key: record[key] for key in ("receipt_id", "disposition")},
-        "line_items": [{**line, **{key: value for key, value in lines.get(line["line_id"], {}).items() if key != "classification_details"}} for line in record["line_items"]],
+        "line_items": [{**line, **{key: _before_attribute_confidences(value) if key == "attributes" else value for key, value in lines.get(line["line_id"], {}).items() if key != "classification_details"}} for line in record["line_items"]],
         "exceptions": [{**{key: value for key, value in item.items() if key != "explanation"}, "source_quote": next(quotes)["source_quote"], "explanation": item["explanation"]} for item in record["exceptions"]],
         "review_signals": record["review_signals"],
         **{key: metadata[key] for key in ("decided", "disposition_reasons", "open_questions", "uncertainty")},
@@ -456,9 +462,9 @@ def test_routing_and_predictions_are_read_back_from_the_audit_for_evaluation(tmp
     validator = ExpenseValidator.from_config(CONFIG, mode="replay", cache_dir=recordings(tmp_path), classification_backend="langgraph")
     batch = validator.validate_batch(list(RECEIPTS.values()), context_complete=True)
     summary = routing_summary(batch.results)
-    assert summary["answered_by"] == {"fallback": 2, "primary": 77} and summary["extra_backend_calls"] == 2
-    assert summary["fallback"]["numerator"] == 2 and summary["routed_for"] == {"error": 1, "low_confidence": 1}
-    assert summary["results"] == {"accepted": 78, "exhausted": 1}  # RCP-005-L3: 0.81, then the LLM's 0.7, with no backend left
+    assert summary["answered_by"] == {"fallback": 1, "primary": 78} and summary["extra_backend_calls"] == 1
+    assert summary["fallback"]["numerator"] == 1 and summary["routed_for"] == {"error": 1}  # confidence never routes a line
+    assert summary["results"] == {"accepted": 79}
     predictions = result_predictions(batch.results, Source(kind="actual", name="lg", description="d", model="m"))
     assert len(predictions.predictions) == 79 and predictions.by_line()["RCP-017-L2"].category == "service_fee"
     direct = ExpenseValidator.from_config(CONFIG, mode="replay", cache_dir=recordings(tmp_path / "direct"), classification_backend="jev", classification_model="typesafe/jev-1.14")

@@ -1,5 +1,8 @@
 """Historical compatibility across the adapters' rename: openrouter is now chat_completions, and jev decisions.
 
+The historical LangGraph configuration also routed by confidence, which routing no longer does, so it is refused as
+changed rather than run. Every other compatibility here still holds.
+
 The historical LangGraph evaluation is a real record, read from the API that stored it before the rename
 (tests/fixtures/historical/langgraph_evaluation.json). It is never edited to fit new code: each test here checks new
 code against what that API wrote. No test reaches a provider.
@@ -14,7 +17,7 @@ from conftest import REPLAY_SETS, REPO
 from evaluation_support import LANGGRAPH_RECEIPTS, Workbench, create, upload
 from expense_validator import ExpenseValidator
 
-from expense_api.services.evaluation_runner import fingerprint, from_snapshot, stored_fingerprint_version
+from expense_api.services.evaluation_runner import JobFailed, fingerprint, from_snapshot, stored_fingerprint_version
 from expense_api.services.spending import spend_report
 
 HISTORICAL = json.loads((Path(__file__).parent / "fixtures" / "historical" / "langgraph_evaluation.json").read_text())
@@ -48,55 +51,35 @@ def as_recorded_before_the_rename(bench, evaluation_id: str, record: dict) -> No
     }})
 
 
-# --- 1. Historical LangGraph configurations keep their fingerprints ---
+# --- 1, 2 and 7. A historical LangGraph configuration routed by confidence, which no longer exists ---
+# Routing once sent a line on below min_confidence. Confidence no longer routes a line (only EXC-03 judges it), so a
+# snapshot holding that threshold cannot run as it was recorded. It is refused as changed, as after any core change,
+# and never re-run under other routing.
 
 
-def test_a_historical_langgraph_configuration_keeps_its_recorded_fingerprint(settings):
+def test_a_historical_langgraph_configuration_with_confidence_routing_is_refused_as_changed(settings):
     record = HISTORICAL["configuration"]
     assert stored_fingerprint_version({"configuration": record}) == 1  # recorded before versions existed
-    core = from_snapshot(settings, "replay", REPLAY_SETS["langgraph"], record["snapshot"], REPO / "rules" / "ruleset.json")
-    validator = ExpenseValidator(core)
-    # The stored snapshot is read as it is, earlier names and all, and the adapters it names are the renamed ones.
-    assert [child.backend for child in core.langgraph.backends] == ["decisions", "chat_completions"] and core.langgraph.reflection.reviewer.backend == "chat_completions"
-    assert fingerprint(core, validator, 1) == record["fingerprint"]  # exactly what was recorded, every field
-    # The adapters' own names give a different hash: which is why a job is checked under the version it recorded.
-    assert validator.prompt_sha256 != record["fingerprint"]["prompt_sha256"] and fingerprint(core, validator)["prompt_identity_version"] == 2
+    assert record["snapshot"]["langgraph"]["routing"]["min_confidence"] == 0.9
+    with pytest.raises(JobFailed, match="the stored configuration no longer loads") as refused:
+        from_snapshot(settings, "replay", REPLAY_SETS["langgraph"], record["snapshot"], REPO / "rules" / "ruleset.json")
+    assert refused.value.code == "configuration_changed"
 
 
-# --- 2 and 7. Historical recordings replay without a provider; a missing one never calls one ---
-
-
-def test_a_historical_langgraph_evaluation_replays_as_recorded_without_a_provider(make_client, settings):
+def test_a_historical_langgraph_evaluation_is_refused_without_a_provider_and_without_a_rewrite(make_client, settings):
     bench = Workbench(make_client, settings, receipt_ids=LANGGRAPH_RECEIPTS)
     evaluation_id = historical_job(bench, backend="langgraph", replay_set="langgraph", langgraph={"reflection": {"enabled": True}})
     as_recorded_before_the_rename(bench, evaluation_id, HISTORICAL)
     bench.drain(client_factory=no_provider)
     job = bench.get(evaluation_id)
-    assert (job["status"], job["error"], job["progress"]["failed_receipts"]) == ("completed", None, 0)
-    assert {name: job["summary"][name] for name in HISTORICAL["summary"]} == HISTORICAL["summary"]  # scored before the summary held more
+    assert (job["status"], job["error"]["code"], job["progress"]["processed_receipts"]) == ("failed", "configuration_changed", 0)
+    assert all(record["mode"] != "live" for record in bench.database["evaluation_usage"].find({"evaluation_id": evaluation_id}))
     # Stored as the earlier API wrote it, and still so: nothing is rewritten.
     stored = bench.database["evaluations"].find_one({"_id": evaluation_id})["configuration"]
     assert {name: stored[name] for name in ("classification_backend", "model_label", "snapshot", "fingerprint")} == {name: HISTORICAL["configuration"][name] for name in ("classification_backend", "model_label", "snapshot", "fingerprint")}
-    # Every call replayed, none live, with the recorded history's cost, grouped by each adapter once.
-    spend = job["spend"]
-    assert (spend["calls"], spend["historical"], spend["new_spend_usd"]) == (HISTORICAL["spend"]["calls"], HISTORICAL["spend"]["historical"], "0")
-    assert {name: totals["calls"]["total"] for name, totals in spend["by_backend"].items()} == {"decisions": HISTORICAL["spend"]["by_backend_calls"]["jev"], "chat_completions": HISTORICAL["spend"]["by_backend_calls"]["openrouter"]}
     assert job["configuration"]["setup"]["nodes"] == [
         {"name": "primary", "backend": "jev", "model": "typesafe/jev-1.14", "provider": "openrouter", "protocol": "decisions", "adapter": "decisions"},
         {"name": "fallback", "backend": "openrouter", "model": "anthropic/claude-haiku-5.5", "provider": "openrouter", "protocol": "chat_completions", "adapter": "chat_completions"}]
-
-
-def test_a_historical_langgraph_evaluation_missing_recordings_never_calls_a_provider(make_client, settings):
-    # The LLM's replay set holds none of Jev's answers: Jev's node has nothing to replay.
-    bench = Workbench(make_client, settings, receipt_ids=LANGGRAPH_RECEIPTS)
-    evaluation_id = historical_job(bench, backend="langgraph", replay_set="openrouter", langgraph={"reflection": {"enabled": True}})
-    as_recorded_before_the_rename(bench, evaluation_id, HISTORICAL)
-    bench.drain(client_factory=no_provider)
-    job = bench.get(evaluation_id)
-    assert job["status"] == "completed" and job["spend"]["calls"]["live"] == 0 and job["spend"]["new_spend_usd"] == "0"
-    # Each receipt is a replay miss, never scored on the answers the LLM node gave in Jev's place.
-    assert job["error_summary"] == {"replay_recording_missing": len(LANGGRAPH_RECEIPTS)}
-    assert all(record["mode"] != "live" for record in bench.database["evaluation_usage"].find({"evaluation_id": evaluation_id}))
 
 
 # --- 3 and 4. Earlier names run the same adapters; new executions record the adapters' own names ---
@@ -184,9 +167,10 @@ def test_a_historical_langgraph_run_compares_by_its_canonical_identity(make_clie
     bench = Workbench(make_client, settings, receipt_ids=LANGGRAPH_RECEIPTS)
     reflection = {"reflection": {"enabled": True}}
     earlier = historical_job(bench, backend="langgraph", replay_set="langgraph", langgraph=reflection)
-    as_recorded_before_the_rename(bench, earlier, HISTORICAL)
     later = historical_job(bench, backend="langgraph", replay_set="langgraph", langgraph=reflection)
     bench.drain(client_factory=no_provider)
+    # A finished run as the earlier API stored it: its configuration names the adapters by their earlier names.
+    as_recorded_before_the_rename(bench, earlier, HISTORICAL)
     before, after = bench.client.post("/v1/evaluations/compare", json={"evaluation_ids": [earlier, later]}).json()["evaluations"]
     assert before["model_label"] != after["model_label"]  # the labels each recorded name the adapters differently
     assert before["classification_identity"] == after["classification_identity"] == "primary=decisions:typesafe/jev-1.14, fallback=chat_completions:anthropic/claude-haiku-5.5"
@@ -195,7 +179,7 @@ def test_a_historical_langgraph_run_compares_by_its_canonical_identity(make_clie
 
 @pytest.mark.parametrize("version", [3, 0])
 def test_an_unknown_fingerprint_version_is_refused_not_guessed(settings, version):
-    core = from_snapshot(settings, "replay", REPLAY_SETS["langgraph"], HISTORICAL["configuration"]["snapshot"], REPO / "rules" / "ruleset.json")
+    core = from_snapshot(settings, "replay", REPLAY_SETS["langgraph"], {"classification_backend": "langgraph", "classification_model": None}, REPO / "rules" / "ruleset.json")
     with pytest.raises(Exception, match="prompt identity version"):
         fingerprint(core, ExpenseValidator(core), version)
     assert Decimal(HISTORICAL["spend"]["historical"]["cost_usd"]) > 0

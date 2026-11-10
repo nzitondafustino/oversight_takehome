@@ -44,6 +44,7 @@ from expense_validator.models.results import (
 )
 
 ATTRIBUTES = ("recipient_name", "recipient_type", "venue_type", "item_kind", "essential_toiletry")
+ATTRIBUTE_CONFIDENCES = ("recipient_type_confidence", "venue_type_confidence", "item_kind_confidence", "essential_toiletry_confidence")
 RETRIEVER = "none"  # There is no retrieval stage: every active rule is evaluated against every receipt.
 
 
@@ -495,6 +496,7 @@ def _explanations(group) -> str:
 
 def _line(item, normalized_line, classified) -> LineResult:
     attributes = {name: getattr(classified, name) for name in ATTRIBUTES if getattr(classified, name) is not None}
+    attributes |= {name: float(getattr(classified, name)) for name in ATTRIBUTE_CONFIDENCES if getattr(classified, name, None) is not None}
     translated = normalized_line is not None and normalized_line.translation_status == "translated"
     return LineResult(
         line_id=item.line_id,

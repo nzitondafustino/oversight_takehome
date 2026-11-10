@@ -99,6 +99,16 @@ assessed:
   - {id: food on Client Entertainment needs no venue, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Client Entertainment}], expected: {secondary: []}}
   - {id: other on an individual meal needs no venue or kind, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: other}]}], expected: {secondary: []}}
   - {id: a venue outside the catalog on any line, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, venue_type: opera}]}], expected: {secondary: [{line_id: L1, field: venue_type, state: unknown}]}}
+  # A secondary value's own confidence, where the classifier gives one (Jev does), is judged here and only here,
+  # against the same min_confidence as the category. Below it, the value is blanked in the view and judged as a
+  # missing one: a signal only where a rule may need the field. At or above it, the value stands. With no
+  # confidence of its own (the LLM gives none), it stands.
+  - {id: a gift's recipient type below the threshold is judged as missing, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_type_confidence: "0.4"}]}], expected: {secondary: [{line_id: L1, field: recipient_type, state: low_confidence}]}}
+  - {id: a gift's recipient type at the threshold stands, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, recipient_type: client, recipient_type_confidence: "0.5"}]}], expected: {secondary: []}}
+  - {id: a gift's recipient type with no confidence of its own stands, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, recipient_type: client}]}], expected: {secondary: []}}
+  - {id: a low-confidence recipient type no rule needs raises nothing, receipt_id: R1, complete: true, receipts: [{<<: *meal, line_items: [{<<: *line, recipient_type: client, recipient_type_confidence: "0.2"}]}], expected: {secondary: []}}
+  - {id: a low-confidence venue on Client Entertainment is judged as missing, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Client Entertainment, line_items: [{<<: *line, category: other, venue_type: golf, venue_type_confidence: "0.3"}]}], expected: {secondary: [{line_id: L1, field: venue_type, state: low_confidence}]}}
+  - {id: a low-confidence toiletry answer with a delay claim is judged as missing, receipt_id: R1, complete: true, receipts: [{<<: *travel, baggage_delay_ref: BAG-1, line_items: [{<<: *line, category: personal_care, essential_toiletry: true, essential_toiletry_confidence: "0.3"}]}], expected: {secondary: [{line_id: L1, field: essential_toiletry, state: low_confidence}]}}
 
   # Item kind
   - {id: other on Computer Equipment with no kind, receipt_id: R1, complete: true, receipts: [{<<: *meal, submitted_expense_type: Computer Equipment, line_items: [{<<: *line, category: other}]}], expected: {secondary: [{line_id: L1, field: item_kind, state: missing}]}}
@@ -198,6 +208,17 @@ evaluated:
     complete: true
     receipts: [{<<: *meal, line_items: [{<<: *line, category: gift, confidence: "0.1", recipient_name: A. Moreau, recipient_type: client, unit_price: "500.00", amount: "500.00", amount_usd: "500.00"}]}]
     expected: {candidates: [], open_lines_include: [{rule_id: GIFT-01, line_id: L1}], signals: 1, decided: false}
+
+  - id: an official's type below the threshold is not read, so GIFT-04 stays open with a signal
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift, recipient_type: government_official, recipient_type_confidence: "0.3"}]}]
+    expected: {open_lines_include: [{rule_id: GIFT-04, line_id: L1}], signals: 1, decided: false}
+  - id: the same official at a usable confidence is read, and GIFT-04 is found
+    receipt_id: R1
+    complete: true
+    receipts: [{<<: *gifts, line_items: [{<<: *line, category: gift, recipient_type: government_official, recipient_type_confidence: "0.9"}]}]
+    expected: {active: [{rule_id: GIFT-04, line_ids: [L1]}], signals: 0}
 
   # A known limitation, documented on purpose: nothing is inferred to close it
   - id: an official on a meal line with no recipient type gives no GIFT-04 and no signal

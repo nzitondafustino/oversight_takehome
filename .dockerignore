@@ -12,7 +12,7 @@
 !data/policy-docs/
 !evaluation/final/replay/
 !evaluation/jev/runs/first-run/replay/
-!evaluation/langgraph/runs/live-claude-jev-1/replay/
+!evaluation/langgraph/runs/live-claude-jev-2/replay/
 !evaluation/compiler/live/
 !backend/pyproject.toml
 !backend/src/

@@ -1,0 +1,1 @@
+{"category":"gift","confidence":0.9,"recipient_name":"R. Delgado","recipient_type":"government_official","venue_type":null,"item_kind":null,"essential_toiletry":null}

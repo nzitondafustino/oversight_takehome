@@ -41,15 +41,21 @@ finalize:
   - {id: two names in the words are a conflict, description: Flowers for A. Moreau and R. Delgado, line: {category: gift, restricted: true, recipient_type: client}, expected: {error: null, recipient_name: null, recipient_type: unidentified, conflict: true}}
   - {id: a predicted name the words contradict is a conflict, description: Flowers for A. Moreau, line: {category: gift, restricted: true, recipient_name: Flowers}, expected: {error: null, recipient_name: null, recipient_type: unidentified, conflict: true}}
   - {id: a named gratuity is left alone, description: Gratuity for guest T. Nguyen, line: {category: service_fee}, expected: {error: null, recipient_name: null, recipient_type: null}}
+  # An attribute's own confidence is kept as given, however low: only EXC-03 judges it.
+  - {id: a low attribute confidence is kept for the engine to judge, description: Flowers for A. Moreau, line: {category: gift, restricted: true, recipient_type: client, recipient_type_confidence: "0.2"}, expected: {error: null, recipient_type: client, recipient_type_confidence: "0.2"}}
+  - {id: an attribute confidence with no attribute, description: null, line: {venue_type_confidence: "0.7"}, expected: {error: invalid venue_type confidence}}
+  - {id: an attribute confidence above 1, description: null, line: {recipient_type: client, recipient_type_confidence: "1.5"}, expected: {error: invalid recipient_type confidence}}
+  - {id: a recipient conflict drops the model's type and its confidence, description: Flowers for A. Moreau and R. Delgado, line: {category: gift, restricted: true, recipient_type: client, recipient_type_confidence: "0.9"}, expected: {error: null, recipient_type: unidentified, recipient_type_confidence: null, conflict: true}}
 
-jev_thresholds:
-  - {id: negative threshold, thresholds: {recipient_type: -0.1}, expected: {refused: true}}
-  - {id: excessive threshold, thresholds: {item_kind: 1.1}, expected: {refused: true}}
-  - {id: boolean threshold, thresholds: {venue_type: true}, expected: {refused: true}}
-  - {id: string threshold, thresholds: {essential_toiletry: '0.8'}, expected: {refused: true}}
-  - {id: unknown threshold field, thresholds: {category: 0.7}, expected: {refused: true}}
-  - {id: NaN threshold, thresholds: {item_kind: .nan}, expected: {refused: true}}
-  - {id: per-field threshold, thresholds: {recipient_type: 0.8}, expected: {refused: false}}
+# Jev passes on each attribute it chooses with that choice's probability, whatever it is: it judges no confidence.
+# Only EXC-03 does, against min_confidence (0.5). RCP-018 is a bracelet given to A. Moreau: Jev answers jewelry at
+# 0.9 and recipient_type client at `probability`. expected: the recipient type and its confidence as passed on, and
+# the EXC-03 state of the recipient type, or null for no signal.
+jev_attribute_confidence:
+  - {id: a clear recipient type is read, probability: 0.7, expected: {recipient_type: client, confidence: 0.7, state: null}}
+  - {id: a recipient type at the threshold is read, probability: 0.5, expected: {recipient_type: client, confidence: 0.5, state: null}}
+  - {id: an unsure recipient type is passed on and goes to review, probability: 0.4, expected: {recipient_type: client, confidence: 0.4, state: low_confidence}}
+  - {id: a barely chosen recipient type is passed on and goes to review, probability: 0.3, expected: {recipient_type: client, confidence: 0.3, state: low_confidence}}
 
 # A Jev category probability reaches the engine as the line's confidence, which EXC-03 judges.
 jev_uncertainty:

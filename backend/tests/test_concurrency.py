@@ -10,7 +10,7 @@ REQUESTS = [  # the ruleset version to use, by label, receipt, classification, t
     # jev, the decisions adapter's earlier name, runs that adapter, and the receipt reports it by its own name.
     ("second", "RCP-001", {"backend": "jev", "model": "typesafe/jev-1.14", "replay_set": "jev"}, "typesafe/jev-1.14", "decisions"),
     ("third", "RCP-017", {"backend": "langgraph", "replay_set": "langgraph"}, LANGGRAPH_ORDER, "langgraph"),
-    ("first", "RCP-022", {"backend": "langgraph", "replay_set": "langgraph", "langgraph": {"routing": {"min_confidence": 0.5}}}, LANGGRAPH_ORDER, "langgraph"),
+    ("first", "RCP-022", {"backend": "langgraph", "replay_set": "langgraph", "langgraph": {"routing": {"fallback_on_error": False}}}, LANGGRAPH_ORDER, "langgraph"),
 ]
 
 

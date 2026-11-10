@@ -17,10 +17,8 @@ classification:
     backends:  # in order: a line goes on to the next backend only as routing says
       - {name: primary, backend: decisions, model: typesafe/jev-1.14}
       - {name: fallback, backend: chat_completions, model: anthropic/claude-haiku-5.5}
-    routing:
-      min_confidence: 0.9  # a line below this is low confidence
-      fallback_on_error: true
-      fallback_on_low_confidence: true
+    routing:  # confidence never routes a line: only the rules judge it, through EXC-03's min_confidence
+      fallback_on_error: true  # a line a backend fails or abstains on goes on to the next
     reflection:  # classify, reflect, then accept, revise or fall back: off unless enabled here or by langgraph_config
       enabled: false
       reviewer: {backend: chat_completions, model: anthropic/claude-haiku-5.5}  # a name in REVIEWERS: it judges the classification only

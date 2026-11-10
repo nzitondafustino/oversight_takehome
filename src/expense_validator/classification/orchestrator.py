@@ -1,7 +1,8 @@
 """Route lines through registered backends with optional bounded reflection.
 
-Keep the last usable answer, otherwise the last abstention or failure. Routing
-uses each answer's threshold without comparing confidence across backends.
+Keep the last usable answer, otherwise the last abstention or failure. A line
+goes on only when a backend fails or abstains: confidence never routes a line.
+It travels with the answer, and only the rules judge it (EXC-03's min_confidence).
 Review acceptance ends a line; revision uses the first eligible reviser when
 the answering backend cannot revise. Uncertain, repeated, or exhausted reviews
 fall back. Failed reviews retain the answer. Unresolved objections withhold
@@ -18,7 +19,6 @@ state and requires the optional langgraph extra.
 """
 
 from dataclasses import dataclass
-from decimal import Decimal
 from typing import TypedDict
 
 from langgraph.errors import GraphRecursionError
@@ -84,22 +84,19 @@ class State(TypedDict):
     lines: dict[str, dict]  # each line's run, by line ID: see _start
 
 
-def assess(line: ClassifiedLine, routing: LangGraphRoutingConfig) -> str:
-    """What one backend's answer for a line is, whatever the routing then does with it."""
+def assess(line: ClassifiedLine) -> str:
+    """What one backend's answer for a line is, whatever the routing then does with it. Any category is accepted,
+    whatever its confidence: judging confidence is the rules' job, not the routing's."""
     if line.error is not None:
         return "missing_recording" if line.error == NOT_RECORDED else "error"
     if line.category is None:
         return "no_category"
-    if line.confidence is None or line.confidence < Decimal(str(routing.min_confidence)):
-        return "low_confidence"
     return "accepted"
 
 
 def wants_next(outcome: str, routing: LangGraphRoutingConfig) -> bool:
     """Whether the routing sends a line with this outcome on. An abstention goes on as a failure does."""
-    if outcome in ("error", "missing_recording", "no_category"):
-        return routing.fallback_on_error
-    return outcome == "low_confidence" and routing.fallback_on_low_confidence
+    return outcome != "accepted" and routing.fallback_on_error
 
 
 def _rank(line: ClassifiedLine) -> int:
@@ -196,7 +193,7 @@ def _run_link(link: Link, line_ids: list[str], context: Context) -> dict[str, tu
 
 def _classified(run: dict, place: int, link: Link, found: tuple[ClassifiedLine, bool], context: Context) -> dict:
     line, answered = found
-    outcome = assess(line, context.routing)
+    outcome = assess(line)
     goes_on = wants_next(outcome, context.routing)
     has_next = place + 1 < len(context.chain)
     run = _keep(run, link.name, line)
@@ -298,9 +295,8 @@ def _revise(state: State, runtime: Runtime[Context]) -> dict:
             revised = link.reviser.revise(context.normalized, normalized_lines[line_id], previous, run["feedback"], complete, context.vocabulary, context=told)
         else:
             revised = link.reviser.revise(context.normalized, normalized_lines[line_id], previous, run["feedback"], complete, context.vocabulary)
-        outcome = assess(revised, context.routing)
-        goes_on = _rank(revised) == 2 and wants_next(outcome, context.routing)
-        attempt = _attempt(link.name, link.backend_name, link.model, revised, outcome, goes_on and run["next"] < len(context.chain), bool(answered), revision)
+        outcome = assess(revised)
+        attempt = _attempt(link.name, link.backend_name, link.model, revised, outcome, False, bool(answered), revision)  # a failed revision goes on as a fallback, recorded there
         if context.reflection.structured:  # which review it answered, and whether it was retrying a failed revision
             attempt |= {"answers_review": answers, "max_retries": context.reflection.max_retries, "retried_validation_error": run["validation_error"] is not None}
         run = {**run, "revisions": revision, "calls": run["calls"] + 1, "attempts": run["attempts"] + (attempt,)}
@@ -313,11 +309,7 @@ def _revise(state: State, runtime: Runtime[Context]) -> dict:
         elif classification_signature(revised) == classification_signature(previous):
             lines[line_id] = _fall_back(run, "revision_unchanged", context)
         else:
-            run = _keep(run, link.name, revised, revision)
-            if goes_on:
-                lines[line_id] = _fall_back(run, outcome, context) if run["next"] < len(context.chain) else _done(run, "exhausted")
-            else:
-                lines[line_id] = {**run, "phase": "review"}
+            lines[line_id] = {**_keep(run, link.name, revised, revision), "phase": "review"}
     return {"lines": lines}
 
 
@@ -355,7 +347,7 @@ def classify_receipt(normalized: NormalizedReceipt, chain: tuple[Link, ...], rou
     Args:
         normalized: Receipt and normalized lines.
         chain: Ordered backend connections.
-        routing: Fallback conditions and confidence threshold.
+        routing: Whether a failed or abstaining line goes on to the next backend.
         vocabulary: Allowed categories and attributes.
         reflection: Optional reviewer, revisers, and call limits.
 

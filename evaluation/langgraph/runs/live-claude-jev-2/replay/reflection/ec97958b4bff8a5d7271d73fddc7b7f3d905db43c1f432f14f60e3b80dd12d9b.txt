@@ -1,0 +1,1 @@
+{"verdict":"revise","reason":"Guinness 0.0 is a non-alcoholic stout, so the line contradicts the alcohol category.","suggested_category":"food_beverage","feedback":"Guinness 0.0 is an alcohol-free beer; the 0.0 designation states it is non-alcoholic, so reconsider alcohol and classify as a non-alcoholic drink instead."}

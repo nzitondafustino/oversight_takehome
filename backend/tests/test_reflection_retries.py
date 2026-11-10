@@ -66,10 +66,10 @@ def test_structured_context_is_a_new_identity_that_replays_from_the_same_recordi
         return {line["line_id"]: (line["category"], line["confidence"], line["classification_details"]["orchestration"]) for row in page for line in row["result"]["line_items"]}
 
     before, after = lines(jobs["default"]), lines(jobs["structured"])
-    # No recorded line needed a revision, so every category is the same. Only RCP-023's line, which no node answered
-    # confidently and no reviewer ever accepted, differs: structured context never treats it as verified.
+    # Both modes give every line the same category and the same verdicts. RCP-023's line is reviewed where it stands,
+    # as confidence never routes a line: the reviewer objects, the reviser keeps other, and the objection is never
+    # withdrawn, so both modes leave it unresolved, with its confidence withheld.
     assert {line: value[0] for line, value in before.items()} == {line: value[0] for line, value in after.items()}
-    changed = sorted(line for line in before if before[line][2]["reflection"]["unresolved"] != after[line][2]["reflection"]["unresolved"])
-    assert changed == ["RCP-023-L1"]
-    assert after["RCP-023-L1"][2]["reflection"]["stop_reason"] == "exhausted" and after["RCP-023-L1"][1] is None
-    assert before["RCP-023-L1"][1] is not None
+    assert sorted(line for line in before if before[line][2]["reflection"]["unresolved"] != after[line][2]["reflection"]["unresolved"]) == []
+    assert after["RCP-023-L1"][2]["reflection"]["stop_reason"] == "repeated_objection" and after["RCP-023-L1"][1] is None
+    assert before["RCP-023-L1"][2]["reflection"]["unresolved"] is True and before["RCP-023-L1"][1] is None

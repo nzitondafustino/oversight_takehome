@@ -33,7 +33,7 @@ The FastAPI service, worker and React UI (`backend/`, `frontend/`) call the same
 
 ## Uncertainty threshold: 0.5
 
-A category with confidence below 0.5 raises an EXC-03 review signal, and that line is left out of every other rule. With Haiku's levels that means 0.3 ("probably not, but nothing fits better") and 0.1 ("cannot tell"). Below 0.5 the model itself rates the category more likely wrong than right, and EXC-03 says "a missed review costs far less than a false accusation". A higher threshold would mostly add unmatched signals, as no answer uses EXC-03. As a project extension, a missing field a rule needs also raises EXC-03: a gift with no stated recipient type leaves GIFT-04 open rather than guessed.
+A category with confidence below 0.5 raises an EXC-03 review signal, and that line is left out of every other rule. With Haiku's levels that means 0.3 ("probably not, but nothing fits better") and 0.1 ("cannot tell"). Below 0.5 the model itself rates the category more likely wrong than right, and EXC-03 says "a missed review costs far less than a false accusation". A higher threshold would mostly add unmatched signals, as no answer uses EXC-03. As a project extension, a missing field a rule needs also raises EXC-03: a gift with no stated recipient type leaves GIFT-04 open rather than guessed. So does a field whose own confidence (Jev gives one) is below 0.5: the rules do not read it. No classifier or router applies a threshold; this is the only one.
 
 ## Categories added
 

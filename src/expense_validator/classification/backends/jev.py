@@ -1,9 +1,11 @@
 """Classify receipt lines through OpenRouter's Jev Decisions API.
 
 Each line uses five bounded questions, TypeSafe-only routing, and no retries.
-Category confidence is the selected category's probability. Native distributions
-and Jev's confidence statistic remain in details. Attributes below their strict
-threshold stay missing. Shared finalization checks recipients and consistency.
+Category confidence is the selected category's probability, and each attribute's
+confidence is its selected value's probability. No confidence is judged here: only
+EXC-03 does that, with its min_confidence. An attribute is missing only when Jev
+chooses not_stated. Native distributions and Jev's confidence statistic remain in
+details. Shared finalization checks recipients and consistency.
 """
 
 import json
@@ -17,7 +19,6 @@ from openrouter.utils import RetryConfig
 
 from expense_validator.classification.core.common import finalize, line_input
 from expense_validator.classification.core.models import Backend, ClassifiedLine, Complete, Vocabulary
-from expense_validator.config import JevThresholds
 from expense_validator.exceptions import ClassificationError
 from expense_validator.normalization.models import NormalizedLine, NormalizedReceipt
 
@@ -132,12 +133,13 @@ def _probability(value: object) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and 0 <= value <= 1
 
 
-def _stated(answer: dict, threshold: float) -> str | None:
+def _stated(answer: dict) -> tuple[str | None, Decimal | None]:
+    """Jev's chosen value and its probability, or nothing when it chose not_stated."""
     choice = answer["choice"]
-    return None if choice == NOT_STATED or answer["probabilities"][choice] <= threshold else choice
+    return (None, None) if choice == NOT_STATED else (choice, Decimal(str(answer["probabilities"][choice])))
 
 
-def classify_line(normalized: NormalizedReceipt, line: NormalizedLine, complete: Complete, model: str, vocabulary: Vocabulary, thresholds: JevThresholds = JevThresholds()) -> ClassifiedLine:
+def classify_line(normalized: NormalizedReceipt, line: NormalizedLine, complete: Complete, model: str, vocabulary: Vocabulary) -> ClassifiedLine:
     """Classify one line with Jev. Any failure is the line's error, with no category: never a guess."""
     questions = questions_text(vocabulary)
     try:
@@ -145,25 +147,32 @@ def classify_line(normalized: NormalizedReceipt, line: NormalizedLine, complete:
     except ClassificationError as error:
         return finalize(ClassifiedLine(line.line_id, error=str(error)), line, vocabulary)
     category = answers["category"]["choice"]
-    toiletry = _stated(answers["essential_toiletry"], thresholds.essential_toiletry)
+    recipient_type, recipient_confidence = _stated(answers["recipient_type"])
+    venue_type, venue_confidence = _stated(answers["venue_type"])
+    item_kind, item_kind_confidence = _stated(answers["item_kind"])
+    toiletry, toiletry_confidence = _stated(answers["essential_toiletry"])
     result = ClassifiedLine(
         line_id=line.line_id,
         category=category,
         restricted=vocabulary.categories[category].restricted,
         confidence=Decimal(str(answers["category"]["probabilities"][category])),
-        recipient_type=_stated(answers["recipient_type"], thresholds.recipient_type),
-        venue_type=_stated(answers["venue_type"], thresholds.venue_type),
-        item_kind=_stated(answers["item_kind"], thresholds.item_kind),
+        recipient_type=recipient_type,
+        venue_type=venue_type,
+        item_kind=item_kind,
         essential_toiletry=None if toiletry is None else toiletry == "essential",
-        details={"backend": BACKEND_ID, "requested_model": model, "model": response_model, "answers": answers, "usage": usage, "attribute_thresholds": thresholds.model_dump()},
+        details={"backend": BACKEND_ID, "requested_model": model, "model": response_model, "answers": answers, "usage": usage},
+        recipient_type_confidence=recipient_confidence,
+        venue_type_confidence=venue_confidence,
+        item_kind_confidence=item_kind_confidence,
+        essential_toiletry_confidence=toiletry_confidence,
     )
     # Shared finalization rejects attributes that contradict the category.
     return finalize(result, line, vocabulary)
 
 
-def classify_receipt(normalized: NormalizedReceipt, complete: Complete, model: str, vocabulary: Vocabulary, thresholds: JevThresholds = JevThresholds(), only: frozenset[str] | None = None) -> tuple[ClassifiedLine, ...]:
+def classify_receipt(normalized: NormalizedReceipt, complete: Complete, model: str, vocabulary: Vocabulary, only: frozenset[str] | None = None) -> tuple[ClassifiedLine, ...]:
     """Classify every line of a receipt, or only the lines with these IDs. A failed line does not stop the others."""
-    return tuple(classify_line(normalized, line, complete, model, vocabulary, thresholds) for line in normalized.lines if only is None or line.line_id in only)
+    return tuple(classify_line(normalized, line, complete, model, vocabulary) for line in normalized.lines if only is None or line.line_id in only)
 
 
 # Validator-facing backend interface.
@@ -184,7 +193,7 @@ def _connect(client: OpenRouter, settings, vocabulary: Vocabulary) -> Complete:
 
 
 def _classify_receipt(normalized: NormalizedReceipt, complete: Complete, settings, vocabulary: Vocabulary, only: frozenset[str] | None = None) -> tuple[ClassifiedLine, ...]:
-    return classify_receipt(normalized, complete, settings.classification_model, vocabulary, settings.jev_thresholds, only)
+    return classify_receipt(normalized, complete, settings.classification_model, vocabulary, only)
 
 
 BACKEND = Backend(check_model=check_model, prompt=questions_text, cache_key=_cache_key, cache_folder="jev", connect=_connect, classify_receipt=_classify_receipt)

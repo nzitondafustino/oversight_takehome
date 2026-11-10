@@ -53,6 +53,11 @@ class LinePrediction(_Strict):
     venue_type: str | None = None
     item_kind: str | None = None
     essential_toiletry: StrictBool | None = None
+    # Each attribute's own confidence, where the classifier gave one: EXC-03 judges it, as the engine does in a run.
+    recipient_type_confidence: Decimal | None = Field(default=None, ge=0, le=1)
+    venue_type_confidence: Decimal | None = Field(default=None, ge=0, le=1)
+    item_kind_confidence: Decimal | None = Field(default=None, ge=0, le=1)
+    essential_toiletry_confidence: Decimal | None = Field(default=None, ge=0, le=1)
 
     def engine_output(self) -> dict[str, object]:
         given = self.model_dump(exclude={"line_id"}, exclude_none=True)

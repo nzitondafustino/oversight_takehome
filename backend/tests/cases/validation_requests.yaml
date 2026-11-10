@@ -83,10 +83,10 @@ cases:
     request: {classification: {backend: langgraph, langgraph: {backends: [{name: primary, backend: openrouter, model: typesafe/jev-1.14}, {name: fallback, backend: jev, model: anthropic/claude-haiku-5.5}]}}}
     expect: {status: 422, code: model_adapter_mismatch, details: {mismatches: [{model: typesafe/jev-1.14, backend: chat_completions, node: primary, compatible: [decisions]}, {model: anthropic/claude-haiku-5.5, backend: decisions, node: fallback, compatible: [chat_completions]}]}}
   - name: a langgraph configuration needs the langgraph backend
-    request: {classification: {langgraph: {routing: {min_confidence: 0.8}}}}
+    request: {classification: {langgraph: {routing: {fallback_on_error: false}}}}
     expect: {status: 422, code: unsupported_configuration}
-  - name: a routing threshold above 1
-    request: {classification: {backend: langgraph, langgraph: {routing: {min_confidence: 2}}}}
+  - name: a routing confidence threshold, as only the rules judge confidence
+    request: {classification: {backend: langgraph, langgraph: {routing: {min_confidence: 0.5}}}}
     expect: {status: 422, code: unsupported_configuration}
   - name: an unknown langgraph field
     request: {classification: {backend: langgraph, langgraph: {retries: 3}}}

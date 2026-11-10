@@ -1,0 +1,1 @@
+{"verdict":"accept","reason":"Fish pie is a meal item from a restaurant on an itemized receipt, which matches food_beverage.","suggested_category":null,"feedback":null}

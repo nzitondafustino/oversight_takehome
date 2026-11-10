@@ -19,12 +19,17 @@ jev_answers:
   - id: a stated attribute with most of the probability is read
     answers: {category: [gift, 0.8], recipient_type: [client, 0.8]}
     expected: {category: gift, recipient_type: client, recipient_name: null, error: null}
-  - id: an attribute without a majority is left missing
+  # Jev judges no confidence: an attribute it chooses is passed on with that choice's probability, however low,
+  # and only EXC-03 judges it, against min_confidence. Only not_stated leaves an attribute missing.
+  - id: an attribute without a majority is passed on with its probability
     answers: {category: [gift, 0.8], recipient_type: [client, 0.45]}
-    expected: {recipient_type: null, error: null}
-  - id: an attribute at exactly half is left missing
+    expected: {recipient_type: client, recipient_type_confidence: "0.45", error: null}
+  - id: an attribute at exactly half is passed on with its probability
     answers: {category: [gift, 0.8], recipient_type: [client, 0.5]}
-    expected: {recipient_type: null, error: null}
+    expected: {recipient_type: client, recipient_type_confidence: "0.5", error: null}
+  - id: an attribute Jev does not state is missing, with no confidence
+    answers: {category: [gift, 0.8]}
+    expected: {recipient_type: null, recipient_type_confidence: null, error: null}
   - id: an over-the-counter medicine
     answers: {category: [health_otc, 0.9], item_kind: [otc_medication, 0.9]}
     expected: {category: health_otc, item_kind: otc_medication, error: null}

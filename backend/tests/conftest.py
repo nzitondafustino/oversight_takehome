@@ -20,7 +20,7 @@ REPO = Path(__file__).resolve().parents[2]
 REPLAY_SETS = {
     "openrouter": REPO / "evaluation" / "final" / "replay",  # every receipt, anthropic/claude-haiku-5.5
     "jev": REPO / "evaluation" / "jev" / "runs" / "first-run" / "replay",  # every receipt, typesafe/jev-1.14
-    "langgraph": REPO / "evaluation" / "langgraph" / "runs" / "live-claude-jev-1" / "replay",  # RCP-011, 017, 022, 023 and 028
+    "langgraph": REPO / "evaluation" / "langgraph" / "runs" / "live-claude-jev-2" / "replay",  # RCP-011, 017, 022, 023 and 028
 }
 ARTIFACT = json.loads((REPO / "rules" / "ruleset.json").read_text())
 COMPILER_RECORDINGS = {

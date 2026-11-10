@@ -1,0 +1,1 @@
+{"verdict":"accept","reason":"The line states Ibuprofen 200mg tablets from a pharmacy, which is an over-the-counter medication matching health_otc, and the item_kind otc_medication fits that.","suggested_category":null,"feedback":null}

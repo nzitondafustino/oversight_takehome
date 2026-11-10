@@ -12,7 +12,6 @@ from expense_validator.classification.core.common import finalize
 from expense_validator.classification.core.models import ClassifiedLine
 from expense_validator.classification.core.recipients import recipient_mentions
 from expense_validator.compiler.validate import read_fields
-from expense_validator.config import JevThresholds
 from expense_validator.engine.policy_engine import PolicyEngine
 from expense_validator.engine.uncertainty import assess_uncertainty
 from expense_validator.exceptions import ClassificationError
@@ -39,17 +38,15 @@ def test_explicit_names_preserve_spelling_and_source_offsets(case):
 @pytest.mark.parametrize("case", load_cases("classification", "finalize"))
 def test_finalize_extracts_recipients_and_checks_the_line(case):
     source = ONE.lines[0] if case["description"] is None else ONE.lines[0].model_copy(update={"description_normalized": case["description"]})
-    changes = dict(case["line"])
-    if changes.get("confidence") is not None:
-        changes["confidence"] = Decimal(changes["confidence"])
+    changes = {name: Decimal(value) if name.endswith("confidence") and value is not None else value for name, value in case["line"].items()}
     result = finalize(BASE._replace(**changes), source, VOCABULARY)
     expected = dict(case["expected"])
     error = expected.pop("error")
     assert (result.error is None) if error is None else (result.error is not None and error in result.error), result.error
     if "conflict" in expected:
         assert ("evidence_conflict" in (result.details or {})) is expected.pop("conflict")
-    if "confidence" in expected:
-        assert (None if result.confidence is None else str(result.confidence)) == expected.pop("confidence")
+    for name in [name for name in expected if name.endswith("confidence")]:
+        assert (None if getattr(result, name) is None else str(getattr(result, name))) == expected.pop(name), name
     assert {name: getattr(result, name) for name in expected} == expected
 
 
@@ -76,23 +73,22 @@ def test_a_translation_that_names_someone_else_is_a_conflict_kept_in_the_details
     assert any(s.field == "recipient_type" and s.state == "unknown" for s in assessment.signals)
 
 
-@pytest.mark.parametrize("case", load_cases("classification", "jev_thresholds"))
-def test_jev_thresholds_are_checked(case):
-    if case["expected"]["refused"]:
-        with pytest.raises(ValidationError):
-            JevThresholds(**case["thresholds"])
-    else:
-        JevThresholds(**case["thresholds"])
+@pytest.mark.parametrize("case", load_cases("classification", "jev_attribute_confidence"))
+def test_a_jev_attribute_probability_is_passed_on_and_judged_only_by_the_engine(case, offline):
+    _install(offline, FakeOpenRouter(lambda state: {"category": ("jewelry", 0.9), "recipient_type": ("client", case["probability"])}))
+    receipt = next(r for r in load_receipts() if r.receipt_id == "RCP-018")
+    result = _jev_validator().validate_batch([receipt], context_complete=True).results[0]
+    attributes, expected = result.line_items[0].attributes, case["expected"]
+    assert (attributes["recipient_type"], attributes["recipient_type_confidence"]) == (expected["recipient_type"], expected["confidence"])
+    states = [u.state for u in result.uncertainty if u.field == "recipient_type"]
+    assert states == ([] if expected["state"] is None else [expected["state"]])
 
 
-def test_jev_thresholds_change_acceptance_without_changing_the_native_answers():
-    raw = json.dumps(jev_response(QUESTIONS, {"category": ("food_beverage", 0.9), "recipient_type": ("client", 0.7)}))
-    default = jev.classify_line(ONE, ONE.lines[0], lambda questions, state: raw, MODEL, VOCABULARY)
-    stricter = jev.classify_line(ONE, ONE.lines[0], lambda questions, state: raw, MODEL, VOCABULARY, JevThresholds(recipient_type=0.8))
-    assert default.recipient_type == "client" and stricter.recipient_type is None
-    assert default.details["answers"] == stricter.details["answers"]
-    assert stricter.details["answers"]["recipient_type"]["probabilities"]["client"] == 0.7
-    assert stricter.details["attribute_thresholds"]["recipient_type"] == 0.8
+def test_a_jev_attribute_is_missing_only_when_jev_chooses_not_stated():
+    raw = json.dumps(jev_response(QUESTIONS, {"category": ("food_beverage", 0.9)}))  # every attribute: not_stated
+    line = jev.classify_line(ONE, ONE.lines[0], lambda questions, state: raw, MODEL, VOCABULARY)
+    assert (line.recipient_type, line.venue_type, line.item_kind, line.essential_toiletry) == (None, None, None, None)
+    assert (line.recipient_type_confidence, line.venue_type_confidence, line.item_kind_confidence, line.essential_toiletry_confidence) == (None, None, None, None)
 
 
 @pytest.mark.parametrize("case", load_cases("classification", "jev_uncertainty"))
@@ -112,10 +108,3 @@ def test_a_low_coarse_confidence_is_judged_by_the_engine():
     assert assessment.evaluation_receipt.line_items[0].category is None
 
 
-def test_configured_thresholds_reach_the_public_facade(offline):
-    _install(offline, FakeOpenRouter(lambda state: {"category": ("jewelry", 0.9), "recipient_type": ("client", 0.7)}))
-    receipt = next(r for r in load_receipts() if r.receipt_id == "RCP-018")
-    result = _jev_validator(jev_thresholds=JevThresholds(recipient_type=0.8)).validate_batch([receipt], context_complete=True).results[0]
-    assert result.line_items[0].attributes["recipient_name"] == "A. Moreau"
-    assert result.line_items[0].attributes["recipient_type"] == "unidentified"
-    assert any(u.field == "recipient_type" and u.state == "unknown" for u in result.uncertainty)

@@ -104,7 +104,7 @@ def test_an_evaluation_keeps_its_chosen_node_models_in_its_snapshot_and_identity
     assert (job["status"], job["error"], job["progress"]["failed_receipts"]) == ("completed", None, 0)
     configuration = job["configuration"]
     assert [(child["name"], child["backend"], child["model"]) for child in configuration["snapshot"]["langgraph"]["backends"]] == [("primary", "chat_completions", HAIKU), ("fallback", "decisions", JEV)]
-    assert configuration["snapshot"]["langgraph"]["routing"] == {"min_confidence": 0.9, "fallback_on_error": True, "fallback_on_low_confidence": True}
+    assert configuration["snapshot"]["langgraph"]["routing"] == {"fallback_on_error": True}
     assert configuration["snapshot"]["langgraph"]["reflection"]["enabled"] is False
     assert configuration["model_label"] == f"primary=chat_completions:{HAIKU}, fallback=decisions:{JEV}"
     assert configuration["fingerprint"]["prompt_identity_version"] == 2

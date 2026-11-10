@@ -46,6 +46,11 @@ class ClassifiedLine(NamedTuple):
     essential_toiletry: bool | None = None
     error: str | None = None
     details: dict | None = None  # a backend's own evidence, such as Jev's probabilities; never read by the engine
+    # Each stated attribute's own confidence, where the backend gives one. Passed on as given: only EXC-03 judges it.
+    recipient_type_confidence: Decimal | None = None
+    venue_type_confidence: Decimal | None = None
+    item_kind_confidence: Decimal | None = None
+    essential_toiletry_confidence: Decimal | None = None
 
 
 class Backend(NamedTuple):
